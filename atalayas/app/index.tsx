@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function Welcome() {
   return (
@@ -12,6 +12,7 @@ export default function Welcome() {
           <Text style={styles.logoText}>DIGI</Text>
         </View>
       </View>
+
 
       <View style={styles.card}>
 
