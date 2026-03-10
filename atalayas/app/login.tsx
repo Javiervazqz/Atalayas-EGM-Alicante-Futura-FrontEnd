@@ -1,6 +1,5 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from "react-native";
-import { useState } from "react";
 import { router } from "expo-router";
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 
 export default function Registro() {
@@ -9,7 +8,7 @@ export default function Registro() {
   return (
     <View style={styles.container}>
 
-      <Text style={styles.title}>Registro</Text>
+      <Text style={styles.title}>Iniciar sesión</Text>
 
       <View style={styles.card}>
 
@@ -19,7 +18,7 @@ export default function Registro() {
         
         <TouchableOpacity 
             style={styles.button}
-            onPress={() => router.push("/(tabs)")}>
+            onPress={() => router.push("/mainPage")}>
             <Text>Inicia sesión</Text>
         </TouchableOpacity>
 

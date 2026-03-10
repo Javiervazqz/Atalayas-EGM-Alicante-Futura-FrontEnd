@@ -16,22 +16,23 @@ export default function Welcome() {
 
       <View style={styles.card}>
 
-        <Text style={styles.text}>Si eres alguien nuevo</Text>
-
-        <TouchableOpacity 
-          style={styles.button}
-          onPress={() => router.push("/registro")}
-        >
-          <Text>Regístrate</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.text}>Si ya tienes una cuenta</Text>
+        <Text style={styles.text}>Si eres empleado</Text>
 
         <TouchableOpacity 
           style={styles.button}
           onPress={() => router.push("/login")}
         >
           <Text>Inicia sesión</Text>
+        </TouchableOpacity>
+
+
+        <Text style={styles.text}>Si quieres registrar tu empresa</Text>
+
+        <TouchableOpacity 
+          style={styles.button}
+          onPress={() => router.push("/register")}
+        >
+          <Text>Registra tu empresa</Text>
         </TouchableOpacity>
 
       </View>

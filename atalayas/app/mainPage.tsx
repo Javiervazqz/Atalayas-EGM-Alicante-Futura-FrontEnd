@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function Home() {
@@ -23,8 +24,10 @@ export default function Home() {
       </View>
 
       <View style={styles.row}>
-        <TouchableOpacity style={[styles.card, styles.yellow]}>
-          <Text>placeholder</Text>
+        <TouchableOpacity 
+        style={[styles.card, styles.yellow]}
+        onPress={() => router.push("/company/companyManage")}>
+          <Text style={styles.cardText}>GESTIONA TU EMPRESA</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.card, styles.teal]}>

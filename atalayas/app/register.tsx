@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from "react-native";
-import { useState } from "react";
 import { router } from "expo-router";
+import { useState } from "react";
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 
 export default function Registro() {
@@ -10,49 +10,21 @@ export default function Registro() {
   return (
     <View style={styles.container}>
 
-      <Text style={styles.title}>Registro</Text>
+      <Text style={styles.title}>Registra tu empresa</Text>
 
       <View style={styles.card}>
 
         <TextInput placeholder="Nombre" style={styles.input} />
         <TextInput placeholder="Email" style={styles.input} />
         <TextInput placeholder="Contraseña" secureTextEntry style={styles.input} />
-
-        <Text style={styles.label}>Tipo de rol</Text>
-
-        <View style={styles.roleContainer}>
-          <TouchableOpacity
-            style={styles.roleButton}
-            onPress={() => setRol("empleado")}
-          >
-            <Text>Empleado</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.roleButton}
-            onPress={() => setRol("empresa")}
-          >
-            <Text>Empresa</Text>
-          </TouchableOpacity>
-        </View>
-
-
-        {rol === "empleado" && (
-          <TextInput
-            placeholder="Buscar empresa"
-            style={styles.input}
-          />
-        )}
-
-        {rol === "empresa" && (
-          <TextInput
+        <TextInput
             placeholder="Nombre de la empresa"
             style={styles.input}
           />
-        )}
+
         <TouchableOpacity 
             style={styles.button}
-            onPress={() => router.push("/(tabs)")}>
+            onPress={() => router.push("/mainPage")}>
             <Text>Registrarse</Text>
         </TouchableOpacity>
 
