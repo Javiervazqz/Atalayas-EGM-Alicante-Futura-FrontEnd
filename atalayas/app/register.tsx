@@ -4,32 +4,30 @@ import { globalStyles } from "../constants/styles";
 
 
 
+export default function Register() {
 
-export default function Login() {
+
   return (
     <View style={globalStyles.containerOrange}>
 
-      <Text style={globalStyles.title}>Iniciar sesión</Text>
+      <Text style={globalStyles.title}>Registra tu empresa</Text>
 
       <View style={globalStyles.card}>
 
+        <TextInput placeholder="Nombre" style={globalStyles.input} />
         <TextInput placeholder="Email" style={globalStyles.input} />
         <TextInput placeholder="Contraseña" secureTextEntry style={globalStyles.input} />
+        <TextInput
+            placeholder="Nombre de la empresa"
+            style={globalStyles.input}
+          />
 
-        
         <TouchableOpacity 
             style={globalStyles.button}
             onPress={() => router.push("/mainPage")}>
-            <Text>Inicia sesión</Text>
+            <Text>Registrarse</Text>
         </TouchableOpacity>
 
-        <Text style={globalStyles.textCenter}
-        onPress={() => router.push("/recoverPassword")}>
-          Has olvidado la contraseña?{" "}
-          <Text style={{ textDecorationLine: "underline" }}>
-            Cambia la aquí
-          </Text>
-        </Text>
       </View>
 
     </View>

@@ -1,11 +1,12 @@
 import { router } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { globalStyles } from "../constants/styles";
 
 export default function Welcome() {
   return (
-    <View style={styles.container}>
+    <View style={globalStyles.containerOrange}>
 
-      <Text style={styles.title}>BIENVENIDO</Text>
+      <Text style={globalStyles.title}>BIENVENIDO</Text>
 
       <View style={styles.logoBox}>
         <View style={styles.logoCircle}>
@@ -14,24 +15,25 @@ export default function Welcome() {
       </View>
 
 
-      <View style={styles.card}>
+      <View style={globalStyles.card}>
 
-        <Text style={styles.text}>Si eres alguien nuevo</Text>
-
-        <TouchableOpacity 
-          style={styles.button}
-          onPress={() => router.push("/registro")}
-        >
-          <Text>Regístrate</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.text}>Si ya tienes una cuenta</Text>
+        <Text style={globalStyles.text}>Si eres empleado</Text>
 
         <TouchableOpacity 
-          style={styles.button}
+          style={globalStyles.button}
           onPress={() => router.push("/login")}
         >
-          <Text>Inicia sesión</Text>
+          <Text style={globalStyles.buttonText}>Inicia sesión</Text>
+        </TouchableOpacity>
+
+
+        <Text style={globalStyles.text}>Si quieres registrar tu empresa</Text>
+
+        <TouchableOpacity 
+          style={globalStyles.button}
+          onPress={() => router.push("/register")}
+        >
+          <Text>Registra tu empresa</Text>
         </TouchableOpacity>
 
       </View>
@@ -41,20 +43,6 @@ export default function Welcome() {
 }
 
 const styles = StyleSheet.create({
-
-  container: {
-    flex: 1,
-    backgroundColor: "#d7b56d",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  title: {
-    fontSize: 24,
-    color: "white",
-    marginBottom: 20,
-  },
-
   logoBox: {
     backgroundColor: "white",
     padding: 20,
@@ -75,27 +63,4 @@ const styles = StyleSheet.create({
     color: "yellow",
     fontWeight: "bold",
   },
-
-  card: {
-    backgroundColor: "#e8e8e8",
-    padding: 25,
-    borderRadius: 20,
-    alignItems: "center",
-    width: 250,
-  },
-
-  text: {
-    marginTop: 10,
-  },
-
-  button: {
-    marginVertical: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#555",
-    backgroundColor: "white",
-  },
-
 });
