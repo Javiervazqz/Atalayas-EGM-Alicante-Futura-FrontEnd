@@ -4,7 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+<<<<<<< HEAD
 export default function RegisterPage() {
+=======
+export default function RegisterPage() { 
+>>>>>>> dc0bd06e81eb286ec62af1d92dff20391082e938
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
