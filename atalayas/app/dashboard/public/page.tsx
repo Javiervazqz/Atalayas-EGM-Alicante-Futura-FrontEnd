@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
+import { API_ROUTES } from '@/lib/utils';
 
 export default function PublicDashboard() {
   const [courses, setCourses] = useState<any[]>([]);
@@ -13,7 +14,7 @@ export default function PublicDashboard() {
     const fetchData = async () => {
       try {
         const headers = { Authorization: `Bearer ${getToken()}` };
-        const res = await fetch('http://localhost:3000/courses', { headers });
+        const res = await fetch(API_ROUTES.COURSES.GET_ALL, { headers });
         const data = await res.json();
         setCourses(Array.isArray(data) ? data : []);
       } catch (err) {
