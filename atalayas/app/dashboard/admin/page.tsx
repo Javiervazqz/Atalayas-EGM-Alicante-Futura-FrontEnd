@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
+import Link from 'next/link';
+import { API_ROUTES } from '@/lib/utils';
+
 interface Stats {
   employees: number;
   courses: number;
@@ -28,8 +31,8 @@ export default function AdminDashboard() {
       try {
         const headers = { Authorization: `Bearer ${getToken()}` };
         const [usersRes, coursesRes] = await Promise.all([
-          fetch('http://localhost:3000/users', { headers }),
-          fetch('http://localhost:3000/courses', { headers }),
+          fetch(API_ROUTES.USERS.GET_ALL, { headers }),
+          fetch(API_ROUTES.COURSES.GET_ALL, { headers }),
         ]);
 
         const usersData = await usersRes.json();
@@ -58,22 +61,25 @@ export default function AdminDashboard() {
     { label: 'Progreso medio', value: `${stats.avgProgress}%`, icon: '📈', color: 'cyan' },
   ];
 
+  // Colores actualizados para el modo claro (fondos pastel, texto oscuro, bordes suaves)
   const colorMap: Record<string, string> = {
-    blue: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    indigo: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-    violet: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
-    cyan: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+    blue: 'bg-blue-50 text-blue-700 border-blue-100',
+    indigo: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+    violet: 'bg-violet-50 text-violet-700 border-violet-100',
+    cyan: 'bg-cyan-50 text-cyan-700 border-cyan-100',
   };
 
   return (
-    <div className="flex min-h-screen bg-[#0f1117]">
+    // Fondo general gris muy clarito (como en el login)
+    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
       <Sidebar role="ADMIN" />
 
       <main className="flex-1 p-8 overflow-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white mb-1">Panel de administración</h1>
-          <p className="text-gray-500 text-sm">Gestiona tu empresa y empleados</p>
+          {/* Texto principal en gris muy oscuro casi negro */}
+          <h1 className="text-2xl font-bold text-[#1d1d1f] mb-1">Panel de administración</h1>
+          <p className="text-[#86868b] text-sm">Gestiona tu empresa y empleados</p>
         </div>
 
         {/* Stats */}
@@ -81,46 +87,48 @@ export default function AdminDashboard() {
           {statCards.map((stat) => (
             <div key={stat.label} className={`rounded-2xl border p-5 ${colorMap[stat.color]}`}>
               <div className="text-2xl mb-3">{stat.icon}</div>
-              <div className="text-2xl font-bold text-white mb-1">{loading ? '...' : stat.value}</div>
-              <div className="text-xs opacity-70">{stat.label}</div>
+              <div className="text-2xl font-bold text-[#1d1d1f] mb-1">{loading ? '...' : stat.value}</div>
+              <div className="text-xs font-medium opacity-80">{stat.label}</div>
             </div>
           ))}
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Cursos */}
-          <div className="bg-white/3 border border-white/8 rounded-2xl p-6">
+          {/* Cursos - Tarjeta blanca con sombra suave */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-white font-semibold">Cursos de la empresa</h2>
-              <a href="/dashboard/admin/courses" className="text-blue-400 text-sm hover:text-blue-300 transition-colors">
+              <h2 className="text-[#1d1d1f] font-semibold">Cursos de la empresa</h2>
+              <Link href="/dashboard/admin/courses" className="text-[#0071e3] text-sm hover:text-blue-600 transition-colors">
                 Ver todos →
-              </a>
+              </Link>
             </div>
 
             {loading ? (
               <div className="space-y-3">
-                {[1,2,3].map(i => (
-                  <div key={i} className="h-14 bg-white/5 rounded-xl animate-pulse" />
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-14 bg-gray-100 rounded-xl animate-pulse" />
                 ))}
               </div>
             ) : courses.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-600 text-sm">No hay cursos todavía</p>
-                <a href="/dashboard/admin/courses" className="text-blue-400 text-sm mt-2 inline-block hover:text-blue-300">
+                <p className="text-[#86868b] text-sm">No hay cursos todavía</p>
+                <Link href="/dashboard/admin/courses/new" className="text-[#0071e3] text-sm mt-2 inline-block hover:text-blue-600">
                   Crear primer curso →
-                </a>
+                </Link>
               </div>
             ) : (
               <div className="space-y-3">
                 {courses.slice(0, 5).map((course) => (
-                  <div key={course.id} className="flex items-center justify-between p-3 bg-white/3 rounded-xl hover:bg-white/5 transition-colors">
+                  // Elementos de la lista gris clarito que pasan a blanco al pasar el ratón
+                  <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-500/15 rounded-lg flex items-center justify-center">
-                        <span className="text-blue-400 text-sm">📚</span>
+                      <div className="w-8 h-8 bg-white border border-gray-200 shadow-sm rounded-lg flex items-center justify-center">
+                        <span className="text-sm">📚</span>
                       </div>
-                      <span className="text-white text-sm font-medium">{course.title}</span>
+                      <span className="text-[#1d1d1f] text-sm font-medium">{course.title}</span>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-lg ${course.isPublic ? 'bg-green-500/15 text-green-400' : 'bg-gray-500/15 text-gray-400'}`}>
+                    {/* Badges claros */}
+                    <span className={`text-xs px-2 py-1 rounded-lg font-medium ${course.isPublic ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}`}>
                       {course.isPublic ? 'Público' : 'Privado'}
                     </span>
                   </div>
@@ -129,24 +137,24 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {/* Quick Actions */}
-          <div className="bg-white/3 border border-white/8 rounded-2xl p-6">
-            <h2 className="text-white font-semibold mb-5">Acciones rápidas</h2>
+          {/* Quick Actions - Tarjeta blanca */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-[#1d1d1f] font-semibold mb-5">Acciones rápidas</h2>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Nuevo empleado', icon: '👤', href: '/dashboard/admin/users/new', color: 'blue' },
-                { label: 'Nuevo curso', icon: '📚', href: '/dashboard/admin/courses/new', color: 'indigo' },
-                { label: 'Subir documento', icon: '📄', href: '/dashboard/admin/documents/new', color: 'violet' },
-                { label: 'Ver informes', icon: '📊', href: '/dashboard/admin/reports', color: 'cyan' },
+                { label: 'Nuevo empleado', icon: '👤', href: '/dashboard/admin/users/new' },
+                { label: 'Nuevo curso', icon: '📚', href: '/dashboard/admin/courses/new' },
+                { label: 'Subir documento', icon: '📄', href: '/dashboard/admin/documents/new' },
+                { label: 'Ver informes', icon: '📊', href: '/dashboard/admin/reports' },
               ].map((action) => (
-                <a
+                <Link
                   key={action.label}
                   href={action.href}
-                  className="flex flex-col items-center gap-2 p-4 bg-white/3 border border-white/8 rounded-xl hover:bg-white/6 hover:border-white/15 transition-all text-center"
+                  className="flex flex-col items-center gap-2 p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-white hover:border-gray-300 hover:shadow-sm transition-all text-center"
                 >
                   <span className="text-2xl">{action.icon}</span>
-                  <span className="text-gray-400 text-xs font-medium">{action.label}</span>
-                </a>
+                  <span className="text-[#1d1d1f] font-medium text-xs">{action.label}</span>
+                </Link>
               ))}
             </div>
           </div>
