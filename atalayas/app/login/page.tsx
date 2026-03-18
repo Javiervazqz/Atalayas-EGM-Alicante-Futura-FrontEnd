@@ -14,7 +14,6 @@ export default function LoginPage() {
   const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
-    /*djnjfndj */
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -37,8 +36,8 @@ export default function LoginPage() {
       const role = data.user.role;
       
       // Redirigimos
-      if (role === 'GENERAL_ADMIN') router.push('/dashboard/general-admin');
-      else if (role === 'ADMIN') router.push('/dashboard/admin');
+      if (role === 'GENERAL_ADMIN') router.push('/dashboard/administrator/general-admin');
+      else if (role === 'ADMIN') router.push('/dashboard/administrator/admin');
       else if (role === 'EMPLOYEE') router.push('/dashboard/employee');
       else router.push('/dashboard/public');
       

@@ -10,19 +10,19 @@ interface SidebarProps {
 
 const navItems = {
   GENERAL_ADMIN: [
-    { label: 'Panel', href: '/dashboard/general-admin', icon: '⊞' },
-    { label: 'Empresas', href: '/dashboard/general-admin/companies', icon: '🏭' },
-    { label: 'Usuarios', href: '/dashboard/general-admin/users', icon: '👥' },
-    { label: 'Cursos', href: '/dashboard/general-admin/courses', icon: '📚' },
-    { label: 'Servicios', href: '/dashboard/general-admin/services', icon: '🔧' },
-    { label: 'Anuncios', href: '/dashboard/general-admin/announcements', icon: '📢' },
+    { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: '⊞' },
+    { label: 'Empresas', href: '/dashboard/administrator/companies', icon: '🏭' },
+    { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: '👥' },
+    { label: 'Cursos', href: '/dashboard/administrator/courses', icon: '📚' },
+    { label: 'Servicios', href: '/dashboard/administrator/services', icon: '🔧' },
+    { label: 'Anuncios', href: '/dashboard/administrator/announcements', icon: '📢' },
   ],
   ADMIN: [
-    { label: 'Panel', href: '/dashboard/admin', icon: '⊞' },
-    { label: 'Empleados', href: '/dashboard/admin/users', icon: '👥' },
-    { label: 'Cursos', href: '/dashboard/admin/courses', icon: '📚' },
-    { label: 'Documentos', href: '/dashboard/admin/documents', icon: '📄' },
-    { label: 'Servicios', href: '/dashboard/admin/services', icon: '🔧' },
+    { label: 'Panel', href: '/dashboard/administrator/admin', icon: '⊞' },
+    { label: 'Empleados', href: '/dashboard/administrator/employees', icon: '👥' },
+    { label: 'Cursos', href: '/dashboard/administrator/courses', icon: '📚' },
+    { label: 'Documentos', href: '/dashboard/administrator/documents', icon: '📄' },
+    { label: 'Servicios', href: '/dashboard/administrator/services', icon: '🔧' }
   ],
   EMPLOYEE: [
     { label: 'Panel', href: '/dashboard/employee', icon: '⊞' },
