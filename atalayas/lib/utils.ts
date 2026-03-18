@@ -22,7 +22,10 @@ export const API_ROUTES = {
   },
   DOCUMENTS: {
     GET_ALL: `${BASE_URL}/document`,
-  }
+  },
+  SERVICES: {
+    GET_ALL: `${BASE_URL}/services`,
+  },
 }
 
 // AÑADIMOS SUPABASE AQUÍ ABAJO:
