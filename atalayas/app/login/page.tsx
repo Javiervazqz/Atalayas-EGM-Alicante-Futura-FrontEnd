@@ -203,12 +203,10 @@ export default function LoginPage() {
             </form>
 
             <div className="text-center mt-6">
-              <a
-                href="#"
-                style={{ color: '#0071e3', fontSize: '13px', textDecoration: 'none' }}
-              >
+              <Link
+                href="/forgot-password" style={{ color: '#0071e3', fontSize: '13px', textDecoration: 'none' }}>
                 ¿Olvidaste tu contraseña?
-              </a>
+              </Link>
             </div>
           </div>
 

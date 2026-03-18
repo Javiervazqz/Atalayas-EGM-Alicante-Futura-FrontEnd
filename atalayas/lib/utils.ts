@@ -11,6 +11,8 @@ export const API_ROUTES = {
   AUTH: {
     LOGIN: `${BASE_URL}/auth/login`,
     REGISTER: `${BASE_URL}/auth/register`,
+    FORGOT_PASSWORD: `${BASE_URL}/auth/forgot-password`,
+    RESET_PASSWORD: `${BASE_URL}/auth/reset-password`,
   },
   USERS: {
     GET_ALL: `${BASE_URL}/users`,
