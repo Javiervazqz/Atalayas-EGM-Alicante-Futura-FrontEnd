@@ -26,8 +26,14 @@ export const API_ROUTES = {
   },
   SERVICES: {
     GET_ALL: `${BASE_URL}/services`,
+  },
   COMPANIES: {
     GET_ALL: `${BASE_URL}/company`,
   },
-},
+  COMPANY_REQUESTS: {
+    CREATE: `${BASE_URL}/company-request`,
+    GET_ALL: `${BASE_URL}/company-request`,
+    APPROVE: (id: string) => `${BASE_URL}/company-request/${id}/approve`,
+    REJECT: (id: string) => `${BASE_URL}/company-request/${id}/reject`,
+  },
 }

@@ -16,13 +16,14 @@ const navItems = {
     { label: 'Cursos', href: '/dashboard/administrator/courses', icon: '📚' },
     { label: 'Servicios', href: '/dashboard/administrator/services', icon: '🔧' },
     { label: 'Anuncios', href: '/dashboard/administrator/announcements', icon: '📢' },
+    {label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: '📄'},
   ],
   ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/admin', icon: '⊞' },
     { label: 'Empleados', href: '/dashboard/administrator/employees', icon: '👥' },
-    { label: 'Cursos', href: '/dashboard/administrator/courses', icon: '📚' },
-    { label: 'Documentos', href: '/dashboard/administrator/documents', icon: '📄' },
-    { label: 'Servicios', href: '/dashboard/administrator/services', icon: '🔧' }
+    { label: 'Cursos', href: '/dashboard/administrator/admin/courses', icon: '📚' },
+    { label: 'Documentos', href: '/dashboard/administrator/admin/documents', icon: '📄' },
+    { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: '🔧' }
   ],
   EMPLOYEE: [
     { label: 'Panel', href: '/dashboard/employee', icon: '⊞' },

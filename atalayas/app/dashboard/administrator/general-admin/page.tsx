@@ -66,7 +66,7 @@ export default function AdminDashboard() {
       className="flex min-h-screen bg-[#f5f5f7]" 
       style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}
     >
-      <Sidebar role="ADMIN" />
+      <Sidebar role="GENERAL_ADMIN" />
 
       <main className="flex-1 p-10 overflow-auto">
         {/* Header */}
