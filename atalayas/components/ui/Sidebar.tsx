@@ -28,7 +28,7 @@ const navItems = {
   EMPLOYEE: [
     { label: 'Panel', href: '/dashboard/employee', icon: '⊞' },
     { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: '📚' },
-    { label: 'Documentos', href: '/dashboard/employee/documents', icon: '📄' },
+    { label: 'Documentos', href: '/dashboard/documents', icon: '📄' },
     { label: 'Servicios', href: '/dashboard/employee/services', icon: '🔧' },
   ],
   PUBLIC: [
