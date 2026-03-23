@@ -14,6 +14,7 @@ const navItems = {
     { label: 'Empresas', href: '/dashboard/administrator/companies', icon: '🏭' },
     { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: '👥' },
     { label: 'Cursos', href: '/dashboard/administrator/courses', icon: '📚' },
+    { label: 'Documentos', href: '/dashboard/documents', icon: '📄' },
     { label: 'Servicios', href: '/dashboard/administrator/services', icon: '🔧' },
     { label: 'Anuncios', href: '/dashboard/administrator/announcements', icon: '📢' },
   ],
@@ -21,13 +22,13 @@ const navItems = {
     { label: 'Panel', href: '/dashboard/administrator/admin', icon: '⊞' },
     { label: 'Empleados', href: '/dashboard/administrator/employees', icon: '👥' },
     { label: 'Cursos', href: '/dashboard/administrator/courses', icon: '📚' },
-    { label: 'Documentos', href: '/dashboard/administrator/documents', icon: '📄' },
+    { label: 'Documentos', href: '/dashboard/documents', icon: '📄' },
     { label: 'Servicios', href: '/dashboard/administrator/services', icon: '🔧' }
   ],
   EMPLOYEE: [
     { label: 'Panel', href: '/dashboard/employee', icon: '⊞' },
     { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: '📚' },
-    { label: 'Documentos', href: '/dashboard/employee/documents', icon: '📄' },
+    { label: 'Documentos', href: '/dashboard/documents', icon: '📄' },
     { label: 'Servicios', href: '/dashboard/employee/services', icon: '🔧' },
   ],
   PUBLIC: [
