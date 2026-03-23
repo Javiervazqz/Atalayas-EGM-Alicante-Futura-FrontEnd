@@ -222,6 +222,13 @@ export default function LoginPage() {
               Regístrate
             </Link>
           </p>
+
+          <p className="text-center mt-2" style={{ color: '#86868b', fontSize: '12px' }}>
+            ¿Eres una empresa del polígono?{' '}
+            <Link href="/company-register" style={{ color: '#0071e3', textDecoration: 'none' }}>
+              Solicitar alta
+            </Link>
+          </p>
         </div>
       </main>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -11,18 +11,19 @@ interface SidebarProps {
 const navItems = {
   GENERAL_ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: '⊞' },
-    { label: 'Empresas', href: '/dashboard/administrator/companies', icon: '🏭' },
-    { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: '👥' },
-    { label: 'Cursos', href: '/dashboard/administrator/courses', icon: '📚' },
-    { label: 'Servicios', href: '/dashboard/administrator/services', icon: '🔧' },
-    { label: 'Anuncios', href: '/dashboard/administrator/announcements', icon: '📢' },
+    { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: '🏭' },
+    { label: 'Usuarios', href: '/dashboard/administrator/general-admin/employees', icon: '👥' },
+    { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: '📚' },
+    { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: '🔧' },
+    { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: '📢' },
+    { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: '📄'},
   ],
   ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/admin', icon: '⊞' },
-    { label: 'Empleados', href: '/dashboard/administrator/employees', icon: '👥' },
-    { label: 'Cursos', href: '/dashboard/administrator/courses', icon: '📚' },
-    { label: 'Documentos', href: '/dashboard/administrator/documents', icon: '📄' },
-    { label: 'Servicios', href: '/dashboard/administrator/services', icon: '🔧' }
+    { label: 'Empleados', href: '/dashboard/administrator/admin/employees', icon: '👥' },
+    { label: 'Cursos', href: '/dashboard/administrator/admin/courses', icon: '📚' },
+    { label: 'Documentos', href: '/dashboard/administrator/admin/documents', icon: '📄' },
+    { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: '🔧' }
   ],
   EMPLOYEE: [
     { label: 'Panel', href: '/dashboard/employee', icon: '⊞' },
@@ -55,7 +56,29 @@ export default function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  const [pendingCount, setPendingCount] = useState(() => {
+  if (typeof window === 'undefined') return 0;
+  return parseInt(localStorage.getItem('pendingCount') || '0');
+});
 
+useEffect(() => {
+  if (role !== 'GENERAL_ADMIN') return;
+  
+  const fetchPending = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:3000/company-request', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const pending = Array.isArray(data) ? data.filter((r: any) => r.status === 'PENDING').length : 0;
+      setPendingCount(pending);
+      localStorage.setItem('pendingCount', pending.toString()); // 👈 guardamos en cache
+    } catch {}
+  };
+
+  fetchPending();
+}, [role]);
   const user = typeof window !== 'undefined'
     ? JSON.parse(localStorage.getItem('user') || '{}')
     : {};
@@ -101,7 +124,16 @@ export default function Sidebar({ role }: SidebarProps) {
               }`}
             >
               <span className="text-base shrink-0">{item.icon}</span>
-              {!collapsed && <span>{item.label}</span>}
+              {!collapsed && (
+                <>
+                  <span className="flex-1">{item.label}</span>
+                  {item.label === 'Solicitudes' && pendingCount > 0 && (
+                    <span className="bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-4.5 text-center">
+                      {pendingCount}
+                    </span>
+                  )}
+                </>
+              )}
             </Link>
           );
         })}
