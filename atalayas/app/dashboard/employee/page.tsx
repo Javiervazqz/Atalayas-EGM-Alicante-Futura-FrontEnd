@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-// 1. Importamos el Sidebar que ya teníamos creado
 import Sidebar from '@/components/ui/Sidebar';
-// 2. Importamos nuestras rutas centralizadas
 import { API_ROUTES } from '@/lib/utils';
 
 interface Course {
@@ -19,34 +17,73 @@ interface Enrollment {
   Course: Course;
 }
 
+interface Service {
+  id: string;
+  title: string;
+  isPublic: boolean;
+  serviceType: 'INFO' | 'BOOKING' | 'ANNOUNCEMENT';
+  description?: string;
+  mediaUrl?: string;
+}
+
+interface UserData {
+  email?: string;
+  name?: string;
+}
+
 export default function EmployeeDashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
-  // Nota: Por ahora enrollments está vacío hasta que conectes el endpoint correspondiente
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [services, setServices] = useState<Service[]>([]);
+  const [user, setUser] = useState<UserData | null>(null);
 
   const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';
 
   useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
     const fetchData = async () => {
+      setLoading(true);
       try {
-        const headers = { Authorization: `Bearer ${getToken()}` };
-        // Usamos API_ROUTES en lugar de la URL quemada
-        const coursesRes = await fetch(API_ROUTES.COURSES.GET_ALL, { headers });
+        const headers = { 
+          'Authorization': `Bearer ${getToken()}`,
+          'Content-Type': 'application/json'
+        };
+
+        // Ejecutamos ambas peticiones en paralelo para ganar velocidad
+        const [coursesRes, servicesRes] = await Promise.all([
+          fetch(API_ROUTES.COURSES.GET_ALL, { headers }),
+          fetch(API_ROUTES.SERVICES.GET_ALL, { headers })
+        ]);
+
         const coursesData = await coursesRes.json();
+        const servicesData = await servicesRes.json();
+
+        // Validamos que la respuesta sea exitosa y sea un array
         setCourses(Array.isArray(coursesData) ? coursesData : []);
+        setServices(Array.isArray(servicesData) ? servicesData : []);
+
       } catch (err) {
-        console.error(err);
+        console.error("Error cargando el Dashboard:", err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
   const completedCourses = enrollments.filter(e => e.progress === 100).length;
   const inProgressCourses = enrollments.filter(e => e.progress > 0 && e.progress < 100).length;
 
+    const userName = user?.email?.split('@')[0];
+    const formattedName = userName 
+    ? userName.charAt(0).toUpperCase() + userName.slice(1).toLowerCase() 
+    : 'Usuario';
+  
   return (
     <div 
       className="flex min-h-screen bg-[#f5f5f7]" 
@@ -58,11 +95,12 @@ export default function EmployeeDashboard() {
       <main className="flex-1 p-10 overflow-auto">
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-3xl font-bold text-[#1d1d1f] tracking-tight mb-2">
-            Buenos días
+          <h1 className="text-3xl text-[#1d1d1f] tracking-tight mb-2">
+            <span className="font-normal text-[#86868b]">¡Bienvenido,</span> 
+            <span className="font-bold"> {formattedName}!</span>
           </h1>
           <p className="text-[#86868b] text-base">
-            Consulta tus cursos y tu progreso de formación
+            Consulta tus cursos, servicios y tu progreso de formación
           </p>
         </div>
 
@@ -132,40 +170,75 @@ export default function EmployeeDashboard() {
             )}
           </div>
 
-          {/* Mi progreso */}
-          <div className="bg-white rounded-2xl p-7 shadow-sm border border-gray-200">
-            <h2 className="text-[#1d1d1f] text-lg font-semibold tracking-tight mb-6">Mi progreso</h2>
-
-            {enrollments.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="w-14 h-14 bg-[#f5f5f7] rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-                  🎯
-                </div>
-                <p className="text-[#1d1d1f] text-sm font-medium mb-1">Sin matrículas activas</p>
-                <p className="text-[#86868b] text-sm mb-5">Empieza un curso para ver tu progreso aquí</p>
-                <Link href="/dashboard/employee/courses" className="inline-block text-[#0071e3] text-sm font-medium px-5 py-2 bg-blue-50 rounded-full hover:bg-blue-100 transition-colors">
-                  Explorar cursos
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-5">
-                {enrollments.map((enrollment) => (
-                  <div key={enrollment.id}>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-[#1d1d1f] text-sm font-medium">{enrollment.Course.title}</span>
-                      <span className="text-[#86868b] text-sm">{enrollment.progress}%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-[#f5f5f7] rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-500 ${enrollment.progress === 100 ? 'bg-green-500' : 'bg-[#0071e3]'}`}
-                        style={{ width: `${enrollment.progress}%` }} 
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+        {/* Sección de Servicios */}
+        <div className="bg-white rounded-2xl p-7 shadow-sm border border-gray-200">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-[#1d1d1f] text-lg font-semibold tracking-tight">Servicios disponibles</h2>
+            <Link href="/dashboard/employee/services" className="text-[#0071e3] text-sm hover:underline">
+              Ver todos
+            </Link>
           </div>
+
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-14 bg-[#f5f5f7] rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : services.length === 0 ? (
+            <div className="text-center py-10">
+              <p className="text-[#86868b] text-sm">No hay servicios disponibles</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {services.slice(0, 5).map((service) => {
+                // Lógica para iconos y colores según el tipo
+                const getServiceDetails = (type: string) => {
+                  switch (type) {
+                    case 'INFO':
+                      return { icon: 'ℹ️', label: 'Información', color: 'bg-blue-50 text-blue-600' };
+                    case 'BOOKING':
+                      return { icon: '📅', label: 'Reserva', color: 'bg-purple-50 text-purple-600' };
+                    case 'ANNOUNCEMENT':
+                      return { icon: '📢', label: 'Aviso', color: 'bg-orange-50 text-orange-600' };
+                    default:
+                      return { icon: '📄', label: 'Servicio', color: 'bg-gray-50 text-gray-600' };
+                  }
+                };
+
+                const details = getServiceDetails(service.serviceType);
+
+                return (
+                  <Link key={service.id} href={`/dashboard/employee/services/${service.id}`}>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-[#f5f5f7] hover:bg-gray-200 transition-colors cursor-pointer group">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg ${details.color}`}>
+                        {details.icon}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[#1d1d1f] text-sm font-medium truncate mb-0.5">
+                          {service.title}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${details.color} bg-white border border-current opacity-80`}>
+                            {details.label}
+                          </span>
+                          <p className={`text-[10px] ${service.isPublic ? 'text-green-600' : 'text-[#86868b]'}`}>
+                            {service.isPublic ? 'Público' : 'Empresa'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-gray-400 group-hover:text-gray-600 transition-colors shrink-0">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
         </div>
       </main>
     </div>
