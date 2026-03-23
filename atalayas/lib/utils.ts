@@ -35,5 +35,8 @@ export const API_ROUTES = {
     GET_ALL: `${BASE_URL}/company-request`,
     APPROVE: (id: string) => `${BASE_URL}/company-request/${id}/approve`,
     REJECT: (id: string) => `${BASE_URL}/company-request/${id}/reject`,
+    ARCHIVE: (id: string) => `${BASE_URL}/company-request/${id}/archive`,
+    UNARCHIVE: (id: string) => `${BASE_URL}/company-request/${id}/unarchive`,
+    GET_ARCHIVED: `${BASE_URL}/company-request?archived=true`,
   },
 }

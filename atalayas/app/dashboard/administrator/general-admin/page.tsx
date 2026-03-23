@@ -98,7 +98,7 @@ export default function AdminDashboard() {
           {/* Cursos */}
           <div className="bg-white rounded-2xl p-7 shadow-sm border border-gray-200">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-[#1d1d1f] text-lg font-semibold tracking-tight">Cursos de la empresa</h2>
+              <h2 className="text-[#1d1d1f] text-lg font-semibold tracking-tight">Cursos</h2>
               <Link href="/dashboard/admin/courses" className="text-[#0071e3] text-sm hover:underline">
                 Ver todos
               </Link>

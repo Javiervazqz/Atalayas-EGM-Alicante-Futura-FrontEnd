@@ -108,30 +108,31 @@ export default function ServicesPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredServices.map((services) => {
-                const styles = getTypeStyles(services.serviceType);
+              {filteredServices.map((service) => {
+                const styles = getTypeStyles(service.serviceType);
                 return (
-                  <Link key={services.id} href={`/dashboard/employee/services/${services.id}`}>
+                  <Link key={service.id} href={`/dashboard/administrator/services/${service.id}`}>
                     <div className="group bg-white p-8 rounded-[2.5rem] border border-gray-200/50 shadow-sm hover:shadow-2xl hover:shadow-gray-300/40 transition-all duration-500 flex flex-col h-full active:scale-95">
+
                       <div className={`w-14 h-14 ${styles.bg} rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:rotate-6 transition-transform duration-300`}>
                         {styles.icon}
                       </div>
-                      
+
                       <h3 className="text-xl font-bold text-[#1d1d1f] mb-3 group-hover:text-[#0071e3] transition-colors leading-tight">
-                        {services.title}
+                        {service.title}
                       </h3>
-                      
+
                       <p className="text-[#86868b] text-[15px] leading-relaxed line-clamp-3 mb-8 flex-1">
-                        {services.description || 'Consulta los detalles de este recurso para miembros de Atalayas.'}
+                        {service.description || 'Sin descripción.'}
                       </p>
 
                       <div className="flex items-center justify-between pt-6 border-t border-gray-50">
+                        <span className={`text-[11px] font-black uppercase tracking-widest ${service.isPublic ? 'text-green-600' : 'text-gray-400'}`}>
+                          {service.isPublic ? '🌐 Público' : '🔒 Privado'}
+                        </span>
                         <span className={`text-[11px] font-black uppercase tracking-widest ${styles.color}`}>
                           {styles.label}
                         </span>
-                        <div className="flex items-center gap-2 text-[#0071e3] font-semibold text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                          Ver más <span className="text-lg">→</span>
-                        </div>
                       </div>
                     </div>
                   </Link>
