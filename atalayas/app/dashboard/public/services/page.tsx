@@ -3,26 +3,46 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Sidebar from '@/components/ui/Sidebar';
-import SearchInput from '@/components/ui/Searchbar';
 import { API_ROUTES } from '@/lib/utils';
+import SearchInput from '@/components/ui/Searchbar';
 
-export default function EmployeeServices() {
-  const [services, setServices] = useState<any[]>([]);
+interface Service {
+  id: string;
+  title: string;
+  description: string;
+  isPublic: boolean;
+  serviceType: 'INFO' | 'BOOKING' | 'ANNOUNCEMENT';
+}
+
+export default function ServicesPage() {
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'ALL' | 'PUBLIC' | 'COMPANY'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'INFO' | 'BOOKING' | 'ANNOUNCEMENT'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
-  const myCompanyName = user.Company?.name || 'Mi Empresa';
+  // Recuperamos el usuario para el Sidebar
+  const user = typeof window !== 'undefined' 
+    ? JSON.parse(localStorage.getItem('user') || '{}') 
+    : {};
+  const role = user.role || 'PUBLIC';
 
   useEffect(() => {
     const fetchServices = async () => {
       try {
+        const token = localStorage.getItem('token');
         const res = await fetch(API_ROUTES.SERVICES.GET_ALL, { 
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
+        
+        if (!res.ok) throw new Error('Error al cargar servicios');
+        
         const data = await res.json();
-        setServices(data);
+        setServices(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Error fetching services:", err);
       } finally {
         setLoading(false);
       }
@@ -34,60 +54,61 @@ export default function EmployeeServices() {
     switch (type) {
       case 'INFO': return { icon: 'ℹ️', label: 'Información', color: 'text-blue-600', bg: 'bg-blue-50' };
       case 'BOOKING': return { icon: '📅', label: 'Reserva', color: 'text-purple-600', bg: 'bg-purple-50' };
+      case 'ANNOUNCEMENT': return { icon: '📢', label: 'Aviso', color: 'text-orange-600', bg: 'bg-orange-50' };
       default: return { icon: '📄', label: 'Servicio', color: 'text-gray-600', bg: 'bg-gray-50' };
     }
   };
 
-  const filtered = services.filter(s => {
-    const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase());
-    if (filter === 'PUBLIC') return matchesSearch && s.isPublic;
-    if (filter === 'COMPANY') return matchesSearch && !s.isPublic;
-    return matchesSearch;
+ const filteredServices = services.filter((s) => {
+    const matchesFilter = filter === 'ALL' || s.serviceType === filter;
+    const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          s.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFilter && matchesSearch;
   });
-  
-  const sortedServices = [...filtered].sort((a,b)=>{
-    if(a.isPublic && !b.isPublic) return -1;
-    if(!a.isPublic && b.isPublic) return 1;
 
-    return 0
-  })
-
-  return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
-      <Sidebar role="EMPLOYEE" />
-      <main className="flex-1 h-screen overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-8 py-12">
-          
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold text-[#1d1d1f] tracking-tight">Servicios</h1>
-            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder='Buscar servicios...' />
+ return (
+  <div className="flex min-h-screen bg-[#f5f5f7]">
+    <Sidebar role={role} />
+    
+    <main className="flex-1 h-screen overflow-y-auto">
+      <div className="max-w-6xl mx-auto px-8 py-12">
+        
+        {/* Header con Título y Búsqueda en la misma fila */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div>
+            <nav className="flex items-center gap-2 text-sm text-[#86868b] mb-4">
+              <Link href="/dashboard/employee" className="hover:text-[#0071e3] transition-colors">Dashboard</Link>
+              <span className="opacity-50">/</span>
+              <span className="text-[#1d1d1f] font-medium">Servicios</span>
+            </nav>
+            <h1 className="text-4xl font-bold text-[#1d1d1f] tracking-tight">
+              Servicios y Recursos
+            </h1>
           </div>
 
-          {/* CHIPS DE FILTRADO */}
-          <div className="flex items-center gap-3 mb-10 overflow-x-auto pb-2 no-scrollbar">
-            {['ALL', 'PUBLIC', 'COMPANY'].map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilter(type as any)}
-                className={`shrink-0 px-6 py-2 rounded-full text-sm font-bold transition-all ${
-                  filter === type ? 'bg-[#1d1d1f] text-white' : 'bg-white text-[#86868b] border border-gray-200'
-                }`}
-              >
-                {type === 'ALL' ? 'Todos' : type === 'PUBLIC' ? '🌐 Públicos' : `🏭 ${myCompanyName}`}
-              </button>
-            ))}
-          </div>
+          {/* Aquí el buscador desplegable */}
+          <SearchInput 
+            value={searchQuery} 
+            onChange={setSearchQuery} 
+            placeholder='Buscar servicios...'
+          />
+        </div>
 
+          {/* Grid Principal */}
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[1, 2, 3, 4, 5, 6].map(i => (
                 <div key={i} className="h-64 bg-white rounded-[2.5rem] border border-gray-100 animate-pulse" />
               ))}
             </div>
+          ) : filteredServices.length === 0 ? (
+            <div className="text-center py-24 bg-white rounded-[2.5rem] border border-dashed border-gray-300">
+              <span className="text-4xl mb-4 block">🔍</span>
+              <p className="text-[#86868b] font-medium">No hay servicios disponibles en esta categoría.</p>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-
-              {sortedServices.map((service) => {
+              {filteredServices.map((service) => {
                 const styles = getTypeStyles(service.serviceType);
                 return (
                   <Link key={service.id} href={`/dashboard/administrator/services/${service.id}`}>
@@ -119,9 +140,8 @@ export default function EmployeeServices() {
               })}
             </div>
           )}
-
         </div>
       </main>
     </div>
-  )
-};
+  );
+}
