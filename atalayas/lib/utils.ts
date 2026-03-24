@@ -26,6 +26,7 @@ export const API_ROUTES = {
   },
   SERVICES: {
     GET_ALL: `${BASE_URL}/services`,
+    CREATE: `${BASE_URL}/services`,
   },
   COMPANIES: {
     GET_ALL: `${BASE_URL}/company`,

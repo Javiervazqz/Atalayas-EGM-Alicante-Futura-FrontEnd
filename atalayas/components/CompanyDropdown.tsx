@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useEffect } from 'react';
 
 interface CompanyDropdownProps {
   companies: string[];
@@ -17,13 +18,22 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
     c === 'PUBLIC' || c.toLowerCase().includes(search.toLowerCase())
   );
 
+  useEffect(() => {
+    const closeDropdown = (e: MouseEvent) => {
+      if (!(e.target as Element).closest('.relative')) setOpen(false);
+    };
+    if (open) window.addEventListener('click', closeDropdown);
+    return () => window.removeEventListener('click', closeDropdown);
+  }, [open]);
+
   return (
     <div className="relative mb-8">
       <button
+        type='button'
         onClick={() => setOpen(!open)}
         className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-5 py-3 text-sm font-semibold text-[#1d1d1f] hover:border-gray-400 transition-all w-64"
       >
-        <span>{selected === 'PUBLIC' ? '🌐 Públicos' : `🏭 ${selected}`}</span>
+        <span>{selected === 'PUBLIC' ? '🌐 Público' : `🏭 ${selected}`}</span>
         <span className="ml-auto text-gray-400">{open ? '▲' : '▼'}</span>
       </button>
 
@@ -39,7 +49,7 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
             />
           </div>
           <div className="max-h-64 overflow-y-auto">
-            {filtered.map((company) => (
+            {filtered.slice(0,10).map((company) => (
               <button
                 key={company}
                 onClick={() => { onChange(company); setOpen(false); setSearch(''); }}

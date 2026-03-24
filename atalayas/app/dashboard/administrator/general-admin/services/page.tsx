@@ -84,7 +84,7 @@ export default function ServicesPage() {
     c === 'PUBLIC' || c.toLowerCase().includes(companySearch.toLowerCase())
     );
  return (
-  <div className="flex min-h-screen bg-[#f5f5f7]">
+  <div className="flex min-h-screen bg-[#f5f5f7] relative">
     <Sidebar role={role} />
     
     <main className="flex-1 h-screen overflow-y-auto">
@@ -102,7 +102,7 @@ export default function ServicesPage() {
           </div>
           <div className="flex items-center gap-4">
           <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar servicios..." />
-          <Link href="/dashboard/company-admin/services/new" className="bg-[#0071e3] text-white px-6 py-2.5 rounded-full font-semibold hover:bg-[#0077ed] transition-all shadow-md">
+          <Link href="/dashboard/administrator/general-admin/services/new" className="bg-[#0071e3] text-white px-6 py-2.5 rounded-full font-semibold hover:bg-[#0077ed] transition-all shadow-md">
                 Nuevo Servicio
           </Link>
           </div>
@@ -118,7 +118,6 @@ export default function ServicesPage() {
         {/* Grid */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-
             {[1,2,3,4,5,6].map(i => (
               <div key={i} className="h-64 bg-white rounded-[2.5rem] border border-gray-100 animate-pulse" />
             ))}
