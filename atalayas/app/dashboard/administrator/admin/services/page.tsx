@@ -9,7 +9,7 @@ import { API_ROUTES } from '@/lib/utils';
 export default function CompanyAdminServices() {
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'ALL' | 'PUBLIC' | 'COMPANY'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'PUBLIC' | 'COMPANY'>('COMPANY');
   const [searchQuery, setSearchQuery] = useState('');
 
   const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
