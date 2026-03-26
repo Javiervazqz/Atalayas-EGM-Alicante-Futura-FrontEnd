@@ -12,7 +12,7 @@ const navItems = {
   GENERAL_ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: '⊞' },
     { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: '🏭' },
-    { label: 'Usuarios', href: '/dashboard/administrator/general-admin/employees', icon: '👥' },
+    { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: '👥' },
     { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: '📚' },
     { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: '🔧' },
     { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: '📢' },
@@ -20,7 +20,7 @@ const navItems = {
   ],
   ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/admin', icon: '⊞' },
-    { label: 'Empleados', href: '/dashboard/administrator/admin/employees', icon: '👥' },
+    { label: 'Empleados', href: '/dashboard/administrator/employees', icon: '👥' },
     { label: 'Cursos', href: '/dashboard/administrator/admin/courses', icon: '📚' },
     { label: 'Documentos', href: '/dashboard/administrator/admin/documents', icon: '📄' },
     { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: '🔧' }
@@ -56,11 +56,29 @@ const roleColors = {
 export default function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [pendingCount, setPendingCount] = useState(() => {
   if (typeof window === 'undefined') return 0;
   return parseInt(localStorage.getItem('pendingCount') || '0');
 });
+
+useEffect(() => {
+    // 2. Función para decidir si colapsar según el ancho de pantalla
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setCollapsed(true); // En móvil/tablet siempre colapsado
+      } else {
+        setCollapsed(false); // En escritorio expandido por defecto
+      }
+    };
+
+    // Ejecutar al montar la página
+    handleResize();
+
+    // Escuchar cambios de tamaño de ventana
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
 useEffect(() => {
   if (role !== 'GENERAL_ADMIN') return;
@@ -91,8 +109,7 @@ useEffect(() => {
   };
 
   return (
-    // Fondo blanco con un borde lateral gris muy suave
-    <aside className={`${collapsed ? 'w-16' : 'w-64'} transition-all duration-300 bg-white border-r border-gray-200 flex flex-col min-h-screen`}>
+    <aside className={`${collapsed ? 'w-16' : 'w-50'} transition-all duration-300 bg-[#13151f] border-r border-white/5 flex flex-col h-screen sticky top-0 left-0`}>
       {/* Logo */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         {!collapsed && (

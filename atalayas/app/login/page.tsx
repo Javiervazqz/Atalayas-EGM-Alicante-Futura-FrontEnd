@@ -226,7 +226,7 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          <p className="text-center mt-2" style={{ color: '#86868b', fontSize: '12px' }}>
+          <p className="text-center mt-2" style={{ color: '#86868b', fontSize: '13px' }}>
             ¿Eres una empresa del polígono?{' '}
             <Link href="/company-register" style={{ color: '#0071e3', textDecoration: 'none' }}>
               Solicitar alta
