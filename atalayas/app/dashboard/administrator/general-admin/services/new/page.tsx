@@ -4,7 +4,7 @@ import { useEffect, useState, useActionState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
-import CompanyDropdown from '@/components/CompanyDropdown';
+import CompanyDropdown from '@/components/ui/CompanyDropdown';
 
 export default function NewGeneralService() {
     const router = useRouter();

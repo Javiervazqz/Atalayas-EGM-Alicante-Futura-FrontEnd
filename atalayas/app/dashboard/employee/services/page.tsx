@@ -90,7 +90,7 @@ export default function EmployeeServices() {
               {sortedServices.map((service) => {
                 const styles = getTypeStyles(service.serviceType);
                 return (
-                  <Link key={service.id} href={`/dashboard/administrator/services/${service.id}`}>
+                  <Link key={service.id} href={`/dashboard/employee/services/${service.id}`}>
                     <div className="group bg-white p-8 rounded-[2.5rem] border border-gray-200/50 shadow-sm hover:shadow-2xl hover:shadow-gray-300/40 transition-all duration-500 flex flex-col h-full active:scale-95">
 
                       <div className={`w-14 h-14 ${styles.bg} rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:rotate-6 transition-transform duration-300`}>

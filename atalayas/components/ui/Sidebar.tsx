@@ -16,7 +16,7 @@ const navItems = {
     { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: '📚' },
     { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: '🔧' },
     { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: '📢' },
-    { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: '📄'},
+    { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: '📄' },
   ],
   ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/admin', icon: '⊞' },
@@ -45,59 +45,62 @@ const roleLabels = {
   PUBLIC: 'Usuario',
 };
 
-// Colores actualizados al modo claro (fondos pastel, texto oscuro)
 const roleColors = {
-  GENERAL_ADMIN: 'bg-purple-100 text-purple-700',
-  ADMIN: 'bg-blue-100 text-blue-700',
-  EMPLOYEE: 'bg-green-100 text-green-700',
-  PUBLIC: 'bg-gray-100 text-gray-700',
+  GENERAL_ADMIN: 'bg-purple-500/20 text-purple-300',
+  ADMIN: 'bg-blue-500/20 text-blue-300',
+  EMPLOYEE: 'bg-green-500/20 text-green-300',
+  PUBLIC: 'bg-gray-500/20 text-gray-300',
 };
 
 export default function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [pendingCount, setPendingCount] = useState(() => {
-  if (typeof window === 'undefined') return 0;
-  return parseInt(localStorage.getItem('pendingCount') || '0');
-});
+    if (typeof window === 'undefined') return 0;
+    return parseInt(localStorage.getItem('pendingCount') || '0');
+  });
 
-useEffect(() => {
-    // 2. Función para decidir si colapsar según el ancho de pantalla
-    const handleResize = () => {
-      if (window.innerWidth < 1024) {
-        setCollapsed(true); // En móvil/tablet siempre colapsado
+  useEffect(() => {
+    const checkResizing = () => {
+      const width = window.innerWidth;
+      const mobile = width < 768;
+      setIsMobile(mobile);
+      
+      // Solo colapsar automáticamente si detectamos que es móvil
+      if (mobile) {
+        setCollapsed(true);
       } else {
-        setCollapsed(false); // En escritorio expandido por defecto
+        setCollapsed(false);
       }
     };
 
-    // Ejecutar al montar la página
-    handleResize();
+      // Ejecutar al montar
+      checkResizing();
 
-    // Escuchar cambios de tamaño de ventana
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+      window.addEventListener('resize', checkResizing);
+      return () => window.removeEventListener('resize', checkResizing);
   }, []);
 
-useEffect(() => {
-  if (role !== 'GENERAL_ADMIN') return;
-  
-  const fetchPending = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:3000/company-request', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      const pending = Array.isArray(data) ? data.filter((r: any) => r.status === 'PENDING').length : 0;
-      setPendingCount(pending);
-      localStorage.setItem('pendingCount', pending.toString()); // 👈 guardamos en cache
-    } catch {}
-  };
+  useEffect(() => {
+    if (role !== 'GENERAL_ADMIN') return;
 
-  fetchPending();
-}, [role]);
+    const fetchPending = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:3000/company-request', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const pending = Array.isArray(data) ? data.filter((r: any) => r.status === 'PENDING').length : 0;
+        setPendingCount(pending);
+        localStorage.setItem('pendingCount', pending.toString()); // 👈 guardamos en cache
+      } catch { }
+    };
+
+    fetchPending();
+  }, [role]);
   const user = typeof window !== 'undefined'
     ? JSON.parse(localStorage.getItem('user') || '{}')
     : {};
@@ -109,21 +112,20 @@ useEffect(() => {
   };
 
   return (
-    <aside className={`${collapsed ? 'w-16' : 'w-50'} transition-all duration-300 bg-[#13151f] border-r border-white/5 flex flex-col h-screen sticky top-0 left-0`}>
+    <aside className={`${collapsed ? 'w-16' : 'w-56'} transition-all duration-300 bg-[#13151f] border-r border-white/5 flex flex-col h-screen sticky top-0 left-0`}>
       {/* Logo */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <div className="flex items-center justify-between p-4 border-b border-white/5">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#1d1d1f] rounded-lg flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shrink-0">
               <span className="text-white font-bold text-sm">A</span>
             </div>
-            {/* Texto oscuro */}
-            <span className="text-[#1d1d1f] font-semibold text-sm">Atalayas</span>
+            <span className="text-white font-semibold text-sm">Atalayas</span>
           </div>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="text-gray-400 hover:text-[#1d1d1f] transition-colors p-1 rounded-lg hover:bg-gray-100"
+          className="text-gray-500 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5"
         >
           {collapsed ? '→' : '←'}
         </button>
@@ -137,13 +139,10 @@ useEffect(() => {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm ${
-                isActive
-                  // Estado activo: Azul de Apple con fondo azul súper clarito
-                  ? 'bg-blue-50 text-[#0071e3] font-medium'
-                  // Estado inactivo: Gris oscuro, al pasar el ratón se pone casi negro con fondo gris
-                  : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-gray-100'
-              }`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm ${isActive
+                  ? 'bg-blue-500/15 text-blue-400 font-medium'
+                  : 'text-gray-500 hover:text-white hover:bg-white/5'
+                }`}
             >
               <span className="text-base shrink-0">{item.icon}</span>
               {!collapsed && (
@@ -162,29 +161,25 @@ useEffect(() => {
       </nav>
 
       {/* User */}
-      <div className="p-3 border-t border-gray-200">
+      <div className="p-3 border-t border-white/5">
         <div className={`flex items-center gap-3 px-3 py-2 rounded-xl ${collapsed ? 'justify-center' : ''}`}>
-          <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center shrink-0">
-            <span className="text-[#0071e3] text-sm font-medium">
+          <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center shrink-0">
+            <span className="text-blue-400 text-sm font-medium">
               {user.email?.[0]?.toUpperCase() || 'U'}
             </span>
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              {/* Email oscuro */}
-              <p className="text-[#1d1d1f] text-xs font-medium truncate">{user.email || 'Usuario'}</p>
-              <div className="mt-0.5">
-                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${roleColors[role]}`}>
-                  {roleLabels[role]}
-                </span>
-              </div>
+              <p className="text-white text-xs font-medium truncate">{user.email ? user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1).toLowerCase() : 'Usuario'}</p>
+              <span className={`text-xs px-1.5 py-0.5 rounded-md ${roleColors[role]}`}>
+                {roleLabels[role]}
+              </span>
             </div>
           )}
         </div>
         <button
           onClick={handleLogout}
-          // Botón de salir: Gris que se vuelve rojo suave al pasar el ratón
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[#86868b] hover:text-red-600 hover:bg-red-50 transition-all text-sm mt-1 ${collapsed ? 'justify-center' : ''}`}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-gray-500 hover:text-red-400 hover:bg-red-500/5 transition-all text-sm mt-1 ${collapsed ? 'justify-center' : ''}`}
         >
           <span>⎋</span>
           {!collapsed && <span>Cerrar sesión</span>}

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
 import SearchInput from '@/components/ui/Searchbar';
-import CompanyDropdown from '@/components/CompanyDropdown';
+import CompanyDropdown from '@/components/ui/CompanyDropdown';
 
 interface Service {
   id: string;
