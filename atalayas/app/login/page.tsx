@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
+    /*djnjfndj */
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -36,8 +37,8 @@ export default function LoginPage() {
       const role = data.user.role;
       
       // Redirigimos
-      if (role === 'GENERAL_ADMIN') router.push('/dashboard/administrator/general-admin');
-      else if (role === 'ADMIN') router.push('/dashboard/administrator/admin');
+      if (role === 'GENERAL_ADMIN') router.push('/dashboard/general-admin');
+      else if (role === 'ADMIN') router.push('/dashboard/admin');
       else if (role === 'EMPLOYEE') router.push('/dashboard/employee');
       else router.push('/dashboard/public');
       
@@ -203,10 +204,12 @@ export default function LoginPage() {
             </form>
 
             <div className="text-center mt-6">
-              <Link
-                href="/forgot-password" style={{ color: '#0071e3', fontSize: '13px', textDecoration: 'none' }}>
+              <a
+                href="#"
+                style={{ color: '#0071e3', fontSize: '13px', textDecoration: 'none' }}
+              >
                 ¿Olvidaste tu contraseña?
-              </Link>
+              </a>
             </div>
           </div>
 
