@@ -14,9 +14,10 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  const filtered = companies.filter(c =>
-    c === 'PUBLIC' || c.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = companies.filter(c =>{
+   if(c==='EGM Atalayas') return false;
+   return c === 'PUBLIC' || c.toLowerCase().includes(search.toLowerCase())
+  });
 
   useEffect(() => {
     const closeDropdown = (e: MouseEvent) => {
@@ -57,7 +58,7 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
                   selected === company ? 'font-bold text-[#0071e3]' : 'text-[#1d1d1f]'
                 }`}
               >
-                {company === 'PUBLIC' ? '🌐 Públicos' : `🏭 ${company}`}
+                {company === 'PUBLIC' ? '🌐 Público' : `🏭 ${company}`}
               </button>
             ))}
           </div>
