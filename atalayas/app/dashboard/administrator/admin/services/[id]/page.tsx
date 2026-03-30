@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect , useRef} from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
-import CompanyDropdown from '@/components/ui/CompanyDropdown';
 import { API_ROUTES } from '@/lib/utils';
 import mediumZoom from 'medium-zoom'
-
 
 const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
 
@@ -15,6 +13,7 @@ export default function ServiceDetailAdmin() {
     const params = useParams();
     const router = useRouter();
     const zoomRef = useRef<HTMLImageElement>(null)
+
     const [service, setService] = useState<any>(null);
     const [companies, setCompanies] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -38,24 +37,27 @@ export default function ServiceDetailAdmin() {
     // ── Fetch service + companies ──────────────────────────────────────────────
     useEffect(() => {
         const fetchAll = async () => {
+            if(typeof params.id !== 'string'){
+                console.error("ID de servicio no válido");
+                return;
+            }
             const token = localStorage.getItem('token');
             const headers = { Authorization: `Bearer ${token}` };
 
-            const [svcRes, compRes] = await Promise.all([
-                fetch(`${API_ROUTES.SERVICES.GET_ALL}/${params.id}`, { headers }),
-                fetch(API_ROUTES.COMPANIES.GET_ALL, { headers }),
+            const [svcRes] = await Promise.all([
+                fetch(API_ROUTES.SERVICES.GET_BY_ID(params.id), { headers }),
             ]);
 
             const svcData = await svcRes.json();
-            const compData = await compRes.json();
             console.log(svcData)
-            console.log(compData)
 
             setService(svcData);
-            setCompanies(compData);
 
             // Hydrate form
-            const matchedCompany = compData.find((c: any) => c.id === svcData.companyId);
+            const matchedCompany = companies.find((c: any) => c.id === svcData.companyId);
+            if(matchedCompany){
+                setSelectedCompany(matchedCompany);
+            }
             setFormData({
                 title: svcData.title || '',
                 description: svcData.description || '',
@@ -73,13 +75,13 @@ export default function ServiceDetailAdmin() {
     }, [params.id]);
 
     useEffect(() => {
-        if (zoomRef.current && service?.mediaUrl && !isEditing) {
+        if(zoomRef.current && service?.mediaUrl && !isEditing) {
             const zoom = mediumZoom(zoomRef.current, {
                 background: 'rgba(0, 0, 0, 0.8)',
                 margin: 24,
             });
 
-            return () => { zoom.detach() };
+            return () => {zoom.detach()};
         }
     }, [service?.mediaUrl, isEditing]);
 
@@ -188,7 +190,7 @@ export default function ServiceDetailAdmin() {
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
-            <Sidebar role="GENERAL_ADMIN" />
+            <Sidebar role="ADMIN" />
 
             <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>
 
@@ -223,6 +225,7 @@ export default function ServiceDetailAdmin() {
                             </div>
 
                             {/* Action buttons */}
+                           {!service.isPublic && (
                             <div className="flex items-center gap-3 shrink-0">
                                 {!isEditing ? (
                                     <>
@@ -257,6 +260,7 @@ export default function ServiceDetailAdmin() {
                                     </>
                                 )}
                             </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -294,36 +298,18 @@ export default function ServiceDetailAdmin() {
 
                                     <div className="p-8 bg-white rounded-[2rem] border border-gray-200 shadow-sm space-y-4">
                                         <label className="block text-[11px] font-bold uppercase tracking-widest text-[#86868b]">
-                                            Enlace de Imagen o Vídeo
+                                        Enlace de Imagen o Vídeo
                                         </label>
-                                        <input
-                                            type="text"
-                                            value={formData.mediaUrl}
-                                            onChange={(e) => setFormData({ ...formData, mediaUrl: e.target.value })}
-                                            placeholder="https://ejemplo.com/imagen.jpg"
-                                            className="w-full px-5 py-4 bg-[#f5f5f7] rounded-2xl border-2 border-transparent focus:border-[#0071e3] transition-all outline-none"
+                                        <input 
+                                        type="text"
+                                        value={formData.mediaUrl}
+                                        onChange={(e) => setFormData({...formData, mediaUrl: e.target.value})}
+                                        placeholder="https://ejemplo.com/imagen.jpg"
+                                        className="w-full px-5 py-4 bg-[#f5f5f7] rounded-2xl border-2 border-transparent focus:border-[#0071e3] transition-all outline-none"
                                         />
                                         {formData.mediaUrl && (
-                                            <p className="text-xs text-green-600 font-medium ml-1">✓ Enlace detectado</p>
+                                        <p className="text-xs text-green-600 font-medium ml-1">✓ Enlace detectado</p>
                                         )}
-                                    </div>
-
-                                    {/* Selector de Empresa (Si tienes el componente) */}
-                                    <div style={{ zIndex: 10 }}>
-                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#86868b', marginBottom: '8px' }}>Visibilidad / Empresa</label>
-                                        <CompanyDropdown
-                                            companies={companyNames}
-                                            selected={selectedCompany}
-                                            onChange={(val) => {
-                                                setSelectedCompany(val);
-                                                const comp = companies.find(c => c.name === val);
-                                                setFormData({
-                                                    ...formData,
-                                                    isPublic: val === 'PUBLIC',
-                                                    companyId: val === 'PUBLIC' ? '' : (comp?.id || '')
-                                                });
-                                            }}
-                                        />
                                     </div>
                                 </div>
                             ) : (
@@ -335,42 +321,19 @@ export default function ServiceDetailAdmin() {
                             {service.mediaUrl && !isEditing && (
                                 <div className="pt-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
                                     <div className="relative group overflow-hidden rounded-[2.5rem] bg-[#f5f5f7] border border-gray-100 shadow-sm">
-                                        <img
-                                            ref={zoomRef}
-                                            src={service.mediaUrl}
-                                            alt="Detalle del servicio"
-                                            className="w-full h-auto cursor-zoom-in"
-                                        />
+                                    <img 
+                                        ref={zoomRef}
+                                        src={service.mediaUrl} 
+                                        alt="Detalle del servicio" 
+                                        className="w-full h-auto cursor-zoom-in"
+                                    />
                                     </div>
                                 </div>
                             )}
-                        
-                            {isBooking ?
-                                <div className="action-box">
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#86868b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Precio</span>
-                                        <p style={{ fontSize: '24px', fontWeight: 700, color: '#1d1d1f', margin: 0 }}>Gratuito</p>
-                                    </div>
-
-                                    <button style={{
-                                        width: '100%', padding: '18px', marginTop: '20px', borderRadius: '16px', border: 'none',
-                                        background: accentColor, color: '#fff',
-                                        fontSize: '16px', fontWeight: 600, cursor: 'pointer',
-                                        boxShadow: `0 4px 15px ${isBooking ? 'rgba(175,82,222,0.2)' : 'rgba(0,113,227,0.2)'}`,
-                                        transition: 'transform 0.2s'
-                                    }}
-                                        onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.01)'}
-                                        onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                                    >
-                                        Reservar
-                                    </button>
-                                </div> : (
-                                    null
-                                )}
                         </div>
 
-                        {/* La Action Box (Lateral)
-                        {/*<div className="action-box">
+                        {/* La Action Box (Lateral) */}
+                        <div className="action-box">
                             <div style={{ marginBottom: '20px' }}>
                                 <span style={{ fontSize: '12px', fontWeight: 700, color: '#86868b', textTransform: 'uppercase' }}>Estado</span>
                                 <p style={{ fontSize: '18px', fontWeight: 600, color: formData.isPublic ? '#34c759' : '#ff9500', margin: 0 }}>
@@ -389,7 +352,7 @@ export default function ServiceDetailAdmin() {
                                     Consultar Información
                                 </button>
                             </div>
-                        </div>*/}
+                        </div>
                     </div>
                 </div>
             </main>

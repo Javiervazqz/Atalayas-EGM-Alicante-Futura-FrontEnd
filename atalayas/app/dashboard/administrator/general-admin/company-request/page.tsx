@@ -141,7 +141,7 @@ export default function CompanyRequestsPage() {
             {pendingCount > 0 && (
               <div style={{ background: 'rgba(255,149,0,0.1)', border: '1px solid rgba(255,149,0,0.2)', borderRadius: '20px', padding: '6px 14px' }}>
                 <span style={{ color: '#ff9500', fontSize: '13px', fontWeight: 500 }}>
-                  {pendingCount} pendiente{pendingCount > 1 ? 's' : ''}
+                  {pendingCount} pendiente {pendingCount > 1 ? 's' : ''}
                 </span>
               </div>
             )}
@@ -249,7 +249,7 @@ export default function CompanyRequestsPage() {
                         fontWeight: 500,
                         flexShrink: 0,
                       }}>
-                        {status.label}
+                        {status.label.slice(0, -1)}
                       </span>
                     </div>
                   );

@@ -24,9 +24,11 @@ export const API_ROUTES = {
   SERVICES: {
     GET_ALL: `${BASE_URL}/services`,
     CREATE: `${BASE_URL}/services`,
+    GET_BY_ID: (id: string) => `${BASE_URL}/services/${id}`,
   },
   COMPANIES: {
     GET_ALL: `${BASE_URL}/company`,
+    GET_BY_ID: (id: string) => `${BASE_URL}/company/${id}`,
   },
   ANNOUNCEMENTS: {
     GET_ALL: `${BASE_URL}/announcement`

@@ -16,6 +16,7 @@ export default function NewGeneralService() {
     title: '',
     description: '',
     serviceType: 'INFO',
+    mediaUrl: '',
     isPublic: true, // Por defecto público en General Admin
     companyId: ''   // El General Admin sí puede asignar empresa
     });
@@ -49,6 +50,7 @@ export default function NewGeneralService() {
         const dataToSubmit = {
             title:formData.title,
             description: formData.description,
+            mediaUrl: formData.mediaUrl,
             isPublic: formData.isPublic,
             companyId: formData.isPublic? null : formData.companyId,
             type: formData.serviceType,
@@ -178,6 +180,23 @@ export default function NewGeneralService() {
               rows={4}
               className="w-full px-6 py-5 bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] focus:bg-white rounded-2xl outline-none transition-all resize-none text-[#424245] leading-relaxed"
             />
+
+             {/* SECCIÓN: MEDIA URL (Imagen) */}
+            <div className="space-y-2">
+              <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[#86868b] ml-1">Imagen de portada (URL)</label>
+              <input 
+                type="url" 
+                placeholder="https://tusitio.com/imagen.jpg"
+                value={formData.mediaUrl}
+                onChange={e => setFormData({...formData, mediaUrl: e.target.value})}
+                className="w-full px-6 py-4 bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] focus:bg-white rounded-2xl outline-none transition-all text-[#424245]"
+              />
+              {formData.mediaUrl && (
+                <div className="mt-4 rounded-xl overflow-hidden h-32 w-full border border-gray-100">
+                   <img src={formData.mediaUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => e.currentTarget.style.display = 'none'} />
+                </div>
+              )}
+            </div>
 
             {/* TIPO DE SERVICIO (Cards seleccionables) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
