@@ -49,7 +49,7 @@ export default function ServiceDetail() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
-      <Sidebar role="EMPLOYEE" />
+      <Sidebar role="PUBLIC" />
 
       <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>
 
@@ -80,7 +80,7 @@ export default function ServiceDetail() {
                   background: service.isPublic ? 'rgba(52,199,89,0.1)' : 'rgba(0,113,227,0.1)',
                   padding: '4px 10px', borderRadius: '999px'
                 }}>
-                  {service.isPublic ? '🌐 Público' : '🏢 Tu empresa'}
+                  {'🌐 Público'}
                 </span>
               </div>
             </div>

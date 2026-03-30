@@ -11,7 +11,6 @@ interface Service {
   title: string;
   description: string;
   isPublic: boolean;
-  serviceType: 'INFO' | 'BOOKING' | 'ANNOUNCEMENT';
 }
 
 export default function ServicesPage() {
@@ -50,25 +49,15 @@ export default function ServicesPage() {
     fetchServices();
   }, []);
 
-  const getTypeStyles = (type: string) => {
-    switch (type) {
-      case 'INFO': return { icon: 'ℹ️', label: 'Información', color: 'text-blue-600', bg: 'bg-blue-50' };
-      case 'BOOKING': return { icon: '📅', label: 'Reserva', color: 'text-purple-600', bg: 'bg-purple-50' };
-      case 'ANNOUNCEMENT': return { icon: '📢', label: 'Aviso', color: 'text-orange-600', bg: 'bg-orange-50' };
-      default: return { icon: '📄', label: 'Servicio', color: 'text-gray-600', bg: 'bg-gray-50' };
-    }
-  };
-
  const filteredServices = services.filter((s) => {
-    const matchesFilter = filter === 'ALL' || s.serviceType === filter;
     const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           s.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesFilter && matchesSearch;
+    return matchesSearch;
   });
 
  return (
   <div className="flex min-h-screen bg-[#f5f5f7]">
-    <Sidebar role={role} />
+    <Sidebar role='PUBLIC' />
     
     <main className="flex-1 h-screen overflow-y-auto">
       <div className="max-w-6xl mx-auto px-8 py-12">
@@ -77,7 +66,7 @@ export default function ServicesPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <nav className="flex items-center gap-2 text-sm text-[#86868b] mb-4">
-              <Link href="/dashboard/employee" className="hover:text-[#0071e3] transition-colors">Dashboard</Link>
+              <Link href="/dashboard/public" className="hover:text-[#0071e3] transition-colors">Dashboard</Link>
               <span className="opacity-50">/</span>
               <span className="text-[#1d1d1f] font-medium">Servicios</span>
             </nav>
@@ -109,14 +98,9 @@ export default function ServicesPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredServices.map((service) => {
-                const styles = getTypeStyles(service.serviceType);
                 return (
-                  <Link key={service.id} href={`/dashboard/administrator/services/${service.id}`}>
+                  <Link key={service.id} href={`/dashboard/public/services/${service.id}`}>
                     <div className="group bg-white p-8 rounded-[2.5rem] border border-gray-200/50 shadow-sm hover:shadow-2xl hover:shadow-gray-300/40 transition-all duration-500 flex flex-col h-full active:scale-95">
-
-                      <div className={`w-14 h-14 ${styles.bg} rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:rotate-6 transition-transform duration-300`}>
-                        {styles.icon}
-                      </div>
 
                       <h3 className="text-xl font-bold text-[#1d1d1f] mb-3 group-hover:text-[#0071e3] transition-colors leading-tight">
                         {service.title}
@@ -129,9 +113,6 @@ export default function ServicesPage() {
                       <div className="flex items-center justify-between pt-6 border-t border-gray-50">
                         <span className={`text-[11px] font-black uppercase tracking-widest ${service.isPublic ? 'text-green-600' : 'text-gray-400'}`}>
                           {service.isPublic ? '🌐 Público' : '🔒 Privado'}
-                        </span>
-                        <span className={`text-[11px] font-black uppercase tracking-widest ${styles.color}`}>
-                          {styles.label}
                         </span>
                       </div>
                     </div>

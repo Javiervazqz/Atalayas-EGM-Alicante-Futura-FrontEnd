@@ -17,8 +17,6 @@ interface Service {
 
   isPublic: boolean;
 
-  serviceType: 'INFO' | 'BOOKING';
-
   Company?: { id: string; name: string };
 
 }
@@ -90,7 +88,7 @@ const searchedServices = services.filter(s =>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
               <h1 className="text-3xl font-bold text-[#1d1d1f] tracking-tight">Gestión de Servicios</h1>
-              <p className="text-[#86868b] text-sm">Organiza y edita los servicios del ecosistema.</p>
+              <p className="text-[#86868b] text-sm">Organiza y edita los servicios de tu empresa.</p>
             </div>
             <div className="flex items-center gap-3">
               <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar..." />
@@ -124,7 +122,6 @@ const searchedServices = services.filter(s =>
                   <tr className="bg-[#fbfbfd] border-bottom border-gray-100">
                     <th className="px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">Servicio</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">Empresa Propietaria</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">Tipo</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -151,11 +148,6 @@ const searchedServices = services.filter(s =>
                         <td className="px-6 py-4">
                           <span className={`text-xs font-medium px-2.5 py-1 rounded-md ${service.isPublic ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                             {service.isPublic ? 'Global (Atalayas)' : service.Company?.name}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${service.serviceType === 'BOOKING' ? 'border-purple-200 text-purple-600' : 'border-blue-200 text-blue-600'}`}>
-                            {service.serviceType}
                           </span>
                         </td>
                       </tr>
