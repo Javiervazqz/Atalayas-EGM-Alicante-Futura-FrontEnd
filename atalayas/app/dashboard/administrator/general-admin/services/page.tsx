@@ -67,7 +67,12 @@ export default function ServicesPage() {
   }, {} as Record<string, Service[]>);
 
   const companies = ['PUBLIC', ...Object.keys(byCompany)];
-  const currentList = selectedCompany === 'PUBLIC' ? publicServices : byCompany[selectedCompany] || [];
+  const currentList = selectedCompany === 'PUBLIC' ? publicServices : byCompany[selectedCompany] || []
+  currentList.sort((a,b)=>{
+    if(a.title.toLowerCase() < b.title.toLowerCase()) return -1;
+    if(a.title.toLowerCase() > b.title.toLowerCase()) return 1;
+    return 0
+  })
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f7]">
@@ -102,8 +107,8 @@ export default function ServicesPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#fbfbfd] border-bottom border-gray-100">
-                    <th className="px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">Servicio</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">Empresa Propietaria</th>
+                    <th className="w-3/5 px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">Servicio</th>
+                    <th className="w-2/5 px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">Empresa Propietaria</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">

@@ -40,6 +40,7 @@ export default function EmployeeServices() {
   const sortedServices = [...filtered].sort((a,b)=>{
     if(a.isPublic && !b.isPublic) return -1;
     if(!a.isPublic && b.isPublic) return 1;
+    return a.title.localeCompare(b.title);
 
     return 0
   })

@@ -97,7 +97,7 @@ export default function ServicesPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredServices.map((service) => {
+              {filteredServices.sort((a, b) => a.title.localeCompare(b.title)).map((service) => {
                 return (
                   <Link key={service.id} href={`/dashboard/public/services/${service.id}`}>
                     <div className="group bg-white p-8 rounded-[2.5rem] border border-gray-200/50 shadow-sm hover:shadow-2xl hover:shadow-gray-300/40 transition-all duration-500 flex flex-col h-full active:scale-95">

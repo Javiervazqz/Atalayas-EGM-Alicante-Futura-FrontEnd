@@ -287,7 +287,7 @@ export default function CompanyRequestsPage() {
                   color: statusConfig[selected.status].color,
                   fontSize: '12px', fontWeight: 500,
                 }}>
-                  {statusConfig[selected.status].label}
+                  {statusConfig[selected.status].label.slice(0, -1)}
                 </span>
               </div>
 

@@ -29,7 +29,7 @@ export default function ServicesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [role, setRole] = useState<'ADMIN' | 'USER'>('ADMIN');
   const router = useRouter();
-  const [filter, setFilter] = useState<'ALL' | 'PUBLIC' | 'COMPANY'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'PUBLIC' | 'COMPANY'>('COMPANY');
 
 
   useEffect(() => {
@@ -120,8 +120,8 @@ const searchedServices = services.filter(s =>
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#fbfbfd] border-bottom border-gray-100">
-                    <th className="px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">Servicio</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">Empresa Propietaria</th>
+                    <th className="w-3/5 px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">Servicio</th>
+                    <th className="w-2/5 px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">Empresa Propietaria</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
