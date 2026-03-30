@@ -26,6 +26,7 @@ export default function RegisterCompanyPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
     companyName: '',
@@ -44,6 +45,36 @@ export default function RegisterCompanyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({})
+
+    const newErrors: Record<string, string> = {};
+
+    if(!form.companyName) newErrors.companyName = 'El nombre es obligatorio';
+    
+    if(!form.cif){
+      newErrors.cif = 'El CIF es obligatorio';
+    } else if(!/^[ABCDEFGHJKLMNPQSVW]\d{7}[0-9A-J]$/i.test(form.cif)) {
+      newErrors.cif = 'El formato del CIF no es válido (ej: B12345678)';
+    }
+
+    if (!form.contactEmail) {
+      newErrors.contactEmail = 'El email es obligatorio';
+     } else if (!/\S+@\S+\.\S+/.test(form.contactEmail)){
+      newErrors.contactEmail = 'Introduce un email válido';
+    }
+
+    if(!form.contactName) newErrors.contactName = 'El nombre del responsable es obligatorio';
+
+    if(form.phone && !/^\+?[\d\s]{9,}$/.test(form.phone)){
+      newErrors.phone = 'El teléfono no parece válido'
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      setError('Por favor, revisa los campos marcados en rojo');
+      window.scrollTo({top:0, behavior: 'smooth'})
+      return;
+    }
 
     if (!file) {
       setError('Debes adjuntar un documento acreditativo');
@@ -105,6 +136,45 @@ export default function RegisterCompanyPage() {
     );
   }
 
+  const renderInput = (name: string, placeholder: string, type = 'text', required= false) =>{
+    const hasError = !!fieldErrors[name];
+    return (
+      <div style={{ marginBottom: '4px' }}>
+        <input
+          name={name}
+          type={type}
+          value={(form as any)[name]}
+          onChange={handleChange}
+          placeholder={placeholder}
+          required={required}
+          style={{
+            ...inputStyle,
+            border: hasError ? '1px solid #ff3b30' : '1px solid rgba(0,0,0,0.08)',
+            background: hasError ? '#fff2f2' : '#f5f5f7',
+            transition: 'all 0.2s ease'
+          }}
+          onFocus={(e) => { 
+            if(!hasError) {
+              e.target.style.border = '1px solid #0071e3'; 
+              e.target.style.background = '#fff'; 
+            }
+          }}
+          onBlur={(e) => { 
+            if(!hasError) {
+              e.target.style.border = '1px solid rgba(0,0,0,0.08)'; 
+              e.target.style.background = '#f5f5f7'; 
+            }
+          }}
+        />
+        {hasError && (
+          <span style={{ color: '#ff3b30', fontSize: '12px', marginLeft: '4px', marginTop: '2px', display: 'block', fontWeight: 500 }}>
+            {fieldErrors[name]}
+          </span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
       {/* Nav */}
@@ -137,51 +207,17 @@ export default function RegisterCompanyPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           {/* Datos de la empresa */}
           <div style={{ background: '#fff', borderRadius: '18px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)' }}>
             <h3 style={{ color: '#1d1d1f', fontSize: '15px', fontWeight: 600, margin: '0 0 16px', letterSpacing: '-0.02em' }}>
               Datos de la empresa
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <input
-                name="companyName"
-                value={form.companyName}
-                onChange={handleChange}
-                placeholder="Nombre de la empresa"
-                required
-                style={inputStyle}
-                onFocus={(e) => { e.target.style.border = '1px solid #0071e3'; e.target.style.background = '#fff'; }}
-                onBlur={(e) => { e.target.style.border = '1px solid rgba(0,0,0,0.08)'; e.target.style.background = '#f5f5f7'; }}
-              />
-              <input
-                name="cif"
-                value={form.cif}
-                onChange={handleChange}
-                placeholder="CIF (ej: B12345678)"
-                required
-                style={inputStyle}
-                onFocus={(e) => { e.target.style.border = '1px solid #0071e3'; e.target.style.background = '#fff'; }}
-                onBlur={(e) => { e.target.style.border = '1px solid rgba(0,0,0,0.08)'; e.target.style.background = '#f5f5f7'; }}
-              />
-              <input
-                name="activity"
-                value={form.activity}
-                onChange={handleChange}
-                placeholder="Sector / Actividad (opcional)"
-                style={inputStyle}
-                onFocus={(e) => { e.target.style.border = '1px solid #0071e3'; e.target.style.background = '#fff'; }}
-                onBlur={(e) => { e.target.style.border = '1px solid rgba(0,0,0,0.08)'; e.target.style.background = '#f5f5f7'; }}
-              />
-              <input
-                name="address"
-                value={form.address}
-                onChange={handleChange}
-                placeholder="Dirección en el polígono (opcional)"
-                style={inputStyle}
-                onFocus={(e) => { e.target.style.border = '1px solid #0071e3'; e.target.style.background = '#fff'; }}
-                onBlur={(e) => { e.target.style.border = '1px solid rgba(0,0,0,0.08)'; e.target.style.background = '#f5f5f7'; }}
-              />
+              {renderInput('companyName', 'Nombre de la empresa', 'text', true)}
+              {renderInput('cif', 'CIF (ej: B12345678)', 'text', true)}
+              {renderInput('activity', 'Sector / Actividad (opcional)')}
+              {renderInput('address', 'Dirección en el polígono (opcional)')}
             </div>
           </div>
 
@@ -191,36 +227,9 @@ export default function RegisterCompanyPage() {
               Datos de contacto
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <input
-                name="contactName"
-                value={form.contactName}
-                onChange={handleChange}
-                placeholder="Nombre del responsable"
-                required
-                style={inputStyle}
-                onFocus={(e) => { e.target.style.border = '1px solid #0071e3'; e.target.style.background = '#fff'; }}
-                onBlur={(e) => { e.target.style.border = '1px solid rgba(0,0,0,0.08)'; e.target.style.background = '#f5f5f7'; }}
-              />
-              <input
-                name="contactEmail"
-                type="email"
-                value={form.contactEmail}
-                onChange={handleChange}
-                placeholder="Email de contacto"
-                required
-                style={inputStyle}
-                onFocus={(e) => { e.target.style.border = '1px solid #0071e3'; e.target.style.background = '#fff'; }}
-                onBlur={(e) => { e.target.style.border = '1px solid rgba(0,0,0,0.08)'; e.target.style.background = '#f5f5f7'; }}
-              />
-              <input
-                name="phone"
-                value={form.phone}
-                onChange={handleChange}
-                placeholder="Teléfono (opcional)"
-                style={inputStyle}
-                onFocus={(e) => { e.target.style.border = '1px solid #0071e3'; e.target.style.background = '#fff'; }}
-                onBlur={(e) => { e.target.style.border = '1px solid rgba(0,0,0,0.08)'; e.target.style.background = '#f5f5f7'; }}
-              />
+             {renderInput('contactName', 'Nombre del responsable', 'text', true)}
+              {renderInput('contactEmail', 'Email de contacto', 'email', true)}
+              {renderInput('phone', 'Teléfono (opcional)', 'tel')}
             </div>
           </div>
 

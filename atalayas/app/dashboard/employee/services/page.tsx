@@ -30,14 +30,6 @@ export default function EmployeeServices() {
     fetchServices();
   }, []);
 
-  const getTypeStyles = (type: string) => {
-    switch (type) {
-      case 'INFO': return { icon: 'ℹ️', label: 'Información', color: 'text-blue-600', bg: 'bg-blue-50' };
-      case 'BOOKING': return { icon: '📅', label: 'Reserva', color: 'text-purple-600', bg: 'bg-purple-50' };
-      default: return { icon: '📄', label: 'Servicio', color: 'text-gray-600', bg: 'bg-gray-50' };
-    }
-  };
-
   const filtered = services.filter(s => {
     const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase());
     if (filter === 'PUBLIC') return matchesSearch && s.isPublic;
@@ -48,6 +40,7 @@ export default function EmployeeServices() {
   const sortedServices = [...filtered].sort((a,b)=>{
     if(a.isPublic && !b.isPublic) return -1;
     if(!a.isPublic && b.isPublic) return 1;
+    return a.title.localeCompare(b.title);
 
     return 0
   })
@@ -88,14 +81,9 @@ export default function EmployeeServices() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
               {sortedServices.map((service) => {
-                const styles = getTypeStyles(service.serviceType);
                 return (
-                  <Link key={service.id} href={`/dashboard/administrator/services/${service.id}`}>
+                  <Link key={service.id} href={`/dashboard/employee/services/${service.id}`}>
                     <div className="group bg-white p-8 rounded-[2.5rem] border border-gray-200/50 shadow-sm hover:shadow-2xl hover:shadow-gray-300/40 transition-all duration-500 flex flex-col h-full active:scale-95">
-
-                      <div className={`w-14 h-14 ${styles.bg} rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:rotate-6 transition-transform duration-300`}>
-                        {styles.icon}
-                      </div>
 
                       <h3 className="text-xl font-bold text-[#1d1d1f] mb-3 group-hover:text-[#0071e3] transition-colors leading-tight">
                         {service.title}
@@ -108,9 +96,6 @@ export default function EmployeeServices() {
                       <div className="flex items-center justify-between pt-6 border-t border-gray-50">
                         <span className={`text-[11px] font-black uppercase tracking-widest ${service.isPublic ? 'text-green-600' : 'text-gray-400'}`}>
                           {service.isPublic ? '🌐 Público' : '🔒 Privado'}
-                        </span>
-                        <span className={`text-[11px] font-black uppercase tracking-widest ${styles.color}`}>
-                          {styles.label}
                         </span>
                       </div>
                     </div>
