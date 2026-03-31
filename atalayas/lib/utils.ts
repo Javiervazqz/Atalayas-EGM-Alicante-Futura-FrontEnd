@@ -13,6 +13,7 @@ export const API_ROUTES = {
     REGISTER: `${BASE_URL}/auth/register`,
     FORGOT_PASSWORD: `${BASE_URL}/auth/forgot-password`,
     RESET_PASSWORD: `${BASE_URL}/auth/reset-password`,
+    PROFILE: `${BASE_URL}/auth/profile`,
   },
   USERS: {
     GET_ALL: `${BASE_URL}/users`,
