@@ -42,4 +42,7 @@ export const API_ROUTES = {
     UNARCHIVE: (id: string) => `${BASE_URL}/company-request/${id}/unarchive`,
     GET_ARCHIVED: `${BASE_URL}/company-request?archived=true`,
   },
+  CHATBOT: {
+    SEND:`${BASE_URL}/chatbot`
+  }
 }
