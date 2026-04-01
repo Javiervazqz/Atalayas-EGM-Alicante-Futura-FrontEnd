@@ -13,11 +13,12 @@ const navItems = {
     { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: '⊞' },
     { label: 'Directorio', href: '/dashboard/administrator/general-admin/companies', icon: '🏭' }, // Tu lista general
     { label: 'Perfiles Empresas', href: '/dashboard/company', icon: '🏢' }, // 🚀 NUEVO: El editor con desplegable
+    { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: '🏭' },
     { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: '👥' },
     { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: '📚' },
     { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: '🔧' },
     { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: '📢' },
-    { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: '📄'},
+    { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: '📄' },
   ],
   ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/admin', icon: '⊞' },
@@ -59,6 +60,7 @@ export default function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [pendingCount, setPendingCount] = useState(() => {
     if (typeof window === 'undefined') return 0;
     return parseInt(localStorage.getItem('pendingCount') || '0');
@@ -67,6 +69,29 @@ export default function Sidebar({ role }: SidebarProps) {
   useEffect(() => {
     if (role !== 'GENERAL_ADMIN') return;
     
+    const checkResizing = () => {
+      const width = window.innerWidth;
+      const mobile = width < 768;
+      setIsMobile(mobile);
+      
+      // Solo colapsar automáticamente si detectamos que es móvil
+      if (mobile) {
+        setCollapsed(true);
+      } else {
+        setCollapsed(false);
+      }
+    };
+
+      // Ejecutar al montar
+      checkResizing();
+
+      window.addEventListener('resize', checkResizing);
+      return () => window.removeEventListener('resize', checkResizing);
+  }, []);
+
+  useEffect(() => {
+    if (role !== 'GENERAL_ADMIN') return;
+
     const fetchPending = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -83,6 +108,12 @@ export default function Sidebar({ role }: SidebarProps) {
     fetchPending();
   }, [role]);
 
+        localStorage.setItem('pendingCount', pending.toString()); // 👈 guardamos en cache
+      } catch { }
+    };
+
+    fetchPending();
+  }, [role]);
   const user = typeof window !== 'undefined'
     ? JSON.parse(localStorage.getItem('user') || '{}')
     : {};
@@ -96,6 +127,7 @@ export default function Sidebar({ role }: SidebarProps) {
   return (
     // 🚀 Fondo blanco y bordes grises
     <aside className={`${collapsed ? 'w-16' : 'w-64'} transition-all duration-300 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 left-0 z-20`}>
+    <aside className={`${collapsed ? 'w-16' : 'w-56'} transition-all duration-300 bg-[#13151f] border-r border-white/5 flex flex-col h-screen sticky top-0 left-0`}>
       {/* Logo */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         {!collapsed && (
@@ -127,6 +159,10 @@ export default function Sidebar({ role }: SidebarProps) {
                   ? 'bg-[#0071e3]/10 text-[#0071e3]'
                   : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]'
               }`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm ${isActive
+                  ? 'bg-blue-500/15 text-blue-400 font-medium'
+                  : 'text-gray-500 hover:text-white hover:bg-white/5'
+                }`}
             >
               <span className="text-base shrink-0">{item.icon}</span>
               {!collapsed && (

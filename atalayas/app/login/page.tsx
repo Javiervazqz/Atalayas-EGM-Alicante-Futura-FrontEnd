@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
+    /*djnjfndj */
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -29,13 +30,11 @@ export default function LoginPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Error al iniciar sesión');
 
-      // Tu backend ya nos devuelve el token y el rol correctos desde Prisma
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
       const role = data.user.role;
       
-      // Redirigimos
       if (role === 'GENERAL_ADMIN') router.push('/dashboard/administrator/general-admin');
       else if (role === 'ADMIN') router.push('/dashboard/administrator/admin');
       else if (role === 'EMPLOYEE') router.push('/dashboard/employee');
@@ -203,10 +202,12 @@ export default function LoginPage() {
             </form>
 
             <div className="text-center mt-6">
-              <Link
-                href="/forgot-password" style={{ color: '#0071e3', fontSize: '13px', textDecoration: 'none' }}>
+              <a
+                href="#"
+                style={{ color: '#0071e3', fontSize: '13px', textDecoration: 'none' }}
+              >
                 ¿Olvidaste tu contraseña?
-              </Link>
+              </a>
             </div>
           </div>
 
@@ -223,7 +224,7 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          <p className="text-center mt-2" style={{ color: '#86868b', fontSize: '12px' }}>
+          <p className="text-center mt-2" style={{ color: '#86868b', fontSize: '13px' }}>
             ¿Eres una empresa del polígono?{' '}
             <Link href="/company-register" style={{ color: '#0071e3', textDecoration: 'none' }}>
               Solicitar alta
