@@ -28,7 +28,7 @@ export default function ServicesPage() {
   const user = typeof window !== 'undefined' 
     ? JSON.parse(localStorage.getItem('user') || '{}') 
     : {};
-  const role = user.role || 'ADMIN';
+  const role = user.role || 'GENERAL_ADMIN';
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -85,7 +85,7 @@ export default function ServicesPage() {
     );
  return (
   <div className="flex min-h-screen bg-[#f5f5f7] relative">
-    <Sidebar role={role} />
+     <Sidebar role="GENERAL_ADMIN" />
     
     <main className="flex-1 h-screen overflow-y-auto">
       <div className="max-w-6xl mx-auto px-8 py-12">
