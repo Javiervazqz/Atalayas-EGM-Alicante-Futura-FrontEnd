@@ -143,7 +143,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'Nuevo empleado', icon: '👤', href: '/dashboard/admin/users/new' },
-                { label: 'Nuevo curso', icon: '📚', href: '/dashboard/admin/courses/new' },
+                { label: 'Nuevo curso', icon: '📚', href: '/dashboard/administrator/admin/courses/new' },
                 { label: 'Subir documento', icon: '📄', href: '/dashboard/admin/documents/new' },
                 { label: 'Ver informes', icon: '📊', href: '/dashboard/admin/reports' },
               ].map((action) => (

@@ -63,6 +63,7 @@ export default function Sidebar({ role }: SidebarProps) {
 
   // 1. Manejo de Responsive
   useEffect(() => {
+    // 1. Manejo de redimensionamiento
     const checkResizing = () => {
       const width = window.innerWidth;
       const mobile = width < 768;
@@ -136,16 +137,15 @@ export default function Sidebar({ role }: SidebarProps) {
         </button>
       </div>
 
-      {/* Nav */}
+      {/* Navegación */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navItems[role].map((item) => {
+        {navItems[role]?.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
-                isActive
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${isActive
                   ? 'bg-[#0071e3]/10 text-[#0071e3]'
                   : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]'
               }`}
@@ -170,12 +170,11 @@ export default function Sidebar({ role }: SidebarProps) {
       <div className="p-3 border-t border-gray-100 bg-white">
         <Link href="/dashboard/profile">
           <div className={`flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[#f5f5f7] transition-colors cursor-pointer group ${collapsed ? 'justify-center' : ''}`}>
-            
             <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-gray-200 group-hover:border-[#0071e3] transition-colors">
               {user.avatarUrl ? (
-                <img 
-                  src={encodeURI(user.avatarUrl)} 
-                  alt="Perfil" 
+                <img
+                  src={encodeURI(user.avatarUrl)}
+                  alt="Perfil"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -199,7 +198,7 @@ export default function Sidebar({ role }: SidebarProps) {
             )}
           </div>
         </Link>
-        
+
         <button
           onClick={handleLogout}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[#86868b] hover:text-red-600 hover:bg-red-50 transition-all text-sm font-medium mt-1 ${collapsed ? 'justify-center' : ''}`}

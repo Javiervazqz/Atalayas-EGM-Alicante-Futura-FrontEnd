@@ -60,10 +60,10 @@ export default function EmployeeCoursesPage() {
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
-                            className={`pb-4 text-sm font-semibold transition-all ${activeTab === tab ? 'border-b-2 border-[#0071e3] text-[#0071e3]' : 'text-[#86868b] hover:text-[#1d1d1f]'
+                            className={`pb-4 text-sm font-semibold cursor-pointer transition-all ${activeTab === tab ? 'border-b-2 border-[#0071e3] text-[#0071e3]' : 'text-[#86868b] hover:text-[#1d1d1f]'
                                 }`}
                         >
-                            {tab === 'BASICO' ? 'Cursos Básicos' : 'Especialización'}
+                            {tab === 'BASICO' ? 'Onboarding' : 'Especialización'}
                         </button>
                     ))}
                 </div>
@@ -76,14 +76,14 @@ export default function EmployeeCoursesPage() {
                                 <div>
                                     <div className="flex justify-between items-start mb-4">
                                         <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase ${activeTab === 'BASICO' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
-                                            {activeTab}
+                                            {activeTab === 'BASICO' ? 'Onboarding' : 'Especialización'}
                                         </span>
 
                                         {/* MENÚ DE TRES PUNTOS RESTAURADO */}
                                         <div className="relative">
                                             <button
                                                 onClick={() => toggleMenu(course.id)}
-                                                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                                                className="p-1 hover:bg-gray-100 cursor-pointer rounded-full transition-colors"
                                             >
                                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
                                                     <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
@@ -92,7 +92,7 @@ export default function EmployeeCoursesPage() {
 
                                             {activeMenu === course.id && (
                                                 <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden animate-in fade-in zoom-in duration-200">
-                                                    <button className="w-full text-left px-4 py-3 text-sm text-[#1d1d1f] hover:bg-[#f5f5f7] flex items-center gap-2 transition-colors">
+                                                    <button className="w-full text-left cursor-pointer px-4 py-3 text-sm text-[#1d1d1f] hover:bg-[#f5f5f7] flex items-center gap-2 transition-colors">
                                                         <span>📥</span> Descargar
                                                     </button>
                                                 </div>
@@ -106,7 +106,7 @@ export default function EmployeeCoursesPage() {
                                     <h3 className="text-[#1d1d1f] font-semibold text-lg leading-tight mb-4">{course.title}</h3>
                                 </div>
 
-                                <button className="w-full py-2.5 bg-[#0071e3] text-white text-sm font-medium rounded-xl text-center hover:bg-[#0077ed] transition-colors shadow-sm">
+                                <button className="w-full py-2.5 bg-[#0071e3] text-white cursor-pointer text-sm font-medium rounded-xl text-center hover:bg-[#0077ed] transition-colors shadow-sm">
                                     Ver
                                 </button>
                             </div>

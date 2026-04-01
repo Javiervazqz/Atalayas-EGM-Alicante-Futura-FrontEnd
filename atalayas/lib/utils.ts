@@ -20,6 +20,7 @@ export const API_ROUTES = {
   },
   COURSES: {
     GET_ALL: `${BASE_URL}/courses`,
+    CREATE: `${BASE_URL}/courses`,
   },
   DOCUMENTS: {
     GET_ALL: `${BASE_URL}/document`,
