@@ -190,7 +190,7 @@ export default function DocumentsExplorerPage() {
           {selectedDoc ? (
             <>
               {/* Barra superior del visor */}
-              <div className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 flex items-center justify-between px-8 z-10 flex-shrink-0">
+              <div className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 flex items-center justify-between px-8 z-10 shrink-0">
                 <div className="flex items-center gap-3">
                   <h2 className="text-lg font-bold text-[#1d1d1f]">{selectedDoc.title}</h2>
                   <span className="text-xs font-medium text-[#86868b] bg-gray-100 px-2 py-1 rounded-md">
