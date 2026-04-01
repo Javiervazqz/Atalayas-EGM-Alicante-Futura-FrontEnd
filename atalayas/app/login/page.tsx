@@ -30,15 +30,13 @@ export default function LoginPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Error al iniciar sesión');
 
-      // Tu backend ya nos devuelve el token y el rol correctos desde Prisma
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
       const role = data.user.role;
       
-      // Redirigimos
-      if (role === 'GENERAL_ADMIN') router.push('/dashboard/general-admin');
-      else if (role === 'ADMIN') router.push('/dashboard/admin');
+      if (role === 'GENERAL_ADMIN') router.push('/dashboard/administrator/general-admin');
+      else if (role === 'ADMIN') router.push('/dashboard/administrator/admin');
       else if (role === 'EMPLOYEE') router.push('/dashboard/employee');
       else router.push('/dashboard/public');
       
