@@ -11,7 +11,6 @@ interface SidebarProps {
 const navItems = {
   GENERAL_ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: '⊞' },
-    { label: 'Directorio', href: '/dashboard/administrator/general-admin/companies', icon: '🏭' },
     { label: 'Perfiles Empresas', href: '/dashboard/company', icon: '🏢' },
     { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: '🏭' },
     { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: '👥' },
@@ -62,26 +61,32 @@ export default function Sidebar({ role }: SidebarProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
+  // 1. Manejo de Responsive
   useEffect(() => {
     // 1. Manejo de redimensionamiento
     const checkResizing = () => {
       const width = window.innerWidth;
       const mobile = width < 768;
       setIsMobile(mobile);
-      setCollapsed(mobile);
+      if (mobile) {
+        setCollapsed(true);
+      }
+      else{
+        setCollapsed(false)
+      }
     };
 
     checkResizing();
+    
     window.addEventListener('resize', checkResizing);
-
-    // 2. Cargar contador inicial de localStorage
-    const savedCount = localStorage.getItem('pendingCount');
-    if (savedCount) setPendingCount(parseInt(savedCount));
-
     return () => window.removeEventListener('resize', checkResizing);
   }, []);
 
+  // 2. Carga inicial de caché y fetch de solicitudes pendientes
   useEffect(() => {
+    const cached = localStorage.getItem('pendingCount');
+    if (cached) setPendingCount(parseInt(cached));
+
     if (role !== 'GENERAL_ADMIN') return;
 
     const fetchPending = async () => {
@@ -95,7 +100,7 @@ export default function Sidebar({ role }: SidebarProps) {
         setPendingCount(pending);
         localStorage.setItem('pendingCount', pending.toString());
       } catch (error) {
-        console.error("Error fetching pending requests:", error);
+        console.error("Error fetching pending requests", error);
       }
     };
 
@@ -143,7 +148,7 @@ export default function Sidebar({ role }: SidebarProps) {
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${isActive
                   ? 'bg-[#0071e3]/10 text-[#0071e3]'
                   : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]'
-                }`}
+              }`}
             >
               <span className="text-base shrink-0">{item.icon}</span>
               {!collapsed && (
@@ -161,7 +166,7 @@ export default function Sidebar({ role }: SidebarProps) {
         })}
       </nav>
 
-      {/* Sección Usuario */}
+      {/* User Section */}
       <div className="p-3 border-t border-gray-100 bg-white">
         <Link href="/dashboard/profile">
           <div className={`flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[#f5f5f7] transition-colors cursor-pointer group ${collapsed ? 'justify-center' : ''}`}>
