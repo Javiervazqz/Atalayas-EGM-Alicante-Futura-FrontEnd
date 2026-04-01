@@ -101,6 +101,7 @@ export default function Sidebar({ role }: SidebarProps) {
 
     fetchPending();
   }, [role]);
+
   const user = typeof window !== 'undefined'
     ? JSON.parse(localStorage.getItem('user') || '{}')
     : {};

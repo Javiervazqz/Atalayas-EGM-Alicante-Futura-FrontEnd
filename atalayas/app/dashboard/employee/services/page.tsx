@@ -11,15 +11,21 @@ export default function EmployeeServices() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'ALL' | 'PUBLIC' | 'COMPANY'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-
-  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
-  const myCompanyName = user.Company?.name || 'Mi Empresa';
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     const fetchServices = async () => {
       try {
+        const storedUser = localStorage.getItem('user');
+        const token = localStorage.getItem('token');
+        
+        if (!storedUser || !token) return;
+        
+        const user = JSON.parse(storedUser);
+        setCurrentUser(user);
+
         const res = await fetch(API_ROUTES.SERVICES.GET_ALL, { 
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
         setServices(data);
@@ -42,12 +48,14 @@ export default function EmployeeServices() {
     if(!a.isPublic && b.isPublic) return 1;
     return a.title.localeCompare(b.title);
 
-    return 0
   })
+
+    if (!currentUser) return null;
+
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f7]">
-      <Sidebar role="EMPLOYEE" />
+      <Sidebar role='EMPLOYEE' />
       <main className="flex-1 h-screen overflow-y-auto">
         <div className="max-w-6xl mx-auto px-8 py-12">
           
@@ -66,7 +74,7 @@ export default function EmployeeServices() {
                   filter === type ? 'bg-[#1d1d1f] text-white' : 'bg-white text-[#86868b] border border-gray-200'
                 }`}
               >
-                {type === 'ALL' ? 'Todos' : type === 'PUBLIC' ? '🌐 Públicos' : `🏭 ${myCompanyName}`}
+                {type === 'ALL' ? 'Todos' : type === 'PUBLIC' ? '🌐 Públicos' : `🏭 Mi empresa`}
               </button>
             ))}
           </div>
