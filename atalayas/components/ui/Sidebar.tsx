@@ -13,6 +13,7 @@ const navItems = {
     { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: '⊞' },
     { label: 'Directorio', href: '/dashboard/administrator/general-admin/companies', icon: '🏭' },
     { label: 'Perfiles Empresas', href: '/dashboard/company', icon: '🏢' },
+    { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: '🏭' },
     { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: '👥' },
     { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: '📚' },
     { label: 'Documentos', href: '/dashboard/documents', icon: '📄' },
@@ -61,21 +62,20 @@ export default function Sidebar({ role }: SidebarProps) {
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [pendingCount, setPendingCount] = useState(() => {
-    if (typeof window === 'undefined') return 0;
-    return parseInt(localStorage.getItem('pendingCount') || '0');
-  });
+  const [pendingCount, setPendingCount] = useState(0);
 
+  // 1. Manejo de Responsive
   useEffect(() => {
+    // 1. Manejo de redimensionamiento
     const checkResizing = () => {
       const width = window.innerWidth;
       const mobile = width < 768;
       setIsMobile(mobile);
-      
       if (mobile) {
         setCollapsed(true);
-      } else {
-        setCollapsed(false);
+      }
+      else{
+        setCollapsed(false)
       }
     };
 
@@ -84,7 +84,11 @@ export default function Sidebar({ role }: SidebarProps) {
     return () => window.removeEventListener('resize', checkResizing);
   }, []);
 
+  // 2. Carga inicial de caché y fetch de solicitudes pendientes
   useEffect(() => {
+    const cached = localStorage.getItem('pendingCount');
+    if (cached) setPendingCount(parseInt(cached));
+
     if (role !== 'GENERAL_ADMIN') return;
 
     const fetchPending = async () => {
@@ -135,16 +139,15 @@ export default function Sidebar({ role }: SidebarProps) {
         </button>
       </div>
 
-      {/* Nav */}
+      {/* Navegación */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navItems[role].map((item) => {
+        {navItems[role]?.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
-                isActive
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${isActive
                   ? 'bg-[#0071e3]/10 text-[#0071e3]'
                   : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]'
               }`}
@@ -154,7 +157,7 @@ export default function Sidebar({ role }: SidebarProps) {
                 <>
                   <span className="flex-1">{item.label}</span>
                   {item.label === 'Solicitudes' && pendingCount > 0 && (
-                    <span className="bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-4.5 text-center">
+                    <span className="bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[1.2rem] text-center">
                       {pendingCount}
                     </span>
                   )}
@@ -165,16 +168,15 @@ export default function Sidebar({ role }: SidebarProps) {
         })}
       </nav>
 
-      {/* User */}
+      {/* User Section */}
       <div className="p-3 border-t border-gray-100 bg-white">
         <Link href="/dashboard/profile">
           <div className={`flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[#f5f5f7] transition-colors cursor-pointer group ${collapsed ? 'justify-center' : ''}`}>
-            
             <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-gray-200 group-hover:border-[#0071e3] transition-colors">
               {user.avatarUrl ? (
-                <img 
-                  src={encodeURI(user.avatarUrl)} 
-                  alt="Perfil" 
+                <img
+                  src={encodeURI(user.avatarUrl)}
+                  alt="Perfil"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -196,10 +198,9 @@ export default function Sidebar({ role }: SidebarProps) {
                 </span>
               </div>
             )}
-            
           </div>
         </Link>
-        
+
         <button
           onClick={handleLogout}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[#86868b] hover:text-red-600 hover:bg-red-50 transition-all text-sm font-medium mt-1 ${collapsed ? 'justify-center' : ''}`}

@@ -20,6 +20,7 @@ export const API_ROUTES = {
   },
   COURSES: {
     GET_ALL: `${BASE_URL}/courses`,
+    CREATE: `${BASE_URL}/courses`,
   },
   DOCUMENTS: {
     GET_ALL: `${BASE_URL}/document`,
@@ -45,4 +46,7 @@ export const API_ROUTES = {
     UNARCHIVE: (id: string) => `${BASE_URL}/company-request/${id}/unarchive`,
     GET_ARCHIVED: `${BASE_URL}/company-request?archived=true`,
   },
+  CHATBOT: {
+    SEND:`${BASE_URL}/chatbot`
+  }
 }
