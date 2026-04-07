@@ -55,19 +55,11 @@ export default function AdminDashboard() {
   }, []);
 
   const statCards = [
-    { label: 'Empleados', value: stats.employees, icon: '👥', color: 'blue' },
-    { label: 'Cursos activos', value: stats.courses, icon: '📚', color: 'indigo' },
-    { label: 'Documentos', value: stats.documents, icon: '📄', color: 'violet' },
-    { label: 'Progreso medio', value: `${stats.avgProgress}%`, icon: '📈', color: 'cyan' },
+    { label: 'Empleados', value: stats.employees, icon: <i className="bi bi-people-fill text-blue-500"></i>},
+    { label: 'Cursos activos', value: stats.courses, icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i> },
+    { label: 'Documentos', value: stats.documents, icon:  <i className="bi bi-file-earmark-text-fill text-blue-500"></i> },
+    { label: 'Progreso medio', value: `${stats.avgProgress}%`, icon: <i className="bi bi-graph-up text-blue-500"></i> },
   ];
-
-  // Colores actualizados para el modo claro (fondos pastel, texto oscuro, bordes suaves)
-  const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-700 border-blue-100',
-    indigo: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-    violet: 'bg-violet-50 text-violet-700 border-violet-100',
-    cyan: 'bg-cyan-50 text-cyan-700 border-cyan-100',
-  };
 
   return (
     // Fondo general gris muy clarito (como en el login)
@@ -85,7 +77,7 @@ export default function AdminDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {statCards.map((stat) => (
-            <div key={stat.label} className={`rounded-2xl border p-5 ${colorMap[stat.color]}`}>
+            <div key={stat.label} className={`rounded-2xl border p-5`}>
               <div className="text-2xl mb-3">{stat.icon}</div>
               <div className="text-2xl font-bold text-[#1d1d1f] mb-1">{loading ? '...' : stat.value}</div>
               <div className="text-xs font-medium opacity-80">{stat.label}</div>
@@ -99,7 +91,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-[#1d1d1f] font-semibold">Cursos de la empresa</h2>
               <Link href="/dashboard/administrator/admin/courses" className="text-[#0071e3] text-sm hover:text-blue-600 transition-colors">
-                Ver todos →
+                Ver todos <i className="bi bi-arrow-right-short"></i>
               </Link>
             </div>
 
@@ -113,7 +105,7 @@ export default function AdminDashboard() {
               <div className="text-center py-8">
                 <p className="text-[#86868b] text-sm">No hay cursos todavía</p>
                 <Link href="/dashboard/admin/courses/new" className="text-[#0071e3] text-sm mt-2 inline-block hover:text-blue-600">
-                  Crear primer curso →
+                  Crear primer curso
                 </Link>
               </div>
             ) : (
@@ -123,7 +115,7 @@ export default function AdminDashboard() {
                   <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-white border border-gray-200 shadow-sm rounded-lg flex items-center justify-center">
-                        <span className="text-sm">📚</span>
+                        <span className="text-sm"><i className="bi bi-mortarboard-fill text-blue-500 "></i></span>
                       </div>
                       <span className="text-[#1d1d1f] text-sm font-medium">{course.title}</span>
                     </div>
@@ -142,10 +134,10 @@ export default function AdminDashboard() {
             <h2 className="text-[#1d1d1f] font-semibold mb-5">Acciones rápidas</h2>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Nuevo empleado', icon: '👤', href: '/dashboard/admin/users/new' },
-                { label: 'Nuevo curso', icon: '📚', href: '/dashboard/administrator/admin/courses/new' },
-                { label: 'Subir documento', icon: '📄', href: '/dashboard/admin/documents/new' },
-                { label: 'Ver informes', icon: '📊', href: '/dashboard/admin/reports' },
+                { label: 'Nuevo empleado', icon: <i className="bi bi-person-fill-add text-blue-500"></i>, href: '/dashboard/admin/users/new' },
+                { label: 'Nuevo curso', icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i>, href: '/dashboard/administrator/admin/courses/new' },
+                { label: 'Subir documento', icon: <i className="bi bi-file-earmark-text-fill text-blue-500"></i>, href: '/dashboard/admin/documents/new' },
+                { label: 'Ver informes', icon: <i className="bi bi-bar-chart-fill text-blue-500"></i> , href: '/dashboard/admin/reports' },
               ].map((action) => (
                 <Link
                   key={action.label}

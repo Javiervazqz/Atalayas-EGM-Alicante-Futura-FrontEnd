@@ -108,7 +108,7 @@ export default function GeneralAdminCourses() {
                                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-4 ${activeTab === 'BASICO' ? 'bg-blue-100' : 'bg-purple-100'}`}>
                                         {activeTab === 'BASICO' ? '📖' : '🎓'}
                                     </div>
-                                    <h3 className="text-[#1d1d1f] font-semibold text-lg leading-tight mb-4 min-h-[3rem] line-clamp-2">
+                                    <h3 className="text-[#1d1d1f] font-semibold text-lg leading-tight mb-4 min-h-12 line-clamp-2">
                                         {course.title}
                                     </h3>
                                 </div>

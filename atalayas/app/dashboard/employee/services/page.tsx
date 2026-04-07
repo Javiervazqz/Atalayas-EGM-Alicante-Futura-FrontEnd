@@ -86,30 +86,41 @@ export default function EmployeeServices() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-              {sortedServices.map((service) => {
-                return (
+                {sortedServices.map((service) => (
                   <Link key={service.id} href={`/dashboard/employee/services/${service.id}`}>
-                    <div className="group bg-white p-8 rounded-[2.5rem] border border-gray-200/50 shadow-sm hover:shadow-2xl hover:shadow-gray-300/40 transition-all duration-500 flex flex-col h-full active:scale-95">
+                    <div className="group bg-white rounded-[2rem] border border-gray-200/50 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full overflow-hidden active:scale-[0.98]">
 
-                      <h3 className="text-xl font-bold text-[#1d1d1f] mb-3 group-hover:text-[#0071e3] transition-colors leading-tight">
-                        {service.title}
-                      </h3>
+                      {/* 1. CONTENEDOR DE IMAGEN: Forzamos ratio 16:9 o 4:3 */}
+                      <div className="relative w-full aspect-video overflow-hidden bg-gray-100 border-b border-gray-100">
+                        {service.mediaUrl && (
+                          <img
+                            src={service.mediaUrl}
+                            alt={service.title}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        )}
+                      </div>
 
-                      <p className="text-[#86868b] text-[15px] leading-relaxed line-clamp-3 mb-8 flex-1">
-                        {service.description || 'Sin descripción.'}
-                      </p>
+                      {/* 2. CONTENIDO: Padding reducido para evitar "mucho espacio" */}
+                      <div className="p-5 flex flex-col flex-1">
 
-                      <div className="flex items-center justify-between pt-6 border-t border-gray-50">
-                        <span className={`text-[11px] font-black uppercase tracking-widest ${service.isPublic ? 'text-green-600' : 'text-gray-400'}`}>
-                          {service.isPublic ? '🌐 Público' : '🔒 Privado'}
-                        </span>
+                        {/* Título: Altura mínima para 2 líneas máximo */}
+                        <h3 className="text-lg font-bold text-[#1d1d1f] mb-2 group-hover:text-[#0071e3] transition-colors line-clamp-2 h-14 overflow-hidden">
+                          {service.title}
+                        </h3>
+
+                        {/* 3. FOOTER: Empujado al final */}
+                        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                          <span className={`text-[10px] font-black uppercase tracking-widest ${service.isPublic ? 'text-green-600' : 'text-gray-400'}`}>
+                            {service.isPublic ? '🌐 Público' : '🔒 Privado'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </Link>
-                );
-              })}
+                ))}
             </div>
           )}
 

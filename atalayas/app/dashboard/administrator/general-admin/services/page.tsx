@@ -21,21 +21,16 @@ export default function ServicesPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCompany, setSelectedCompany] = useState<string>('PUBLIC');
-<<<<<<< HEAD
   const [companySearch, setCompanySearch] = useState('');
+  const router = useRouter();
 
   // Recuperamos el usuario para el Sidebar
   const user = typeof window !== 'undefined' 
     ? JSON.parse(localStorage.getItem('user') || '{}') 
     : {};
   const role = user.role || 'GENERAL_ADMIN';
-=======
-  const [mounted, setMounted] = useState(false); // Para evitar errores de hidratación
-  const router = useRouter();
->>>>>>> 172065c9bd3108c36df8f4a8fe46e5128e792c3f
 
   useEffect(() => {
-    setMounted(true);
     const fetchServices = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -78,29 +73,6 @@ export default function ServicesPage() {
   // 4. Ordenado alfabético (Usando localeCompare que es más robusto)
   currentList.sort((a, b) => a.title.localeCompare(b.title));
 
-<<<<<<< HEAD
-    const filteredCompanies = companies.filter(c => 
-    c === 'PUBLIC' || c.toLowerCase().includes(companySearch.toLowerCase())
-    );
- return (
-  <div className="flex min-h-screen bg-[#f5f5f7] relative">
-     <Sidebar role="GENERAL_ADMIN" />
-    
-    <main className="flex-1 h-screen overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-8 py-12">
-        
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
-          <div>
-            <nav className="flex items-center gap-2 text-sm text-[#86868b] mb-4">
-              <Link href="/dashboard/administrator/general-admin" className="hover:text-[#0071e3] transition-colors">Dashboard</Link>
-              <span className="opacity-50">/</span>
-              <span className="text-[#1d1d1f] font-medium">Servicios</span>
-            </nav>
-            <h1 className="text-4xl font-bold text-[#1d1d1f] tracking-tight">Servicios</h1>
-=======
-  // No renderizar hasta que el cliente esté listo para evitar el error "T vs U" en el Sidebar
-  if (!mounted) return null;
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f7]">
@@ -123,7 +95,6 @@ export default function ServicesPage() {
                 Nuevo servicio
               </Link>
             </div>
->>>>>>> 172065c9bd3108c36df8f4a8fe46e5128e792c3f
           </div>
 
           <div className="mb-6">

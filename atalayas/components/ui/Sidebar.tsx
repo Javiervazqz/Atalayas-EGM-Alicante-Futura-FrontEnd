@@ -10,33 +10,33 @@ interface SidebarProps {
 
 const navItems = {
   GENERAL_ADMIN: [
-    { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: '⊞' },
-    { label: 'Perfiles Empresas', href: '/dashboard/company', icon: '🏢' },
-    { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: '🏭' },
-    { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: '👥' },
-    { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: '📚' },
-    { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: '🔧' },
-    { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: '📢' },
-    { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: '📄' },
+    { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: <i className="bi bi-house-fill text-blue-500"></i> },
+    { label: 'Perfiles Empresas', href: '/dashboard/company', icon: <i className="bi bi-building-fill-gear text-blue-500"></i> },
+    { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: <i className="bi bi-buildings-fill text-blue-500"></i> },
+    { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill text-blue-500"></i>},
+    { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i>  },
+    { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: <i className="bi bi-suitcase-lg-fill text-blue-500"></i> },
+    { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: <i className="bi bi-megaphone-fill text-blue-500"></i> },
+    { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: <i className="bi bi-envelope-exclamation-fill text-blue-500"></i> },
   ],
   ADMIN: [
-    { label: 'Panel', href: '/dashboard/administrator/admin', icon: '⊞' },
-    { label: 'Mi Empresa', href: '/dashboard/company', icon: '🏢' },
-    { label: 'Empleados', href: '/dashboard/administrator/employees', icon: '👥' },
-    { label: 'Cursos', href: '/dashboard/administrator/admin/courses', icon: '📚' },
-    { label: 'Documentos', href: '/dashboard/administrator/admin/documents', icon: '📄' },
-    { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: '🔧' }
+    { label: 'Panel', href: '/dashboard/administrator/admin', icon: <i className="bi bi-house-fill text-blue-500"></i> },
+    { label: 'Mi Empresa', href: '/dashboard/company', icon: <i className="bi bi-building-fill text-blue-500"></i> },
+    { label: 'Empleados', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill text-blue-500"></i>},
+    { label: 'Cursos', href: '/dashboard/administrator/admin/courses', icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i>  },
+    { label: 'Documentos', href: '/dashboard/administrator/admin/documents', icon: <i className="bi bi-file-earmark-text-fill text-blue-500"></i>  },
+    { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill text-blue-500"></i> }
   ],
   EMPLOYEE: [
-    { label: 'Panel', href: '/dashboard/employee', icon: '⊞' },
-    { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: '📚' },
-    { label: 'Documentos', href: '/dashboard/documents', icon: '📄' },
-    { label: 'Servicios', href: '/dashboard/employee/services', icon: '🔧' },
+    { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-house-fill text-[#005596]"></i> },
+    { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: <i className="bi bi-mortarboard-fill text-[#005596] "></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill text-[#005596]"></i> },
+    { label: 'Servicios', href: '/dashboard/employee/services', icon: <i className="bi bi-suitcase-lg-fill text-[#005596]"></i> },
   ],
   PUBLIC: [
-    { label: 'Panel', href: '/dashboard/public', icon: '⊞' },
-    { label: 'Cursos', href: '/dashboard/public/courses', icon: '📚' },
-    { label: 'Servicios', href: '/dashboard/public/services', icon: '🔧' },
+    { label: 'Panel', href: '/dashboard/public', icon: <i className="bi bi-house-fill text-blue-500"></i> },
+    { label: 'Cursos', href: '/dashboard/public/courses', icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i>  },
+    { label: 'Servicios', href: '/dashboard/public/services', icon: <i className="bi bi-suitcase-lg-fill text-blue-500"></i> },
   ],
 };
 
@@ -59,6 +59,7 @@ export default function Sidebar({ role }: SidebarProps) {
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
   // 1. Manejo de Responsive
@@ -67,8 +68,10 @@ export default function Sidebar({ role }: SidebarProps) {
     const checkResizing = () => {
       const width = window.innerWidth;
       const mobile = width < 768;
+      const tablet = width >= 768 && width < 1024
       setIsMobile(mobile);
-      if (mobile) {
+      setIsTablet(tablet);
+      if (mobile || tablet) {
         setCollapsed(true);
       }
       else{
@@ -133,7 +136,7 @@ export default function Sidebar({ role }: SidebarProps) {
           onClick={() => setCollapsed(!collapsed)}
           className="text-[#86868b] hover:text-[#1d1d1f] transition-colors p-1 rounded-lg hover:bg-[#f5f5f7]"
         >
-          {collapsed ? '→' : '←'}
+          <i className="bi bi-list"></i>
         </button>
       </div>
 
@@ -201,9 +204,9 @@ export default function Sidebar({ role }: SidebarProps) {
 
         <button
           onClick={handleLogout}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[#86868b] hover:text-red-600 hover:bg-red-50 transition-all text-sm font-medium mt-1 ${collapsed ? 'justify-center' : ''}`}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[#86868b] hover:text-red-600 hover:bg-red-50 transition-all text-sm font-medium mt-1 ${collapsed ? 'justify-center' : 'ml-0.5'}`}
         >
-          <span className="text-lg">⎋</span>
+          <span className="text-lg"><i className="bi bi-door-closed"></i></span>
           {!collapsed && <span>Cerrar sesión</span>}
         </button>
       </div>

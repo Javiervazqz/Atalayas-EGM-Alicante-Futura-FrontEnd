@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
+import Link from 'next/link';
 
 interface Course {
     id: string;
@@ -106,9 +107,13 @@ export default function EmployeeCoursesPage() {
                                     <h3 className="text-[#1d1d1f] font-semibold text-lg leading-tight mb-4">{course.title}</h3>
                                 </div>
 
-                                <button className="w-full py-2.5 bg-[#0071e3] text-white cursor-pointer text-sm font-medium rounded-xl text-center hover:bg-[#0077ed] transition-colors shadow-sm">
-                                    Ver
-                                </button>
+                            <Link 
+                                key={course.id} 
+                                href={`/dashboard/employee/courses/${course.id}`} // Corregido: ${course.id}
+                                className="w-full py-2.5 bg-[#0071e3] text-white cursor-pointer text-sm font-medium rounded-xl text-center hover:bg-[#0077ed] transition-colors shadow-sm inline-block"
+                            >
+                                Ver
+                            </Link>
                             </div>
                         ))}
                 </div>

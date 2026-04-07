@@ -122,7 +122,7 @@ export default function NewEmployeePage() {
                   defaultValue="PUBLIC"
                   className="w-full bg-[#f5f5f7] rounded-xl px-4 py-3 text-sm outline-none cursor-pointer border-transparent focus:border-[#0071e3] transition-all"
                 >
-                  <option value="PUBLIC">Acceso público</option>
+                  {currentUser.role === 'GENERAL_ADMIN' && <option value="PUBLIC">Acceso público</option> }
                   <option value="EMPLOYEE">Empleado</option>
                   <option value="ADMIN">Administrador de empresa</option>
                   {currentUser.role === 'GENERAL_ADMIN' && <option value="GENERAL_ADMIN">Administrador General</option>}
