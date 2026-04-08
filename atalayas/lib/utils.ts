@@ -17,6 +17,7 @@ export const API_ROUTES = {
   },
   USERS: {
     GET_ALL: `${BASE_URL}/users`,
+    CREATE: `${BASE_URL}/users`,
   },
   COURSES: {
     GET_ALL: `${BASE_URL}/courses`,
