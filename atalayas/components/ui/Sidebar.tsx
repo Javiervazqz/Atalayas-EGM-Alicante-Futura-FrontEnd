@@ -37,6 +37,7 @@ const navItems = {
     { label: 'Panel', href: '/dashboard/public', icon: <i className="bi bi-house-fill text-blue-500"></i> },
     { label: 'Cursos', href: '/dashboard/public/courses', icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i>  },
     { label: 'Servicios', href: '/dashboard/public/services', icon: <i className="bi bi-suitcase-lg-fill text-blue-500"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: '📄' },
   ],
 };
 
@@ -80,7 +81,6 @@ export default function Sidebar({ role }: SidebarProps) {
     };
 
     checkResizing();
-    
     window.addEventListener('resize', checkResizing);
     return () => window.removeEventListener('resize', checkResizing);
   }, []);
@@ -103,7 +103,7 @@ export default function Sidebar({ role }: SidebarProps) {
         setPendingCount(pending);
         localStorage.setItem('pendingCount', pending.toString());
       } catch (error) {
-        console.error("Error fetching pending requests", error);
+        console.error('Error fetching pending requests:', error);
       }
     };
 
