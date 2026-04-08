@@ -58,10 +58,10 @@ export default function AdminCourses() {
                         />
 
                         <Link
-                            href="/dashboard/administrator/admin/courses/new"
+                            href="/dashboard/administrator/admin/courses/manage"
                             className="bg-[#0071e3] text-white px-6 py-2.5 rounded-full font-semibold hover:bg-[#0077ed] transition-all shadow-md shrink-0 text-center"
                         >
-                            Nuevo Curso
+                            Gestionar Cursos
                         </Link>
                     </div>
                 </div>

@@ -14,9 +14,9 @@ export default function NewCoursePage() {
 
     const [formData, setFormData] = useState({
         title: '',
-        isPublic: false,
-        category: 'BASICO', // CAMBIO: Valor inicial para Onboarding
-        file: null as File | null // CAMBIO: Estado para el PDF
+        isPublic: false, // Siempre falso para administradores de empresa
+        category: 'BASICO',
+        file: null as File | null
     });
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -28,12 +28,11 @@ export default function NewCoursePage() {
         try {
             const token = localStorage.getItem('token');
 
-            // CAMBIO: Preparamos el objeto con las nuevas columnas
             const payload = {
-                title: formData.title,
-                isPublic: formData.isPublic,
+                title: formData.title.trim(),
+                isPublic: false, // Forzamos false en el envío
                 category: formData.category,
-                fileUrl: formData.file ? formData.file.name : null, // Guardamos el nombre como referencia
+                fileUrl: formData.file ? formData.file.name : null,
                 companyId: user.companyId || null
             };
 
@@ -47,11 +46,12 @@ export default function NewCoursePage() {
             });
 
             if (res.ok) {
-                router.push('/dashboard/administrator/admin/courses');
+                // Redirigimos a la gestión de cursos
+                router.push('/dashboard/administrator/admin/courses/manage');
             } else {
                 const errorData = await res.json();
                 console.error("Error backend:", errorData);
-                alert("Error al guardar en la base de datos.");
+                alert("Error al guardar en la base de datos: " + (errorData.message || ""));
             }
         } catch (err) {
             alert("Error de conexión.");
@@ -67,10 +67,11 @@ export default function NewCoursePage() {
             <main className="flex-1 p-12 overflow-y-auto">
                 <div className="max-w-2xl mx-auto">
                     <header className="mb-10">
-                        <button onClick={() => router.back()} className="text-[#0071e3] font-medium mb-4 flex items-center gap-2">
+                        <button onClick={() => router.back()} className="text-[#0071e3] font-medium mb-4 flex items-center gap-2 hover:underline">
                             ← Volver
                         </button>
                         <h1 className="text-4xl font-bold text-[#1d1d1f] tracking-tight">Nuevo Curso</h1>
+                        <p className="text-[#86868b] mt-2">Crea un nuevo curso para los empleados de tu empresa.</p>
                     </header>
 
                     <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-10">
@@ -82,12 +83,12 @@ export default function NewCoursePage() {
                                 type="text"
                                 value={formData.title}
                                 onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                className="w-full px-6 py-5 rounded-2xl bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] outline-none font-bold"
-                                placeholder="Introduzca nombre del curso"
+                                className="w-full px-6 py-5 rounded-2xl bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] outline-none font-bold text-[#1d1d1f] transition-all"
+                                placeholder="Ej: Prevención de Riesgos"
                             />
                         </div>
 
-                        {/* 2. CATEGORÍA (NUEVO) */}
+                        {/* 2. CATEGORÍA */}
                         <div className="space-y-4">
                             <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-1">Tipo de Formación</label>
                             <div className="grid grid-cols-2 gap-4">
@@ -108,7 +109,7 @@ export default function NewCoursePage() {
                             </div>
                         </div>
 
-                        {/* 3. MATERIAL PDF (NUEVO) */}
+                        {/* 3. MATERIAL PDF */}
                         <div className="space-y-4">
                             <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-1">Documento de estudio</label>
                             <div className="relative h-32 w-full border-2 border-dashed border-gray-200 rounded-3xl flex items-center justify-center bg-[#f5f5f7] hover:border-blue-400 transition-all cursor-pointer">
@@ -118,31 +119,19 @@ export default function NewCoursePage() {
                                     onChange={e => setFormData({ ...formData, file: e.target.files?.[0] || null })}
                                     className="absolute inset-0 opacity-0 cursor-pointer"
                                 />
-                                <div className="text-center">
-                                    <p className="font-bold text-[#1d1d1f]">{formData.file ? formData.file.name : 'Seleccionar PDF'}</p>
-                                    <p className="text-xs text-[#86868b]">{formData.file ? 'Archivo listo' : 'Formatos aceptados: .pdf'}</p>
+                                <div className="text-center px-4">
+                                    <p className="font-bold text-[#1d1d1f] truncate max-w-xs">
+                                        {formData.file ? formData.file.name : 'Seleccionar PDF'}
+                                    </p>
+                                    <p className="text-xs text-[#86868b] mt-1">{formData.file ? 'Archivo cargado correctamente' : 'Haz clic para subir el material formativo'}</p>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* 4. VISIBILIDAD */}
-                        <div
-                            onClick={() => setFormData({ ...formData, isPublic: !formData.isPublic })}
-                            className={`p-6 cursor-pointer rounded-3xl border-2 transition-all flex items-center justify-between ${formData.isPublic ? 'border-green-500 bg-green-50' : 'bg-[#f5f5f7] border-transparent'}`}
-                        >
-                            <div className="flex items-center gap-4">
-                                <span className="text-2xl">{formData.isPublic ? '🌐' : '🔒'}</span>
-                                <div>
-                                    <p className="font-bold text-[#1d1d1f]">{formData.isPublic ? 'Público' : 'Privado'}</p>
-                                    <p className="text-xs text-[#86868b]">Control de acceso global</p>
-                                </div>
-                            </div>
-                        </div>
+                        </div><br />
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-4 bg-[#0071e3] text-white rounded-2xl font-bold text-lg hover:bg-[#0077ed] disabled:bg-gray-400 shadow-md"
+                            className="w-full py-5 bg-[#1d1d1f] text-white rounded-2xl font-bold text-lg hover:bg-black disabled:bg-gray-400 shadow-md transition-all active:scale-[0.98] cursor-pointer"
                         >
                             {loading ? 'Creando curso...' : 'Crear Curso'}
                         </button>

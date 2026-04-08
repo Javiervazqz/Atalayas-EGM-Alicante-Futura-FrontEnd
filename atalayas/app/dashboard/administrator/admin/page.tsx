@@ -112,7 +112,7 @@ export default function AdminDashboard() {
             ) : courses.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-[#86868b] text-sm">No hay cursos todavía</p>
-                <Link href="/dashboard/admin/courses/new" className="text-[#0071e3] text-sm mt-2 inline-block hover:text-blue-600">
+                <Link href="/dashboard/admin/courses/manage/new" className="text-[#0071e3] text-sm mt-2 inline-block hover:text-blue-600">
                   Crear primer curso →
                 </Link>
               </div>
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'Nuevo empleado', icon: '👤', href: '/dashboard/admin/users/new' },
-                { label: 'Nuevo curso', icon: '📚', href: '/dashboard/administrator/admin/courses/new' },
+                { label: 'Nuevo curso', icon: '📚', href: '/dashboard/administrator/admin/courses/manage/new' },
                 { label: 'Subir documento', icon: '📄', href: '/dashboard/admin/documents/new' },
                 { label: 'Ver informes', icon: '📊', href: '/dashboard/admin/reports' },
               ].map((action) => (
