@@ -1,76 +1,167 @@
 'use client';
-
+ 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Sidebar from '@/components/ui/Sidebar';
-import { API_ROUTES } from '@/lib/utils';
-
-// --- ESTRUCTURA DE DATOS DE ONBOARDING ---
-const ONBOARDING_STEPS = [
-  {
-    day: 1,
-    badge: "Bienvenida",
-    title: "Día 1: Tu aterrizaje",
-    description: "Primeros pasos críticos para configurar tu entorno de trabajo.",
-    tasks: [
-      { id: 't1', label: 'Completa tu perfil de usuario', done: true },
-      { id: 't2', label: 'Firma digital del contrato', done: false },
-      { id: 't3', label: 'Lectura del reglamento interno', done: false },
-    ]
-  },
-  {
-    day: 2,
-    badge: "Cultura EGM",
-    title: "Día 2: Entorno Atalayas",
-    description: "Conoce los servicios, seguridad y ventajas de trabajar en el polígono.",
-    tasks: [
-      { id: 't4', label: 'Explora servicios de restauración', done: false },
-      { id: 't5', label: 'Revisa el plan de movilidad y parking', done: false },
-      { id: 't6', label: 'Acceso al portal de documentos', done: false },
-    ]
-  },
-  {
-    day: 3,
-    badge: "Formación",
-    title: "Día 3: Capacitación",
-    description: "Comienza tus cursos de seguridad y metodología.",
-    tasks: [
-      { id: 't7', label: 'Curso: Prevención de riesgos laborales', done: false },
-      { id: 't8', label: 'Video: Historia de Alicante Futura', done: false },
-    ]
-  }
-];
-
+import { useRouter } from 'next/navigation';
+ 
+interface Course {
+  id: string;
+  title: string;
+  isPublic: boolean;
+}
+ 
+interface Enrollment {
+  id: string;
+  progress: number;
+  Course: Course;
+}
+ 
+const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
+ 
+function Sidebar({ active }: { active: string }) {
+  const router = useRouter();
+  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
+ 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    router.push('/login');
+  };
+ 
+  const navItems = [
+    { label: 'Panel', href: '/dashboard/employee', icon: (
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor"/></svg>
+    )},
+    { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: (
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M4 19V6a2 2 0 012-2h12a2 2 0 012 2v13M4 19a2 2 0 002 2h12a2 2 0 002-2M4 19H2m20 0h-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M9 10h6M9 14h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+    )},
+    { label: 'Documentos', href: '/dashboard/employee/documents', icon: (
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 2v6h6M9 13h6M9 17h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+    )},
+    { label: 'Servicios', href: '/dashboard/employee/services', icon: (
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+    )},
+  ];
+ 
+  return (
+    <aside style={{
+      width: '240px',
+      minHeight: '100vh',
+      background: 'rgba(255,255,255,0.8)',
+      backdropFilter: 'blur(20px)',
+      borderRight: '1px solid rgba(0,0,0,0.06)',
+      display: 'flex',
+      flexDirection: 'column',
+      fontFamily: appleFont,
+      position: 'sticky',
+      top: 0,
+    }}>
+      {/* Logo */}
+      <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            width: '32px', height: '32px',
+            background: 'linear-gradient(135deg, #1d1d1f 0%, #434343 100%)',
+            borderRadius: '9px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span style={{ color: 'white', fontSize: '14px', fontWeight: 600 }}>A</span>
+          </div>
+          <div>
+            <p style={{ color: '#1d1d1f', fontSize: '14px', fontWeight: 600, margin: 0 }}>Atalayas</p>
+            <p style={{ color: '#86868b', fontSize: '11px', margin: 0 }}>Polígono Industrial</p>
+          </div>
+        </div>
+      </div>
+ 
+      {/* Nav */}
+      <nav style={{ flex: 1, padding: '12px 10px' }}>
+        {navItems.map((item) => {
+          const isActive = active === item.label;
+          return (
+            <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '9px 12px',
+                borderRadius: '10px',
+                marginBottom: '2px',
+                background: isActive ? 'rgba(0,113,227,0.08)' : 'transparent',
+                color: isActive ? '#0071e3' : '#424245',
+                fontSize: '14px',
+                fontWeight: isActive ? 500 : 400,
+                cursor: 'pointer',
+                transition: 'background 0.15s',
+              }}>
+                {item.icon}
+                {item.label}
+              </div>
+            </Link>
+          );
+        })}
+      </nav>
+ 
+      {/* User */}
+      <div style={{ padding: '16px 10px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '10px',
+          padding: '10px 12px',
+          borderRadius: '10px',
+          background: '#f5f5f7',
+          marginBottom: '6px',
+        }}>
+          <div style={{
+            width: '30px', height: '30px',
+            background: '#e8e8ed',
+            borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <span style={{ color: '#424245', fontSize: '12px', fontWeight: 600 }}>
+              {user.email?.[0]?.toUpperCase() || 'U'}
+            </span>
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ color: '#1d1d1f', fontSize: '13px', fontWeight: 500, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user.email || 'Usuario'}
+            </p>
+            <p style={{ color: '#86868b', fontSize: '11px', margin: 0 }}>Empleado</p>
+          </div>
+        </div>
+        <button
+          onClick={handleLogout}
+          style={{
+            width: '100%', padding: '8px 12px',
+            border: 'none', borderRadius: '10px',
+            background: 'transparent', color: '#ff3b30',
+            fontSize: '13px', cursor: 'pointer',
+            textAlign: 'left', fontFamily: appleFont,
+            display: 'flex', alignItems: 'center', gap: '8px',
+          }}
+        >
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Cerrar sesión
+        </button>
+      </div>
+    </aside>
+  );
+}
+ 
 export default function EmployeeDashboard() {
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>({});
-  const [currentDay, setCurrentDay] = useState(1); // Control de evolución
-
-  // 1. Carga de datos iniciales
+ 
+  const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+ 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-      setUser(storedUser);
-
-      // LÓGICA DE DÍAS: Calculamos la diferencia entre hoy y la creación de cuenta
-      if (storedUser.createdAt) {
-        const signupDate = new Date(storedUser.createdAt);
-        const today = new Date();
-        const diffTime = Math.abs(today.getTime() - signupDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        setCurrentDay(Math.min(diffDays, ONBOARDING_STEPS.length));
-      }
-    }
-
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(API_ROUTES.COURSES.GET_ALL, { 
-          headers: { Authorization: `Bearer ${token}` } 
-        });
-        const data = await res.json();
-        setCourses(Array.isArray(data) ? data : []);
+        const headers = { Authorization: `Bearer ${getToken()}` };
+        const coursesRes = await fetch('http://localhost:3000/courses', { headers });
+        const coursesData = await coursesRes.json();
+        setCourses(Array.isArray(coursesData) ? coursesData : []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -79,133 +170,191 @@ export default function EmployeeDashboard() {
     };
     fetchData();
   }, []);
-
-  // Helpers de datos
-  const firstName = user?.name || user?.email?.split('@')[0] || 'Empleado';
-  const unlockedSteps = ONBOARDING_STEPS.filter(s => s.day <= currentDay);
-  const allUnlockedTasks = unlockedSteps.flatMap(s => s.tasks);
-  const completedTasks = allUnlockedTasks.filter(t => t.done).length;
-  const progressPercent = Math.round((completedTasks / allUnlockedTasks.length) * 100);
-
+ 
+  const completedCourses = enrollments.filter(e => e.progress === 100).length;
+  const inProgressCourses = enrollments.filter(e => e.progress > 0 && e.progress < 100).length;
+ 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
-      <Sidebar role="EMPLOYEE" />
-
-      <main className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        
-        {/* COLUMNA CENTRAL: CONTENIDO PRINCIPAL */}
-        <div className="flex-1 h-screen overflow-y-auto px-6 md:px-12 py-10 no-scrollbar">
-          
-          {/* Header Bienvenida */}
-          <header className="mb-10">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-black text-[#1d1d1f] tracking-tight">¡Hola, {firstName}! 👋</h1>
-                    <p className="text-gray-500 mt-1 font-medium">Estás en tu <span className='font-black px-1 py-1 rounded-lg hover:shadow-lg transition-all bg-[#d9ff00] text-[#005596]'>Día {currentDay}</span> de incorporación.</p>
-                </div>
-                {/* BOTÓN DESARROLLO (Borrar en producción) */}
-                <button 
-                    onClick={() => setCurrentDay(prev => prev < 3 ? prev + 1 : 1)}
-                    className="bg-[#d9ff00] text-[#005596] text-[10px] font-black px-3 py-2 rounded-lg hover:shadow-lg transition-all"
-                >
-                    DEBUG: SIGUIENTE DÍA
-                </button>
-            </div>
-          </header>
-
-          {/* LISTADO DE ONBOARDING EVOLUTIVO */}
-          <section className="space-y-6 mb-12">
-            <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em] mb-4">Tu Ruta de Incorporación</h2>
-            
-            {unlockedSteps.map((step) => (
-              <div key={step.day} className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-sm hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="bg-[#d9ff00] text-[#005596] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                    {step.badge}
-                  </span>
-                  {step.day < currentDay && (
-                    <span className="text-[#005596] text-[10px] font-bold">✓ Completado</span>
-                  )}
-                </div>
-                
-                <h3 className="text-xl font-bold text-[#1d1d1f] mb-1">{step.title}</h3>
-                <p className="text-gray-500 text-sm mb-6 font-medium">{step.description}</p>
-
-                <div className="grid gap-3">
-                  {step.tasks.map((task) => (
-                    <div key={task.id} className="flex items-center gap-4 p-4 rounded-2xl border border-gray-50 bg-gray-50/30 hover:bg-white hover:border-[#d9ff00] transition-all group cursor-pointer">
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${task.done ? 'bg-[#005596] border-[#005596]' : 'border-gray-200 group-hover:border-[#d9ff00]'}`}>
-                        {task.done && <span className="text-[#d9ff00] text-xs">✓</span>}
-                      </div>
-                      <span className={`text-sm font-bold ${task.done ? 'text-gray-400 line-through' : 'text-[#1d1d1f]'}`}>
-                        {task.label}
-                      </span>
-                      <span className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-[#005596]">→</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </section>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
+      <Sidebar active="Panel" />
+ 
+      <main style={{ flex: 1, padding: '40px', overflow: 'auto' }}>
+ 
+        {/* Header */}
+        <div style={{ marginBottom: '36px' }}>
+          <h1 style={{ color: '#1d1d1f', fontSize: '32px', fontWeight: 700, letterSpacing: '-0.04em', margin: '0 0 6px' }}>
+            Buenos días
+          </h1>
+          <p style={{ color: '#86868b', fontSize: '15px', margin: 0 }}>
+            Consulta tus cursos y tu progreso de formación
+          </p>
         </div>
-
-        {/* PANEL DERECHO: MÉTRICAS Y PERFIL */}
-        <aside className="w-full md:w-80 h-screen border-l border-gray-100 bg-white p-8 flex flex-col gap-8 shrink-0 overflow-y-auto">
-
-            {/* Decoración círculo fondo */}
-            <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-[#d9ff00]/10 rounded-full blur-2xl"></div>
-          
-
-          {/* Progreso Circular o Barra */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Tu Progreso Total</h4>
-            <div className="bg-gray-50 rounded-[24px] p-5 border border-gray-100">
-                <div className="flex justify-between items-end mb-2">
-                    <span className="text-2xl font-black text-[#005596]">{progressPercent}%</span>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">{completedTasks} de {allUnlockedTasks.length} tareas</span>
-                </div>
-                <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                        className="h-full bg-[#d9ff00] rounded-full transition-all duration-1000 shadow-[0_0_10px_#d9ff00]"
-                        style={{ width: `${progressPercent}%` }}
-                    />
-                </div>
+ 
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
+          {[
+            { label: 'Cursos disponibles', value: courses.length, sub: 'para ti', color: '#0071e3', bg: 'rgba(0,113,227,0.06)' },
+            { label: 'En progreso', value: inProgressCourses, sub: 'cursos activos', color: '#ff9500', bg: 'rgba(255,149,0,0.06)' },
+            { label: 'Completados', value: completedCourses, sub: 'cursos terminados', color: '#34c759', bg: 'rgba(52,199,89,0.06)' },
+          ].map((stat) => (
+            <div key={stat.label} style={{
+              background: '#ffffff',
+              borderRadius: '18px',
+              padding: '24px',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)',
+            }}>
+              <div style={{
+                width: '40px', height: '40px',
+                background: stat.bg,
+                borderRadius: '12px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: '16px',
+              }}>
+                <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: stat.color, opacity: 0.8 }} />
+              </div>
+              <p style={{ color: '#1d1d1f', fontSize: '32px', fontWeight: 700, letterSpacing: '-0.04em', margin: '0 0 4px' }}>
+                {loading ? '—' : stat.value}
+              </p>
+              <p style={{ color: '#1d1d1f', fontSize: '14px', fontWeight: 500, margin: '0 0 2px' }}>{stat.label}</p>
+              <p style={{ color: '#86868b', fontSize: '12px', margin: 0 }}>{stat.sub}</p>
             </div>
-          </div>
-
-          {/* Accesos rápidos con estilo EGM */}
-          <div className="space-y-4">
-            {/* CURSOS */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em]">Formación Recomendada</h2>
-                <Link href="/dashboard/employee/courses" className="text-[#005596] text-xs font-bold hover:underline">Ver catálogo completo</Link>
+          ))}
+        </div>
+ 
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+ 
+          {/* Cursos disponibles */}
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '18px',
+            padding: '28px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, margin: 0, letterSpacing: '-0.02em' }}>
+                Cursos disponibles
+              </h2>
+              <Link href="/dashboard/employee/courses" style={{ color: '#0071e3', fontSize: '13px', textDecoration: 'none' }}>
+                Ver todos
+              </Link>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6">
-              {loading ? (
-                [1,2,3].map(n => <div key={n} className="h-48 bg-gray-200 rounded-[32px] animate-pulse" />)
-              ) : (
-                courses.slice(0, 3).map((course) => (
-                  <Link key={course.id} href={`/dashboard/employee/courses/${course.id}`}>
-                    <div className="bg-white rounded-[32px] overflow-hidden border border-gray-100 hover:shadow-xl transition-all group">
-                        <div className="h-18 bg-[#005596] flex items-center justify-center text-4xl group-hover:scale-105 transition-transform">
-                            <i className="bi bi-mortarboard-fill text-white"></i>
-                        </div>
-                        <div className="p-6">
-                            <h4 className="font-bold text-[#1d1d1f] text-sm leading-tight mb-2 group-hover:text-[#005596]">{course.title}</h4>
-                            <span className="text-[10px] font-black uppercase text-[#005596] bg-blue-50 px-2 py-1 rounded-md">
-                                {course.isPublic ? 'Público' : 'Empresa'}
-                            </span>
-                        </div>
+ 
+            {loading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {[1,2,3].map(i => (
+                  <div key={i} style={{ height: '56px', background: '#f5f5f7', borderRadius: '12px' }} />
+                ))}
+              </div>
+            ) : courses.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                <p style={{ color: '#86868b', fontSize: '14px' }}>No hay cursos disponibles</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {courses.slice(0, 5).map((course) => (
+                  <Link key={course.id} href={`/dashboard/employee/courses/${course.id}`} style={{ textDecoration: 'none' }}>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      background: '#f5f5f7',
+                      cursor: 'pointer',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#ebebed')}
+                    onMouseLeave={e => (e.currentTarget.style.background = '#f5f5f7')}
+                    >
+                      <div style={{
+                        width: '34px', height: '34px',
+                        background: course.isPublic ? 'rgba(52,199,89,0.12)' : 'rgba(0,113,227,0.1)',
+                        borderRadius: '10px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0,
+                        fontSize: '16px',
+                      }}>
+                        📚
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ color: '#1d1d1f', fontSize: '14px', fontWeight: 500, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {course.title}
+                        </p>
+                        <p style={{ color: course.isPublic ? '#34c759' : '#86868b', fontSize: '11px', margin: 0 }}>
+                          {course.isPublic ? 'Público' : 'Tu empresa'}
+                        </p>
+                      </div>
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" style={{ color: '#c7c7cc', flexShrink: 0 }}>
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                     </div>
                   </Link>
-                ))
-              )}
-            </div>
-          </section>
+                ))}
+              </div>
+            )}
           </div>
-        </aside>
+ 
+          {/* Mi progreso */}
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '18px',
+            padding: '28px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)',
+          }}>
+            <h2 style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, margin: '0 0 20px', letterSpacing: '-0.02em' }}>
+              Mi progreso
+            </h2>
+ 
+            {enrollments.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                <div style={{
+                  width: '56px', height: '56px',
+                  background: '#f5f5f7',
+                  borderRadius: '18px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 14px',
+                  fontSize: '26px',
+                }}>
+                  🎯
+                </div>
+                <p style={{ color: '#1d1d1f', fontSize: '14px', fontWeight: 500, margin: '0 0 6px' }}>
+                  Sin matrículas activas
+                </p>
+                <p style={{ color: '#86868b', fontSize: '13px', margin: '0 0 16px' }}>
+                  Empieza un curso para ver tu progreso aquí
+                </p>
+                <Link href="/dashboard/employee/courses" style={{
+                  color: '#0071e3', fontSize: '13px', textDecoration: 'none',
+                  padding: '8px 16px',
+                  background: 'rgba(0,113,227,0.08)',
+                  borderRadius: '20px',
+                }}>
+                  Explorar cursos
+                </Link>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {enrollments.map((enrollment) => (
+                  <div key={enrollment.id}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span style={{ color: '#1d1d1f', fontSize: '14px', fontWeight: 500 }}>
+                        {enrollment.Course.title}
+                      </span>
+                      <span style={{ color: '#86868b', fontSize: '13px' }}>{enrollment.progress}%</span>
+                    </div>
+                    <div style={{ height: '4px', background: '#f5f5f7', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${enrollment.progress}%`,
+                        background: enrollment.progress === 100 ? '#34c759' : '#0071e3',
+                        borderRadius: '4px',
+                        transition: 'width 0.5s ease',
+                      }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </main>
     </div>
   );
