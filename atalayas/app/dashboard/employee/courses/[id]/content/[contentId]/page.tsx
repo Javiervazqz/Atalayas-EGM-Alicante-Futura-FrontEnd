@@ -1,156 +1,157 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
+import mediumZoom from 'medium-zoom';
 import Link from 'next/link';
 
-export default function ContentDetailPage() {
-  const { id: courseId, contentId } = useParams();
+const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
+
+export default function EmployeeContentDetail() {
+  const params = useParams();
+  const zoomRef = useRef<HTMLImageElement>(null);
+
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'reading' | 'quiz' | 'podcast'>('reading');
 
   useEffect(() => {
     const fetchContent = async () => {
+      const contentId = params.contentId;
+      const courseId = params.id;
+      if (!contentId || !courseId) return;
+
       try {
-        const token = localStorage.getItem('token');
         const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(contentId as string), {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         const data = await res.json();
-        setContent(data);
-      } catch (err) {
-        console.error(err);
+        const finalData = data.content || data.data || data;
+        setContent(finalData);
+      } catch (error) {
+        console.error("Error al cargar la lección:", error);
       } finally {
         setLoading(false);
       }
     };
-    if (contentId) fetchContent();
-  }, [contentId]);
+    fetchContent();
+  }, [params.contentId, params.id]);
 
-  if (loading) return <div className="p-10 animate-pulse text-[#005596] font-bold">Preparando tu formación...</div>;
+  useEffect(() => {
+    if (zoomRef.current && content?.imageUrl) {
+      const zoom = mediumZoom(zoomRef.current, { background: 'rgba(255,255,255,0.95)', margin: 24 });
+      return () => { zoom.detach(); };
+    }
+  }, [content?.imageUrl]);
+
+  if (loading) return (
+    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    </div>
+  );
+
+  if (!content) return null;
+
+  // Verificamos si existen recursos para mostrar la barra lateral
+  const hasResources = content.url || content.podcast;
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
       <Sidebar role="EMPLOYEE" />
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* HEADER DINÁMICO */}
-        <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4">
-            <Link href={`/dashboard/employee/courses/${courseId}`} className="text-gray-400 hover:text-[#005596] transition-colors">
-              <i className="bi bi-arrow-left-circle-fill text-2xl"></i>
+      <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>
+        
+        {/* HEADER */}
+        <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)', padding: '32px 0' }}>
+          <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 24px' }}>
+            <Link href={`/dashboard/employee/courses/${params.id}`}
+              style={{ color: '#0071e3', fontSize: '15px', fontWeight: 500, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '24px' }}>
+              ‹ Volver al curso
             </Link>
-            <div>
-              <span className="text-[10px] font-black text-[#005596] bg-blue-50 px-2 py-0.5 rounded uppercase tracking-tighter">
-                Lección {content?.order}
-              </span>
-              <h1 className="text-lg font-bold text-[#1d1d1f] leading-tight">{content?.title}</h1>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+              <div style={{ width: '64px', height: '64px', background: 'rgba(0,113,227,0.1)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px' }}>
+                📖
+              </div>
+              <div>
+                <h1 style={{ fontSize: 'clamp(22px, 4vw, 30px)', fontWeight: 800, color: '#1d1d1f', letterSpacing: '-0.02em', margin: 0 }}>
+                  {content.title}
+                </h1>
+                <span className="inline-block mt-1 text-[11px] font-bold text-blue-600 uppercase tracking-wider">
+                  Lección {content.order || 1}
+                </span>
+              </div>
             </div>
-          </div>
-
-          <nav className="flex bg-gray-100 p-1 rounded-2xl">
-            <button 
-              onClick={() => setActiveTab('reading')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'reading' ? 'bg-white text-[#005596] shadow-sm' : 'text-gray-500'}`}
-            >
-              Lectura
-            </button>
-            {content?.quiz && (
-              <button 
-                onClick={() => setActiveTab('quiz')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'quiz' ? 'bg-white text-[#005596] shadow-sm' : 'text-gray-500'}`}
-              >
-                IA Quiz
-              </button>
-            )}
-            {content?.podcast && (
-              <button 
-                onClick={() => setActiveTab('podcast')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'podcast' ? 'bg-white text-[#005596] shadow-sm' : 'text-gray-500'}`}
-              >
-                Audio IA
-              </button>
-            )}
-          </nav>
-        </header>
-
-        {/* CONTENIDO PRINCIPAL */}
-        <div className="flex-1 overflow-y-auto bg-white">
-          <div className="max-w-4xl mx-auto py-12 px-6">
-            
-            {/* VISTA DE LECTURA (Summary + Portada) */}
-            {activeTab === 'reading' && (
-              <div className="animate-in fade-in duration-500">
-                {content?.url && (
-                  <img 
-                    src={content.url} 
-                    alt="Portada" 
-                    className="w-full h-64 object-cover rounded-[32px] mb-10 shadow-lg border border-gray-100"
-                  />
-                )}
-                <div className="prose prose-blue max-w-none">
-                  <h2 className="text-3xl font-black text-[#1d1d1f] mb-6">Resumen Ejecutivo</h2>
-                  <div className="text-gray-600 text-lg leading-relaxed whitespace-pre-line">
-                    {content?.summary || "No hay resumen disponible para esta lección."}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* VISTA DE QUIZ IA */}
-            {activeTab === 'quiz' && (
-              <div className="animate-in slide-in-from-bottom-4 duration-500 bg-[#f8fafc] p-8 rounded-[32px] border border-blue-100">
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-[#d9ff00] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-                    <i className="bi bi-lightning-charge-fill text-[#005596] text-2xl"></i>
-                  </div>
-                  <h2 className="text-2xl font-black text-[#1d1d1f]">Pon a prueba tu conocimiento</h2>
-                  <p className="text-gray-500 text-sm">Cuestionario generado por IA basado en el material del curso.</p>
-                </div>
-                {/* Aquí renderizarías el JSON del quiz */}
-                <div className="space-y-4">
-                  {content.quiz.questions?.map((q: any, i: number) => (
-                    <div key={i} className="bg-white p-6 rounded-2xl border border-gray-100">
-                      <p className="font-bold text-[#005596] mb-3">{q.question}</p>
-                      {/* Lógica de opciones... */}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* VISTA DE PODCAST IA */}
-            {activeTab === 'podcast' && (
-              <div className="animate-in zoom-in-95 duration-500 bg-[#005596] p-12 rounded-[40px] text-center text-white relative overflow-hidden">
-                <div className="relative z-10">
-                  <i className="bi bi-mic-fill text-5xl text-[#d9ff00] mb-6 block"></i>
-                  <h2 className="text-2xl font-black mb-2">Podcast de la Lección</h2>
-                  <p className="text-blue-200 mb-8 max-w-md mx-auto">Escucha el resumen de voz generado por nuestra IA mientras realizas otras tareas.</p>
-                  
-                  <audio controls className="w-full max-w-md mx-auto h-12 rounded-full">
-                    <source src={content.podcast.audioUrl} type="audio/mpeg" />
-                    Tu navegador no soporta el audio.
-                  </audio>
-                </div>
-                {/* Decoración fondo */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
-              </div>
-            )}
-
           </div>
         </div>
 
-        {/* FOOTER DE PROGRESO */}
-        <footer className="bg-white border-t border-gray-100 px-8 py-4 shrink-0 flex justify-between items-center">
-          <p className="text-xs text-gray-400 font-medium">Atalayas EGM · Formación Continua</p>
-          <button className="bg-[#005596] text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#d9ff00] hover:text-[#005596] transition-all shadow-lg">
-            Finalizar Lección
-          </button>
-        </footer>
+        {/* CUERPO DINÁMICO */}
+        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 24px' }}>
+          <div className={hasResources ? "content-with-sidebar" : "content-full"}>
+            
+            <article>
+              <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#1d1d1f', marginBottom: '20px' }}>
+                Desarrollo de la unidad
+              </h3>
+
+              <div className="prose prose-slate max-w-none">
+                <p style={{ fontSize: '18px', lineHeight: '1.8', color: '#424245', whiteSpace: 'pre-wrap' }}>
+                  {content.summary || 'Sin contenido proporcionado'}
+                </p>
+              </div>
+            </article>
+
+            {/* SOLO SE MUESTRA SI HAY RECURSOS */}
+            {hasResources && (
+              <aside className="space-y-6">
+                <h4 className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.2em] px-1">Material Extra</h4>
+                
+                {content.url && (
+                  <div className="bg-white p-6 rounded-[2rem] border border-black/5 shadow-sm text-center">
+                    <div className="text-4xl mb-3">📄</div>
+                    <p className="text-[11px] font-black text-[#1d1d1f] uppercase mb-5">Guía PDF</p>
+                    <a href={content.url} target="_blank" rel="noopener noreferrer"
+                      className="block w-full py-3 bg-[#0071e3] text-white rounded-xl text-xs font-bold hover:bg-[#0077ed] transition-all">
+                      Abrir PDF
+                    </a>
+                  </div>
+                )}
+                
+                {content.podcast && (
+                  <div className="bg-[#1d1d1f] p-6 rounded-[2rem] text-white shadow-xl shadow-black/10">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-lg">🎙️</span>
+                      <p className="text-[10px] font-black opacity-60 tracking-widest uppercase">Podcast</p>
+                    </div>
+                    <button className="w-full py-2.5 bg-white text-black rounded-lg text-xs font-bold hover:bg-gray-100 transition-colors">
+                      Escuchar Resumen
+                    </button>
+                  </div>
+                )}
+              </aside>
+            )}
+          </div>
+        </div>
       </main>
+
+      <style jsx>{`
+        .content-with-sidebar { 
+          display: grid; 
+          grid-template-columns: 1fr 300px; 
+          gap: 64px; 
+        }
+        .content-full { 
+          max-width: 800px;
+          margin: 0 auto;
+        }
+        @media (max-width: 1024px) {
+          .content-with-sidebar { 
+            grid-template-columns: 1fr; 
+            gap: 48px; 
+          }
+        }
+      `}</style>
     </div>
   );
 }

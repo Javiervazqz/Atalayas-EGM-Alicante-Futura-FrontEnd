@@ -28,7 +28,7 @@ const navItems = {
     { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill text-blue-500"></i> }
   ],
   EMPLOYEE: [
-    { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-house-fill text-[#005596]"></i> },
+    { label: 'Inicio', href: '/dashboard/employee', icon: <i className="bi bi-house-fill text-[#005596]"></i> },
     { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: <i className="bi bi-mortarboard-fill text-[#005596] "></i> },
     { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill text-[#005596]"></i> },
     { label: 'Servicios', href: '/dashboard/employee/services', icon: <i className="bi bi-suitcase-lg-fill text-[#005596]"></i> },
