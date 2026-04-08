@@ -3,50 +3,44 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-// Importamos nuestras rutas limpias (ya NO importamos supabase)
-import { API_ROUTES } from '@/lib/utils';
-
+ 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
+ 
   const handleLogin = async (e: React.FormEvent) => {
-    /*djnjfndj */
     e.preventDefault();
     setLoading(true);
     setError('');
-
+ 
     try {
-      // Volvemos a llamar a TU backend de NestJS
-      const res = await fetch(API_ROUTES.AUTH.LOGIN, {
+      const res = await fetch('http://localhost:3000/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
+ 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Error al iniciar sesión');
-
+ 
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-
+ 
       const role = data.user.role;
-      
-      if (role === 'GENERAL_ADMIN') router.push('/dashboard/administrator/general-admin');
-      else if (role === 'ADMIN') router.push('/dashboard/administrator/admin');
+      if (role === 'GENERAL_ADMIN') router.push('/dashboard/general-admin');
+      else if (role === 'ADMIN') router.push('/dashboard/admin');
       else if (role === 'EMPLOYEE') router.push('/dashboard/employee');
       else router.push('/dashboard/public');
-      
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
-
+ 
   return (
     <div
       className="min-h-screen flex flex-col"
@@ -68,12 +62,23 @@ export default function LoginPage() {
             Atalayas
           </span>
         </div>
+        <Link
+          href="/register"
+          style={{
+            color: '#0071e3',
+            fontSize: '14px',
+            fontWeight: 400,
+            textDecoration: 'none',
+          }}
+        >
+          Crear cuenta
+        </Link>
       </nav>
-
+ 
       {/* Main */}
       <main className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
-
+ 
           {/* Card */}
           <div
             className="rounded-3xl px-10 py-12"
@@ -104,7 +109,7 @@ export default function LoginPage() {
                 Polígono Industrial Alicante Futura
               </p>
             </div>
-
+ 
             {error && (
               <div
                 className="rounded-xl px-4 py-3 mb-6 text-center"
@@ -113,7 +118,7 @@ export default function LoginPage() {
                 <p style={{ color: '#ff3b30', fontSize: '13px' }}>{error}</p>
               </div>
             )}
-
+ 
             <form onSubmit={handleLogin} className="space-y-3">
               <div>
                 <input
@@ -143,7 +148,7 @@ export default function LoginPage() {
                   }}
                 />
               </div>
-
+ 
               <div>
                 <input
                   type="password"
@@ -172,7 +177,7 @@ export default function LoginPage() {
                   }}
                 />
               </div>
-
+ 
               <button
                 type="submit"
                 disabled={loading}
@@ -200,7 +205,7 @@ export default function LoginPage() {
                 {loading ? 'Iniciando sesión...' : 'Continuar'}
               </button>
             </form>
-
+ 
             <div className="text-center mt-6">
               <a
                 href="#"
@@ -210,29 +215,22 @@ export default function LoginPage() {
               </a>
             </div>
           </div>
-
+ 
           {/* Footer note */}
           <p className="text-center mt-6" style={{ color: '#86868b', fontSize: '12px', lineHeight: '1.6' }}>
             ¿Eres empleado de una empresa del polígono?<br />
             Contacta con tu administrador para obtener acceso.
           </p>
-
+ 
           <p className="text-center mt-4" style={{ color: '#86868b', fontSize: '13px' }}>
             ¿No tienes cuenta?{' '}
             <Link href="/register" style={{ color: '#0071e3', textDecoration: 'none' }}>
               Regístrate
             </Link>
           </p>
-
-          <p className="text-center mt-2" style={{ color: '#86868b', fontSize: '13px' }}>
-            ¿Eres una empresa del polígono?{' '}
-            <Link href="/company-register" style={{ color: '#0071e3', textDecoration: 'none' }}>
-              Solicitar alta
-            </Link>
-          </p>
         </div>
       </main>
-
+ 
       {/* Footer */}
       <footer className="px-8 py-6">
         <div className="flex items-center justify-center gap-6">
