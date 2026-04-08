@@ -109,7 +109,14 @@ const searchedServices = services.filter(s =>
                   filter === type ? 'bg-[#1d1d1f] text-white' : 'bg-white text-[#86868b] border border-gray-200'
                 }`}
               >
-                {type === 'ALL' ? 'Todos' : type === 'PUBLIC' ? '🌐 Públicos' : `🏭 Mi empresa`}
+                {type === 'ALL' ? ( 'Todos')  :
+                  type === 'PUBLIC' ? 
+                  (<span className="flex items-center gap-2">
+                    <i className="bi bi-globe text-green-400"></i> Públicos
+                </span>
+                )  : 
+                <span className='flex items-center gap-2'>
+                  <i className="bi bi-building-fill text-blue-400"></i> Mi empresa </span>}
               </button>
             ))}
           </div>

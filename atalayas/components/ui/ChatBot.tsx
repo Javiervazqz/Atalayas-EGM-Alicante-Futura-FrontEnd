@@ -315,7 +315,22 @@ export default function ChatWidget() {
                     {isLoading && (
                         <div className="flex items-end gap-2">
                             <div className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center text-sm"
-                                style={{ background: 'rgba(0,113,227,0.1)' }}>🏢</div>
+                                style={{ background: 'rgba(0,113,227,0.1)' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M12 2L14.8 8.5L22 11L14.8 13.5L12 20L9.2 13.5L2 11L9.2 8.5L12 2Z"
+                                            fill="#0071e3"
+                                            stroke="#0071e3"
+                                            strokeWidth="1.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                        {/* Chispa pequeña secundaria para darle más dinamismo */}
+                                        <path
+                                            d="M19 3L19.7 4.7L21.5 5.2L19.7 5.7L19 7.5L18.3 5.7L16.5 5.2L18.3 4.7L19 3Z"
+                                            fill="#0071e3"
+                                            opacity="0.6"
+                                        />
+                                    </svg></div>
                             <div className="flex gap-1 items-center px-4 py-3 rounded-[18px] rounded-bl-lg"
                                 style={{ background: '#f5f5f7' }}>
                                 {[0, 1, 2].map(i => (

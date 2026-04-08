@@ -56,18 +56,11 @@ export default function AdminDashboard() {
 
   // FUSIÓN: Mantenemos tus colores pero usamos sus iconos bi-bootstrap
   const statCards = [
-    { label: 'Empleados', value: stats.employees, icon: <i className="bi bi-people-fill"></i>, color: 'blue' },
-    { label: 'Cursos activos', value: stats.courses, icon: <i className="bi bi-mortarboard-fill"></i>, color: 'indigo' },
-    { label: 'Documentos', value: stats.documents, icon: <i className="bi bi-file-earmark-text-fill"></i>, color: 'violet' },
-    { label: 'Progreso medio', value: `${stats.avgProgress}%`, icon: <i className="bi bi-graph-up"></i>, color: 'cyan' },
+    { label: 'Empleados', value: stats.employees, icon: <i className="bi bi-people-fill text-blue-500"></i>},
+    { label: 'Cursos activos', value: stats.courses, icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i> },
+    { label: 'Documentos', value: stats.documents, icon:  <i className="bi bi-file-earmark-text-fill text-blue-500"></i> },
+    { label: 'Progreso medio', value: `${stats.avgProgress}%`, icon: <i className="bi bi-graph-up text-blue-500"></i> },
   ];
-
-  const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-700 border-blue-100',
-    indigo: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-    violet: 'bg-violet-50 text-violet-700 border-violet-100',
-    cyan: 'bg-cyan-50 text-cyan-700 border-cyan-100',
-  };
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
@@ -81,7 +74,7 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {statCards.map((stat) => (
-            <div key={stat.label} className={`rounded-2xl border p-5 ${colorMap[stat.color]}`}>
+            <div key={stat.label} className={`rounded-2xl border p-5`}>
               <div className="text-2xl mb-3">{stat.icon}</div>
               <div className="text-2xl font-bold text-[#1d1d1f] mb-1">{loading ? '...' : stat.value}</div>
               <div className="text-xs font-medium opacity-80">{stat.label}</div>
@@ -117,7 +110,7 @@ export default function AdminDashboard() {
                   <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-white border border-gray-200 shadow-sm rounded-lg flex items-center justify-center">
-                        <span className="text-sm"><i className="bi bi-mortarboard-fill text-blue-500"></i></span>
+                        <span className="text-sm"><i className="bi bi-mortarboard-fill text-blue-500 "></i></span>
                       </div>
                       <span className="text-[#1d1d1f] text-sm font-medium">{course.title}</span>
                     </div>
@@ -134,10 +127,10 @@ export default function AdminDashboard() {
             <h2 className="text-[#1d1d1f] font-semibold mb-5">Acciones rápidas</h2>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Nuevo empleado', icon: <i className="bi bi-person-fill-add"></i>, href: '/dashboard/admin/users/new' },
-                { label: 'Nuevo curso', icon: <i className="bi bi-mortarboard-fill"></i>, href: '/dashboard/administrator/admin/courses/manage/new' },
-                { label: 'Subir documento', icon: <i className="bi bi-file-earmark-text-fill"></i>, href: '/dashboard/admin/documents/new' },
-                { label: 'Ver informes', icon: <i className="bi bi-bar-chart-fill"></i>, href: '/dashboard/admin/reports' },
+                { label: 'Nuevo empleado', icon: <i className="bi bi-person-fill-add text-blue-500"></i>, href: '/dashboard/admin/users/new' },
+                { label: 'Nuevo curso', icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i>, href: '/dashboard/administrator/admin/courses/new' },
+                { label: 'Subir documento', icon: <i className="bi bi-file-earmark-text-fill text-blue-500"></i>, href: '/dashboard/admin/documents/new' },
+                { label: 'Ver informes', icon: <i className="bi bi-bar-chart-fill text-blue-500"></i> , href: '/dashboard/admin/reports' },
               ].map((action) => (
                 <Link
                   key={action.label}
