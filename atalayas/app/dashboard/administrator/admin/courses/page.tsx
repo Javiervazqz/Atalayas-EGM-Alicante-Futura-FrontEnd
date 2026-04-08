@@ -106,12 +106,12 @@ export default function AdminCourses() {
                                         }`}>
                                         {activeTab === 'BASICO' ? '📖' : '🎓'}
                                     </div>
-                                    <h3 className="text-[#1d1d1f] font-semibold text-lg leading-tight mb-4 min-h-[3rem] line-clamp-2">
+                                    <h3 className="text-[#1d1d1f] font-semibold text-lg leading-tight mb-4 min-h-12 line-clamp-2">
                                         {course.title}
                                     </h3>
                                 </div>
                                 <Link
-                                    href={`/dashboard/admin/courses/${course.id}`}
+                                    href={`/dashboard/administrator/admin/courses/${course.id}`}
                                     className="w-full py-2.5 bg-[#0071e3] text-white text-sm font-medium rounded-xl text-center hover:bg-[#0077ed] transition-colors shadow-sm"
                                 >
                                     Gestionar Curso
