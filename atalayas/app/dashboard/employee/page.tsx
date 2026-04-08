@@ -147,51 +147,14 @@ export default function EmployeeDashboard() {
               </div>
             ))}
           </section>
-
-          {/* CURSOS */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em]">Formación Recomendada</h2>
-                <Link href="/dashboard/employee/courses" className="text-[#005596] text-xs font-bold hover:underline">Ver catálogo completo</Link>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {loading ? (
-                [1,2,3].map(n => <div key={n} className="h-48 bg-gray-200 rounded-[32px] animate-pulse" />)
-              ) : (
-                courses.slice(0, 3).map((course) => (
-                  <Link key={course.id} href={`/dashboard/employee/courses/${course.id}`}>
-                    <div className="bg-white rounded-[32px] overflow-hidden border border-gray-100 hover:shadow-xl transition-all group">
-                        <div className="h-32 bg-[#005596] flex items-center justify-center text-4xl group-hover:scale-105 transition-transform">
-                            📚
-                        </div>
-                        <div className="p-6">
-                            <h4 className="font-bold text-[#1d1d1f] text-sm leading-tight mb-2 group-hover:text-[#005596]">{course.title}</h4>
-                            <span className="text-[10px] font-black uppercase text-[#005596] bg-blue-50 px-2 py-1 rounded-md">
-                                {course.isPublic ? 'Externo' : 'Empresa'}
-                            </span>
-                        </div>
-                    </div>
-                  </Link>
-                ))
-              )}
-            </div>
-          </section>
         </div>
 
         {/* PANEL DERECHO: MÉTRICAS Y PERFIL */}
         <aside className="w-full md:w-80 h-screen border-l border-gray-100 bg-white p-8 flex flex-col gap-8 shrink-0 overflow-y-auto">
-          
-          {/* Perfil Mini Card */}
-          <div className="bg-[#005596] rounded-[32px] p-6 text-white relative overflow-hidden shadow-lg shadow-blue-900/20">
-            <div className="relative z-10">
-                <p className="text-[#d9ff00] text-[10px] font-black uppercase tracking-widest mb-1">Empleado Activo</p>
-                <h3 className="text-xl font-black tracking-tighter">{firstName}</h3>
-                <p className="text-blue-200 text-xs font-medium opacity-80">{user.email}</p>
-            </div>
+
             {/* Decoración círculo fondo */}
             <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-[#d9ff00]/10 rounded-full blur-2xl"></div>
-          </div>
+          
 
           {/* Progreso Circular o Barra */}
           <div className="space-y-4">
@@ -212,32 +175,36 @@ export default function EmployeeDashboard() {
 
           {/* Accesos rápidos con estilo EGM */}
           <div className="space-y-4">
-            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Accesos Rápidos</h4>
-            <div className="grid gap-2">
-                {[
-                    { label: 'Documentación', icon: 'bi bi-file-earmark-text-fill text-[#005596]', href: '/dashboard/documents' },
-                    { label: 'Mis Cursos', icon: 'bi bi-mortarboard-fill text-[#005596]', href: '/dashboard/employee/courses' },
-                    { label: 'Servicios', icon: 'bi bi-suitcase-lg-fill text-[#005596]', href: '/dashboard/employee/services' },
-                ].map((item, idx) => (
-                    <Link key={idx} href={item.href}>
-                        <div className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-50 hover:border-[#d9ff00] hover:bg-gray-50 transition-all group">
-                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-[#d9ff00] transition-colors">
-                              <i className={`bi ${item.icon} text-xl text-[#005596]`}></i>
-                            </div>
-                            <span className="text-sm font-bold text-[#1d1d1f]">{item.label}</span>
-                        </div>
-                    </Link>
-                ))}
+            {/* CURSOS */}
+          <section>
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em]">Formación Recomendada</h2>
+                <Link href="/dashboard/employee/courses" className="text-[#005596] text-xs font-bold hover:underline">Ver catálogo completo</Link>
             </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6">
+              {loading ? (
+                [1,2,3].map(n => <div key={n} className="h-48 bg-gray-200 rounded-[32px] animate-pulse" />)
+              ) : (
+                courses.slice(0, 3).map((course) => (
+                  <Link key={course.id} href={`/dashboard/employee/courses/${course.id}`}>
+                    <div className="bg-white rounded-[32px] overflow-hidden border border-gray-100 hover:shadow-xl transition-all group">
+                        <div className="h-18 bg-[#005596] flex items-center justify-center text-4xl group-hover:scale-105 transition-transform">
+                            <i className="bi bi-mortarboard-fill text-white"></i>
+                        </div>
+                        <div className="p-6">
+                            <h4 className="font-bold text-[#1d1d1f] text-sm leading-tight mb-2 group-hover:text-[#005596]">{course.title}</h4>
+                            <span className="text-[10px] font-black uppercase text-[#005596] bg-blue-50 px-2 py-1 rounded-md">
+                                {course.isPublic ? 'Público' : 'Empresa'}
+                            </span>
+                        </div>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </section>
           </div>
-
-          {/* Footer del Aside */}
-          <div className="mt-auto bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200">
-                <p className="text-[10px] text-slate-400 font-bold leading-tight">
-                    Necesitas ayuda? Contacta con el gestor de Atalayas EGM.
-                </p>
-          </div>
-
         </aside>
       </main>
     </div>

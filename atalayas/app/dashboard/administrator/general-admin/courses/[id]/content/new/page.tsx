@@ -68,7 +68,7 @@ export default function NewAIContentPage() {
 
       if (res.ok) {
         // Volvemos a la moderación del curso
-        router.push(`/dashboard/administrator/admin/courses/${id}`);
+        router.push(`/dashboard/administrator/general-admin/courses/${id}`);
         router.refresh();
       } else {
         const errorData = await res.json();
@@ -84,14 +84,14 @@ export default function NewAIContentPage() {
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f7]">
-      <Sidebar role="ADMIN" />
+      <Sidebar role="GENERAL_ADMIN" />
       
       <main className="flex-1 p-12 overflow-y-auto">
         <div className="max-w-3xl mx-auto">
           
           {/* NAVEGACIÓN Y TÍTULO (ESTILO PREVIO) */}
           <header className="mb-12">
-            <Link href={`/dashboard/administrator/admin/courses/${id}`} className="text-[#0071e3] font-medium mb-4 flex items-center gap-2 hover:underline">
+            <Link href={`/dashboard/administrator/general-admin/courses/${id}`} className="text-[#0071e3] font-medium mb-4 flex items-center gap-2 hover:underline">
               ← Volver a Moderación
             </Link>
             <div className="flex items-center gap-4 mt-4">
