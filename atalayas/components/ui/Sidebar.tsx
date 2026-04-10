@@ -15,6 +15,7 @@ const navItems = {
     { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: <i className="bi bi-buildings-fill text-blue-500"></i> },
     { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill text-blue-500"></i>},
     { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i>  },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill text-blue-500"></i>  },
     { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: <i className="bi bi-suitcase-lg-fill text-blue-500"></i> },
     { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: <i className="bi bi-megaphone-fill text-blue-500"></i> },
     { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: <i className="bi bi-envelope-exclamation-fill text-blue-500"></i> },
@@ -24,7 +25,7 @@ const navItems = {
     { label: 'Mi Empresa', href: '/dashboard/company', icon: <i className="bi bi-building-fill text-blue-500"></i> },
     { label: 'Empleados', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill text-blue-500"></i>},
     { label: 'Cursos', href: '/dashboard/administrator/admin/courses', icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i>  },
-    { label: 'Documentos', href: '/dashboard/administrator/admin/documents', icon: <i className="bi bi-file-earmark-text-fill text-blue-500"></i>  },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill text-blue-500"></i>  },
     { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill text-blue-500"></i> }
   ],
   EMPLOYEE: [
@@ -37,7 +38,6 @@ const navItems = {
     { label: 'Panel', href: '/dashboard/public', icon: <i className="bi bi-house-fill text-blue-500"></i> },
     { label: 'Cursos', href: '/dashboard/public/courses', icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i>  },
     { label: 'Servicios', href: '/dashboard/public/services', icon: <i className="bi bi-suitcase-lg-fill text-blue-500"></i> },
-    { label: 'Documentos', href: '/dashboard/documents', icon: '📄' },
   ],
 };
 

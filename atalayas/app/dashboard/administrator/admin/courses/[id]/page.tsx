@@ -125,8 +125,18 @@ export default function AdminCourseDetailPage() {
                         <td className="px-6 py-5">
                           <div className="flex gap-2">
                             {content.quiz && <span className="bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded">QUIZ</span>}
-                            {content.podcast && <span className="bg-purple-50 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded">AUDIO</span>}
-                            {content.url && <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded">PORTADA</span>}
+                            
+                            {/* Si tiene un MP3, le ponemos la etiqueta de PODCAST IA */}
+                            {content.url && content.url.includes('.mp3') && (
+                              <span className="bg-purple-50 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded border border-purple-100 flex items-center gap-1">
+                                <i className="bi bi-mic-fill"></i> PODCAST IA
+                              </span>
+                            )}
+
+                            {/* Si tiene un PDF o web, etiqueta normal */}
+                            {content.url && !content.url.includes('.mp3') && (
+                              <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded">DOCUMENTO</span>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-5 text-right">
