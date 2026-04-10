@@ -102,10 +102,17 @@ export default function AdminCourses() {
                                             {activeTab === 'BASICO' ? 'Onboarding' : 'Especialización'}
                                         </span>
                                     </div>
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-4 ${activeTab === 'BASICO' ? 'bg-blue-100' : 'bg-purple-100'
+
+                                    {/* ICONOS BOOTSTRAP ACTUALIZADOS */}
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl mb-4 ${activeTab === 'BASICO' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'
                                         }`}>
-                                        {activeTab === 'BASICO' ? '📖' : '🎓'}
+                                        {activeTab === 'BASICO' ? (
+                                            <i className="bi bi-book"></i>
+                                        ) : (
+                                            <i className="bi bi-mortarboard"></i>
+                                        )}
                                     </div>
+
                                     <h3 className="text-[#1d1d1f] font-semibold text-lg leading-tight mb-4 min-h-12 line-clamp-2">
                                         {course.title}
                                     </h3>

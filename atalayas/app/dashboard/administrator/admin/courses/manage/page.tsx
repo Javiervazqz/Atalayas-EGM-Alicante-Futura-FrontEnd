@@ -143,13 +143,13 @@ export default function ManageCourses() {
                                         <td className="px-8 py-5 text-right">
                                             <div className="flex justify-end gap-3">
                                                 <Link href={`/dashboard/administrator/admin/courses/manage/${course.id}`} className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-lg">
-                                                    ✏️
+                                                    <i className="bi bi-pencil-square text-blue-500 group-hover:scale-110 transition-transform block"></i>
                                                 </Link>
                                                 <button
                                                     onClick={() => setCourseToDelete(course.id)}
                                                     className="p-2 hover:bg-red-50 rounded-lg transition-colors cursor-pointer text-lg"
                                                 >
-                                                    🗑️
+                                                    <i className="bi bi-trash-fill text-red-400 group-hover:text-red-600 block transition-colors"></i>
                                                 </button>
                                             </div>
                                         </td>
@@ -173,7 +173,7 @@ export default function ManageCourses() {
                     <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
                         <div className="text-center">
                             <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                                ⚠️
+                                <i className="bi bi-exclamation-triangle-fill text-red-500"></i>
                             </div>
                             <h3 className="text-xl font-bold text-[#1d1d1f] mb-2">¿Eliminar curso?</h3>
                             <p className="text-[#86868b] text-sm mb-8">
@@ -185,7 +185,7 @@ export default function ManageCourses() {
                                     onClick={confirmDelete}
                                     className="w-full py-4 bg-red-500 text-white rounded-2xl font-bold hover:bg-red-600 transition-colors cursor-pointer"
                                 >
-                                    Eliminar
+                                    Eliminar definitivamente
                                 </button>
                                 <button
                                     onClick={() => setCourseToDelete(null)}

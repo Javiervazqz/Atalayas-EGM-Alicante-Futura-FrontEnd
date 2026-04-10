@@ -18,6 +18,7 @@ export const API_ROUTES = {
   USERS: {
     GET_ALL: `${BASE_URL}/users`,
     CREATE: `${BASE_URL}/users`,
+    ONBOARDING_DONE: `${BASE_URL}/users/me/onboarding-done`,
   },
   COURSES: {
     GET_ALL: `${BASE_URL}/courses`,
@@ -53,6 +54,13 @@ export const API_ROUTES = {
     UNARCHIVE: (id: string) => `${BASE_URL}/company-request/${id}/unarchive`,
     GET_ARCHIVED: `${BASE_URL}/company-request?archived=true`,
   },
+
+ONBOARDING: {
+  SETUP:`${BASE_URL}/onboarding/setup`,
+  ME:`${BASE_URL}/onboarding/me`,
+  TOGGLE: `${BASE_URL}/onboarding/toggle`,
+},
+
   CHATBOT: {
     SEND:`${BASE_URL}/chatbot`
   }

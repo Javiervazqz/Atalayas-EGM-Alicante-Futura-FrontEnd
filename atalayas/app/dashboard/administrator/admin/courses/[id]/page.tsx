@@ -32,9 +32,13 @@ export default function AdminCourseDetailPage() {
     if (id) fetchCourse();
   }, [id]);
 
-  const filteredContents = course?.Content?.filter((c: any) =>
+  const contentList = course?.Content || course?.content || [];
+
+  const filteredContents = contentList
+  .filter((c: any) =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase())
-  ).sort((a: any, b: any) => a.order - b.order) || [];
+  )
+  .sort((a: any, b: any) => a.order - b.order);
 
   if (loading) return (
     <div className="flex min-h-screen bg-[#f5f5f7]">
@@ -73,24 +77,20 @@ export default function AdminCourseDetailPage() {
                 href={`/dashboard/administrator/admin/courses/${id}/content/new`}
                 className="bg-[#1d1d1f] text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-black transition-all shadow-sm whitespace-nowrap"
               >
-                + Añadir Lección
+                Añadir Lección
               </Link>
             </div>
           </div>
 
           {/* INFO CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div className="bg-white p-6 rounded-[24px] border border-gray-200 shadow-sm">
-              <p className="text-[11px] font-bold text-[#86868b] uppercase">Empresa</p>
-              <p className="text-lg font-bold text-[#1d1d1f]">{course?.isPublic ? '🌐 Público' : course?.Company?.name || 'Privado'}</p>
-            </div>
+          <div className="grid grid-cols-2 gap-4 mb-10">
             <div className="bg-white p-6 rounded-[24px] border border-gray-200 shadow-sm">
               <p className="text-[11px] font-bold text-[#86868b] uppercase">Categoría</p>
               <p className="text-lg font-bold text-[#1d1d1f]">{course?.category}</p>
             </div>
             <div className="bg-white p-6 rounded-[24px] border border-gray-200 shadow-sm">
               <p className="text-[11px] font-bold text-[#86868b] uppercase">Total Contenidos</p>
-              <p className="text-lg font-bold text-[#1d1d1f]">{course?.Content?.length || 0} Unidades</p>
+              <p className="text-lg font-bold text-[#1d1d1f]">{contentList.length} Unidades</p>
             </div>
           </div>
 

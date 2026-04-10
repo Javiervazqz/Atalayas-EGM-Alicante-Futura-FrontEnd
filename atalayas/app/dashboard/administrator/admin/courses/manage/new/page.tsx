@@ -8,37 +8,38 @@ import { API_ROUTES } from '@/lib/utils';
 export default function NewCoursePage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [loadingStep, setLoadingStep] = useState(''); // Para avisar al usuario de lo que está pasando
 
+    // Estado para validación visual de errores
+    const [titleError, setTitleError] = useState(false);
+
+    // Obtener datos del usuario logueado
     const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
 
     const [formData, setFormData] = useState({
         title: '',
-        isPublic: false,
-        category: 'BASICO',
+        category: 'BASICO' as 'BASICO' | 'ESPECIALIZADO',
         file: null as File | null,
     });
-    
-    // NUEVO: Estado para activar/desactivar la IA
-    const [useAi, setUseAi] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!formData.title.trim()) return alert("El título es obligatorio");
-        if (useAi && !formData.file) return alert("Para usar la IA necesitas subir un PDF obligatoriamente.");
+
+        // Validación de Título (Mismo estilo que general-admin)
+        if (!formData.title.trim()) {
+            setTitleError(true);
+            return;
+        }
 
         setLoading(true);
-        setLoadingStep('Creando el curso base...');
 
         try {
             const token = localStorage.getItem('token');
 
-            // PASO 1: Crear el curso en la base de datos
             const payload = {
                 title: formData.title.trim(),
-                isPublic: false, // Forzamos false en el envío
+                isPublic: false, // Los cursos creados por admin de empresa son privados por defecto
                 category: formData.category,
-                fileUrl: formData.file ? formData.file.name : null, 
+                fileUrl: formData.file ? formData.file.name : null,
                 companyId: user.companyId || null
             };
 
@@ -51,48 +52,16 @@ export default function NewCoursePage() {
                 body: JSON.stringify(payload),
             });
 
-            if (!resCourse.ok) {
-                const errorData = await resCourse.json();
-                console.error("Error backend curso:", errorData);
-                throw new Error("Error al crear el curso base");
-            }
+            if (!resCourse.ok) throw new Error("Error al crear el curso");
 
-            const newCourse = await resCourse.json();
-            
-            // PASO 2: Si hay PDF y quiere IA, llamamos a nuestro motor inteligente
-            if (useAi && formData.file && newCourse.id) {
-                setLoadingStep('🧠 Leyendo PDF y generando voces con IA... (Esto puede tardar unos segundos)');
-                
-                const aiFormData = new FormData();
-                aiFormData.append('title', `Módulo 1: ${formData.title}`);
-                aiFormData.append('order', '1');
-                aiFormData.append('file', formData.file);
-
-                // IMPORTANTE: Asegúrate de que esta URL apunta a tu backend correctamente
-                const aiRes = await fetch(`http://localhost:3000/courses/${newCourse.id}/content/ai`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                        // ¡No pongas Content-Type! Fetch lo pone solo al usar FormData
-                    },
-                    body: aiFormData,
-                });
-
-                if (!aiRes.ok) {
-                    console.error("Error en la IA:", await aiRes.text());
-                    alert("El curso se creó, pero la IA falló al generar el podcast.");
-                }
-            }
-
-            // Terminamos y redirigimos
+            // Redirección al listado de cursos del admin
             router.push('/dashboard/administrator/admin/courses');
-            
+
         } catch (err) {
             console.error(err);
-            alert("Ocurrió un error en el proceso.");
+            alert("Ocurrió un error al crear el curso.");
         } finally {
             setLoading(false);
-            setLoadingStep('');
         }
     };
 
@@ -103,29 +72,40 @@ export default function NewCoursePage() {
             <main className="flex-1 p-12 overflow-y-auto">
                 <div className="max-w-2xl mx-auto">
                     <header className="mb-10">
-                        <button onClick={() => router.back()} className="text-[#0071e3] font-medium mb-4 flex items-center gap-2 hover:underline">
-                            ← Volver
+                        <button
+                            onClick={() => router.back()}
+                            className="text-[#0071e3] font-medium mb-4 flex items-center gap-2 hover:underline bg-transparent border-none cursor-pointer"
+                        >
+                            <i className="bi bi-arrow-left"></i> Volver
                         </button>
                         <h1 className="text-4xl font-bold text-[#1d1d1f] tracking-tight">Nuevo Curso</h1>
-                        <p className="text-[#86868b] mt-2">Crea un nuevo curso para los empleados de tu empresa.</p>
+                        <p className="text-[#86868b] mt-2">Crea un nuevo contenido formativo para tu organización.</p>
                     </header>
 
-                    <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-10">
+                    <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
 
-                        {/* 1. TÍTULO */}
+                        {/* 1. NOMBRE DEL CURSO CON ERROR VISUAL */}
                         <div>
                             <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] mb-2 ml-1">Nombre del Curso</label>
                             <input
                                 type="text"
                                 value={formData.title}
-                                onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                className="w-full px-6 py-5 rounded-2xl bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] outline-none font-bold"
-                                placeholder="Introduzca nombre del curso"
+                                onChange={e => {
+                                    setFormData({ ...formData, title: e.target.value });
+                                    if (titleError) setTitleError(false);
+                                }}
+                                className={`w-full px-6 py-5 rounded-2xl bg-[#f5f5f7] border-2 outline-none font-bold text-[#1d1d1f] transition-all ${titleError ? 'border-red-500 bg-red-50' : 'border-transparent focus:border-[#0071e3]'}`}
+                                placeholder="Título del curso..."
                                 disabled={loading}
                             />
+                            {titleError && (
+                                <p className="text-red-500 text-[10px] font-bold mt-2 ml-2">
+                                    <i className="bi bi-exclamation-triangle-fill"></i> Error: El nombre del curso es obligatorio
+                                </p>
+                            )}
                         </div>
 
-                        {/* 2. CATEGORÍA */}
+                        {/* 2. CATEGORÍA (CON ICONOS) */}
                         <div className="space-y-4">
                             <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-1">Tipo de Formación</label>
                             <div className="grid grid-cols-2 gap-4">
@@ -133,90 +113,54 @@ export default function NewCoursePage() {
                                     type="button"
                                     onClick={() => setFormData({ ...formData, category: 'BASICO' })}
                                     disabled={loading}
-                                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all font-bold ${formData.category === 'BASICO' ? 'border-[#0071e3] bg-blue-50 text-[#0071e3]' : 'border-transparent bg-[#f5f5f7] text-[#86868b]'}`}
+                                    className={`p-4 rounded-2xl border-2 flex items-center justify-center gap-2 cursor-pointer transition-all font-bold ${formData.category === 'BASICO' ? 'border-[#0071e3] bg-blue-50 text-[#0071e3]' : 'border-transparent bg-[#f5f5f7] text-[#86868b]'}`}
                                 >
-                                    📖 Onboarding
+                                    <i className="bi bi-book"></i> Onboarding
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setFormData({ ...formData, category: 'ESPECIALIZADO' })}
                                     disabled={loading}
-                                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all font-bold ${formData.category === 'ESPECIALIZADO' ? 'border-[#0071e3] bg-blue-50 text-[#0071e3]' : 'border-transparent bg-[#f5f5f7] text-[#86868b]'}`}
+                                    className={`p-4 rounded-2xl border-2 flex items-center justify-center gap-2 cursor-pointer transition-all font-bold ${formData.category === 'ESPECIALIZADO' ? 'border-[#0071e3] bg-blue-50 text-[#0071e3]' : 'border-transparent bg-[#f5f5f7] text-[#86868b]'}`}
                                 >
-                                    🎓 Especialización
+                                    <i className="bi bi-mortarboard"></i> Especialización
                                 </button>
                             </div>
                         </div>
 
-                        {/* 3. MATERIAL PDF */}
+                        {/* 3. SUBIDA DE PDF (ESTILO GRUPO) */}
                         <div className="space-y-4">
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-1">Documento de estudio</label>
-                            <div className="relative h-32 w-full border-2 border-dashed border-gray-200 rounded-3xl flex items-center justify-center bg-[#f5f5f7] hover:border-blue-400 transition-all cursor-pointer">
+                            <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-1">Material de estudio (PDF)</label>
+                            <div className="relative h-28 w-full border-2 border-dashed border-gray-200 rounded-3xl flex items-center justify-center bg-[#f5f5f7] hover:border-blue-400 transition-all cursor-pointer group">
                                 <input
                                     type="file"
                                     accept=".pdf"
                                     onChange={e => setFormData({ ...formData, file: e.target.files?.[0] || null })}
                                     disabled={loading}
-                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
                                 />
-                                <div className="text-center px-4">
-                                    <p className="font-bold text-[#1d1d1f] truncate max-w-xs">
-                                        {formData.file ? formData.file.name : 'Seleccionar PDF'}
-                                    </p>
-                                    <p className="text-xs text-[#86868b] mt-1">{formData.file ? 'Archivo cargado correctamente' : 'Haz clic para subir el material formativo'}</p>
-                                </div>
+                                <p className="font-bold text-[#1d1d1f] px-4 truncate flex items-center">
+                                    <i className={`bi ${formData.file ? 'bi-file-earmark-check-fill text-green-500' : 'bi-file-earmark-pdf text-[#0071e3]'} text-xl mr-2 group-hover:scale-110 transition-transform`}></i>
+                                    {formData.file ? formData.file.name : 'Subir documento base'}
+                                </p>
                             </div>
                         </div>
 
-                        {/* 🚀 NUEVO: BOTÓN MÁGICO DE IA */}
-                        {formData.file && (
-                            <div 
-                                onClick={() => !loading && setUseAi(!useAi)}
-                                className={`p-5 cursor-pointer rounded-2xl border-2 transition-all flex items-center justify-between ${useAi ? 'border-purple-500 bg-purple-50' : 'border-transparent bg-[#f5f5f7]'}`}
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${useAi ? 'bg-purple-200' : 'bg-gray-200'}`}>
-                                        ✨
-                                    </div>
-                                    <div>
-                                        <p className={`font-bold ${useAi ? 'text-purple-900' : 'text-[#1d1d1f]'}`}>Convertir a Podcast con IA</p>
-                                        <p className={`text-xs ${useAi ? 'text-purple-700' : 'text-[#86868b]'}`}>Resume el PDF y genera un audio hiperrealista</p>
-                                    </div>
-                                </div>
-                                <div className={`w-12 h-6 rounded-full p-1 transition-colors ${useAi ? 'bg-purple-500' : 'bg-gray-300'}`}>
-                                    <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${useAi ? 'translate-x-6' : 'translate-x-0'}`} />
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 4. VISIBILIDAD */}
-                        <div
-                            onClick={() => !loading && setFormData({ ...formData, isPublic: !formData.isPublic })}
-                            className={`p-6 cursor-pointer rounded-3xl border-2 transition-all flex items-center justify-between ${formData.isPublic ? 'border-green-500 bg-green-50' : 'bg-[#f5f5f7] border-transparent'}`}
-                        >
-                            <div className="flex items-center gap-4">
-                                <span className="text-2xl">{formData.isPublic ? '🌐' : '🔒'}</span>
-                                <div>
-                                    <p className="font-bold text-[#1d1d1f]">{formData.isPublic ? 'Público' : 'Privado'}</p>
-                                    <p className="text-xs text-[#86868b]">Control de acceso global</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* BOTÓN SUBMIT */}
-                        <div>
+                        {/* BOTÓN SUBMIT (MISMO ESTILO QUE GENERAL ADMIN) */}
+                        <div className="pt-4">
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full py-4 bg-[#0071e3] text-white rounded-2xl font-bold text-lg hover:bg-[#0077ed] disabled:bg-blue-300 shadow-md transition-all flex flex-col items-center justify-center"
+                                className={`w-full py-5 text-white rounded-2xl font-bold text-lg transition-all active:scale-[0.98] cursor-pointer shadow-lg disabled:opacity-50 ${loading ? 'bg-gray-400' : 'bg-[#1d1d1f] hover:bg-black'}`}
                             >
-                                {loading ? 'Procesando...' : 'Crear Curso'}
+                                {loading ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <i className="bi bi-arrow-repeat animate-spin"></i> Creando curso...
+                                    </span>
+                                ) : (
+                                    'Crear Curso'
+                                )}
                             </button>
-                            {loadingStep && (
-                                <p className="text-center text-sm font-medium text-blue-600 mt-4 animate-pulse">
-                                    {loadingStep}
-                                </p>
-                            )}
                         </div>
 
                     </form>

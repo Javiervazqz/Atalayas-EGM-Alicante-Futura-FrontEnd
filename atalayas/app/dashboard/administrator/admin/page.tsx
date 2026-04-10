@@ -86,7 +86,7 @@ export default function AdminDashboard() {
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-[#1d1d1f] font-semibold">Cursos de la empresa</h2>
-              <Link href="/dashboard/administrator/admin/courses/manage" className="text-[#0071e3] text-sm hover:text-blue-600 transition-colors">
+              <Link href="/dashboard/administrator/admin/courses" className="text-[#0071e3] text-sm hover:text-blue-600 transition-colors">
                 Ver todos <i className="bi bi-arrow-right-short"></i>
               </Link>
             </div>
