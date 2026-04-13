@@ -38,17 +38,20 @@ export default function ServiceDetail() {
     }
   }, [service?.mediaUrl]);
 
-  if (loading) return (
-    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-    </div>
-  );
   if (!service) return null;
+
 
   const hasContactInfo = service.providerName || service.phone || service.email || service.address || service.schedule || service.price || service.externalUrl;
 
+  if (loading) return (
+    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+      <Sidebar role = 'EMPLOYEE' />
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    </div>
+  );
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
+    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
       <Sidebar role="EMPLOYEE" />
 
       <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>
@@ -68,7 +71,7 @@ export default function ServiceDetail() {
                 width: '72px', height: '72px', background: 'rgba(0,113,227,0.1)',
                 borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', flexShrink: 0
               }}>
-                🏢
+                <i className="bi bi-suitcase-lg-fill text-[#005596]"></i>
               </div>
               <div style={{ flex: 1, minWidth: '250px' }}>
                 <h1 style={{ fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: 800, color: '#1d1d1f', letterSpacing: '-0.02em', margin: 0 }}>
@@ -80,7 +83,12 @@ export default function ServiceDetail() {
                   background: service.isPublic ? 'rgba(52,199,89,0.1)' : 'rgba(0,113,227,0.1)',
                   padding: '4px 10px', borderRadius: '999px'
                 }}>
-                  {service.isPublic ? '🌐 Público' : '🏢 Tu empresa'}
+                  {service.isPublic ? <span className="flex items-center gap-2">
+                    <i className="bi bi-globe text-green-400"></i> Público
+                  </span>: <span className="flex items-center gap-2">
+                    <i className="bi bi-building-fill text-blue-400"></i> Mi
+                    empresa{" "}
+                  </span>}
                 </span>
               </div>
             </div>

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -11,15 +11,14 @@ export default function EmployeeDashboard() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>({});
   const [currentDay, setCurrentDay] = useState(1);
-  const [showSuccess, setShowSuccess] = useState(false); // Para el Thumbs Up
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  // 1. Carga de datos iniciales
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
       setUser(storedUser);
 
-      const referenceDateRaw = storedUser.firstLoginAt
+      const referenceDateRaw = storedUser.firstLoginAt;
 
       if (referenceDateRaw) {
         const referenceDate = new Date(storedUser.createdAt);
@@ -60,28 +59,19 @@ export default function EmployeeDashboard() {
       } catch (err) {
         console.error("Error cargando dashboard:", err);
       } finally {
-        setLoading(false);
+        setTimeout(() => setLoading(false), 800);
       }
     };
 
     fetchData();
   }, []);
 
-  // 2. Función para marcar/desmarcar tareas (Toggle)
-  const handleToggleTask = async (
-    taskId: string,
-    currentStatus: boolean,
-    stepDay: number,
-  ) => {
+  const handleToggleTask = async (taskId: string, currentStatus: boolean, stepDay: number) => {
     const newStatus = !currentStatus;
-
-    // Update Optimista en el UI
     const updatedData = onboardingData.map((step) => ({
       ...step,
       onboardingTasks: step.onboardingTasks.map((task: any) =>
-        task.id === taskId
-          ? { ...task, userProgress: [{ done: newStatus }] }
-          : task,
+        task.id === taskId ? { ...task, userProgress: [{ done: newStatus }] } : task,
       ),
     }));
     setOnboardingData(updatedData);
@@ -97,13 +87,9 @@ export default function EmployeeDashboard() {
         body: JSON.stringify({ taskId, done: newStatus }),
       });
 
-      // Si marcamos como hecho, verificamos si se completó el bloque
       if (newStatus) {
         const currentStep = updatedData.find((s) => s.day === stepDay);
-        const isNowFinished = currentStep.onboardingTasks.every(
-          (t: any) => t.userProgress?.[0]?.done,
-        );
-
+        const isNowFinished = currentStep.onboardingTasks.every((t: any) => t.userProgress?.[0]?.done);
         if (isNowFinished) {
           setShowSuccess(true);
           setTimeout(() => setShowSuccess(false), 2000);
@@ -114,85 +100,48 @@ export default function EmployeeDashboard() {
     }
   };
 
-  // Helpers de datos
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
+        <Sidebar role="EMPLOYEE" />
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="relative flex items-center justify-center">
+            <div className="w-16 h-16 border-4 border-[#005596]/10 border-t-[#005596] rounded-full animate-spin"></div>
+            <div className="absolute w-4 h-4 bg-[#d9ff00] rounded-full shadow-[0_0_15px_rgba(217,255,0,0.8)]"></div>
+          </div>
+          <p className="mt-6 text-[#005596] font-black text-xs uppercase tracking-[0.3em] animate-pulse">
+            Cargando tus datos...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const firstName = user?.name || user?.email?.split("@")[0] || "Empleado";
-
-  // Lógica de filtrado y ordenamiento (Activos arriba, Completados abajo en gris)
   const visibleSteps = onboardingData.filter((s) => s.day <= currentDay);
-
-  const activeSteps = visibleSteps.filter(
-    (step) =>
-      !step.onboardingTasks?.every((task: any) => task.userProgress?.[0]?.done),
-  );
-
-  const completedSteps = visibleSteps.filter(
-    (step) =>
-      step.onboardingTasks?.length > 0 &&
-      step.onboardingTasks.every((task: any) => task.userProgress?.[0]?.done),
-  );
-
+  const activeSteps = visibleSteps.filter(step => !step.onboardingTasks?.every((task: any) => task.userProgress?.[0]?.done));
+  const completedSteps = visibleSteps.filter(step => step.onboardingTasks?.length > 0 && step.onboardingTasks.every((task: any) => task.userProgress?.[0]?.done));
   const sortedSteps = [...activeSteps, ...completedSteps];
 
-  // Cálculos de progreso
   const allTasks = visibleSteps.flatMap((s) => s.onboardingTasks || []);
-  const completedTasks = allTasks.filter(
-    (t) => t.userProgress?.[0]?.done,
-  ).length;
-  const progressPercent =
-    allTasks.length > 0
-      ? Math.round((completedTasks / allTasks.length) * 100)
-      : 0;
-
-  // Buscamos cuál es el día más alto que existe en las tareas (ej: Día 5)
-  const maxOnboardingDay =
-    onboardingData.length > 0
-      ? Math.max(...onboardingData.map((s) => s.day))
-      : 0;
-
-  const hasPendingTasks = onboardingData.some(step =>
-    step.onboardingTasks?.some((task:any) => !task.userProgress?.[0]?.done)
-  );
-  
-  const isOnboardingFinished =
-    currentDay > maxOnboardingDay && maxOnboardingDay > 0 && !hasPendingTasks;
-
-  let visibleDay = currentDay;
-  
-  if(currentDay > maxOnboardingDay){
-    visibleDay = maxOnboardingDay
-  }
-  
+  const completedTasks = allTasks.filter((t) => t.userProgress?.[0]?.done).length;
+  const progressPercent = allTasks.length > 0 ? Math.round((completedTasks / allTasks.length) * 100) : 0;
+  const maxOnboardingDay = onboardingData.length > 0 ? Math.max(...onboardingData.map((s) => s.day)) : 0;
+  const visibleDay = currentDay > maxOnboardingDay ? maxOnboardingDay : currentDay;
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
       <Sidebar role="EMPLOYEE" />
 
-      {/* ANIMACIÓN THUMBS UP */}
       {showSuccess && (
         <div className="fixed inset-0 z-100 flex items-center justify-center pointer-events-none">
           <div className="bg-white/95 backdrop-blur-xl p-12 rounded-[48px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white animate-in zoom-in duration-300 flex flex-col items-center gap-6">
-            {/* El círculo ahora es el protagonista en amarillo flúor */}
             <div className="w-24 h-24 bg-[#d9ff00] rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(217,255,0,0.5)]">
-              <span className="animate-bounce">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="52"
-                  height="52"
-                  fill="#005596"
-                  viewBox="0 0 16 16"
-                >
-                  <path d="M6.956 1.745C7.021.81 7.908.087 8.864.325l.261.066c.463.116.874.456 1.012.965.22.816.533 2.511.062 4.51a10 10 0 0 1 .443-.051c.713-.065 1.669-.072 2.516.21.518.173.994.681 1.2 1.273.184.532.16 1.162-.234 1.733q.086.18.138.363c.077.27.113.567.113.856s-.036.586-.113.856c-.039.135-.09.273-.16.404.169.387.107.819-.003 1.148a3.2 3.2 0 0 1-.488.901c.054.152.076.312.076.465 0 .305-.089.625-.253.912C13.1 15.522 12.437 16 11.5 16H8c-.605 0-1.07-.081-1.466-.218a4.8 4.8 0 0 1-.97-.484l-.048-.03c-.504-.307-.999-.609-2.068-.722C2.682 14.464 2 13.846 2 13V9c0-.85.685-1.432 1.357-1.615.849-.232 1.574-.787 2.132-1.41.56-.627.914-1.28 1.039-1.639.199-.575.356-1.539.428-2.59z" />
-                </svg>
-              </span>
+              <span className="text-3xl animate-bounce">👍</span>
             </div>
-
             <div className="text-center">
-              <h2 className="text-3xl font-black text-[#005596] tracking-tight">
-                ¡Día Completado!
-              </h2>
-              <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">
-                Sigue así, vas por buen camino
-              </p>
+              <h2 className="text-3xl font-black text-[#005596] tracking-tight">¡Día Completado!</h2>
+              <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">Sigue así, vas por buen camino</p>
             </div>
           </div>
         </div>
@@ -202,124 +151,77 @@ export default function EmployeeDashboard() {
         <div className="flex-1 h-screen overflow-y-auto px-6 md:px-12 py-10 no-scrollbar">
           <header className="mb-10 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-black text-[#1d1d1f] tracking-tight">
-                ¡Hola, {firstName}!
-              </h1>
+              <h1 className="text-3xl font-black text-[#1d1d1f] tracking-tight">¡Hola, {firstName}!</h1>
               <p className="text-gray-500 mt-1 font-medium">
-                {isOnboardingFinished ? (
-                  <div className="flex items-center gap-2">
-                    <p className="font-black px-2 py-0.5 rounded-lg bg-[#005596] text-white text-xs uppercase tracking-wider">
-                      Onboarding Completado
-                    </p>
-                    <p className="text-[#005596] font-bold">
-                      ¡Bienvenido al equipo!
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    Estás en tu{" "}
-                    <span className="font-black px-2 py-0.5 rounded-lg bg-[#d9ff00] text-[#005596]">
-                      Día {visibleDay}
-                    </span>{" "}
-                    de incorporación.
-                  </>
-                )}
+                Estás en tu <span className="font-black px-2 py-0.5 rounded-lg bg-[#d9ff00] text-[#005596]">Día {visibleDay}</span> de incorporación.
               </p>
             </div>
-
-            {/* Botón de Debug - Solo para desarrollo */}
-            <button
-              onClick={() => setCurrentDay((prev) => prev + 1)}
-              className="bg-gray-100 text-gray-400 text-[10px] font-black px-3 py-2 rounded-lg hover:bg-gray-200 transition-all"
-            >
-              SIMULAR PASO DEL TIEMPO
-            </button>
+            <button onClick={() => setCurrentDay((prev) => prev + 1)} className="bg-gray-100 text-gray-400 text-[10px] font-black px-3 py-2 rounded-lg hover:bg-gray-200 transition-all">DEBUG +1 DIA</button>
           </header>
 
           <section className="space-y-6 mb-12">
-            <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em] mb-4">
-              Tu Ruta de Incorporación
-            </h2>
-
-            {sortedSteps.length === 0 && !loading && (
-              <div className="p-10 border-2 border-dashed border-gray-200 rounded-[32px] text-center text-gray-400">
-                No hay pasos configurados para hoy.
-              </div>
-            )}
-
+            <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em] mb-4">Tu Ruta de Incorporación</h2>
             {sortedSteps.map((step) => {
-              const isStepDone = step.onboardingTasks?.every(
-                (t: any) => t.userProgress?.[0]?.done,
-              );
-
+              const isStepDone = step.onboardingTasks?.every((t: any) => t.userProgress?.[0]?.done);
               return (
-                <div
-                  key={step.id}
-                  className={`transition-all duration-700 rounded-[32px] border p-8 shadow-sm ${
-                    isStepDone
-                      ? "bg-gray-50/50 border-gray-100 opacity-60 grayscale-[0.8] scale-[0.98]"
-                      : "bg-white border-gray-100 hover:shadow-md animate-in fade-in slide-in-from-bottom-4"
-                  }`}
-                >
+                <div key={step.id} className={`transition-all duration-700 rounded-[32px] border p-8 shadow-sm ${isStepDone ? "bg-gray-50/50 border-gray-100 opacity-60 grayscale-[0.8] scale-[0.98]" : "bg-white border-gray-100 hover:shadow-md animate-in fade-in slide-in-from-bottom-4"}`}>
                   <div className="flex items-center gap-3 mb-4">
-                    <span
-                      className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider ${
-                        isStepDone
-                          ? "bg-gray-200 text-gray-400"
-                          : "bg-[#d9ff00] text-[#005596]"
-                      }`}
-                    >
-                      {step.badge || `Día ${step.day}`}
-                    </span>
-                    {isStepDone && (
-                      <span className="text-gray-400 text-[10px] font-bold">
-                        ✓ BLOQUE FINALIZADO
-                      </span>
-                    )}
+                    <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider ${isStepDone ? "bg-gray-200 text-gray-400" : "bg-[#d9ff00] text-[#005596]"}`}>{step.badge || `Día ${step.day}`}</span>
+                    {isStepDone && <span className="text-gray-400 text-[10px] font-bold">✓ BLOQUE FINALIZADO</span>}
                   </div>
-
-                  <h3
-                    className={`text-xl font-bold mb-1 ${isStepDone ? "text-gray-400" : "text-[#1d1d1f]"}`}
-                  >
-                    {step.title}
-                  </h3>
-                  <p className="text-gray-500 text-sm mb-6 font-medium">
-                    {step.description}
-                  </p>
-
+                  <h3 className={`text-xl font-bold mb-1 ${isStepDone ? "text-gray-400" : "text-[#1d1d1f]"}`}>{step.title}</h3>
+                  <p className="text-gray-500 text-sm mb-6 font-medium">{step.description}</p>
                   <div className="grid gap-3">
                     {step.onboardingTasks?.map((task: any) => {
                       const isDone = task.userProgress?.[0]?.done || false;
-                      return (
-                        <div
-                          key={task.id}
-                          onClick={() =>
-                            handleToggleTask(task.id, isDone, step.day)
+                      
+                      // Lógica de transformación de URL específica para tu estructura
+                      const getCorrectUrl = () => {
+                        if (!task.linkAction) return "#";
+                        
+                        // Extraer parámetros si vienen en formato query string
+                        const urlParts = task.linkAction.split('?');
+                        if (urlParts.length > 1) {
+                          const params = new URLSearchParams(urlParts[1]);
+                          const cId = params.get('courseId');
+                          const contId = params.get('contentId');
+                          
+                          // Si tenemos ambos, construimos la ruta /courses/ID/content/ID
+                          if (cId && contId) {
+                            return `/dashboard/employee/courses/${cId}/content/${contId}?fromTask=${task.id}`;
                           }
-                          className={`flex items-center gap-4 p-4 rounded-2xl border transition-all group cursor-pointer ${
-                            isDone
-                              ? "bg-white/50 border-transparent"
-                              : "border-gray-50 bg-gray-50/30 hover:bg-white hover:border-[#d9ff00]"
-                          }`}
-                        >
-                          <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                              isDone
-                                ? "bg-[#005596] border-[#005596]"
-                                : "border-gray-200 group-hover:border-[#d9ff00]"
-                            }`}
+                          // Si solo hay curso, /courses/ID
+                          if (cId) {
+                            return `/dashboard/employee/courses/${cId}?fromTask=${task.id}`;
+                          }
+                        }
+                        
+                        // Fallback: Si no tiene parámetros, concatenamos el ID de la tarea
+                        return `${task.linkAction}${task.linkAction.includes('?') ? '&' : '?'}fromTask=${task.id}`;
+                      };
+
+                      return (
+                        <div key={task.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all group ${isDone ? "bg-white/50 border-transparent" : "border-gray-50 bg-gray-50/30 hover:bg-white hover:border-[#d9ff00]"}`}>
+                          <div 
+                            onClick={() => handleToggleTask(task.id, isDone, step.day)} 
+                            className="flex items-center gap-4 cursor-pointer flex-1"
                           >
-                            {isDone && (
-                              <span className="text-[#d9ff00] text-[10px]">
-                                ✓
-                              </span>
-                            )}
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isDone ? "bg-[#005596] border-[#005596]" : "border-gray-200 group-hover:border-[#d9ff00]"}`}>
+                              {isDone && <span className="text-[#d9ff00] text-[10px]">✓</span>}
+                            </div>
+                            <span className={`text-sm font-bold ${isDone ? "text-gray-400 line-through" : "text-[#1d1d1f]"}`}>
+                              {task.label}
+                            </span>
                           </div>
-                          <span
-                            className={`text-sm font-bold ${isDone ? "text-gray-400 line-through" : "text-[#1d1d1f]"}`}
-                          >
-                            {task.label}
-                          </span>
+
+                          {task.linkAction && !isDone && (
+                            <Link 
+                              href={getCorrectUrl()}
+                              className="ml-4 px-4 py-2 bg-[#005596] text-[#d9ff00] text-[10px] font-black uppercase tracking-wider rounded-xl hover:scale-105 transition-transform shadow-sm whitespace-nowrap"
+                            >
+                              Ir a la tarea
+                            </Link>
+                          )}
                         </div>
                       );
                     })}
@@ -330,56 +232,30 @@ export default function EmployeeDashboard() {
           </section>
         </div>
 
-        <aside className="w-full md:w-80 h-screen border-l border-gray-100 bg-white p-8 flex flex-col gap-8 shrink-0 overflow-y-auto">
+        <aside className="w-full md:w-80 h-screen border-l border-gray-100 bg-white p-8 flex flex-col gap-8 shrink-0 overflow-y-auto no-scrollbar">
           <div className="space-y-4">
-            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">
-              Progreso Global
-            </h4>
+            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Progreso Global</h4>
             <div className="bg-gray-50 rounded-[24px] p-5 border border-gray-100">
               <div className="flex justify-between items-end mb-2">
-                <span className="text-2xl font-black text-[#005596]">
-                  {progressPercent}%
-                </span>
-                <span className="text-[10px] font-bold text-gray-400 uppercase">
-                  {completedTasks} de {allTasks.length}
-                </span>
+                <span className="text-2xl font-black text-[#005596]">{progressPercent}%</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase">{completedTasks} de {allTasks.length}</span>
               </div>
               <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#d9ff00] rounded-full transition-all duration-1000"
-                  style={{ width: `${progressPercent}%` }}
-                />
+                <div className="h-full bg-[#d9ff00] rounded-full transition-all duration-1000" style={{ width: `${progressPercent}%` }} />
               </div>
             </div>
           </div>
           <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em]">
-                Formación Recomendada
-              </h2>
-            </div>
-
+            <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em] mb-6">Formación Recomendada</h2>
             <div className="grid gap-4">
-              {loading ? (
-                <div className="h-20 bg-gray-100 animate-pulse rounded-2xl" />
-              ) : (
-                courses.slice(0, 5).map((course) => (
-                  <Link
-                    key={course.id}
-                    href={`/dashboard/employee/courses/${course.id}`}
-                  >
-                    <div className="bg-white p-4 rounded-2xl border border-gray-100 hover:border-[#d9ff00] transition-all group">
-                      <h4 className="font-bold text-[#1d1d1f] text-xs mb-1 group-hover:text-[#005596] line-clamp-1">
-                        {course.title}
-                      </h4>
-
-                      <span className="text-[9px] font-black uppercase text-[#005596] bg-blue-50 px-2 py-0.5 rounded">
-                        {course.isPublic ? "EGM" : "Privado"}
-                      </span>
-                    </div>
-                  </Link>
-                ))
-              )}
+              {courses.slice(0, 5).map((course) => (
+                <Link key={course.id} href={`/dashboard/employee/courses/${course.id}`}>
+                  <div className="bg-white p-4 rounded-2xl border border-gray-100 hover:border-[#d9ff00] transition-all group">
+                    <h4 className="font-bold text-[#1d1d1f] text-xs mb-1 group-hover:text-[#005596] line-clamp-1">{course.title}</h4>
+                    <span className="text-[9px] font-black uppercase text-[#005596] bg-blue-50 px-2 py-0.5 rounded">{user.company.name}</span>
+                  </div>
+                </Link>
+              ))}
             </div>
           </section>
         </aside>

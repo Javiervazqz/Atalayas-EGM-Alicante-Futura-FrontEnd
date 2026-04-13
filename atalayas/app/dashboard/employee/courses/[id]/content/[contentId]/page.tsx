@@ -6,12 +6,14 @@ import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
 import mediumZoom from 'medium-zoom';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
 
 export default function EmployeeContentDetail() {
   const params = useParams();
   const zoomRef = useRef<HTMLImageElement>(null);
+  const searchParams = useSearchParams();
 
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -45,6 +47,32 @@ export default function EmployeeContentDetail() {
     }
   }, [content?.imageUrl]);
 
+  useEffect(() => {
+  const completeTask = async () => {
+    const fromTaskId = searchParams.get('fromTask');
+    
+    // Si venimos de una tarea de onboarding y el contenido ha cargado bien
+    if (fromTaskId && content) {
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ taskId: fromTaskId, done: true }),
+        });
+        console.log("Tarea de onboarding completada automáticamente");
+      } catch (err) {
+        console.error("Error al autocompletar tarea:", err);
+      }
+    }
+  };
+
+  completeTask();
+}, [content, searchParams]);
+
   if (loading) return (
     <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
@@ -57,7 +85,7 @@ export default function EmployeeContentDetail() {
   const hasResources = content.url || content.podcast;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
+    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
       <Sidebar role="EMPLOYEE" />
 
       <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>

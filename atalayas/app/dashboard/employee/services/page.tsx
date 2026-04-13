@@ -5,6 +5,8 @@ import Link from "next/link";
 import Sidebar from "@/components/ui/Sidebar";
 import SearchInput from "@/components/ui/Searchbar";
 import { API_ROUTES } from "@/lib/utils";
+import { useSearchParams } from 'next/navigation';
+
 
 export default function EmployeeServices() {
   const [services, setServices] = useState<any[]>([]);
@@ -12,6 +14,8 @@ export default function EmployeeServices() {
   const [filter, setFilter] = useState<"ALL" | "PUBLIC" | "COMPANY">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const searchParams = useSearchParams();
+  const fromTaskId = searchParams.get('fromTask');
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -36,6 +40,29 @@ export default function EmployeeServices() {
     fetchServices();
   }, []);
 
+  useEffect(() => {
+  const autoConfirmTask = async () => {
+    if (fromTaskId) {
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ taskId: fromTaskId, done: true }),
+        });
+        console.log("Tarea de onboarding completada automáticamente");
+      } catch (err) {
+        console.error("Error al autocompletar:", err);
+      }
+    }
+  };
+
+  autoConfirmTask();
+}, [fromTaskId]);
+
   const filtered = services.filter((s) => {
     const matchesSearch = s.title
       .toLowerCase()
@@ -53,8 +80,14 @@ export default function EmployeeServices() {
 
   if (!currentUser) return null;
 
+  if (loading) return (
+    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    </div>
+  );
+
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
+    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
       <Sidebar role="EMPLOYEE" />
       <main className="flex-1 h-screen overflow-y-auto">
         <div className="max-w-6xl mx-auto px-8 py-12">

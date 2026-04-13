@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from "next/navigation";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -24,6 +25,9 @@ export default function ProfilePage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const searchParams = useSearchParams();
+    const fromTaskId = searchParams.get('fromTask');
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -36,6 +40,29 @@ export default function ProfilePage() {
       router.push('/login');
     }
   }, [router]);
+
+  useEffect(() => {
+  const autoConfirmTask = async () => {
+    if (fromTaskId) {
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ taskId: fromTaskId, done: true }),
+        });
+        console.log("Tarea de onboarding completada automáticamente");
+      } catch (err) {
+        console.error("Error al autocompletar:", err);
+      }
+    }
+  };
+
+  autoConfirmTask();
+}, [fromTaskId]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

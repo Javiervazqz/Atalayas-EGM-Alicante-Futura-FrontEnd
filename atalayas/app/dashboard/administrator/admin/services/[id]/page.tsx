@@ -6,6 +6,7 @@ import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
 import mediumZoom from 'medium-zoom';
 import ContactCard from '@/components/ui/ContactCard';
+import Link from 'next/link';
 
 const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
 const inputClass = "w-full px-5 py-3.5 bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] focus:bg-white rounded-2xl outline-none transition-all text-[#424245] text-sm placeholder:text-[#c7c7cc]";
@@ -131,10 +132,13 @@ export default function AdminServiceDetail() {
         {/* HEADER */}
         <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)', padding: '32px 0' }}>
           <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 24px' }}>
-            <button onClick={() => router.back()}
-              style={{ background: 'none', border: 'none', color: '#0071e3', fontSize: '15px', fontWeight: 500, cursor: 'pointer', marginBottom: '24px', padding: 0 }}>
-              ‹ Volver a servicios
-            </button>
+            <Link
+              href="/dashboard/administrator/admin/services"
+              className="group text-[#0071e3] text-sm font-semibold hover:underline mb-6 inline-flex items-center gap-2 transition-all"
+            >
+              <i className="bi bi-arrow-left-circle-fill transition-transform duration-300 group-hover:-translate-x-1.5"></i>
+              <span>Volver a Servicios</span> {/* Opcional: añadir texto mejora el SEO y accesibilidad */}
+            </Link>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
               <div style={{ width: '72px', height: '72px', background: 'rgba(0,113,227,0.1)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', flexShrink: 0 }}>

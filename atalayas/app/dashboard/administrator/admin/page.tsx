@@ -41,7 +41,7 @@ export default function AdminDashboard() {
         setCourses(Array.isArray(coursesData) ? coursesData : []);
         setStats({
           employees: Array.isArray(usersData) ? usersData.filter((u: any) => u.role === 'EMPLOYEE').length : 0,
-          courses: Array.isArray(coursesData) ? coursesData.length : 0,
+          courses: Array.isArray(coursesData) ? coursesData.filter((c: any) => !c.isPublic).length : 0,
           documents: 0,
           avgProgress: 0,
         });
@@ -56,8 +56,8 @@ export default function AdminDashboard() {
 
   const statCards = [
     { label: 'Empleados', value: stats.employees, icon: <i className="bi bi-people-fill text-blue-500"></i>},
-    { label: 'Cursos activos', value: stats.courses, icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i> },
-    { label: 'Documentos', value: stats.documents, icon:  <i className="bi bi-file-earmark-text-fill text-blue-500"></i> },
+    { label: 'Cursos propios activos', value: stats.courses, icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i> },
+    { label: 'Documentos subidos', value: stats.documents, icon:  <i className="bi bi-file-earmark-text-fill text-blue-500"></i> },
     { label: 'Progreso medio', value: `${stats.avgProgress}%`, icon: <i className="bi bi-graph-up text-blue-500"></i> },
   ];
 

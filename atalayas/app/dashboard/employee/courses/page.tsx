@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 interface Course {
     id: string;
@@ -17,6 +18,8 @@ export default function EmployeeCoursesPage() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'BASICO' | 'ESPECIALIZADO'>('BASICO');
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
+    const searchParams = useSearchParams();
+    const fromTaskId = searchParams.get('fromTask');
 
     const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';
 
@@ -37,6 +40,29 @@ export default function EmployeeCoursesPage() {
         fetchCourses();
     }, []);
 
+    useEffect(() => {
+  const autoConfirmTask = async () => {
+    if (fromTaskId) {
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ taskId: fromTaskId, done: true }),
+        });
+        console.log("Tarea de onboarding completada automáticamente");
+      } catch (err) {
+        console.error("Error al autocompletar:", err);
+      }
+    }
+  };
+
+  autoConfirmTask();
+}, [fromTaskId]);
+
     const toggleMenu = (id: string) => setActiveMenu(activeMenu === id ? null : id);
 
     const filtered = courses.filter(c =>
@@ -44,6 +70,7 @@ export default function EmployeeCoursesPage() {
             ? (c.category?.toUpperCase() !== 'ESPECIALIZADO')
             : (c.category?.toUpperCase() === 'ESPECIALIZADO')
     );
+
 
     return (
         <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'-apple-system', sans-serif" }}>
