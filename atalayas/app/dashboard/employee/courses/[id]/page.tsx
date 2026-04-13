@@ -56,8 +56,14 @@ export default function CourseDetailPage() {
     </div>
   );
 
+  if (loading) return (
+    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    </div>
+  );
+
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
+    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
       <Sidebar role="EMPLOYEE" />
       
       <main className="flex-1 h-screen overflow-y-auto">

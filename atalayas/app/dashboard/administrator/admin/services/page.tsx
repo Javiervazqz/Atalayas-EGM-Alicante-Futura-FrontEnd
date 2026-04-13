@@ -78,7 +78,7 @@ const searchedServices = services.filter(s =>
   });
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
+    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
       <Sidebar role='ADMIN' />
 
       <main className="flex-1 h-screen overflow-y-auto">

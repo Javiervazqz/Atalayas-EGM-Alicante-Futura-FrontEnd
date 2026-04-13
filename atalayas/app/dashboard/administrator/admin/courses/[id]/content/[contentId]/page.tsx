@@ -1,14 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Sidebar from '@/components/ui/Sidebar';
-import { API_ROUTES } from '@/lib/utils';
-import mediumZoom from 'medium-zoom';
-import Link from 'next/link';
+import { useState, useEffect, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Sidebar from "@/components/ui/Sidebar";
+import { API_ROUTES } from "@/lib/utils";
+import mediumZoom from "medium-zoom";
+import Link from "next/link";
 
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
-const inputClass = "w-full px-5 py-3.5 bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] focus:bg-white rounded-2xl outline-none transition-all text-[#424245] text-sm placeholder:text-[#c7c7cc]";
+const appleFont =
+  "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
+const inputClass =
+  "w-full px-5 py-3.5 bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] focus:bg-white rounded-2xl outline-none transition-all text-[#424245] text-sm placeholder:text-[#c7c7cc]";
 
 export default function AdminContentDetail() {
   const params = useParams();
@@ -74,10 +76,10 @@ export default function AdminContentDetail() {
 
   const hydrateForm = (c: any) => {
     setFormData({
-      title: c.title || '',
-      summary: c.summary || '',
-      imageUrl: c.imageUrl || '',
-      url: c.url || '',
+      title: c.title || "",
+      summary: c.summary || "",
+      imageUrl: c.imageUrl || "",
+      url: c.url || "",
       quiz: c.quiz || null,
       podcast: c.podcast || null,
     });
@@ -85,8 +87,13 @@ export default function AdminContentDetail() {
 
   useEffect(() => {
     if (zoomRef.current && content?.imageUrl && !isEditing) {
-      const zoom = mediumZoom(zoomRef.current, { background: 'rgba(0,0,0,0.8)', margin: 24 });
-      return () => { zoom.detach(); };
+      const zoom = mediumZoom(zoomRef.current, {
+        background: "rgba(0,0,0,0.8)",
+        margin: 24,
+      });
+      return () => {
+        zoom.detach();
+      };
     }
   }, [content?.imageUrl, isEditing]);
 
@@ -137,7 +144,10 @@ export default function AdminContentDetail() {
         router.push(`/dashboard/administrator/admin/courses/${params.id}`); 
         router.refresh(); 
       }
-    } finally { setDeleting(false); setShowDeleteModal(false); }
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
+    }
   };
 
   const handleQuizSubmit = async () => {
@@ -161,15 +171,23 @@ export default function AdminContentDetail() {
 
   const set = (key: string, value: any) => setFormData(prev => ({ ...prev, [key]: value }));
 
-  if (loading) return (
-    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
   if (!content) return null;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
+    <div
+      className="flex min-h-screen bg-[#f5f5f7]"
+      style={{
+        fontFamily:
+          "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+      }}
+    >
+      {" "}
       <Sidebar role="ADMIN" />
 
       <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>
@@ -216,10 +234,18 @@ export default function AdminContentDetail() {
         {/* CONTENIDO PRINCIPAL */}
         <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 24px' }}>
           <div className="content-layout">
-
             <div>
-              <h3 style={{ fontSize: '19px', fontWeight: 700, color: '#1d1d1f', marginBottom: '20px' }}>
-                {isEditing ? 'Configurar contenido' : 'Información de la lección'}
+              <h3
+                style={{
+                  fontSize: "19px",
+                  fontWeight: 700,
+                  color: "#1d1d1f",
+                  marginBottom: "20px",
+                }}
+              >
+                {isEditing
+                  ? "Configurar contenido"
+                  : "Información de la lección"}
               </h3>
 
               {isEditing ? (
@@ -250,7 +276,12 @@ export default function AdminContentDetail() {
                   <p style={{ fontSize: '17px', lineHeight: '1.8', color: '#424245', whiteSpace: 'pre-wrap', marginBottom: '32px' }}>{content.summary || 'Sin contenido redactado.'}</p>
                   {content.imageUrl && (
                     <div className="mb-8 overflow-hidden rounded-[2.5rem] border border-gray-100 shadow-sm">
-                      <img ref={zoomRef} src={content.imageUrl} alt={content.title} className="w-full h-auto cursor-zoom-in" />
+                      <img
+                        ref={zoomRef}
+                        src={content.imageUrl}
+                        alt={content.title}
+                        className="w-full h-auto cursor-zoom-in"
+                      />
                     </div>
                   )}
 
@@ -357,8 +388,14 @@ export default function AdminContentDetail() {
 
       {/* MODAL ELIMINAR */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md" onClick={() => setShowDeleteModal(false)}>
-          <div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md"
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="text-5xl mb-6 text-center">🗑️</div>
             <h2 className="text-2xl font-bold text-[#1d1d1f] mb-3 text-center">¿Eliminar contenido?</h2>
             <div className="flex flex-col gap-3">
@@ -368,12 +405,20 @@ export default function AdminContentDetail() {
           </div>
         </div>
       )}
-
       <style jsx>{`
-        .content-layout { display: grid; grid-template-columns: 1fr 300px; gap: 48px; }
+        .content-layout {
+          display: grid;
+          grid-template-columns: 1fr 300px;
+          gap: 48px;
+        }
         @media (max-width: 1024px) {
-          .content-layout { grid-template-columns: 1fr; gap: 0; }
-          .action-box { margin-top: 32px; }
+          .content-layout {
+            grid-template-columns: 1fr;
+            gap: 0;
+          }
+          .action-box {
+            margin-top: 32px;
+          }
         }
       `}</style>
     </div>
