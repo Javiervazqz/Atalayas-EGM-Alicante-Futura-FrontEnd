@@ -54,6 +54,7 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
+  // FUSIÓN: Mantenemos tus colores pero usamos sus iconos bi-bootstrap
   const statCards = [
     { label: 'Empleados', value: stats.employees, icon: <i className="bi bi-people-fill text-blue-500"></i>},
     { label: 'Cursos propios activos', value: stats.courses, icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i> },
@@ -62,19 +63,15 @@ export default function AdminDashboard() {
   ];
 
   return (
-    // Fondo general gris muy clarito (como en el login)
     <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
       <Sidebar role="ADMIN" />
 
       <main className="flex-1 p-8 overflow-auto">
-        {/* Header */}
         <div className="mb-8">
-          {/* Texto principal en gris muy oscuro casi negro */}
           <h1 className="text-2xl font-bold text-[#1d1d1f] mb-1">Panel de administración</h1>
           <p className="text-[#86868b] text-sm">Gestiona tu empresa y empleados</p>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {statCards.map((stat) => (
             <div key={stat.label} className={`rounded-2xl border p-5`}>
@@ -86,7 +83,6 @@ export default function AdminDashboard() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Cursos - Tarjeta blanca con sombra suave */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-[#1d1d1f] font-semibold">Cursos de la empresa</h2>
@@ -104,14 +100,13 @@ export default function AdminDashboard() {
             ) : courses.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-[#86868b] text-sm">No hay cursos todavía</p>
-                <Link href="/dashboard/admin/courses/new" className="text-[#0071e3] text-sm mt-2 inline-block hover:text-blue-600">
+                <Link href="/dashboard/administrator/admin/courses/manage/new" className="text-[#0071e3] text-sm mt-2 inline-block hover:text-blue-600">
                   Crear primer curso
                 </Link>
               </div>
             ) : (
               <div className="space-y-3">
                 {courses.slice(0, 5).map((course) => (
-                  // Elementos de la lista gris clarito que pasan a blanco al pasar el ratón
                   <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-white border border-gray-200 shadow-sm rounded-lg flex items-center justify-center">
@@ -119,7 +114,6 @@ export default function AdminDashboard() {
                       </div>
                       <span className="text-[#1d1d1f] text-sm font-medium">{course.title}</span>
                     </div>
-                    {/* Badges claros */}
                     <span className={`text-xs px-2 py-1 rounded-lg font-medium ${course.isPublic ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}`}>
                       {course.isPublic ? 'Público' : 'Privado'}
                     </span>
@@ -129,7 +123,6 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {/* Quick Actions - Tarjeta blanca */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
             <h2 className="text-[#1d1d1f] font-semibold mb-5">Acciones rápidas</h2>
             <div className="grid grid-cols-2 gap-3">
@@ -144,7 +137,7 @@ export default function AdminDashboard() {
                   href={action.href}
                   className="flex flex-col items-center gap-2 p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-white hover:border-gray-300 hover:shadow-sm transition-all text-center"
                 >
-                  <span className="text-2xl">{action.icon}</span>
+                  <span className="text-2xl text-blue-500">{action.icon}</span>
                   <span className="text-[#1d1d1f] font-medium text-xs">{action.label}</span>
                 </Link>
               ))}
