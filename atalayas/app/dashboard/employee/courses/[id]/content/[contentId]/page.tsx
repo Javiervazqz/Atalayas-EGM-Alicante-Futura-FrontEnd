@@ -25,7 +25,7 @@ export default function EmployeeContentDetail() {
       if (!contentId || !courseId) return;
 
       try {
-        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(contentId as string), {
+        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(contentId as string, courseId as string), {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         const data = await res.json();

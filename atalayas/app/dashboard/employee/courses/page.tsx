@@ -40,7 +40,7 @@ export default function EmployeeCoursesPage() {
         fetchCourses();
     }, []);
 
-    useEffect(() => {
+  useEffect(() => {
   const autoConfirmTask = async () => {
     if (fromTaskId) {
       try {
