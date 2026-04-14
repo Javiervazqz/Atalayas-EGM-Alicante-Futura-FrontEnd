@@ -126,61 +126,74 @@ export default function Sidebar({ role }: SidebarProps) {
       )}
 
       <aside 
-        className={`
-          ${collapsed ? 'w-16 max-lg:-translate-x-full' : 'w-64 max-lg:translate-x-0'} 
-          transition-all duration-300 bg-white border-r border-gray-200 flex flex-col h-screen 
-          sticky top-0 left-0 z-40 max-lg:fixed
-        `}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          <div className={`flex items-center gap-2 ${collapsed ? 'hidden' : 'flex'}`}>
-            <div className="rounded-2xl flex items-center justify-center shrink-0 shadow-sm overflow-hidden bg-gray-50 h-12 w-12">
-              {/* Solo mostramos la imagen si está montado y tenemos datos */}
-              {mounted && user?.company?.logoUrl ? (
-                <img src={user.company.logoUrl} className="object-cover h-full w-full" alt="Logo" />
-              ) : (
-                <div className="h-full w-full bg-gray-100 animate-pulse" />
-              )}
-            </div>
-            <span className="text-[#1d1d1f] font-bold text-lg tracking-tight ml-1 truncate">
-              {/* Si no está montado, no mostramos texto para evitar el parpadeo de "Mi Empresa" */}
-              {mounted ? (user?.company?.name || 'Mi Empresa') : ''}
+  className={`
+    ${collapsed ? 'w-16 max-lg:-translate-x-full' : 'w-64 max-lg:translate-x-0'} 
+    transition-all duration-300 bg-white border-r border-gray-200 flex flex-col h-screen 
+    sticky top-0 left-0 z-40 max-lg:fixed
+  `}
+>
+  <div className="flex items-center justify-between p-4 border-b border-gray-100">
+    <div className={`flex items-center gap-2 ${collapsed ? 'hidden' : 'flex'}`}>
+      <div className="rounded-2xl flex items-center justify-center shrink-0 shadow-sm overflow-hidden bg-gray-50 h-12 w-12 border border-gray-100">
+        {/* Cambiado a user.Company.logoUrl para coincidir con tu JSON */}
+        {mounted && user?.Company?.logoUrl ? (
+          <img 
+            src={user.Company.logoUrl} 
+            className="object-cover h-full w-full" 
+            alt="Logo Empresa" 
+            onError={(e) => {
+              // Si la imagen de Supabase falla, ponemos un fallback con la inicial
+              (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${user?.Company?.name || 'C'}&background=005596&color=fff`;
+            }}
+          />
+        ) : (
+          <div className="h-full w-full bg-[#005596]/10 flex items-center justify-center">
+            {/* Fallback mientras carga o si no hay logo */}
+            <span className="text-[#005596] font-bold">
+              {mounted ? (user?.Company?.name?.charAt(0) || 'C') : ''}
             </span>
           </div>
-          
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="text-[#86868b] hover:text-[#1d1d1f] transition-colors p-1 rounded-lg hover:bg-[#f5f5f7]"
-          >
-            <i className={`bi ${collapsed && mounted && window.innerWidth >= 1024 ? 'bi-chevron-right' : 'bi-list'}`}></i>
-          </button>
-        </div>
+        )}
+      </div>
+      <span className="text-[#1d1d1f] font-bold text-lg tracking-tight ml-1 truncate">
+        {/* Cambiado a user.Company.name */}
+        {mounted ? (user?.Company?.name || 'Mi Empresa') : ''}
+      </span>
+    </div>
+    
+    <button
+      onClick={() => setCollapsed(!collapsed)}
+      className="text-[#86868b] hover:text-[#1d1d1f] transition-colors p-1 rounded-lg hover:bg-[#f5f5f7]"
+    >
+      <i className={`bi ${collapsed && mounted && window.innerWidth >= 1024 ? 'bi-chevron-right' : 'bi-list'}`}></i>
+    </button>
+  </div>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {navItems[role]?.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => { if(window.innerWidth < 1024) setCollapsed(true) }}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
-                  isActive ? 'bg-[#0071e3]/10 text-[#0071e3]' : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]'
-                }`}
-              >
-                <span className="text-base shrink-0">{item.icon}</span>
-                <span className={`flex-1 ${collapsed ? 'hidden' : 'block'} truncate`}>
-                  {item.label}
-                </span>
-                {!collapsed && item.label === 'Solicitudes' && pendingCount > 0 && (
-                  <span className="bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[1.2rem] text-center">
-                    {pendingCount}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+  <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+    {navItems[role]?.map((item) => {
+      const isActive = pathname === item.href;
+      return (
+        <Link
+          key={item.href}
+          href={item.href}
+          onClick={() => { if(window.innerWidth < 1024) setCollapsed(true) }}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
+            isActive ? 'bg-[#0071e3]/10 text-[#0071e3]' : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]'
+          }`}
+        >
+          <span className="text-base shrink-0">{item.icon}</span>
+          <span className={`flex-1 ${collapsed ? 'hidden' : 'block'} truncate`}>
+            {item.label}
+          </span>
+          {!collapsed && item.label === 'Solicitudes' && pendingCount > 0 && (
+            <span className="bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[1.2rem] text-center">
+              {pendingCount}
+            </span>
+          )}
+        </Link>
+      );
+    })}
+  </nav>
 
         <div className="p-3 border-t border-gray-100 bg-white">
           <Link href="/dashboard/profile">

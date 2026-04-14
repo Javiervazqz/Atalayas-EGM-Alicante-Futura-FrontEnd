@@ -137,7 +137,6 @@ export default function CompanyProfilePage() {
       const token = localStorage.getItem('token');
       const formData = new FormData();
       
-      // Adjuntamos solo los campos que tengan valor
       if (name) formData.append('name', name);
       if (address) formData.append('address', address);
       if (description) formData.append('description', description);
@@ -146,14 +145,11 @@ export default function CompanyProfilePage() {
       if (contactPhone) formData.append('contactPhone', contactPhone);
       if (cif) formData.append('cif', cif);
       if (activity) formData.append('activity', activity);
-      
-      // Adjuntamos el archivo físico si se ha seleccionado uno nuevo
       if (newFile) formData.append('file', newFile); 
 
-      // Petición PATCH al endpoint que creamos antes
       const res = await fetch(`${API_ROUTES.COMPANIES.GET_ALL}/${selectedCompanyId}`, {
         method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${token}` }, // Sin Content-Type, el FormData se encarga
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
       });
 
@@ -164,10 +160,36 @@ export default function CompanyProfilePage() {
         throw new Error(errorMsg || 'Error actualizando el perfil de la empresa');
       }
 
+      // --- ✨ LÓGICA DE ACTUALIZACIÓN EN TIEMPO REAL ✨ ---
+
+      // 1. Obtenemos el usuario actual del localStorage
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const userObj = JSON.parse(storedUser);
+
+        // 2. Actualizamos los datos de la empresa dentro del objeto usuario
+        // Solo si la empresa que editamos es la misma que tiene el usuario en su sesión
+        if (userObj.companyId === selectedCompanyId || userObj.role === 'GENERAL_ADMIN') {
+          userObj.Company = {
+            ...userObj.Company,
+            name: name, // El nombre que acabamos de escribir
+            logoUrl: data.logoUrl || currentLogoUrl // El nuevo logo que devolvió el servidor
+          };
+
+          // 3. Guardamos el usuario actualizado en el localStorage
+          localStorage.setItem('user', JSON.stringify(userObj));
+
+        }
+      }
+
+      // --- ------------------------------------------- ---
+
       setCurrentLogoUrl(data.logoUrl || currentLogoUrl);
       setNewFile(null);
       setLogoPreview(null);
       setSuccess('Perfil de empresa actualizado correctamente.');
+      window.location.reload();
+
 
     } catch (err: any) {
       setError(err.message);

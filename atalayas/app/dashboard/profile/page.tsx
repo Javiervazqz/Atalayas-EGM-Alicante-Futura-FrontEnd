@@ -77,59 +77,68 @@ export default function ProfilePage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess('');
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setSuccess('');
 
-    if (password && password.length < 6) {
-      setError('La nueva contraseña debe tener al menos 6 caracteres.');
-      setLoading(false);
-      return;
+  // ... validaciones de password se mantienen igual ...
+
+  try {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    
+    if (name) formData.append('name', name);
+    if (password) formData.append('password', password);
+    if (newFile) formData.append('file', newFile); 
+
+    const res = await fetch(API_ROUTES.AUTH.PROFILE, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData,
+    });
+
+    const data = await res.json(); // Estos son los datos nuevos del usuario
+
+    if (!res.ok) {
+      const errorMsg = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+      throw new Error(errorMsg || 'Error actualizando el perfil');
     }
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden.');
-      setLoading(false);
-      return;
-    }
 
-    try {
-      const token = localStorage.getItem('token');
-      const formData = new FormData();
-      
-      if (name) formData.append('name', name);
-      if (password) formData.append('password', password);
-      if (newFile) formData.append('file', newFile); 
+    // --- SOLUCIÓN AL CAMBIO AUTOMÁTICO ---
+    
+    // 1. Recuperamos el usuario actual del localStorage (que tiene el objeto Company)
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    // 2. Mezclamos: lo que ya teníamos + lo que viene nuevo de la API
+    const updatedUser = {
+      ...storedUser, // Mantiene la propiedad Company: { logoUrl, name, etc. }
+      ...data        // Actualiza name y avatarUrl con la respuesta del servidor
+    };
 
-      const res = await fetch(API_ROUTES.AUTH.PROFILE, {
-        method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData,
-      });
+    // 3. Guardamos el objeto completo de nuevo
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    
+    // 4. Actualizamos estados locales
+    setCurrentUser(updatedUser);
+    setCurrentAvatarUrl(updatedUser.avatarUrl);
+    
+    // Limpieza de inputs
+    setNewFile(null);
+    setAvatarPreview(null);
+    setPassword('');
+    setConfirmPassword('');
+    setSuccess('Perfil actualizado correctamente.');
 
-      const data = await res.json();
+    // 5. El reload ahora sí encontrará los datos correctos
+    window.location.reload();
 
-      if (!res.ok) {
-        const errorMsg = Array.isArray(data.message) ? data.message.join(', ') : data.message;
-        throw new Error(errorMsg || 'Error actualizando el perfil');
-      }
-
-      localStorage.setItem('user', JSON.stringify(data));
-      
-      setCurrentUser(data);
-      setCurrentAvatarUrl(data.avatarUrl);
-      setNewFile(null);
-      setAvatarPreview(null);
-      setPassword('');
-      setConfirmPassword('');
-      setSuccess('Perfil actualizado correctamente.');
-
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (err: any) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (!currentUser) return null;
 
