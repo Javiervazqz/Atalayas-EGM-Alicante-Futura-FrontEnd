@@ -197,7 +197,7 @@ export default function AdminContentDetail() {
       <Sidebar role="ADMIN" />
 
       <main className="flex-1 h-screen overflow-y-auto w-full">
-        <div className="bg-white border-b border-black/5 py-6 md:py-8">
+        <div className="bg-white border-b border-black/5 py-6 md:py-8 sticky top-0 z-30">
           <div className="max-w-5xl mx-auto px-6">
             <Link
               href={`/dashboard/administrator/admin/courses/${params.id}`}

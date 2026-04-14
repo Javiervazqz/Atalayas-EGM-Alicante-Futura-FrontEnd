@@ -54,16 +54,16 @@ export default function EmployeeDashboard() {
 
         const dataCourses = await resCourses.json();
         const dataOnboarding = await resOnboarding.json();
-         const sortedDataCourses = dataCourses.sort((a: any, b: any) => {
-            // Quitamos espacios en blanco al principio/final para comparar limpio
-            const titleA = a.title.trim().toLowerCase();
-            const titleB = b.title.trim().toLowerCase();
+        const sortedDataCourses = dataCourses.sort((a: any, b: any) => {
+          // Quitamos espacios en blanco al principio/final para comparar limpio
+          const titleA = a.title.trim().toLowerCase();
+          const titleB = b.title.trim().toLowerCase();
 
-            return titleA.localeCompare(titleB, undefined, {
-              numeric: true,
-              sensitivity: "base",
-            });
+          return titleA.localeCompare(titleB, undefined, {
+            numeric: true,
+            sensitivity: "base",
           });
+        });
 
         setCourses(Array.isArray(sortedDataCourses) ? dataCourses : []);
         setOnboardingData(Array.isArray(dataOnboarding) ? dataOnboarding : []);

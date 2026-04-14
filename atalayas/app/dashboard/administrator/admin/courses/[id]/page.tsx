@@ -35,15 +35,13 @@ export default function AdminCourseDetailPage() {
     if (id) fetchCourse();
   }, [id]);
 
-  // --- LÓGICA DE ELIMINACIÓN ---
-  // 1. Solo abre el modal y guarda el ID
+
 const confirmDelete = (e: React.MouseEvent, contentId: string) => {
   e.stopPropagation();
   setContentToDelete(contentId);
   setShowDeleteModal(true);
 };
 
-// 2. Ejecuta la eliminación (esta se llama desde el botón del Modal)
 const executeDelete = async () => {
   if (!contentToDelete) return;
 
