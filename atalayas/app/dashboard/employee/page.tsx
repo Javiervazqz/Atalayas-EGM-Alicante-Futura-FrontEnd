@@ -1,360 +1,264 @@
 'use client';
- 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
- 
-interface Course {
-  id: string;
-  title: string;
-  isPublic: boolean;
-}
- 
-interface Enrollment {
-  id: string;
-  progress: number;
-  Course: Course;
-}
- 
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
- 
-function Sidebar({ active }: { active: string }) {
-  const router = useRouter();
-  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
- 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    router.push('/login');
-  };
- 
-  const navItems = [
-    { label: 'Panel', href: '/dashboard/employee', icon: (
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor"/></svg>
-    )},
-    { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: (
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M4 19V6a2 2 0 012-2h12a2 2 0 012 2v13M4 19a2 2 0 002 2h12a2 2 0 002-2M4 19H2m20 0h-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M9 10h6M9 14h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-    )},
-    { label: 'Documentos', href: '/dashboard/employee/documents', icon: (
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 2v6h6M9 13h6M9 17h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-    )},
-    { label: 'Servicios', href: '/dashboard/employee/services', icon: (
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-    )},
-  ];
- 
-  return (
-    <aside style={{
-      width: '240px',
-      minHeight: '100vh',
-      background: 'rgba(255,255,255,0.8)',
-      backdropFilter: 'blur(20px)',
-      borderRight: '1px solid rgba(0,0,0,0.06)',
-      display: 'flex',
-      flexDirection: 'column',
-      fontFamily: appleFont,
-      position: 'sticky',
-      top: 0,
-    }}>
-      {/* Logo */}
-      <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '32px', height: '32px',
-            background: 'linear-gradient(135deg, #1d1d1f 0%, #434343 100%)',
-            borderRadius: '9px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{ color: 'white', fontSize: '14px', fontWeight: 600 }}>A</span>
-          </div>
-          <div>
-            <p style={{ color: '#1d1d1f', fontSize: '14px', fontWeight: 600, margin: 0 }}>Atalayas</p>
-            <p style={{ color: '#86868b', fontSize: '11px', margin: 0 }}>Polígono Industrial</p>
-          </div>
-        </div>
-      </div>
- 
-      {/* Nav */}
-      <nav style={{ flex: 1, padding: '12px 10px' }}>
-        {navItems.map((item) => {
-          const isActive = active === item.label;
-          return (
-            <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '9px 12px',
-                borderRadius: '10px',
-                marginBottom: '2px',
-                background: isActive ? 'rgba(0,113,227,0.08)' : 'transparent',
-                color: isActive ? '#0071e3' : '#424245',
-                fontSize: '14px',
-                fontWeight: isActive ? 500 : 400,
-                cursor: 'pointer',
-                transition: 'background 0.15s',
-              }}>
-                {item.icon}
-                {item.label}
-              </div>
-            </Link>
-          );
-        })}
-      </nav>
- 
-      {/* User */}
-      <div style={{ padding: '16px 10px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          padding: '10px 12px',
-          borderRadius: '10px',
-          background: '#f5f5f7',
-          marginBottom: '6px',
-        }}>
-          <div style={{
-            width: '30px', height: '30px',
-            background: '#e8e8ed',
-            borderRadius: '50%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}>
-            <span style={{ color: '#424245', fontSize: '12px', fontWeight: 600 }}>
-              {user.email?.[0]?.toUpperCase() || 'U'}
-            </span>
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ color: '#1d1d1f', fontSize: '13px', fontWeight: 500, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {user.email || 'Usuario'}
-            </p>
-            <p style={{ color: '#86868b', fontSize: '11px', margin: 0 }}>Empleado</p>
-          </div>
-        </div>
-        <button
-          onClick={handleLogout}
-          style={{
-            width: '100%', padding: '8px 12px',
-            border: 'none', borderRadius: '10px',
-            background: 'transparent', color: '#ff3b30',
-            fontSize: '13px', cursor: 'pointer',
-            textAlign: 'left', fontFamily: appleFont,
-            display: 'flex', alignItems: 'center', gap: '8px',
-          }}
-        >
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
-            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Cerrar sesión
-        </button>
-      </div>
-    </aside>
-  );
-}
- 
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import Sidebar from "@/components/ui/Sidebar";
+import { API_ROUTES } from "@/lib/utils";
+
 export default function EmployeeDashboard() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [onboardingData, setOnboardingData] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
- 
-  const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';
- 
+  const [user, setUser] = useState<any>({});
+  const [currentDay, setCurrentDay] = useState(1);
+  const [showSuccess, setShowSuccess] = useState(false);
+
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      setUser(storedUser);
+
+      const referenceDateRaw = storedUser.firstLoginAt;
+
+      if (referenceDateRaw) {
+        const referenceDate = new Date(storedUser.createdAt);
+        const today = new Date();
+        const start = new Date(
+          referenceDate.getFullYear(),
+          referenceDate.getMonth(),
+          referenceDate.getDate(),
+        );
+        const end = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate(),
+        );
+
+        const diffTime = end.getTime() - start.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+        setCurrentDay(diffDays > 0 ? diffDays : 1);
+      }
+    }
+
     const fetchData = async () => {
       try {
-        const headers = { Authorization: `Bearer ${getToken()}` };
-        const coursesRes = await fetch('http://localhost:3000/courses', { headers });
-        const coursesData = await coursesRes.json();
-        setCourses(Array.isArray(coursesData) ? coursesData : []);
+        const token = localStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
+
+        const [resCourses, resOnboarding] = await Promise.all([
+          fetch(API_ROUTES.COURSES.GET_ALL, { headers }),
+          fetch(API_ROUTES.ONBOARDING.ME, { headers }),
+        ]);
+
+        const dataCourses = await resCourses.json();
+        const dataOnboarding = await resOnboarding.json();
+
+        setCourses(Array.isArray(dataCourses) ? dataCourses : []);
+        setOnboardingData(Array.isArray(dataOnboarding) ? dataOnboarding : []);
       } catch (err) {
-        console.error(err);
+        console.error("Error cargando dashboard:", err);
       } finally {
-        setLoading(false);
+        setTimeout(() => setLoading(false), 800);
       }
     };
+
     fetchData();
   }, []);
- 
-  const completedCourses = enrollments.filter(e => e.progress === 100).length;
-  const inProgressCourses = enrollments.filter(e => e.progress > 0 && e.progress < 100).length;
- 
-  return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
-      <Sidebar active="Panel" />
- 
-      <main style={{ flex: 1, padding: '40px', overflow: 'auto' }}>
- 
-        {/* Header */}
-        <div style={{ marginBottom: '36px' }}>
-          <h1 style={{ color: '#1d1d1f', fontSize: '32px', fontWeight: 700, letterSpacing: '-0.04em', margin: '0 0 6px' }}>
-            Buenos días
-          </h1>
-          <p style={{ color: '#86868b', fontSize: '15px', margin: 0 }}>
-            Consulta tus cursos y tu progreso de formación
+
+  const handleToggleTask = async (taskId: string, currentStatus: boolean, stepDay: number) => {
+    const newStatus = !currentStatus;
+    const updatedData = onboardingData.map((step) => ({
+      ...step,
+      onboardingTasks: step.onboardingTasks.map((task: any) =>
+        task.id === taskId ? { ...task, userProgress: [{ done: newStatus }] } : task,
+      ),
+    }));
+    setOnboardingData(updatedData);
+
+    try {
+      const token = localStorage.getItem("token");
+      await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ taskId, done: newStatus }),
+      });
+
+      if (newStatus) {
+        const currentStep = updatedData.find((s) => s.day === stepDay);
+        const isNowFinished = currentStep.onboardingTasks.every((t: any) => t.userProgress?.[0]?.done);
+        if (isNowFinished) {
+          setShowSuccess(true);
+          setTimeout(() => setShowSuccess(false), 2000);
+        }
+      }
+    } catch (err) {
+      console.error("Error al actualizar tarea:", err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
+        <Sidebar role="EMPLOYEE" />
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="relative flex items-center justify-center">
+            <div className="w-16 h-16 border-4 border-[#005596]/10 border-t-[#005596] rounded-full animate-spin"></div>
+            <div className="absolute w-4 h-4 bg-[#d9ff00] rounded-full shadow-[0_0_15px_rgba(217,255,0,0.8)]"></div>
+          </div>
+          <p className="mt-6 text-[#005596] font-black text-xs uppercase tracking-[0.3em] animate-pulse">
+            Cargando tus datos...
           </p>
         </div>
- 
-        {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
-          {[
-            { label: 'Cursos disponibles', value: courses.length, sub: 'para ti', color: '#0071e3', bg: 'rgba(0,113,227,0.06)' },
-            { label: 'En progreso', value: inProgressCourses, sub: 'cursos activos', color: '#ff9500', bg: 'rgba(255,149,0,0.06)' },
-            { label: 'Completados', value: completedCourses, sub: 'cursos terminados', color: '#34c759', bg: 'rgba(52,199,89,0.06)' },
-          ].map((stat) => (
-            <div key={stat.label} style={{
-              background: '#ffffff',
-              borderRadius: '18px',
-              padding: '24px',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)',
-            }}>
-              <div style={{
-                width: '40px', height: '40px',
-                background: stat.bg,
-                borderRadius: '12px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: '16px',
-              }}>
-                <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: stat.color, opacity: 0.8 }} />
-              </div>
-              <p style={{ color: '#1d1d1f', fontSize: '32px', fontWeight: 700, letterSpacing: '-0.04em', margin: '0 0 4px' }}>
-                {loading ? '—' : stat.value}
+      </div>
+    );
+  }
+
+  const firstName = user?.name || user?.email?.split("@")[0] || "Empleado";
+  const visibleSteps = onboardingData.filter((s) => s.day <= currentDay);
+  const activeSteps = visibleSteps.filter(step => !step.onboardingTasks?.every((task: any) => task.userProgress?.[0]?.done));
+  const completedSteps = visibleSteps.filter(step => step.onboardingTasks?.length > 0 && step.onboardingTasks.every((task: any) => task.userProgress?.[0]?.done));
+  const sortedSteps = [...activeSteps, ...completedSteps];
+
+  const allTasks = visibleSteps.flatMap((s) => s.onboardingTasks || []);
+  const completedTasks = allTasks.filter((t) => t.userProgress?.[0]?.done).length;
+  const progressPercent = allTasks.length > 0 ? Math.round((completedTasks / allTasks.length) * 100) : 0;
+  const maxOnboardingDay = onboardingData.length > 0 ? Math.max(...onboardingData.map((s) => s.day)) : 0;
+  const visibleDay = currentDay > maxOnboardingDay ? maxOnboardingDay : currentDay;
+
+  return (
+    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
+      <Sidebar role="EMPLOYEE" />
+
+      {showSuccess && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center pointer-events-none">
+          <div className="bg-white/95 backdrop-blur-xl p-12 rounded-[48px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white animate-in zoom-in duration-300 flex flex-col items-center gap-6">
+            <div className="w-24 h-24 bg-[#d9ff00] rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(217,255,0,0.5)]">
+              <span className="text-3xl animate-bounce">👍</span>
+            </div>
+            <div className="text-center">
+              <h2 className="text-3xl font-black text-[#005596] tracking-tight">¡Día Completado!</h2>
+              <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">Sigue así, vas por buen camino</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+        <div className="flex-1 h-screen overflow-y-auto px-6 md:px-12 py-10 no-scrollbar">
+          <header className="mb-10 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-black text-[#1d1d1f] tracking-tight">¡Hola, {firstName}!</h1>
+              <p className="text-gray-500 mt-1 font-medium">
+                Estás en tu <span className="font-black px-2 py-0.5 rounded-lg bg-[#d9ff00] text-[#005596]">Día {visibleDay}</span> de incorporación.
               </p>
-              <p style={{ color: '#1d1d1f', fontSize: '14px', fontWeight: 500, margin: '0 0 2px' }}>{stat.label}</p>
-              <p style={{ color: '#86868b', fontSize: '12px', margin: 0 }}>{stat.sub}</p>
             </div>
-          ))}
-        </div>
- 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
- 
-          {/* Cursos disponibles */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '18px',
-            padding: '28px',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, margin: 0, letterSpacing: '-0.02em' }}>
-                Cursos disponibles
-              </h2>
-              <Link href="/dashboard/employee/courses" style={{ color: '#0071e3', fontSize: '13px', textDecoration: 'none' }}>
-                Ver todos
-              </Link>
-            </div>
- 
-            {loading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {[1,2,3].map(i => (
-                  <div key={i} style={{ height: '56px', background: '#f5f5f7', borderRadius: '12px' }} />
-                ))}
-              </div>
-            ) : courses.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '32px 0' }}>
-                <p style={{ color: '#86868b', fontSize: '14px' }}>No hay cursos disponibles</p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {courses.slice(0, 5).map((course) => (
-                  <Link key={course.id} href={`/dashboard/employee/courses/${course.id}`} style={{ textDecoration: 'none' }}>
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: '12px',
-                      padding: '12px 14px',
-                      borderRadius: '12px',
-                      background: '#f5f5f7',
-                      cursor: 'pointer',
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#ebebed')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#f5f5f7')}
-                    >
-                      <div style={{
-                        width: '34px', height: '34px',
-                        background: course.isPublic ? 'rgba(52,199,89,0.12)' : 'rgba(0,113,227,0.1)',
-                        borderRadius: '10px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0,
-                        fontSize: '16px',
-                      }}>
-                        📚
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ color: '#1d1d1f', fontSize: '14px', fontWeight: 500, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {course.title}
-                        </p>
-                        <p style={{ color: course.isPublic ? '#34c759' : '#86868b', fontSize: '11px', margin: 0 }}>
-                          {course.isPublic ? 'Público' : 'Tu empresa'}
-                        </p>
-                      </div>
-                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" style={{ color: '#c7c7cc', flexShrink: 0 }}>
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
- 
-          {/* Mi progreso */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '18px',
-            padding: '28px',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)',
-          }}>
-            <h2 style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, margin: '0 0 20px', letterSpacing: '-0.02em' }}>
-              Mi progreso
-            </h2>
- 
-            {enrollments.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '32px 0' }}>
-                <div style={{
-                  width: '56px', height: '56px',
-                  background: '#f5f5f7',
-                  borderRadius: '18px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  margin: '0 auto 14px',
-                  fontSize: '26px',
-                }}>
-                  🎯
-                </div>
-                <p style={{ color: '#1d1d1f', fontSize: '14px', fontWeight: 500, margin: '0 0 6px' }}>
-                  Sin matrículas activas
-                </p>
-                <p style={{ color: '#86868b', fontSize: '13px', margin: '0 0 16px' }}>
-                  Empieza un curso para ver tu progreso aquí
-                </p>
-                <Link href="/dashboard/employee/courses" style={{
-                  color: '#0071e3', fontSize: '13px', textDecoration: 'none',
-                  padding: '8px 16px',
-                  background: 'rgba(0,113,227,0.08)',
-                  borderRadius: '20px',
-                }}>
-                  Explorar cursos
-                </Link>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {enrollments.map((enrollment) => (
-                  <div key={enrollment.id}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ color: '#1d1d1f', fontSize: '14px', fontWeight: 500 }}>
-                        {enrollment.Course.title}
-                      </span>
-                      <span style={{ color: '#86868b', fontSize: '13px' }}>{enrollment.progress}%</span>
-                    </div>
-                    <div style={{ height: '4px', background: '#f5f5f7', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{
-                        height: '100%',
-                        width: `${enrollment.progress}%`,
-                        background: enrollment.progress === 100 ? '#34c759' : '#0071e3',
-                        borderRadius: '4px',
-                        transition: 'width 0.5s ease',
-                      }} />
-                    </div>
+            <button onClick={() => setCurrentDay((prev) => prev + 1)} className="bg-gray-100 text-gray-400 text-[10px] font-black px-3 py-2 rounded-lg hover:bg-gray-200 transition-all">DEBUG +1 DIA</button>
+          </header>
+
+          <section className="space-y-6 mb-12">
+            <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em] mb-4">Tu Ruta de Incorporación</h2>
+            {sortedSteps.map((step) => {
+              const isStepDone = step.onboardingTasks?.every((t: any) => t.userProgress?.[0]?.done);
+              return (
+                <div key={step.id} className={`transition-all duration-700 rounded-[32px] border p-8 shadow-sm ${isStepDone ? "bg-gray-50/50 border-gray-100 opacity-60 grayscale-[0.8] scale-[0.98]" : "bg-white border-gray-100 hover:shadow-md animate-in fade-in slide-in-from-bottom-4"}`}>
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider ${isStepDone ? "bg-gray-200 text-gray-400" : "bg-[#d9ff00] text-[#005596]"}`}>{step.badge || `Día ${step.day}`}</span>
+                    {isStepDone && <span className="text-gray-400 text-[10px] font-bold">✓ BLOQUE FINALIZADO</span>}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  <h3 className={`text-xl font-bold mb-1 ${isStepDone ? "text-gray-400" : "text-[#1d1d1f]"}`}>{step.title}</h3>
+                  <p className="text-gray-500 text-sm mb-6 font-medium">{step.description}</p>
+                  <div className="grid gap-3">
+                    {step.onboardingTasks?.map((task: any) => {
+                      const isDone = task.userProgress?.[0]?.done || false;
+                      
+                      // Lógica de transformación de URL específica para tu estructura
+                      const getCorrectUrl = () => {
+                        if (!task.linkAction) return "#";
+                        
+                        // Extraer parámetros si vienen en formato query string
+                        const urlParts = task.linkAction.split('?');
+                        if (urlParts.length > 1) {
+                          const params = new URLSearchParams(urlParts[1]);
+                          const cId = params.get('courseId');
+                          const contId = params.get('contentId');
+                          
+                          // Si tenemos ambos, construimos la ruta /courses/ID/content/ID
+                          if (cId && contId) {
+                            return `/dashboard/employee/courses/${cId}/content/${contId}?fromTask=${task.id}`;
+                          }
+                          // Si solo hay curso, /courses/ID
+                          if (cId) {
+                            return `/dashboard/employee/courses/${cId}?fromTask=${task.id}`;
+                          }
+                        }
+                        
+                        // Fallback: Si no tiene parámetros, concatenamos el ID de la tarea
+                        return `${task.linkAction}${task.linkAction.includes('?') ? '&' : '?'}fromTask=${task.id}`;
+                      };
+
+                      return (
+                        <div key={task.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all group ${isDone ? "bg-white/50 border-transparent" : "border-gray-50 bg-gray-50/30 hover:bg-white hover:border-[#d9ff00]"}`}>
+                          <div 
+                            onClick={() => handleToggleTask(task.id, isDone, step.day)} 
+                            className="flex items-center gap-4 cursor-pointer flex-1"
+                          >
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isDone ? "bg-[#005596] border-[#005596]" : "border-gray-200 group-hover:border-[#d9ff00]"}`}>
+                              {isDone && <span className="text-[#d9ff00] text-[10px]">✓</span>}
+                            </div>
+                            <span className={`text-sm font-bold ${isDone ? "text-gray-400 line-through" : "text-[#1d1d1f]"}`}>
+                              {task.label}
+                            </span>
+                          </div>
+
+                          {task.linkAction && !isDone && (
+                            <Link 
+                              href={getCorrectUrl()}
+                              className="ml-4 px-4 py-2 bg-[#005596] text-[#d9ff00] text-[10px] font-black uppercase tracking-wider rounded-xl hover:scale-105 transition-transform shadow-sm whitespace-nowrap"
+                            >
+                              Ir a la tarea
+                            </Link>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </section>
         </div>
+
+        <aside className="w-full md:w-80 h-screen border-l border-gray-100 bg-white p-8 flex flex-col gap-8 shrink-0 overflow-y-auto no-scrollbar">
+          <div className="space-y-4">
+            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Progreso Global</h4>
+            <div className="bg-gray-50 rounded-[24px] p-5 border border-gray-100">
+              <div className="flex justify-between items-end mb-2">
+                <span className="text-2xl font-black text-[#005596]">{progressPercent}%</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase">{completedTasks} de {allTasks.length}</span>
+              </div>
+              <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-[#d9ff00] rounded-full transition-all duration-1000" style={{ width: `${progressPercent}%` }} />
+              </div>
+            </div>
+          </div>
+          <section>
+            <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em] mb-6">Formación Recomendada</h2>
+            <div className="grid gap-4">
+              {courses.slice(0, 5).map((course) => (
+                <Link key={course.id} href={`/dashboard/employee/courses/${course.id}`}>
+                  <div className="bg-white p-4 rounded-2xl border border-gray-100 hover:border-[#d9ff00] transition-all group">
+                    <h4 className="font-bold text-[#1d1d1f] text-xs mb-1 group-hover:text-[#005596] line-clamp-1">{course.title}</h4>
+                    <span className="text-[9px] font-black uppercase text-[#005596] bg-blue-50 px-2 py-0.5 rounded">{user.company.name}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </aside>
       </main>
     </div>
   );
