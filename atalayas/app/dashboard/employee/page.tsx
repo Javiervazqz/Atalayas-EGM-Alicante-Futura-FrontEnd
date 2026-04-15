@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/ui/Sidebar";
 import { API_ROUTES } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function EmployeeDashboard() {
   const [onboardingData, setOnboardingData] = useState<any[]>([]);
@@ -20,7 +21,7 @@ export default function EmployeeDashboard() {
 
       const referenceDateRaw = storedUser.firstLoginAt;
 
-      if (referenceDateRaw) {
+      if (referenceDateRaw || storedUser.createdAt) {
         const referenceDate = new Date(storedUser.createdAt);
         const today = new Date();
         const start = new Date(
@@ -53,8 +54,18 @@ export default function EmployeeDashboard() {
 
         const dataCourses = await resCourses.json();
         const dataOnboarding = await resOnboarding.json();
+        const sortedDataCourses = dataCourses.sort((a: any, b: any) => {
+          // Quitamos espacios en blanco al principio/final para comparar limpio
+          const titleA = a.title.trim().toLowerCase();
+          const titleB = b.title.trim().toLowerCase();
 
-        setCourses(Array.isArray(dataCourses) ? dataCourses : []);
+          return titleA.localeCompare(titleB, undefined, {
+            numeric: true,
+            sensitivity: "base",
+          });
+        });
+
+        setCourses(Array.isArray(sortedDataCourses) ? dataCourses : []);
         setOnboardingData(Array.isArray(dataOnboarding) ? dataOnboarding : []);
       } catch (err) {
         console.error("Error cargando dashboard:", err);
@@ -149,9 +160,11 @@ export default function EmployeeDashboard() {
 
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         <div className="flex-1 h-screen overflow-y-auto px-6 md:px-12 py-10 no-scrollbar">
-          <header className="mb-10 flex items-center justify-between">
+          
+          {/* BANNER DE BIENVENIDA COMPACTO */}
+          <header className="bg-white rounded-[2rem] p-8 mb-10 border border-gray-100 shadow-sm flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-black text-[#1d1d1f] tracking-tight">¡Hola, {firstName}!</h1>
+              <h1 className="text-3xl font-black text-[#1d1d1f] tracking-tight">¡Hola, <span className="text-blue-600">{user.name}</span>!</h1>
               <p className="text-gray-500 mt-1 font-medium">
                 Estás en tu <span className="font-black px-2 py-0.5 rounded-lg bg-[#d9ff00] text-[#005596]">Día {visibleDay}</span> de incorporación.
               </p>
@@ -160,7 +173,7 @@ export default function EmployeeDashboard() {
           </header>
 
           <section className="space-y-6 mb-12">
-            <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em] mb-4">Tu Ruta de Incorporación</h2>
+            <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em] mb-4 ml-2">Tu Ruta de Incorporación</h2>
             {sortedSteps.map((step) => {
               const isStepDone = step.onboardingTasks?.every((t: any) => t.userProgress?.[0]?.done);
               return (
@@ -170,33 +183,20 @@ export default function EmployeeDashboard() {
                     {isStepDone && <span className="text-gray-400 text-[10px] font-bold">✓ BLOQUE FINALIZADO</span>}
                   </div>
                   <h3 className={`text-xl font-bold mb-1 ${isStepDone ? "text-gray-400" : "text-[#1d1d1f]"}`}>{step.title}</h3>
-                  <p className="text-gray-500 text-sm mb-6 font-medium">{step.description}</p>
+                  <p className="text-gray-500 text-sm mb-6 font-medium leading-relaxed">{step.description}</p>
                   <div className="grid gap-3">
                     {step.onboardingTasks?.map((task: any) => {
                       const isDone = task.userProgress?.[0]?.done || false;
-                      
-                      // Lógica de transformación de URL específica para tu estructura
                       const getCorrectUrl = () => {
                         if (!task.linkAction) return "#";
-                        
-                        // Extraer parámetros si vienen en formato query string
                         const urlParts = task.linkAction.split('?');
                         if (urlParts.length > 1) {
                           const params = new URLSearchParams(urlParts[1]);
                           const cId = params.get('courseId');
                           const contId = params.get('contentId');
-                          
-                          // Si tenemos ambos, construimos la ruta /courses/ID/content/ID
-                          if (cId && contId) {
-                            return `/dashboard/employee/courses/${cId}/content/${contId}?fromTask=${task.id}`;
-                          }
-                          // Si solo hay curso, /courses/ID
-                          if (cId) {
-                            return `/dashboard/employee/courses/${cId}?fromTask=${task.id}`;
-                          }
+                          if (cId && contId) return `/dashboard/employee/courses/${cId}/content/${contId}?fromTask=${task.id}`;
+                          if (cId) return `/dashboard/employee/courses/${cId}?fromTask=${task.id}`;
                         }
-                        
-                        // Fallback: Si no tiene parámetros, concatenamos el ID de la tarea
                         return `${task.linkAction}${task.linkAction.includes('?') ? '&' : '?'}fromTask=${task.id}`;
                       };
 
@@ -252,7 +252,7 @@ export default function EmployeeDashboard() {
                 <Link key={course.id} href={`/dashboard/employee/courses/${course.id}`}>
                   <div className="bg-white p-4 rounded-2xl border border-gray-100 hover:border-[#d9ff00] transition-all group">
                     <h4 className="font-bold text-[#1d1d1f] text-xs mb-1 group-hover:text-[#005596] line-clamp-1">{course.title}</h4>
-                    <span className="text-[9px] font-black uppercase text-[#005596] bg-blue-50 px-2 py-0.5 rounded">{user.company.name}</span>
+                    <span className="text-[9px] font-black uppercase text-[#005596] bg-blue-50 px-2 py-0.5 rounded">{user?.company?.name || "Empresa"}</span>
                   </div>
                 </Link>
               ))}
