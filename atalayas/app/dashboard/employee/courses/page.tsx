@@ -46,22 +46,22 @@ export default function EmployeeCoursesPage() {
     );
 
     return (
-        <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'-apple-system', sans-serif" }}>
+        <div className="flex min-h-screen bg-background font-sans">
             <Sidebar role="EMPLOYEE" />
 
-            <main className="flex-1 p-10 overflow-auto">
+            <main className="flex-1 p-6 lg:p-10 overflow-auto">
                 <div className="mb-10">
-                    <h1 className="text-3xl font-bold text-[#1d1d1f] tracking-tight mb-2">Mi Formación</h1>
-                    <p className="text-[#86868b] text-base">Accede a tus contenidos y material de estudio.</p>
+                    <h1 className="text-3xl font-bold text-foreground tracking-tight mb-2">Mi Formación</h1>
+                    <p className="text-muted-foreground text-base">Accede a tus contenidos y material de estudio.</p>
                 </div>
 
                 {/* Tabs Consistentes */}
-                <div className="flex gap-8 border-b border-gray-200 mb-8">
+                <div className="flex gap-8 border-b border-border mb-8 overflow-x-auto no-scrollbar">
                     {['BASICO', 'ESPECIALIZADO'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
-                            className={`pb-4 text-sm font-semibold cursor-pointer transition-all ${activeTab === tab ? 'border-b-2 border-[#0071e3] text-[#0071e3]' : 'text-[#86868b] hover:text-[#1d1d1f]'
+                            className={`pb-4 text-sm font-semibold cursor-pointer transition-all whitespace-nowrap ${activeTab === tab ? 'border-b-2 border-secondary text-secondary' : 'text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             {tab === 'BASICO' ? 'Onboarding' : 'Especialización'}
@@ -70,49 +70,51 @@ export default function EmployeeCoursesPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {loading ? [1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-white rounded-2xl animate-pulse border border-gray-200" />)
-                        : filtered.map((course) => (
-                            <div key={course.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 flex flex-col justify-between group hover:shadow-md transition-all relative">
+                    {loading ? [1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-card rounded-3xl animate-pulse border border-border" />)
+                        : filtered.length === 0 ? (
+                           <div className="col-span-full text-center py-20 bg-card rounded-3xl border border-dashed border-border">
+                                <span className="text-4xl text-muted-foreground/50 mb-4 block"><i className="bi bi-journal-x"></i></span>
+                                <p className="text-muted-foreground font-medium">No hay cursos en esta categoría.</p>
+                            </div> 
+                        ) : filtered.map((course) => (
+                            <div key={course.id} className="bg-card rounded-3xl p-6 shadow-sm border border-border flex flex-col justify-between group hover:shadow-xl hover:border-secondary transition-all relative">
 
                                 <div>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase ${activeTab === 'BASICO' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+                                    <div className="flex justify-between items-start mb-6">
+                                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase ${activeTab === 'BASICO' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'}`}>
                                             {activeTab === 'BASICO' ? 'Onboarding' : 'Especialización'}
                                         </span>
 
-                                        {/* MENÚ DE TRES PUNTOS RESTAURADO */}
+                                        {/* MENÚ DE TRES PUNTOS */}
                                         <div className="relative">
                                             <button
                                                 onClick={() => toggleMenu(course.id)}
-                                                className="p-1 hover:bg-gray-100 cursor-pointer rounded-full transition-colors"
+                                                className="p-1.5 hover:bg-muted cursor-pointer rounded-full transition-colors text-muted-foreground hover:text-foreground"
                                             >
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-                                                    <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
-                                                </svg>
+                                                <i className="bi bi-three-dots-vertical"></i>
                                             </button>
 
                                             {activeMenu === course.id && (
-                                                <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden animate-in fade-in zoom-in duration-200">
-                                                    <button className="w-full text-left cursor-pointer px-4 py-3 text-sm text-[#1d1d1f] hover:bg-[#f5f5f7] flex items-center gap-2 transition-colors">
-                                                        <span>📥</span> Descargar
+                                                <div className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-xl shadow-lg z-10 overflow-hidden animate-in fade-in zoom-in duration-200">
+                                                    <button className="w-full text-left cursor-pointer px-4 py-3 text-sm text-foreground hover:bg-muted flex items-center gap-3 transition-colors">
+                                                        <i className="bi bi-download text-muted-foreground"></i> Descargar
                                                     </button>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
 
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-4 ${activeTab === 'BASICO' ? 'bg-blue-100' : 'bg-purple-100'}`}>
-                                        {activeTab === 'BASICO' ? '📖' : '🎓'}
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-5 transition-colors ${activeTab === 'BASICO' ? 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground' : 'bg-secondary/10 text-secondary group-hover:bg-secondary group-hover:text-secondary-foreground'}`}>
+                                        <i className={`bi ${activeTab === 'BASICO' ? 'bi-journal-text' : 'bi-award'}`}></i>
                                     </div>
-                                    <h3 className="text-[#1d1d1f] font-semibold text-lg leading-tight mb-4">{course.title}</h3>
+                                    <h3 className="text-foreground font-bold text-lg leading-tight mb-5 line-clamp-2">{course.title}</h3>
                                 </div>
 
                                 <Link
-                                    key={course.id}
-                                    href={`/dashboard/employee/courses/${course.id}`} // Corregido: ${course.id}
-                                    className="w-full py-2.5 bg-[#0071e3] text-white cursor-pointer text-sm font-medium rounded-xl text-center hover:bg-[#0077ed] transition-colors shadow-sm inline-block"
+                                    href={`/dashboard/employee/courses/${course.id}`}
+                                    className="w-full py-3 bg-secondary text-secondary-foreground cursor-pointer text-sm font-semibold rounded-xl text-center hover:opacity-90 transition-opacity shadow-sm inline-block"
                                 >
-                                    Ver
+                                    Ver Curso
                                 </Link>
                             </div>
                         ))}

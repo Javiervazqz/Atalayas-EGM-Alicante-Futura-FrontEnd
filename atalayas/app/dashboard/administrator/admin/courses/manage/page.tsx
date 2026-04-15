@@ -15,6 +15,7 @@ export default function ManageCourses() {
 
     // ESTADO PARA EL MODAL DE ELIMINACIÓN
     const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
@@ -41,6 +42,7 @@ export default function ManageCourses() {
 
     const confirmDelete = async () => {
         if (!courseToDelete) return;
+        setDeleting(true);
 
         try {
             const token = localStorage.getItem('token');
@@ -57,6 +59,8 @@ export default function ManageCourses() {
             }
         } catch (err) {
             console.error("Error al eliminar:", err);
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -69,39 +73,42 @@ export default function ManageCourses() {
         return matchesSearch && isNotPublic && matchesTab;
     });
 
-    if (!mounted) return <div className="min-h-screen bg-[#f5f5f7]" />;
+    if (!mounted) return <div className="min-h-screen bg-background" />;
 
     return (
-        <div className="flex min-h-screen bg-[#f5f5f7] relative">
+        <div className="flex min-h-screen bg-background font-sans relative">
             <Sidebar role="ADMIN" />
 
             <main className="flex-1 h-screen overflow-y-auto">
-                <div className="max-w-7xl mx-auto px-8 py-10">
+                <div className="max-w-6xl mx-auto px-6 lg:px-8 py-10 lg:py-12">
 
                     {/* HEADER */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                         <div>
-                            <h1 className="text-3xl font-bold text-[#1d1d1f] tracking-tight">Vista de los Cursos</h1>
-                            <p className="text-[#86868b] text-sm">Administra el contenido privado de tu empresa.</p>
+                            <Link href="/dashboard/administrator/admin/courses" className="inline-flex items-center gap-2 text-secondary text-sm font-bold hover:opacity-80 transition-opacity mb-4">
+                                <i className="bi bi-arrow-left"></i> Volver a Formación
+                            </Link>
+                            <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">Gestionar Cursos</h1>
+                            <p className="text-muted-foreground mt-2 text-base">Administra el contenido privado de tu empresa.</p>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
                             <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar curso..." />
                             <Link
                                 href="/dashboard/administrator/admin/courses/manage/new"
-                                className="bg-[#0071e3] text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-[#0077ed] transition-all shadow-sm whitespace-nowrap"
+                                className="bg-secondary text-secondary-foreground w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold hover:opacity-90 transition-opacity shadow-sm shrink-0 text-center flex items-center justify-center gap-2"
                             >
-                                Nuevo curso
+                                <i className="bi bi-plus-lg"></i> Nuevo curso
                             </Link>
                         </div>
                     </div>
 
                     {/* FILTROS */}
-                    <div className="flex items-center gap-3 mb-10">
+                    <div className="flex items-center gap-3 mb-8 overflow-x-auto pb-2 no-scrollbar">
                         {['ALL', 'BASICO', 'ESPECIALIZADO'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setFilter(tab as any)}
-                                className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${filter === tab ? 'bg-[#1d1d1f] text-white' : 'bg-white text-[#86868b] border border-gray-200 cursor-pointer hover:bg-[#1d1d1f]'
+                                className={`shrink-0 px-6 py-2.5 rounded-full text-sm font-bold transition-all border ${filter === tab ? 'bg-foreground text-background border-foreground shadow-sm' : 'bg-background text-muted-foreground border-border hover:bg-muted'
                                     }`}
                             >
                                 {tab === 'ALL' ? 'Todos' : tab === 'BASICO' ? 'Onboarding' : 'Especialización'}
@@ -110,90 +117,104 @@ export default function ManageCourses() {
                     </div>
 
                     {/* TABLA */}
-                    <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="bg-[#fbfbfd] border-b border-gray-100">
-                                    <th className="px-8 py-5 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">Nombre</th>
-                                    {/* CENTRADO DE CABECERA */}
-                                    <th className="px-8 py-5 text-[11px] font-bold text-[#86868b] uppercase tracking-widest text-center">Categoría</th>
-                                    <th className="px-8 py-5 text-[11px] font-bold text-[#86868b] uppercase tracking-widest text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {filtered.map((course) => (
-                                    <tr key={course.id} className="group hover:bg-[#fbfbfd] transition-colors">
-                                        <td className="px-8 py-5 font-semibold text-[#1d1d1f]">{course.title}</td>
-
-                                        {/* COLUMNA CENTRADA */}
-                                        <td className="px-8 py-5">
-                                            <div className="flex justify-center">
-                                                {course.category?.toUpperCase() === 'ESPECIALIZADO' ? (
-                                                    <span className="text-[10px] font-black px-4 py-1.5 rounded-full bg-purple-50 text-purple-600 uppercase tracking-tight whitespace-nowrap">
-                                                        Especialización
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-[10px] font-black px-4 py-1.5 rounded-full bg-blue-50 text-blue-600 uppercase tracking-tight whitespace-nowrap">
-                                                        Onboarding
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-
-                                        <td className="px-8 py-5 text-right">
-                                            <div className="flex justify-end gap-3">
-                                                <Link href={`/dashboard/administrator/admin/courses/manage/${course.id}`} className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-lg">
-                                                    <i className="bi bi-pencil-square text-blue-500 group-hover:scale-110 transition-transform block"></i>
-                                                </Link>
-                                                <button
-                                                    onClick={() => setCourseToDelete(course.id)}
-                                                    className="p-2 hover:bg-red-50 rounded-lg transition-colors cursor-pointer text-lg"
-                                                >
-                                                    <i className="bi bi-trash-fill text-red-400 group-hover:text-red-600 block transition-colors"></i>
-                                                </button>
-                                            </div>
-                                        </td>
+                    <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse min-w-[600px]">
+                                <thead>
+                                    <tr className="bg-muted/50 border-b border-border">
+                                        <th className="px-6 lg:px-8 py-5 text-[11px] font-black text-muted-foreground uppercase tracking-widest w-2/3">Nombre del Curso</th>
+                                        <th className="px-6 lg:px-8 py-5 text-[11px] font-black text-muted-foreground uppercase tracking-widest text-center w-1/6">Categoría</th>
+                                        <th className="px-6 lg:px-8 py-5 text-[11px] font-black text-muted-foreground uppercase tracking-widest text-right w-1/6">Acciones</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {loading ? (
+                                         [1, 2, 3].map(i => (
+                                            <tr key={i} className="animate-pulse">
+                                                <td colSpan={3} className="px-6 py-8 bg-muted/30"></td>
+                                            </tr>
+                                        ))
+                                    ) : filtered.length > 0 ? (
+                                        filtered.map((course) => (
+                                        <tr key={course.id} className="group hover:bg-muted/30 transition-colors">
+                                            <td className="px-6 lg:px-8 py-5 font-bold text-base text-foreground group-hover:text-primary transition-colors">{course.title}</td>
 
-                        {filtered.length === 0 && !loading && (
-                            <div className="py-20 text-center">
-                                <p className="text-[#86868b] font-medium">No se encontraron cursos en esta categoría.</p>
-                            </div>
-                        )}
+                                            <td className="px-6 lg:px-8 py-5 text-center">
+                                                <div className="flex justify-center">
+                                                    {course.category?.toUpperCase() === 'ESPECIALIZADO' ? (
+                                                        <span className="text-[10px] font-black px-3 py-1 rounded-md bg-secondary/10 text-secondary uppercase tracking-wider whitespace-nowrap">
+                                                            Especialización
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[10px] font-black px-3 py-1 rounded-md bg-primary/10 text-primary uppercase tracking-wider whitespace-nowrap">
+                                                            Onboarding
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+
+                                            <td className="px-6 lg:px-8 py-5 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Link 
+                                                        href={`/dashboard/administrator/admin/courses/manage/${course.id}`} 
+                                                        className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors group/btn"
+                                                        title="Editar curso"
+                                                    >
+                                                        <i className="bi bi-pencil-square text-lg group-hover/btn:scale-110 transition-transform block"></i>
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => setCourseToDelete(course.id)}
+                                                        className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors group/btn cursor-pointer border-none bg-transparent"
+                                                        title="Eliminar curso"
+                                                    >
+                                                        <i className="bi bi-trash3 text-lg block transition-colors"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={3} className="px-6 py-20 text-center">
+                                                <div className="text-4xl text-muted-foreground/30 mb-3"><i className="bi bi-search"></i></div>
+                                                <p className="text-foreground font-bold text-lg mb-1">No hay resultados</p>
+                                                <p className="text-muted-foreground text-sm font-medium">No se encontraron cursos en esta categoría.</p>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </main>
 
             {/* MODAL DE CONFIRMACIÓN */}
             {courseToDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
-                        <div className="text-center">
-                            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                                <i className="bi bi-exclamation-triangle-fill text-red-500"></i>
-                            </div>
-                            <h3 className="text-xl font-bold text-[#1d1d1f] mb-2">¿Eliminar curso?</h3>
-                            <p className="text-[#86868b] text-sm mb-8">
-                                Esta acción no se puede deshacer. El curso se borrará permanentemente.
-                            </p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-card w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-200 text-center border border-border">
+                        <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+                            <i className="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <h3 className="text-2xl font-extrabold text-foreground mb-2 tracking-tight">¿Eliminar curso?</h3>
+                        <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
+                            Esta acción no se puede deshacer. El curso se borrará permanentemente.
+                        </p>
 
-                            <div className="flex flex-col gap-3">
-                                <button
-                                    onClick={confirmDelete}
-                                    className="w-full py-4 bg-red-500 text-white rounded-2xl font-bold hover:bg-red-600 transition-colors cursor-pointer"
-                                >
-                                    Eliminar definitivamente
-                                </button>
-                                <button
-                                    onClick={() => setCourseToDelete(null)}
-                                    className="w-full py-4 bg-[#f5f5f7] text-[#1d1d1f] rounded-2xl font-bold hover:bg-gray-200 transition-colors cursor-pointer"
-                                >
-                                    Cancelar
-                                </button>
-                            </div>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={confirmDelete}
+                                disabled={deleting}
+                                className="w-full py-3.5 bg-destructive text-destructive-foreground rounded-xl font-bold hover:opacity-90 transition-opacity cursor-pointer shadow-sm disabled:opacity-60"
+                            >
+                                {deleting ? 'Eliminando...' : 'Sí, eliminar'}
+                            </button>
+                            <button
+                                onClick={() => setCourseToDelete(null)}
+                                className="w-full py-3.5 bg-muted text-foreground rounded-xl font-bold hover:bg-border transition-colors cursor-pointer"
+                            >
+                                Cancelar
+                            </button>
                         </div>
                     </div>
                 </div>

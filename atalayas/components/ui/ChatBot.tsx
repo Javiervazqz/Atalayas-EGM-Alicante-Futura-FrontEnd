@@ -294,13 +294,13 @@ export default function ChatWidget() {
                     {/* Sugerencias */}
                     {showSuggestions && (
                         <div className="mt-1">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-[#86868b] mb-2">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
                                 Preguntas frecuentes
                             </p>
                             <div className="flex flex-col gap-1.5">
                                 {SUGGESTED.map(q => (
                                     <button key={q} onClick={() => sendMessage(q)}
-                                        className="text-left text-[13px] font-medium text-[#1d1d1f] px-3.5 py-2.5 rounded-xl border border-[#e8e8ed] bg-[#f5f5f7] cursor-pointer transition-colors"
+                                        className="text-left text-[13px] font-medium text-foreground px-3.5 py-2.5 rounded-xl border border-[#e8e8ed] bg-background cursor-pointer transition-colors"
                                         onMouseOver={e => (e.currentTarget.style.background = '#ebebf0')}
                                         onMouseOut={e => (e.currentTarget.style.background = '#f5f5f7')}
                                     >
@@ -346,7 +346,7 @@ export default function ChatWidget() {
 
                 {/* INPUT */}
                 <div className="px-3 pb-3 pt-2 shrink-0 border-t border-black/6 bg-white">
-                    <div className="flex items-end gap-2 px-3 py-2 rounded-2xl border-2 border-transparent bg-[#f5f5f7] transition-all"
+                    <div className="flex items-end gap-2 px-3 py-2 rounded-2xl border-2 border-transparent bg-background transition-all"
                         style={{ borderColor: 'transparent' }}
                         onFocusCapture={e => (e.currentTarget.style.borderColor = '#0071e3')}
                         onBlurCapture={e => (e.currentTarget.style.borderColor = 'transparent')}
@@ -359,7 +359,7 @@ export default function ChatWidget() {
                             placeholder="Escribe tu pregunta..."
                             disabled={isLoading}
                             rows={1}
-                            className="flex-1 bg-transparent border-none outline-none resize-none text-sm text-[#1d1d1f] leading-relaxed placeholder:text-[#c7c7cc]"
+                            className="flex-1 bg-transparent border-none outline-none resize-none text-sm text-foreground leading-relaxed placeholder:text-[#c7c7cc]"
                             style={{ maxHeight: '96px', fontFamily: 'inherit', overflowY: 'auto', padding: 0 }}
                             onInput={e => {
                                 const el = e.currentTarget;
@@ -382,7 +382,7 @@ export default function ChatWidget() {
                             </svg>
                         </button>
                     </div>
-                    <p className="text-[10px] text-[#86868b] text-center mt-2 mb-0">
+                    <p className="text-[10px] text-muted-foreground text-center mt-2 mb-0">
                         Asistente IA · Tenga en cuenta que puede cometer errores.
                     </p>
                 </div>

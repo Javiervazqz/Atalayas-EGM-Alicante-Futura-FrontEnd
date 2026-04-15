@@ -44,7 +44,7 @@ export default function OnboardingView({
       )}
 
       <header className="mb-10">
-        <h1 className="text-3xl font-black text-[#1d1d1f] tracking-tight">¡Hola, {firstName}! 👋</h1>
+        <h1 className="text-3xl font-black text-foreground tracking-tight">¡Hola, {firstName}! 👋</h1>
         <p className="text-gray-500 mt-1 font-medium">
           Estás en tu <span className="font-black px-2 py-0.5 rounded-lg bg-[#d9ff00] text-[#005596]">Día {currentDay}</span> de incorporación.
         </p>
@@ -74,7 +74,7 @@ export default function OnboardingView({
                 {isStepDone && <span className="text-gray-400 text-[10px] font-bold">✓ COMPLETADO</span>}
               </div>
 
-              <h3 className={`text-xl font-bold mb-1 ${isStepDone ? "text-gray-400" : "text-[#1d1d1f]"}`}>{step.title}</h3>
+              <h3 className={`text-xl font-bold mb-1 ${isStepDone ? "text-gray-400" : "text-foreground"}`}>{step.title}</h3>
               <p className="text-gray-500 text-sm mb-6 font-medium">{step.description}</p>
 
               <div className="grid gap-3">
@@ -93,7 +93,7 @@ export default function OnboardingView({
                       }`}>
                         {isDone && <span className="text-[#d9ff00] text-[10px]">✓</span>}
                       </div>
-                      <span className={`text-sm font-bold ${isDone ? "text-gray-400 line-through" : "text-[#1d1d1f]"}`}>
+                      <span className={`text-sm font-bold ${isDone ? "text-gray-400 line-through" : "text-foreground"}`}>
                         {task.label}
                       </span>
                     </div>

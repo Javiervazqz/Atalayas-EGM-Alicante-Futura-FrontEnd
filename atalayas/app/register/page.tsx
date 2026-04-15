@@ -47,23 +47,14 @@ export default function RegisterPage() {
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{
-        background: '#f5f5f7',
-        fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
-      }}
-    >
+    <div className="min-h-screen flex flex-col bg-background font-sans">
       {/* Top nav */}
       <nav className="flex items-center justify-between px-8 py-5">
         <div className="flex items-center gap-2">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #1d1d1f 0%, #434343 100%)' }}
-          >
-            <span className="text-white text-xs font-semibold">A</span>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary shadow-sm">
+            <span className="text-primary-foreground text-sm font-bold">A</span>
           </div>
-          <span style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, letterSpacing: '-0.02em' }}>
+          <span className="text-foreground text-lg font-bold tracking-tight">
             Atalayas
           </span>
         </div>
@@ -74,46 +65,26 @@ export default function RegisterPage() {
         <div className="w-full max-w-sm">
 
           {/* Card */}
-          <div
-            className="rounded-3xl px-10 py-12"
-            style={{
-              background: '#ffffff',
-              boxShadow: '0 2px 20px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.06)',
-            }}
-          >
+          <div className="rounded-3xl px-10 py-12 bg-card shadow-xl border border-border">
             <div className="text-center mb-10">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-6"
-                style={{ background: 'linear-gradient(135deg, #1d1d1f 0%, #434343 100%)' }}
-              >
-                <span className="text-white text-2xl font-semibold">A</span>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-6 bg-primary shadow-md">
+                <span className="text-primary-foreground text-2xl font-bold">A</span>
               </div>
-              <h1
-                style={{
-                  color: '#1d1d1f',
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  letterSpacing: '-0.03em',
-                  marginBottom: '6px',
-                }}
-              >
+              <h1 className="text-foreground text-2xl font-bold tracking-tight mb-1.5">
                 Crear cuenta
               </h1>
-              <p style={{ color: '#86868b', fontSize: '14px', fontWeight: 400 }}>
+              <p className="text-muted-foreground text-sm font-medium">
                 Accede a los servicios del polígono
               </p>
             </div>
 
             {error && (
-              <div
-                className="rounded-xl px-4 py-3 mb-6 text-center"
-                style={{ background: '#fff2f2', border: '1px solid #ffd0d0' }}
-              >
-                <p style={{ color: '#ff3b30', fontSize: '13px' }}>{error}</p>
+              <div className="rounded-xl px-4 py-3 mb-6 text-center bg-destructive/10 border border-destructive/20">
+                <p className="text-destructive text-sm font-medium">{error}</p>
               </div>
             )}
 
-            <form onSubmit={handleRegister} className="space-y-3">
+            <form onSubmit={handleRegister} className="space-y-4">
               <div>
                 <input
                   type="email"
@@ -121,25 +92,7 @@ export default function RegisterPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Correo electrónico"
                   required
-                  style={{
-                    width: '100%',
-                    background: '#f5f5f7',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    borderRadius: '12px',
-                    padding: '13px 16px',
-                    fontSize: '15px',
-                    color: '#1d1d1f',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.border = '1px solid #0071e3';
-                    e.target.style.background = '#fff';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.border = '1px solid rgba(0,0,0,0.08)';
-                    e.target.style.background = '#f5f5f7';
-                  }}
+                  className="w-full bg-background border border-input rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
                 />
               </div>
 
@@ -150,25 +103,7 @@ export default function RegisterPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Contraseña"
                   required
-                  style={{
-                    width: '100%',
-                    background: '#f5f5f7',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    borderRadius: '12px',
-                    padding: '13px 16px',
-                    fontSize: '15px',
-                    color: '#1d1d1f',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.border = '1px solid #0071e3';
-                    e.target.style.background = '#fff';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.border = '1px solid rgba(0,0,0,0.08)';
-                    e.target.style.background = '#f5f5f7';
-                  }}
+                  className="w-full bg-background border border-input rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
                 />
               </div>
 
@@ -179,65 +114,28 @@ export default function RegisterPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirmar contraseña"
                   required
-                  style={{
-                    width: '100%',
-                    background: '#f5f5f7',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    borderRadius: '12px',
-                    padding: '13px 16px',
-                    fontSize: '15px',
-                    color: '#1d1d1f',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.border = '1px solid #0071e3';
-                    e.target.style.background = '#fff';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.border = '1px solid rgba(0,0,0,0.08)';
-                    e.target.style.background = '#f5f5f7';
-                  }}
+                  className="w-full bg-background border border-input rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  background: loading ? '#86868b' : '#0071e3',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '13px 16px',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  marginTop: '8px',
-                  transition: 'background 0.2s',
-                  fontFamily: 'inherit',
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading) (e.target as HTMLButtonElement).style.background = '#0077ed';
-                }}
-                onMouseLeave={(e) => {
-                  if (!loading) (e.target as HTMLButtonElement).style.background = '#0071e3';
-                }}
+                className="w-full bg-secondary text-secondary-foreground font-semibold rounded-xl px-4 py-3 text-sm mt-2 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {loading ? 'Creando cuenta...' : 'Crear cuenta'}
               </button>
             </form>
           </div>
 
-          <p className="text-center mt-6" style={{ color: '#86868b', fontSize: '13px' }}>
+          <p className="text-center mt-6 text-muted-foreground text-sm">
             ¿Ya tienes cuenta?{' '}
-            <Link href="/login" style={{ color: '#0071e3', textDecoration: 'none' }}>
+            <Link href="/login" className="text-primary font-medium hover:underline transition-all">
               Inicia sesión
             </Link>
           </p>
 
-          <p className="text-center mt-4" style={{ color: '#86868b', fontSize: '12px', lineHeight: '1.6' }}>
+          <p className="text-center mt-4 text-muted-foreground text-xs leading-relaxed">
             ¿Eres empleado de una empresa del polígono?<br />
             Contacta con tu administrador para obtener acceso.
           </p>

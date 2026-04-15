@@ -5,8 +5,6 @@ import { API_ROUTES } from '@/lib/utils';
 import Sidebar from '@/components/ui/Sidebar';
 import SearchBar from '@/components/ui/Searchbar';
 
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
-
 interface CompanyRequest {
   id: string;
   companyName: string;
@@ -24,10 +22,10 @@ interface CompanyRequest {
 }
 
 const statusConfig = {
-  PENDING: { label: 'Pendientes', color: '#ff9500', bg: 'rgba(255,149,0,0.1)' },
-  APPROVED: { label: 'Aprobadas', color: '#34c759', bg: 'rgba(52,199,89,0.1)' },
-  REJECTED: { label: 'Rechazadas', color: '#ff3b30', bg: 'rgba(255,59,48,0.1)' },
-  ARCHIVED: { label: 'Archivadas', color: '#86868b', bg: 'rgba(134,134,139,0.1)' },
+  PENDING: { label: 'Pendientes', textColor: 'text-amber-500', bgClass: 'bg-amber-500/10 border-amber-500/20' },
+  APPROVED: { label: 'Aprobadas', textColor: 'text-emerald-600', bgClass: 'bg-emerald-500/10 border-emerald-500/20' },
+  REJECTED: { label: 'Rechazadas', textColor: 'text-destructive', bgClass: 'bg-destructive/10 border-destructive/20' },
+  ARCHIVED: { label: 'Archivadas', textColor: 'text-muted-foreground', bgClass: 'bg-muted border-border' },
 };
 
 export default function CompanyRequestsPage() {
@@ -122,79 +120,77 @@ export default function CompanyRequestsPage() {
       r.contactName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.contactEmail.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role="GENERAL_ADMIN" />
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)', padding: '24px 32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="bg-card border-b border-border px-8 py-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 style={{ color: '#1d1d1f', fontSize: '24px', fontWeight: 700, letterSpacing: '-0.03em', margin: '0 0 4px' }}>
+              <h1 className="text-2xl font-bold text-foreground tracking-tight mb-1">
                 Solicitudes de empresa
               </h1>
-              <p style={{ color: '#86868b', fontSize: '14px', margin: 0 }}>
+              <p className="text-muted-foreground text-sm">
                 Gestiona las solicitudes de alta de nuevas empresas
               </p>
             </div>
             {pendingCount > 0 && (
-              <div style={{ background: 'rgba(255,149,0,0.1)', border: '1px solid rgba(255,149,0,0.2)', borderRadius: '20px', padding: '6px 14px' }}>
-                <span style={{ color: '#ff9500', fontSize: '13px', fontWeight: 500 }}>
-                  {pendingCount} pendiente {pendingCount > 1 ? 's' : ''}
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-full px-3.5 py-1.5 flex items-center shadow-sm">
+                <span className="text-amber-600 text-xs font-bold tracking-wide">
+                  <i className="bi bi-bell-fill mr-1"></i> {pendingCount} pendiente{pendingCount > 1 ? 's' : ''}
                 </span>
               </div>
             )}
-
           </div>
+
           {/* Filtros */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '20px' }}>
-            <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-6 gap-4">
+            <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 no-scrollbar max-w-full">
               {(['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'ARCHIVED'] as const).map((f) => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '20px',
-                    border: 'none',
-                    background: filter === f ? '#1d1d1f' : '#f5f5f7',
-                    color: filter === f ? '#fff' : '#424245',
-                    fontSize: '13px',
-                    fontWeight: filter === f ? 500 : 400,
-                    cursor: 'pointer',
-                    fontFamily: appleFont,
-                    transition: 'all 0.15s',
-                  }}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all shrink-0 border ${
+                    filter === f 
+                      ? 'bg-foreground text-background border-foreground shadow-sm' 
+                      : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                  }`}
                 >
                   {f === 'ALL' ? 'Todas' : statusConfig[f].label}
                 </button>
               ))}
             </div>
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Buscar solicitud..."
-            />
+            <div className="w-full sm:w-auto shrink-0">
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Buscar solicitud..."
+              />
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 380px' : '1fr', flex: 1, overflow: 'hidden' }}>
+        <div className={`grid flex-1 overflow-hidden transition-all duration-300 ${selected ? 'grid-cols-1 lg:grid-cols-[1fr_400px]' : 'grid-cols-1'}`}>
+          
           {/* Lista */}
-          <div style={{ padding: '24px 32px', overflowY: 'auto' }}>
+          <div className="p-6 lg:p-8 overflow-y-auto">
             {loading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {[1, 2, 3].map(i => (
-                  <div key={i} style={{ height: '90px', background: '#fff', borderRadius: '16px', animation: 'pulse 1.5s infinite' }} />
+              <div className="flex flex-col gap-4">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="h-24 bg-card border border-border rounded-2xl animate-pulse" />
                 ))}
               </div>
             ) : filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                <p style={{ fontSize: '32px', marginBottom: '12px' }}>📋</p>
-                <p style={{ color: '#86868b', fontSize: '14px' }}>No hay solicitudes {filter !== 'ALL' ? statusConfig[filter].label.toLowerCase() : ''}</p>
+              <div className="text-center py-20 border border-dashed border-border rounded-3xl bg-card">
+                <p className="text-5xl mb-4 text-muted-foreground/30"><i className="bi bi-inbox"></i></p>
+                <p className="text-foreground font-bold text-lg mb-1">No hay solicitudes</p>
+                <p className="text-muted-foreground text-sm">No se encontraron solicitudes {filter !== 'ALL' ? statusConfig[filter].label.toLowerCase() : ''}</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="flex flex-col gap-3">
                 {filtered.map((req) => {
                   const status = statusConfig[req.status];
                   const isSelected = selected?.id === req.id;
@@ -202,53 +198,29 @@ export default function CompanyRequestsPage() {
                     <div
                       key={req.id}
                       onClick={() => setSelected(isSelected ? null : req)}
-                      style={{
-                        background: '#fff',
-                        borderRadius: '16px',
-                        padding: '18px 20px',
-                        cursor: 'pointer',
-                        border: isSelected ? '1px solid #0071e3' : '1px solid transparent',
-                        boxShadow: isSelected
-                          ? '0 0 0 3px rgba(0,113,227,0.1)'
-                          : '0 2px 8px rgba(0,0,0,0.06)',
-                        transition: 'all 0.15s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '16px',
-                      }}
+                      className={`bg-card rounded-2xl p-5 cursor-pointer border transition-all flex items-center justify-between gap-4 ${
+                        isSelected
+                          ? 'border-primary ring-2 ring-primary/20 shadow-md'
+                          : 'border-border hover:border-secondary hover:shadow-sm'
+                      }`}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
-                        <div style={{
-                          width: '42px', height: '42px',
-                          background: '#f5f5f7',
-                          borderRadius: '12px',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          flexShrink: 0, fontSize: '18px',
-                        }}>
-                          🏭
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center shrink-0 text-xl text-muted-foreground">
+                          <i className="bi bi-building"></i>
                         </div>
-                        <div style={{ minWidth: 0 }}>
-                          <p style={{ color: '#1d1d1f', fontSize: '15px', fontWeight: 600, margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-foreground text-base font-bold mb-0.5 truncate">
                             {req.companyName}
                           </p>
-                          <p style={{ color: '#86868b', fontSize: '12px', margin: '0 0 2px' }}>
+                          <p className="text-muted-foreground text-xs mb-1 truncate">
                             CIF: {req.cif} · {req.contactName}
                           </p>
-                          <p style={{ color: '#b0b0b5', fontSize: '11px', margin: 0 }}>
-                            {req.created_at ? new Date(req.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Sin fecha'}
+                          <p className="text-muted-foreground/70 text-[10px] uppercase font-bold tracking-wider">
+                            <i className="bi bi-calendar-event"></i> {req.created_at ? new Date(req.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Sin fecha'}
                           </p>
                         </div>
                       </div>
-                      <span style={{
-                        padding: '4px 10px',
-                        borderRadius: '20px',
-                        background: status.bg,
-                        color: status.color,
-                        fontSize: '12px',
-                        fontWeight: 500,
-                        flexShrink: 0,
-                      }}>
+                      <span className={`px-3 py-1 rounded-full border text-xs font-bold shrink-0 ${status.bgClass} ${status.textColor}`}>
                         {status.label.slice(0, -1)}
                       </span>
                     </div>
@@ -260,118 +232,93 @@ export default function CompanyRequestsPage() {
 
           {/* Panel detalle */}
           {selected && (
-            <div style={{ overflowY: 'auto', borderLeft: '1px solid rgba(0,0,0,0.06)', background: '#fff', padding: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                <h2 style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, margin: 0, letterSpacing: '-0.02em' }}>
+            <div className="overflow-y-auto border-l border-border bg-card p-8 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] animate-in slide-in-from-right-8 duration-300">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-foreground text-lg font-bold tracking-tight">
                   Detalle solicitud
                 </h2>
                 <button
                   onClick={() => setSelected(null)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868b', fontSize: '18px' }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                 >
-                  ✕
+                  <i className="bi bi-x-lg"></i>
                 </button>
               </div>
 
               {/* Info empresa */}
-              <div style={{ marginBottom: '20px' }}>
-                <div style={{ width: '48px', height: '48px', background: '#f5f5f7', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', marginBottom: '14px' }}>
-                  🏭
+              <div className="mb-8">
+                <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center text-2xl mb-4 text-muted-foreground shadow-sm">
+                  <i className="bi bi-building"></i>
                 </div>
-                <h3 style={{ color: '#1d1d1f', fontSize: '20px', fontWeight: 700, margin: '0 0 4px', letterSpacing: '-0.03em' }}>
+                <h3 className="text-foreground text-2xl font-extrabold mb-3 tracking-tight leading-tight">
                   {selected.companyName}
                 </h3>
-                <span style={{
-                  padding: '3px 10px', borderRadius: '20px',
-                  background: statusConfig[selected.status].bg,
-                  color: statusConfig[selected.status].color,
-                  fontSize: '12px', fontWeight: 500,
-                }}>
+                <span className={`px-3 py-1 rounded-full border text-xs font-bold inline-block ${statusConfig[selected.status].bgClass} ${statusConfig[selected.status].textColor}`}>
                   {statusConfig[selected.status].label.slice(0, -1)}
                 </span>
               </div>
 
               {/* Campos */}
-              {[
-                { label: 'CIF', value: selected.cif },
-                { label: 'Actividad', value: selected.activity },
-                { label: 'Dirección', value: selected.address },
-                { label: 'Responsable', value: selected.contactName },
-                { label: 'Email', value: selected.contactEmail },
-                { label: 'Teléfono', value: selected.phone },
-              ].filter(f => f.value).map((field) => (
-                <div key={field.label} style={{ marginBottom: '14px' }}>
-                  <p style={{ color: '#86868b', fontSize: '11px', fontWeight: 500, margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {field.label}
-                  </p>
-                  <p style={{ color: '#1d1d1f', fontSize: '14px', margin: 0 }}>{field.value}</p>
-                </div>
-              ))}
+              <div className="space-y-4 mb-8">
+                {[
+                  { label: 'CIF', value: selected.cif },
+                  { label: 'Actividad', value: selected.activity },
+                  { label: 'Dirección', value: selected.address },
+                  { label: 'Responsable', value: selected.contactName },
+                  { label: 'Email', value: selected.contactEmail },
+                  { label: 'Teléfono', value: selected.phone },
+                ].filter(f => f.value).map((field) => (
+                  <div key={field.label} className="bg-background p-3.5 rounded-xl border border-border">
+                    <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1">
+                      {field.label}
+                    </p>
+                    <p className="text-foreground text-sm font-medium">{field.value}</p>
+                  </div>
+                ))}
+              </div>
 
               {/* Documento */}
-              <div style={{ marginBottom: '24px' }}>
-                <p style={{ color: '#86868b', fontSize: '11px', fontWeight: 500, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div className="mb-8">
+                <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-2 ml-1">
                   Documento acreditativo
                 </p>
                 <a
                   href={selected.documentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '10px',
-                    padding: '12px 14px',
-                    background: '#f5f5f7',
-                    borderRadius: '12px',
-                    textDecoration: 'none',
-                    color: '#0071e3',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                  }}
+                  className="flex items-center justify-between p-4 bg-primary/10 border border-primary/20 rounded-xl text-primary text-sm font-bold hover:bg-primary/20 transition-colors group"
                 >
-                  <span>📄</span>
-                  Ver documento
-                  <span style={{ marginLeft: 'auto' }}>↗</span>
+                  <span className="flex items-center gap-2"><i className="bi bi-file-earmark-pdf text-lg"></i> Ver documento PDF</span>
+                  <i className="bi bi-box-arrow-up-right group-hover:scale-110 transition-transform"></i>
                 </a>
               </div>
 
               {/* Motivo rechazo */}
               {selected.rejectReason && (
-                <div style={{ background: 'rgba(255,59,48,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '24px' }}>
-                  <p style={{ color: '#ff3b30', fontSize: '12px', fontWeight: 500, margin: '0 0 4px' }}>Motivo de rechazo</p>
-                  <p style={{ color: '#1d1d1f', fontSize: '13px', margin: 0 }}>{selected.rejectReason}</p>
+                <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 mb-8">
+                  <p className="text-destructive text-[10px] font-black uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                    <i className="bi bi-exclamation-triangle-fill"></i> Motivo de rechazo
+                  </p>
+                  <p className="text-foreground text-sm font-medium leading-relaxed">{selected.rejectReason}</p>
                 </div>
               )}
 
               {/* Acciones */}
               {selected.status === 'PENDING' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="flex flex-col gap-3">
                   <button
                     onClick={() => handleApprove(selected.id)}
                     disabled={actionLoading}
-                    style={{
-                      width: '100%', padding: '13px',
-                      background: actionLoading ? '#86868b' : '#34c759',
-                      color: '#fff', border: 'none',
-                      borderRadius: '12px', fontSize: '14px',
-                      fontWeight: 500, cursor: actionLoading ? 'not-allowed' : 'pointer',
-                      fontFamily: appleFont,
-                    }}
+                    className="w-full py-3.5 bg-emerald-500 text-white rounded-xl text-sm font-bold hover:bg-emerald-600 transition-colors shadow-sm disabled:opacity-60 flex items-center justify-center gap-2"
                   >
-                    {actionLoading ? 'Procesando...' : '✓ Aprobar solicitud'}
+                    {actionLoading ? <><i className="bi bi-arrow-repeat animate-spin"></i> Procesando...</> : <><i className="bi bi-check-lg text-lg"></i> Aprobar solicitud</>}
                   </button>
                   <button
                     onClick={() => setShowRejectModal(true)}
                     disabled={actionLoading}
-                    style={{
-                      width: '100%', padding: '13px',
-                      background: 'rgba(255,59,48,0.08)',
-                      color: '#ff3b30', border: 'none',
-                      borderRadius: '12px', fontSize: '14px',
-                      fontWeight: 500, cursor: 'pointer',
-                      fontFamily: appleFont,
-                    }}
+                    className="w-full py-3.5 bg-destructive/10 text-destructive rounded-xl text-sm font-bold hover:bg-destructive/20 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                   >
-                    ✕ Rechazar solicitud
+                    <i className="bi bi-x-lg text-lg"></i> Rechazar solicitud
                   </button>
                 </div>
               )}
@@ -386,100 +333,65 @@ export default function CompanyRequestsPage() {
                     await fetchRequests();
                     setSelected(null);
                   }}
-                  style={{
-                    width: '100%', padding: '13px',
-                    background: '#f5f5f7', color: '#424245',
-                    border: 'none', borderRadius: '12px',
-                    fontSize: '14px', cursor: 'pointer',
-                    fontFamily: appleFont, marginTop: '10px',
-                  }}
+                  className="w-full py-3.5 bg-muted text-foreground border border-border rounded-xl text-sm font-bold hover:bg-background transition-colors mt-4 flex items-center justify-center gap-2"
                 >
-                  📦 Archivar solicitud
+                  <i className="bi bi-archive"></i> Archivar solicitud
                 </button>
               )}
 
               {selected.archivedAt && (
                 <button
-                onClick={async () => {
-                  await fetch(API_ROUTES.COMPANY_REQUESTS.UNARCHIVE(selected.id), {
-                    method: 'PATCH',
-                    headers: {Authorization: `Bearer ${getToken()}`},
-                  });
-                  setFilter(selected.status as any);
-                  await fetchRequests();
-                  setSelected(null);
-                }}
-                style={{
-                width: '100%', padding: '13px',
-                background: '#f5f5f7', color: '#0071e3',
-                border: 'none', borderRadius: '12px',
-                fontSize: '14px', cursor: 'pointer',
-                fontFamily: appleFont, marginTop: '10px',
-              }}
-              >
-                📤 Desarchivar solicitud
-              </button>
-            )}
-          </div>
+                  onClick={async () => {
+                    await fetch(API_ROUTES.COMPANY_REQUESTS.UNARCHIVE(selected.id), {
+                      method: 'PATCH',
+                      headers: {Authorization: `Bearer ${getToken()}`},
+                    });
+                    setFilter(selected.status as any);
+                    await fetchRequests();
+                    setSelected(null);
+                  }}
+                  className="w-full py-3.5 bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm font-bold hover:bg-primary/20 transition-colors mt-4 flex items-center justify-center gap-2"
+                >
+                  <i className="bi bi-box-arrow-up"></i> Desarchivar solicitud
+                </button>
+              )}
+            </div>
           )}
         </div>
 
         {/* Modal rechazo */}
         {showRejectModal && (
-          <div style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 100, padding: '24px',
-          }}>
-            <div style={{ background: '#fff', borderRadius: '20px', padding: '28px', maxWidth: '420px', width: '100%' }}>
-              <h3 style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, margin: '0 0 8px' }}>
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            <div className="bg-card border border-border rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+              <div className="w-14 h-14 bg-destructive/10 text-destructive rounded-2xl flex items-center justify-center mb-5 text-2xl">
+                <i className="bi bi-x-circle-fill"></i>
+              </div>
+              <h3 className="text-foreground text-xl font-bold mb-2 tracking-tight">
                 Rechazar solicitud
               </h3>
-              <p style={{ color: '#86868b', fontSize: '13px', margin: '0 0 16px' }}>
-                Indica el motivo del rechazo. Se enviará un email al solicitante.
+              <p className="text-muted-foreground text-sm mb-6">
+                Indica el motivo del rechazo. Esta información se enviará por correo electrónico al solicitante.
               </p>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Motivo del rechazo..."
+                placeholder="Explica brevemente el motivo del rechazo..."
                 rows={4}
-                style={{
-                  width: '100%', background: '#f5f5f7',
-                  border: '1px solid rgba(0,0,0,0.08)',
-                  borderRadius: '12px', padding: '12px 14px',
-                  fontSize: '14px', color: '#1d1d1f',
-                  outline: 'none', resize: 'none',
-                  fontFamily: appleFont, boxSizing: 'border-box',
-                }}
+                className="w-full bg-background border border-input focus:border-destructive focus:ring-2 focus:ring-destructive/30 rounded-xl p-4 text-sm text-foreground outline-none resize-none mb-6 transition-all placeholder:text-muted-foreground"
               />
-              <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+              <div className="flex gap-3">
                 <button
                   onClick={() => { setShowRejectModal(false); setRejectReason(''); }}
-                  style={{
-                    flex: 1, padding: '12px',
-                    background: '#f5f5f7', color: '#424245',
-                    border: 'none', borderRadius: '12px',
-                    fontSize: '14px', cursor: 'pointer',
-                    fontFamily: appleFont,
-                  }}
+                  className="flex-1 py-3.5 bg-muted text-foreground rounded-xl text-sm font-bold hover:bg-border transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleReject}
                   disabled={!rejectReason.trim() || actionLoading}
-                  style={{
-                    flex: 1, padding: '12px',
-                    background: !rejectReason.trim() ? '#86868b' : '#ff3b30',
-                    color: '#fff', border: 'none',
-                    borderRadius: '12px', fontSize: '14px',
-                    fontWeight: 500,
-                    cursor: !rejectReason.trim() ? 'not-allowed' : 'pointer',
-                    fontFamily: appleFont,
-                  }}
+                  className="flex-1 py-3.5 bg-destructive text-destructive-foreground rounded-xl text-sm font-bold hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {actionLoading ? 'Rechazando...' : 'Confirmar rechazo'}
+                  {actionLoading ? 'Procesando...' : 'Confirmar rechazo'}
                 </button>
               </div>
             </div>

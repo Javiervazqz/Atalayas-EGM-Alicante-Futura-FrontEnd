@@ -7,15 +7,13 @@ import { API_ROUTES } from '@/lib/utils';
 import mediumZoom from 'medium-zoom';
 import Link from 'next/link';
 
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
-const inputClass = "w-full px-5 py-3.5 bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] focus:bg-white rounded-2xl outline-none transition-all text-[#424245] text-sm placeholder:text-[#c7c7cc]";
+const inputClass = "w-full px-5 py-4 bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-2xl outline-none transition-all text-foreground text-sm placeholder:text-muted-foreground";
 
 export default function AdminContentDetail() {
   const params = useParams();
   const router = useRouter();
   const zoomRef = useRef<HTMLImageElement>(null);
   
-  // 🚀 REFERENCIAS PARA EL AUDIO
   const audioRef = useRef<HTMLAudioElement>(null);
   const lastSavedSecond = useRef<number>(0);
 
@@ -29,7 +27,6 @@ export default function AdminContentDetail() {
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<{ title?: string }>({});
 
-  // 🚀 ESTADOS DEL QUIZ
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
@@ -43,7 +40,6 @@ export default function AdminContentDetail() {
     podcast: null as any,
   });
 
-  // ── Fetch (ACTUALIZADO CON DOS PARÁMETROS) ──────────────────────────────────
   useEffect(() => {
     const fetchContent = async () => {
       const courseId = params.id as string;
@@ -52,14 +48,11 @@ export default function AdminContentDetail() {
       if (!courseId || !contentId) return;
 
       try {
-        // 🚀 Cambio: Enviamos curso y contenido
         const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(courseId, contentId), {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         const data = await res.json();
         const finalData = data.content || data.data || data;
-        
-        console.log("📥 Datos recibidos de la lección:", finalData);
         
         setContent(finalData);
         hydrateForm(finalData);
@@ -85,12 +78,11 @@ export default function AdminContentDetail() {
 
   useEffect(() => {
     if (zoomRef.current && content?.imageUrl && !isEditing) {
-      const zoom = mediumZoom(zoomRef.current, { background: 'rgba(0,0,0,0.8)', margin: 24 });
+      const zoom = mediumZoom(zoomRef.current, { background: 'rgba(250,250,249,0.95)', margin: 24 });
       return () => { zoom.detach(); };
     }
   }, [content?.imageUrl, isEditing]);
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -109,7 +101,6 @@ export default function AdminContentDetail() {
     
     setSaving(true);
     try {
-      // 🚀 También actualizamos la ruta aquí
       const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
@@ -128,7 +119,6 @@ export default function AdminContentDetail() {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      // 🚀 También actualizamos la ruta aquí
       const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
@@ -162,50 +152,66 @@ export default function AdminContentDetail() {
   const set = (key: string, value: any) => setFormData(prev => ({ ...prev, [key]: value }));
 
   if (loading) return (
-    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary" />
     </div>
   );
   if (!content) return null;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role="ADMIN" />
 
-      <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>
+      <main className="flex-1 h-screen overflow-y-auto">
 
         {/* HEADER */}
-        <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)', padding: '32px 0' }}>
-          <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 24px' }}>
+        <div className="bg-card border-b border-border py-8 lg:py-10">
+          <div className="max-w-5xl mx-auto px-6 lg:px-8">
             <Link href={`/dashboard/administrator/admin/courses/${params.id}`}
-              style={{ color: '#0071e3', fontSize: '15px', fontWeight: 500, textDecoration: 'none', display: 'block', marginBottom: '24px' }}>
-              ‹ Volver a la unidad
+              className="inline-flex items-center gap-1 text-secondary text-sm font-bold hover:opacity-80 transition-opacity mb-8">
+              <i className="bi bi-chevron-left"></i> Volver a la unidad
             </Link>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
-              <div style={{ width: '72px', height: '72px', background: 'rgba(0,113,227,0.1)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', flexShrink: 0 }}>📚</div>
-              
-              <div style={{ flex: 1, minWidth: '250px' }}>
-                <h1 style={{ fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: 800, color: '#1d1d1f', letterSpacing: '-0.02em', margin: 0 }}>
-                  {formData.title || content?.title || "Cargando título..."}
-                </h1>
-                <span className="inline-block mt-2 text-[12px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">Unidad de aprendizaje</span>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 bg-primary/10 text-primary rounded-3xl flex items-center justify-center text-3xl shrink-0">
+                  <i className="bi bi-journal-text"></i>
+                </div>
+                
+                <div className="flex-1 min-w-[250px]">
+                  <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight mb-2">
+                    {formData.title || content?.title || "Cargando..."}
+                  </h1>
+                  <span className="inline-flex items-center text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-secondary/10 text-secondary">
+                    Unidad de aprendizaje
+                  </span>
+                </div>
               </div>
 
-              {saveSuccess && (
-                <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-200 animate-in fade-in duration-300">✓ Cambios guardados</span>
-              )}
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
+                {saveSuccess && (
+                  <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-bold px-3 py-1.5 rounded-full border border-primary/20 animate-in fade-in duration-300">
+                    <i className="bi bi-check-circle"></i> Guardado
+                  </span>
+                )}
 
-              <div className="flex items-center gap-3 shrink-0">
                 {!isEditing ? (
                   <>
-                    <button onClick={() => setShowDeleteModal(true)} className="px-4 py-2 rounded-xl text-sm font-semibold text-red-500 bg-red-50 hover:bg-red-100 transition-colors">Eliminar</button>
-                    <button onClick={() => setIsEditing(true)} className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#0071e3] text-white hover:bg-[#0077ed] transition-colors">Editar unidad</button>
+                    <button onClick={() => setShowDeleteModal(true)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-destructive bg-destructive/10 hover:bg-destructive/20 transition-colors">
+                      Eliminar
+                    </button>
+                    <button onClick={() => setIsEditing(true)} className="px-6 py-2.5 rounded-xl text-sm font-bold bg-secondary text-secondary-foreground hover:opacity-90 transition-opacity shadow-sm">
+                      Editar unidad
+                    </button>
                   </>
                 ) : (
                   <>
-                    <button onClick={() => { hydrateForm(content); setIsEditing(false); }} className="px-4 py-2 rounded-xl text-sm font-semibold text-[#424245] bg-[#f5f5f7] hover:bg-gray-200 transition-colors">Descartar</button>
-                    <button onClick={handleSave} disabled={saving} className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#0071e3] text-white hover:bg-[#0077ed] transition-colors disabled:opacity-60">{saving ? 'Guardando...' : 'Guardar cambios'}</button>
+                    <button onClick={() => { hydrateForm(content); setIsEditing(false); }} className="px-5 py-2.5 rounded-xl text-sm font-bold text-muted-foreground bg-muted hover:bg-border transition-colors">
+                      Descartar
+                    </button>
+                    <button onClick={handleSave} disabled={saving} className="px-6 py-2.5 rounded-xl text-sm font-bold bg-secondary text-secondary-foreground hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60 flex items-center gap-2">
+                      {saving ? <><i className="bi bi-arrow-repeat animate-spin"></i> Guardando...</> : 'Guardar cambios'}
+                    </button>
                   </>
                 )}
               </div>
@@ -214,68 +220,100 @@ export default function AdminContentDetail() {
         </div>
 
         {/* CONTENIDO PRINCIPAL */}
-        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 24px' }}>
-          <div className="content-layout">
+        <div className="max-w-5xl mx-auto px-6 lg:px-8 py-10 lg:py-12">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10 lg:gap-12">
 
             <div>
-              <h3 style={{ fontSize: '19px', fontWeight: 700, color: '#1d1d1f', marginBottom: '20px' }}>
+              <h3 className="text-xl font-bold text-foreground mb-6">
                 {isEditing ? 'Configurar contenido' : 'Información de la lección'}
               </h3>
 
               {isEditing ? (
-                <div className="space-y-5">
-                  <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm space-y-4">
-                    <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#86868b]">Texto e Imagen</p>
+                <div className="space-y-6">
+                  {/* TEXTO E IMAGEN */}
+                  <div className="bg-card p-6 lg:p-8 rounded-3xl border border-border shadow-sm space-y-5">
+                    <p className="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Texto e Imagen</p>
+                    
                     <div className="space-y-1">
-                      <input value={formData.title} onChange={e => set('title', e.target.value)} placeholder="Título..." className={`w-full px-5 py-4 rounded-2xl outline-none transition-all text-lg font-bold ${errors.title ? 'border-2 border-red-400 bg-red-50/30' : 'border-2 border-transparent bg-[#f5f5f7] focus:border-[#0071e3] focus:bg-white'}`} />
-                      {errors.title && <p className="text-red-500 text-xs font-bold ml-2">⚠️ {errors.title}</p>}
+                      <input value={formData.title} onChange={e => set('title', e.target.value)} placeholder="Título..." className={`w-full px-5 py-4 rounded-2xl outline-none transition-all text-lg font-bold ${errors.title ? 'border-2 border-destructive bg-destructive/10 text-destructive' : 'border border-input bg-background focus:border-primary focus:ring-2 focus:ring-ring text-foreground'}`} />
+                      {errors.title && <p className="text-destructive text-xs font-bold ml-2 mt-1"><i className="bi bi-exclamation-triangle"></i> {errors.title}</p>}
                     </div>
-                    <textarea rows={8} value={formData.summary} onChange={e => set('summary', e.target.value)} placeholder="Cuerpo..." className="w-full px-5 py-4 bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] focus:bg-white rounded-2xl outline-none transition-all resize-none text-[#424245] leading-relaxed" />
-                    <input value={formData.imageUrl} onChange={e => set('imageUrl', e.target.value)} placeholder="URL Imagen..." className={inputClass} />
+                    
+                    <textarea rows={8} value={formData.summary} onChange={e => set('summary', e.target.value)} placeholder="Cuerpo de la lección..." className="w-full px-5 py-4 bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-2xl outline-none transition-all resize-none text-foreground leading-relaxed placeholder:text-muted-foreground" />
+                    
+                    <input value={formData.imageUrl} onChange={e => set('imageUrl', e.target.value)} placeholder="URL Imagen (Opcional)..." className={inputClass} />
                   </div>
 
-                  <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm space-y-4">
-                    <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#86868b]">Documento PDF / Audio URL</p>
+                  {/* DOCUMENTO PDF */}
+                  <div className="bg-card p-6 lg:p-8 rounded-3xl border border-border shadow-sm space-y-5">
+                    <p className="text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">Documento PDF / Enlace</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                       <input value={formData.url} onChange={e => set('url', e.target.value)} placeholder="Link directo..." className={inputClass} />
-                       <div className="relative h-12.5 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50 hover:border-blue-400 transition-all cursor-pointer">
+                       <input value={formData.url} onChange={e => set('url', e.target.value)} placeholder="Enlace directo (Opcional)..." className={inputClass} />
+                       
+                       <div className="relative h-[3.5rem] rounded-2xl border-2 border-dashed border-border flex items-center justify-center bg-muted/50 hover:bg-muted hover:border-secondary transition-all cursor-pointer">
                           <input type="file" accept=".pdf" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
-                          <span className="text-xs font-bold text-blue-600">{uploading ? 'Subiendo...' : '📥 Subir nuevo PDF'}</span>
+                          <span className="text-sm font-bold text-secondary flex items-center gap-2">
+                            <i className="bi bi-cloud-arrow-up"></i> {uploading ? 'Subiendo...' : 'Subir nuevo PDF'}
+                          </span>
                        </div>
                     </div>
                   </div>
+
+                  {/* DATOS IA (Solo lectura) */}
+                  {(formData.podcast || formData.quiz) && (
+                    <div className="bg-muted/50 p-6 lg:p-8 rounded-3xl border border-border space-y-4">
+                      <p className="text-[11px] font-black uppercase text-muted-foreground tracking-widest">Datos Generados por IA (Solo lectura)</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         {formData.podcast && <div className="p-4 bg-background border border-border rounded-xl text-xs font-mono overflow-hidden h-24 text-muted-foreground">Podcast: {JSON.stringify(formData.podcast).substring(0,60)}...</div>}
+                         {formData.quiz && <div className="p-4 bg-background border border-border rounded-xl text-xs font-mono overflow-hidden h-24 text-muted-foreground">Quiz: {JSON.stringify(formData.quiz).substring(0,60)}...</div>}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>
-                  <p style={{ fontSize: '17px', lineHeight: '1.8', color: '#424245', whiteSpace: 'pre-wrap', marginBottom: '32px' }}>{content.summary || 'Sin contenido redactado.'}</p>
+                  <div className="prose prose-slate max-w-none">
+                    <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-wrap mb-10">
+                      {content.summary || 'Sin contenido redactado.'}
+                    </p>
+                  </div>
+
                   {content.imageUrl && (
-                    <div className="mb-8 overflow-hidden rounded-[2.5rem] border border-gray-100 shadow-sm">
+                    <div className="mb-10 overflow-hidden rounded-3xl border border-border shadow-sm">
                       <img ref={zoomRef} src={content.imageUrl} alt={content.title} className="w-full h-auto cursor-zoom-in" />
                     </div>
                   )}
 
                   {/* 🚀 QUIZ INTERACTIVO */}
                   {content.quiz && (
-                    <div className="mt-12 bg-white p-8 md:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm">
-                      <div className="flex items-center gap-4 mb-8">
-                        <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center"><i className="bi bi-patch-question text-3xl text-orange-500"></i></div>
+                    <div className="mt-12 bg-card p-6 lg:p-10 rounded-3xl border border-border shadow-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-5 mb-8">
+                        <div className="w-14 h-14 bg-secondary/10 text-secondary rounded-2xl flex items-center justify-center shrink-0 border border-secondary/20">
+                          <i className="bi bi-patch-question text-3xl"></i>
+                        </div>
                         <div>
-                          <h3 className="text-2xl font-black text-[#1d1d1f]">Test de Comprensión</h3>
-                          <p className="text-[#86868b] text-sm mt-1">Supera el test para guardar tu progreso.</p>
+                          <h3 className="text-2xl font-extrabold text-foreground tracking-tight">Test de Comprensión</h3>
+                          <p className="text-muted-foreground text-sm font-medium mt-1">Supera el test para validar el conocimiento adquirido.</p>
                         </div>
                       </div>
 
                       <div className="space-y-8">
                         {content.quiz.map((pregunta: any, index: number) => {
-                          const bgClass = quizSubmitted ? (quizAnswers[index] === pregunta.correctAnswer ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200") : "bg-[#f5f5f7]";
+                          const isCorrect = quizAnswers[index] === pregunta.correctAnswer;
+                          const bgClass = quizSubmitted 
+                            ? (isCorrect ? "bg-primary/10 border-primary/30" : "bg-destructive/10 border-destructive/30") 
+                            : "bg-background border-border";
+                          
                           return (
-                            <div key={index} className={`p-6 rounded-3xl transition-colors ${bgClass}`}>
-                              <p className="font-bold text-[#1d1d1f] text-lg mb-4">{index + 1}. {pregunta.question}</p>
+                            <div key={index} className={`p-6 rounded-3xl border transition-colors ${bgClass}`}>
+                              <p className="font-bold text-foreground text-base mb-4 flex gap-2">
+                                <span className="text-muted-foreground">{index + 1}.</span> {pregunta.question}
+                              </p>
                               <div className="flex flex-col gap-3">
                                 {pregunta.options.map((opcion: string, i: number) => (
-                                  <label key={i} className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${quizAnswers[index] === opcion ? 'border-orange-500 bg-orange-50' : 'bg-white border-transparent hover:border-orange-200'}`}>
-                                    <input type="radio" name={`q-${index}`} checked={quizAnswers[index] === opcion} onChange={() => !quizSubmitted && setQuizAnswers(prev => ({...prev, [index]: opcion}))} className="w-5 h-5 accent-orange-500" />
-                                    <span className="text-[#424245] font-medium">{opcion}</span>
+                                  <label key={i} className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${quizAnswers[index] === opcion ? 'border-secondary bg-secondary/5' : 'bg-card border-border hover:border-secondary/50'}`}>
+                                    <input type="radio" name={`q-${index}`} checked={quizAnswers[index] === opcion} onChange={() => !quizSubmitted && setQuizAnswers(prev => ({...prev, [index]: opcion}))} className="w-5 h-5 accent-secondary" />
+                                    <span className="text-foreground text-sm font-medium">{opcion}</span>
                                   </label>
                                 ))}
                               </div>
@@ -285,11 +323,20 @@ export default function AdminContentDetail() {
                       </div>
                       
                       {!quizSubmitted ? (
-                        <button onClick={handleQuizSubmit} disabled={Object.keys(quizAnswers).length < content.quiz.length} className="mt-8 w-full py-5 bg-[#1d1d1f] text-white rounded-2xl font-bold hover:bg-black transition-colors disabled:bg-gray-300">Corregir Test</button>
+                        <button 
+                          onClick={handleQuizSubmit} 
+                          disabled={Object.keys(quizAnswers).length < content.quiz.length} 
+                          className="mt-8 w-full py-4 bg-secondary text-secondary-foreground rounded-2xl font-bold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                        >
+                          Corregir Test
+                        </button>
                       ) : (
-                        <div className="mt-8 p-6 bg-blue-50 rounded-2xl text-center border border-blue-100">
-                          <h4 className="text-2xl font-black text-[#005596] mb-2">Puntuación: {quizScore} / {content.quiz.length}</h4>
-                          {quizScore === content.quiz.length ? <p className="text-green-600 font-bold">¡Perfecto! Progreso guardado.</p> : <button onClick={() => { setQuizSubmitted(false); setQuizAnswers({}); }} className="mt-4 px-8 py-3 bg-[#005596] text-white rounded-xl font-bold">Reintentar</button>}
+                        <div className="mt-8 p-8 bg-primary/10 rounded-3xl text-center border border-primary/20">
+                          <h4 className="text-3xl font-black text-primary mb-2 tracking-tight">Puntuación: {quizScore} / {content.quiz.length}</h4>
+                          {quizScore === content.quiz.length 
+                            ? <p className="text-primary font-bold flex items-center justify-center gap-2 mt-2"><i className="bi bi-check-circle-fill"></i> ¡Perfecto! Excelente trabajo.</p> 
+                            : <button onClick={() => { setQuizSubmitted(false); setQuizAnswers({}); }} className="mt-4 px-8 py-3 bg-card border border-border text-foreground rounded-xl font-bold hover:bg-muted transition-colors shadow-sm">Reintentar Test</button>
+                          }
                         </div>
                       )}
                     </div>
@@ -298,31 +345,36 @@ export default function AdminContentDetail() {
               )}
             </div>
 
-            {/* BARRA LATERAL (Con lógica de audio segura) */}
+            {/* BARRA LATERAL */}
             {!isEditing && (
-              <aside className="action-box space-y-4">
+              <aside className="space-y-6">
                 {content.url && !content.url.includes('.mp3') && (
-                  <div className="bg-white p-6 rounded-[2rem] border border-black/5 shadow-sm text-center">
-                    <div className="text-3xl mb-3">📄</div>
-                    <p className="text-xs font-bold text-[#86868b] uppercase mb-4">Material de Estudio</p>
-                    <a href={content.url} target="_blank" rel="noreferrer" className="block w-full py-3 bg-[#1d1d1f] text-white rounded-xl text-xs font-bold hover:bg-black transition-all">Abrir documento</a>
+                  <div className="bg-card p-6 rounded-3xl border border-border shadow-sm text-center">
+                    <div className="text-4xl text-primary mb-3"><i className="bi bi-file-earmark-pdf"></i></div>
+                    <p className="text-[11px] font-black text-foreground uppercase mb-5 tracking-widest">Material de Estudio</p>
+                    <a href={content.url} target="_blank" rel="noreferrer" className="block w-full py-3 bg-secondary text-secondary-foreground rounded-xl text-sm font-bold hover:opacity-90 transition-opacity shadow-sm">
+                      Abrir documento
+                    </a>
                   </div>
                 )}
                 
                 {content.url && content.url.includes('.mp3') && (
-                  <div className="bg-[#0071e3] p-6 rounded-[2rem] text-white shadow-lg shadow-blue-500/20 text-center">
-                    <p className="text-[10px] font-black uppercase opacity-60 mb-2 flex items-center gap-1"><i className="bi bi-robot"></i> AI Podcast</p>
-                    <h4 className="text-sm font-bold mb-4 leading-tight">Escucha la lección</h4>
+                  <div className="bg-card p-6 rounded-3xl border border-border shadow-sm text-center overflow-hidden relative">
+                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                      <i className="bi bi-mic text-6xl"></i>
+                    </div>
+                    <p className="text-[10px] font-black uppercase text-primary mb-3 flex items-center justify-center gap-1.5 tracking-widest relative z-10">
+                      <i className="bi bi-robot"></i> AI Podcast
+                    </p>
+                    <h4 className="text-foreground font-bold mb-5 leading-tight relative z-10">Escucha la lección</h4>
                     <audio 
                       ref={audioRef}
                       controls 
-                      className="w-full h-10 rounded-lg" 
+                      className="w-full h-12 rounded-xl relative z-10" 
                       src={content.url}
                       onCanPlay={() => {
-                        // 🚀 RECUPERAR PROGRESO AL CARGAR
                         const savedTime = content.userProgresses?.[0]?.lastTime || 0;
                         if (audioRef.current && savedTime > 0 && lastSavedSecond.current === 0) {
-                          console.log(`🎬 Resumiendo audio desde: ${savedTime}s`);
                           audioRef.current.currentTime = savedTime;
                           lastSavedSecond.current = savedTime;
                         }
@@ -332,7 +384,6 @@ export default function AdminContentDetail() {
                         const currentSec = Math.floor(target.currentTime);
                         const totalDur = Math.floor(target.duration || 0);
 
-                        // Solo guardamos cada 10 segundos
                         if (currentSec > 0 && currentSec % 10 === 0 && currentSec !== lastSavedSecond.current) {
                           lastSavedSecond.current = currentSec;
                           try {
@@ -342,7 +393,6 @@ export default function AdminContentDetail() {
                               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                               body: JSON.stringify({ contentId: content.id, lastTime: Math.floor(Number(currentSec)), totalDuration: Math.floor(Number(totalDur)) })
                             });
-                            console.log(`💾 Guardado segundo ${currentSec}`);
                           } catch (err) { console.error(err); }
                         }
                       }}
@@ -357,25 +407,26 @@ export default function AdminContentDetail() {
 
       {/* MODAL ELIMINAR */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md" onClick={() => setShowDeleteModal(false)}>
-          <div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="text-5xl mb-6 text-center">🗑️</div>
-            <h2 className="text-2xl font-bold text-[#1d1d1f] mb-3 text-center">¿Eliminar contenido?</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowDeleteModal(false)}>
+          <div className="bg-card rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl border border-border animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+              <i className="bi bi-trash3"></i>
+            </div>
+            <h2 className="text-2xl font-extrabold text-foreground mb-2 text-center tracking-tight">¿Eliminar contenido?</h2>
+            <p className="text-sm text-muted-foreground mb-8 text-center leading-relaxed">
+              Esta acción eliminará la lección de forma permanente y no se puede deshacer.
+            </p>
             <div className="flex flex-col gap-3">
-              <button onClick={handleDelete} className="w-full py-4 rounded-2xl font-bold bg-[#ff3b30] text-white">Eliminar</button>
-              <button onClick={() => setShowDeleteModal(false)} className="w-full py-4 rounded-2xl font-semibold text-[#0071e3]">Cancelar</button>
+              <button onClick={handleDelete} disabled={deleting} className="w-full py-4 rounded-xl font-bold bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
+                {deleting ? 'Eliminando...' : 'Sí, eliminar'}
+              </button>
+              <button onClick={() => setShowDeleteModal(false)} className="w-full py-4 rounded-xl font-bold text-muted-foreground hover:bg-muted transition-colors">
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        .content-layout { display: grid; grid-template-columns: 1fr 300px; gap: 48px; }
-        @media (max-width: 1024px) {
-          .content-layout { grid-template-columns: 1fr; gap: 0; }
-          .action-box { margin-top: 32px; }
-        }
-      `}</style>
     </div>
   );
 }

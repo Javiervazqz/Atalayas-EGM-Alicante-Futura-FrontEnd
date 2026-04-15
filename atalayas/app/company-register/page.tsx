@@ -1,24 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { API_ROUTES } from '@/lib/utils';
-
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
-
-const inputStyle = {
-  width: '100%',
-  background: '#f5f5f7',
-  border: '1px solid rgba(0,0,0,0.08)',
-  borderRadius: '12px',
-  padding: '13px 16px',
-  fontSize: '15px',
-  color: '#1d1d1f',
-  outline: 'none',
-  boxSizing: 'border-box' as const,
-  fontFamily: appleFont,
-};
 
 export default function RegisterCompanyPage() {
   const router = useRouter();
@@ -45,34 +30,34 @@ export default function RegisterCompanyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setFieldErrors({})
+    setFieldErrors({});
 
     const newErrors: Record<string, string> = {};
 
-    if(!form.companyName) newErrors.companyName = 'El nombre es obligatorio';
+    if (!form.companyName) newErrors.companyName = 'El nombre es obligatorio';
     
-    if(!form.cif){
+    if (!form.cif) {
       newErrors.cif = 'El CIF es obligatorio';
-    } else if(!/^[ABCDEFGHJKLMNPQSVW]\d{7}[0-9A-J]$/i.test(form.cif)) {
+    } else if (!/^[ABCDEFGHJKLMNPQSVW]\d{7}[0-9A-J]$/i.test(form.cif)) {
       newErrors.cif = 'El formato del CIF no es válido (ej: B12345678)';
     }
 
     if (!form.contactEmail) {
       newErrors.contactEmail = 'El email es obligatorio';
-     } else if (!/\S+@\S+\.\S+/.test(form.contactEmail)){
+    } else if (!/\S+@\S+\.\S+/.test(form.contactEmail)) {
       newErrors.contactEmail = 'Introduce un email válido';
     }
 
-    if(!form.contactName) newErrors.contactName = 'El nombre del responsable es obligatorio';
+    if (!form.contactName) newErrors.contactName = 'El nombre del responsable es obligatorio';
 
-    if(form.phone && !/^\+?[\d\s]{9,}$/.test(form.phone)){
-      newErrors.phone = 'El teléfono no parece válido'
+    if (form.phone && !/^\+?[\d\s]{9,}$/.test(form.phone)) {
+      newErrors.phone = 'El teléfono no parece válido';
     }
 
     if (Object.keys(newErrors).length > 0) {
       setFieldErrors(newErrors);
       setError('Por favor, revisa los campos marcados en rojo');
-      window.scrollTo({top:0, behavior: 'smooth'})
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -106,29 +91,24 @@ export default function RegisterCompanyPage() {
     }
   };
 
+  // ── ESTADO DE ÉXITO ────────────────────────────────────────────────────────
   if (success) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-        <div style={{ background: '#fff', borderRadius: '24px', padding: '48px', maxWidth: '480px', width: '100%', textAlign: 'center', boxShadow: '0 2px 20px rgba(0,0,0,0.08)' }}>
-          <div style={{ width: '64px', height: '64px', background: 'rgba(52,199,89,0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: '28px' }}>
-            ✅
+      <div className="min-h-screen bg-background font-sans flex items-center justify-center p-6">
+        <div className="bg-card rounded-3xl p-10 lg:p-12 max-w-md w-full text-center shadow-2xl border border-border animate-in zoom-in-95 duration-500">
+          <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 text-4xl text-emerald-500 shadow-sm border border-emerald-500/20">
+            <i className="bi bi-check-lg"></i>
           </div>
-          <h2 style={{ color: '#1d1d1f', fontSize: '22px', fontWeight: 700, letterSpacing: '-0.03em', margin: '0 0 10px' }}>
+          <h2 className="text-foreground text-2xl lg:text-3xl font-extrabold mb-3 tracking-tight">
             Solicitud enviada
           </h2>
-          <p style={{ color: '#86868b', fontSize: '14px', lineHeight: '1.6', margin: '0 0 28px' }}>
-            Hemos recibido tu solicitud. El equipo de Atalayas la revisará y recibirás un email con la respuesta en breve.
+          <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+            Hemos recibido tu solicitud. El equipo de Atalayas la revisará detalladamente y recibirás un email con la respuesta en breve.
           </p>
-          <Link href="/login" style={{
-            display: 'inline-block',
-            background: '#0071e3',
-            color: '#fff',
-            borderRadius: '12px',
-            padding: '12px 24px',
-            fontSize: '14px',
-            fontWeight: 500,
-            textDecoration: 'none',
-          }}>
+          <Link 
+            href="/login" 
+            className="inline-block w-full bg-secondary text-secondary-foreground rounded-2xl px-6 py-4 text-sm font-bold transition-all hover:opacity-90 shadow-sm active:scale-95"
+          >
             Volver al inicio
           </Link>
         </div>
@@ -136,10 +116,11 @@ export default function RegisterCompanyPage() {
     );
   }
 
-  const renderInput = (name: string, placeholder: string, type = 'text', required= false) =>{
+  // ── GENERADOR DE INPUTS ────────────────────────────────────────────────────
+  const renderInput = (name: string, placeholder: string, type = 'text', required = false) => {
     const hasError = !!fieldErrors[name];
     return (
-      <div style={{ marginBottom: '4px' }}>
+      <div className="mb-1">
         <input
           name={name}
           type={type}
@@ -147,145 +128,132 @@ export default function RegisterCompanyPage() {
           onChange={handleChange}
           placeholder={placeholder}
           required={required}
-          style={{
-            ...inputStyle,
-            border: hasError ? '1px solid #ff3b30' : '1px solid rgba(0,0,0,0.08)',
-            background: hasError ? '#fff2f2' : '#f5f5f7',
-            transition: 'all 0.2s ease'
-          }}
-          onFocus={(e) => { 
-            if(!hasError) {
-              e.target.style.border = '1px solid #0071e3'; 
-              e.target.style.background = '#fff'; 
-            }
-          }}
-          onBlur={(e) => { 
-            if(!hasError) {
-              e.target.style.border = '1px solid rgba(0,0,0,0.08)'; 
-              e.target.style.background = '#f5f5f7'; 
-            }
-          }}
+          className={`w-full bg-background rounded-xl px-5 py-4 text-sm outline-none transition-all text-foreground placeholder:text-muted-foreground/50 font-medium ${
+            hasError 
+              ? 'border-2 border-destructive bg-destructive/5' 
+              : 'border-2 border-transparent focus:border-primary focus:bg-card focus:ring-2 focus:ring-ring border-input'
+          }`}
         />
         {hasError && (
-          <span style={{ color: '#ff3b30', fontSize: '12px', marginLeft: '4px', marginTop: '2px', display: 'block', fontWeight: 500 }}>
-            {fieldErrors[name]}
+          <span className="text-destructive text-xs font-bold ml-2 mt-1.5 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+            <i className="bi bi-exclamation-triangle-fill"></i> {fieldErrors[name]}
           </span>
         )}
       </div>
     );
-  }
+  };
 
+  // ── VISTA PRINCIPAL (FORMULARIO) ───────────────────────────────────────────
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
+    <div className="min-h-screen bg-background font-sans flex flex-col">
       {/* Nav */}
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '28px', height: '28px', background: 'linear-gradient(135deg, #1d1d1f 0%, #434343 100%)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: 'white', fontSize: '12px', fontWeight: 600 }}>A</span>
+      <nav className="flex items-center justify-between px-6 lg:px-10 py-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-sm">
+            <span className="text-primary-foreground text-sm font-extrabold">A</span>
           </div>
-          <span style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, letterSpacing: '-0.02em' }}>Atalayas</span>
+          <span className="text-foreground text-xl font-bold tracking-tight">Atalayas</span>
         </div>
-        <Link href="/login" style={{ color: '#0071e3', fontSize: '14px', textDecoration: 'none' }}>
-          Iniciar sesión
+        <Link href="/login" className="text-primary text-sm font-bold hover:underline transition-all flex items-center gap-1">
+          Iniciar sesión <i className="bi bi-arrow-right"></i>
         </Link>
       </nav>
 
       {/* Content */}
-      <main style={{ maxWidth: '560px', margin: '0 auto', padding: '20px 24px 60px' }}>
-        <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ color: '#1d1d1f', fontSize: '28px', fontWeight: 700, letterSpacing: '-0.04em', margin: '0 0 8px' }}>
+      <main className="max-w-2xl mx-auto px-6 pb-20 w-full flex-1">
+        <div className="mb-10 mt-4 text-center sm:text-left">
+          <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight mb-3">
             Solicitar alta de empresa
           </h1>
-          <p style={{ color: '#86868b', fontSize: '14px', margin: 0, lineHeight: '1.6' }}>
+          <p className="text-muted-foreground text-base leading-relaxed">
             Rellena el formulario para solicitar acceso al polígono industrial. Revisaremos tu solicitud y nos pondremos en contacto contigo.
           </p>
         </div>
 
         {error && (
-          <div style={{ background: '#fff2f2', border: '1px solid #ffd0d0', borderRadius: '12px', padding: '12px 16px', marginBottom: '20px' }}>
-            <p style={{ color: '#ff3b30', fontSize: '13px', margin: 0 }}>{error}</p>
+          <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-5 mb-8 flex items-center gap-3 animate-in fade-in">
+            <i className="bi bi-exclamation-octagon-fill text-2xl text-destructive"></i>
+            <p className="text-destructive text-sm font-bold">{error}</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} noValidate>
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
+          
           {/* Datos de la empresa */}
-          <div style={{ background: '#fff', borderRadius: '18px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)' }}>
-            <h3 style={{ color: '#1d1d1f', fontSize: '15px', fontWeight: 600, margin: '0 0 16px', letterSpacing: '-0.02em' }}>
+          <div className="bg-card rounded-3xl p-6 lg:p-8 shadow-sm border border-border">
+            <h3 className="text-foreground text-lg font-bold mb-5 tracking-tight border-l-4 border-primary pl-3">
               Datos de la empresa
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {renderInput('companyName', 'Nombre de la empresa', 'text', true)}
-              {renderInput('cif', 'CIF (ej: B12345678)', 'text', true)}
-              {renderInput('activity', 'Sector / Actividad (opcional)')}
-              {renderInput('address', 'Dirección en el polígono (opcional)')}
+            <div className="flex flex-col gap-4">
+              {renderInput('companyName', 'Nombre de la empresa *', 'text', true)}
+              {renderInput('cif', 'CIF (ej: B12345678) *', 'text', true)}
+              {renderInput('activity', 'Sector / Actividad (Opcional)')}
+              {renderInput('address', 'Dirección en el polígono (Opcional)')}
             </div>
           </div>
 
           {/* Datos de contacto */}
-          <div style={{ background: '#fff', borderRadius: '18px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)' }}>
-            <h3 style={{ color: '#1d1d1f', fontSize: '15px', fontWeight: 600, margin: '0 0 16px', letterSpacing: '-0.02em' }}>
+          <div className="bg-card rounded-3xl p-6 lg:p-8 shadow-sm border border-border">
+            <h3 className="text-foreground text-lg font-bold mb-5 tracking-tight border-l-4 border-primary pl-3">
               Datos de contacto
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-             {renderInput('contactName', 'Nombre del responsable', 'text', true)}
-              {renderInput('contactEmail', 'Email de contacto', 'email', true)}
-              {renderInput('phone', 'Teléfono (opcional)', 'tel')}
+            <div className="flex flex-col gap-4">
+              {renderInput('contactName', 'Nombre del responsable *', 'text', true)}
+              {renderInput('contactEmail', 'Email de contacto *', 'email', true)}
+              {renderInput('phone', 'Teléfono (Opcional)', 'tel')}
             </div>
           </div>
 
           {/* Documento acreditativo */}
-          <div style={{ background: '#fff', borderRadius: '18px', padding: '24px', marginBottom: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)' }}>
-            <h3 style={{ color: '#1d1d1f', fontSize: '15px', fontWeight: 600, margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+          <div className="bg-card rounded-3xl p-6 lg:p-8 shadow-sm border border-border">
+            <h3 className="text-foreground text-lg font-bold mb-2 tracking-tight border-l-4 border-primary pl-3">
               Documento acreditativo
             </h3>
-            <p style={{ color: '#86868b', fontSize: '12px', margin: '0 0 16px' }}>
+            <p className="text-muted-foreground text-xs font-medium mb-6 ml-4">
               Adjunta un documento que acredite tu pertenencia al polígono (contrato de arrendamiento, escrituras, etc.)
             </p>
-            <label style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: '8px', padding: '24px', borderRadius: '12px',
-              border: `2px dashed ${file ? '#34c759' : 'rgba(0,0,0,0.12)'}`,
-              background: file ? 'rgba(52,199,89,0.04)' : '#f5f5f7',
-              cursor: 'pointer', transition: 'all 0.2s',
-            }}>
-              <span style={{ fontSize: '24px' }}>{file ? '✅' : '📄'}</span>
-              <span style={{ color: file ? '#34c759' : '#86868b', fontSize: '13px', fontWeight: 500 }}>
+            
+            <label className={`relative flex flex-col items-center justify-center gap-2 p-8 rounded-[2rem] border-2 border-dashed transition-all cursor-pointer group ${
+                file 
+                  ? 'border-emerald-500/50 bg-emerald-500/5' 
+                  : 'border-border bg-background hover:bg-muted hover:border-primary/50'
+              }`}
+            >
+              <span className={`text-4xl mb-2 transition-transform group-hover:scale-110 ${file ? 'text-emerald-500' : 'text-primary'}`}>
+                <i className={`bi ${file ? 'bi-check-circle-fill' : 'bi-file-earmark-arrow-up'}`}></i>
+              </span>
+              <span className={`text-sm font-bold text-center ${file ? 'text-emerald-600' : 'text-foreground'}`}>
                 {file ? file.name : 'Haz clic para seleccionar archivo'}
               </span>
-              <span style={{ color: '#b0b0b5', fontSize: '11px' }}>PDF, Word o imagen (máx. 10MB)</span>
+              {!file && <span className="text-muted-foreground text-xs font-medium mt-1">PDF, Word o imagen (máx. 10MB)</span>}
+              
               <input
                 type="file"
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                style={{ display: 'none' }}
+                className="hidden"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
               />
             </label>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              background: loading ? '#86868b' : '#0071e3',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '14px',
-              fontSize: '15px',
-              fontWeight: 500,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontFamily: appleFont,
-              transition: 'background 0.2s',
-            }}
-          >
-            {loading ? 'Enviando solicitud...' : 'Enviar solicitud'}
-          </button>
+          <div className="pt-4">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 lg:py-5 bg-secondary text-secondary-foreground rounded-2xl font-bold text-base hover:opacity-90 transition-opacity shadow-sm active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <><i className="bi bi-arrow-repeat animate-spin text-xl"></i> Enviando solicitud...</>
+              ) : (
+                'Enviar solicitud'
+              )}
+            </button>
+          </div>
         </form>
 
-        <p style={{ textAlign: 'center', color: '#86868b', fontSize: '13px', marginTop: '20px' }}>
+        <p className="text-center text-muted-foreground text-sm mt-8 font-medium">
           ¿Ya tienes cuenta?{' '}
-          <Link href="/login" style={{ color: '#0071e3', textDecoration: 'none' }}>
+          <Link href="/login" className="text-primary font-bold hover:underline transition-all">
             Iniciar sesión
           </Link>
         </p>

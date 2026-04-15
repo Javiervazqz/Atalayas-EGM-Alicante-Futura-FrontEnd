@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
@@ -19,7 +19,6 @@ export default function NewGeneralService() {
     mediaUrl: '',
     isPublic: true,
     companyId: '',
-    // Campos de contacto
     providerName: '',
     email: '',
     phone: '',
@@ -52,7 +51,6 @@ export default function NewGeneralService() {
     setLoading(true);
     const token = localStorage.getItem('token');
 
-    // Limpiamos strings vacíos → null para no enviar campos vacíos
     const clean = (v: string) => v.trim() || null;
 
     const dataToSubmit = {
@@ -97,33 +95,33 @@ export default function NewGeneralService() {
 
   const companyNames = ['PUBLIC', ...companies.map((c) => c.name)];
 
-  const inputClass = 'w-full px-6 py-4 bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] focus:bg-white rounded-2xl outline-none transition-all text-[#424245] placeholder:text-[#c7c7cc]';
+  const inputClass = 'w-full px-5 py-4 bg-background border-2 border-transparent focus:border-primary focus:ring-2 focus:ring-ring rounded-2xl outline-none transition-all text-foreground placeholder:text-muted-foreground';
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role="GENERAL_ADMIN" />
 
-      <main className="flex-1 p-8 md:p-12 overflow-y-auto">
-        <div className="max-w-2xl mx-auto">
+      <main className="flex-1 p-6 lg:p-10 overflow-y-auto">
+        <div className="max-w-3xl mx-auto">
 
           {/* Cabecera */}
-          <header className="mb-12">
+          <header className="mb-10">
             <button
               type="button"
               onClick={() => router.back()}
-              className="text-[#0071e3] hover:text-[#0077ed] font-semibold mb-4 flex items-center gap-1 group"
+              className="text-secondary hover:opacity-80 font-bold text-sm mb-6 flex items-center gap-1 transition-opacity"
             >
-              <span className="group-hover:-translate-x-1 transition-transform">←</span> Volver
+              <i className="bi bi-chevron-left"></i> Volver
             </button>
-            <h1 className="text-4xl font-bold text-[#1d1d1f] tracking-tight">Crear nuevo servicio</h1>
-            <p className="text-[#86868b] mt-2 text-lg">Configura la visibilidad y el contenido del servicio.</p>
+            <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">Crear nuevo servicio</h1>
+            <p className="text-muted-foreground mt-2 text-base">Configura la visibilidad y el contenido del servicio.</p>
           </header>
 
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
 
             {/* ── SECCIÓN 1: VISIBILIDAD ─────────────────────────────── */}
-            <section className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
-              <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[#86868b] mb-6">
+            <section className="bg-card p-6 lg:p-8 rounded-3xl border border-border shadow-sm">
+              <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground mb-6">
                 Asignación de Visibilidad
               </label>
 
@@ -140,8 +138,8 @@ export default function NewGeneralService() {
                 }}
               />
 
-              <div className={`mt-4 p-4 rounded-2xl transition-colors ${formData.isPublic ? 'bg-green-50/50 text-green-700' : 'bg-blue-50/50 text-blue-700'}`}>
-                <p className="text-sm font-medium">
+              <div className={`mt-5 p-4 rounded-2xl transition-colors font-semibold text-sm ${formData.isPublic ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                <p>
                   {formData.isPublic
                     ? '🌐 Este servicio será visible para todos los usuarios de Atalayas.'
                     : `🏢 Servicio exclusivo para empleados de ${selectedCompany}.`}
@@ -150,8 +148,8 @@ export default function NewGeneralService() {
             </section>
 
             {/* ── SECCIÓN 2: INFORMACIÓN PRINCIPAL ──────────────────── */}
-            <section className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
-              <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[#86868b]">
+            <section className="bg-card p-6 lg:p-8 rounded-3xl border border-border shadow-sm space-y-5">
+              <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">
                 Información Principal
               </label>
 
@@ -165,19 +163,17 @@ export default function NewGeneralService() {
                     setFormData({ ...formData, title: e.target.value });
                     if (errors.title) setErrors({});
                   }}
-                  className={`w-full px-6 py-5 rounded-2xl outline-none transition-all text-xl font-bold ${
+                  className={`w-full px-5 py-4 rounded-2xl outline-none transition-all text-lg font-bold ${
                     errors.title
-                      ? 'border-2 border-red-400 bg-red-50/30 text-red-900'
-                      : 'border-2 border-transparent bg-[#f5f5f7] focus:border-[#0071e3] focus:bg-white text-[#1d1d1f]'
+                      ? 'border-2 border-destructive bg-destructive/10 text-destructive'
+                      : 'border-2 border-transparent bg-background focus:border-primary focus:bg-card focus:ring-2 focus:ring-ring text-foreground'
                   }`}
                 />
-                <div className="h-5 ml-4">
-                  {errors.title && (
-                    <p className="text-red-500 text-xs font-bold flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
-                      <span>⚠️</span> {errors.title}
-                    </p>
-                  )}
-                </div>
+                {errors.title && (
+                  <p className="text-destructive text-xs font-bold ml-2 mt-1 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                    <i className="bi bi-exclamation-triangle"></i> {errors.title}
+                  </p>
+                )}
               </div>
 
               {/* Descripción */}
@@ -186,12 +182,12 @@ export default function NewGeneralService() {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={4}
-                className="w-full px-6 py-5 bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] focus:bg-white rounded-2xl outline-none transition-all resize-none text-[#424245] leading-relaxed placeholder:text-[#c7c7cc]"
+                className="w-full px-5 py-4 bg-background border-2 border-transparent focus:border-primary focus:ring-2 focus:ring-ring rounded-2xl outline-none transition-all resize-none text-foreground leading-relaxed text-sm placeholder:text-muted-foreground"
               />
 
               {/* Imagen */}
-              <div className="space-y-2">
-                <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[#86868b] ml-1">
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-foreground ml-1 mb-1.5">
                   Imagen de portada (URL)
                 </label>
                 <input
@@ -202,7 +198,7 @@ export default function NewGeneralService() {
                   className={inputClass}
                 />
                 {formData.mediaUrl && (
-                  <div className="mt-3 rounded-2xl overflow-hidden h-36 w-full border border-gray-100">
+                  <div className="mt-4 rounded-2xl overflow-hidden h-40 w-full border border-border">
                     <img
                       src={formData.mediaUrl}
                       alt="Preview"
@@ -215,17 +211,16 @@ export default function NewGeneralService() {
             </section>
 
             {/* ── SECCIÓN 3: DATOS DE CONTACTO ──────────────────────── */}
-            <section className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-5">
+            <section className="bg-card p-6 lg:p-8 rounded-3xl border border-border shadow-sm space-y-5">
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[#86868b]">
+                <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-muted-foreground">
                   Datos de Contacto
                 </label>
-                <p className="text-xs text-[#86868b] mt-1">Todos los campos son opcionales.</p>
+                <p className="text-xs text-muted-foreground mt-1">Todos los campos son opcionales.</p>
               </div>
 
-              {/* Proveedor */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#86868b] ml-1">Proveedor / Empresa</label>
+                <label className="text-xs font-bold text-foreground ml-1 mb-1.5 block">Proveedor / Empresa</label>
                 <input
                   type="text"
                   placeholder="Ej: Wincontrol Seguridad S.L."
@@ -235,10 +230,9 @@ export default function NewGeneralService() {
                 />
               </div>
 
-              {/* Teléfono + Email en grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#86868b] ml-1">Teléfono</label>
+                  <label className="text-xs font-bold text-foreground ml-1 mb-1.5 block">Teléfono</label>
                   <input
                     type="tel"
                     placeholder="647 76 33 89"
@@ -248,7 +242,7 @@ export default function NewGeneralService() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#86868b] ml-1">Email</label>
+                  <label className="text-xs font-bold text-foreground ml-1 mb-1.5 block">Email</label>
                   <input
                     type="email"
                     placeholder="contacto@servicio.com"
@@ -259,9 +253,8 @@ export default function NewGeneralService() {
                 </div>
               </div>
 
-              {/* Dirección */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#86868b] ml-1">Dirección</label>
+                <label className="text-xs font-bold text-foreground ml-1 mb-1.5 block">Dirección</label>
                 <input
                   type="text"
                   placeholder="C/ Chelín, Parcela 22, Planta 1"
@@ -271,10 +264,9 @@ export default function NewGeneralService() {
                 />
               </div>
 
-              {/* Horario + Precio en grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#86868b] ml-1">Horario</label>
+                  <label className="text-xs font-bold text-foreground ml-1 mb-1.5 block">Horario</label>
                   <input
                     type="text"
                     placeholder="Lun–Vie 9:00–14:00"
@@ -284,7 +276,7 @@ export default function NewGeneralService() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#86868b] ml-1">Precio</label>
+                  <label className="text-xs font-bold text-foreground ml-1 mb-1.5 block">Precio</label>
                   <input
                     type="text"
                     placeholder="Gratuito / Desde 20€/mes"
@@ -295,9 +287,8 @@ export default function NewGeneralService() {
                 </div>
               </div>
 
-              {/* Enlace externo */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[#86868b] ml-1">Enlace externo</label>
+                <label className="text-xs font-bold text-foreground ml-1 mb-1.5 block">Enlace externo</label>
                 <input
                   type="url"
                   placeholder="https://journify.com/atalayas"
@@ -309,11 +300,11 @@ export default function NewGeneralService() {
             </section>
 
             {/* ── BOTÓN SUBMIT ───────────────────────────────────────── */}
-            <div className="pb-8">
+            <div className="pb-8 pt-4">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-[#0071e3] text-white rounded-2xl font-bold hover:bg-[#0077ed] transition-all disabled:opacity-60 text-base"
+                className="w-full py-4 bg-secondary text-secondary-foreground rounded-2xl font-bold hover:opacity-90 transition-opacity disabled:opacity-60 text-base shadow-sm"
               >
                 {loading ? 'Publicando...' : 'Publicar Servicio'}
               </button>

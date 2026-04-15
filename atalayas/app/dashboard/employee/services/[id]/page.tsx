@@ -7,8 +7,6 @@ import { API_ROUTES } from '@/lib/utils';
 import mediumZoom from 'medium-zoom';
 import ContactCard from '@/components/ui/ContactCard';
 
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
-
 export default function ServiceDetail() {
   const params = useParams();
   const router = useRouter();
@@ -33,14 +31,14 @@ export default function ServiceDetail() {
 
   useEffect(() => {
     if (zoomRef.current && service?.mediaUrl) {
-      const zoom = mediumZoom(zoomRef.current, { background: 'rgba(0,0,0,0.8)', margin: 24 });
+      const zoom = mediumZoom(zoomRef.current, { background: 'rgba(250, 250, 249, 0.95)', margin: 24 });
       return () => { zoom.detach(); };
     }
   }, [service?.mediaUrl]);
 
   if (loading) return (
-    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary" />
     </div>
   );
   if (!service) return null;
@@ -48,38 +46,30 @@ export default function ServiceDetail() {
   const hasContactInfo = service.providerName || service.phone || service.email || service.address || service.schedule || service.price || service.externalUrl;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role="EMPLOYEE" />
 
-      <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>
+      <main className="flex-1 h-screen overflow-y-auto">
 
         {/* HEADER */}
-        <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)', padding: '32px 0' }}>
-          <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 24px' }}>
+        <div className="bg-card border-b border-border py-8 lg:py-10">
+          <div className="max-w-5xl mx-auto px-6 lg:px-8">
             <button
               onClick={() => router.back()}
-              style={{ background: 'none', border: 'none', color: '#0071e3', fontSize: '15px', fontWeight: 500, cursor: 'pointer', marginBottom: '24px', padding: 0 }}
+              className="flex items-center gap-1 text-secondary text-sm font-semibold hover:opacity-80 transition-opacity mb-6"
             >
-              ‹ Volver a servicios
+              <i className="bi bi-chevron-left"></i> Volver a servicios
             </button>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
-              <div style={{
-                width: '72px', height: '72px', background: 'rgba(0,113,227,0.1)',
-                borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', flexShrink: 0
-              }}>
-                🏢
+            <div className="flex items-center gap-6 flex-wrap">
+              <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center text-3xl flex-shrink-0">
+                <i className="bi bi-briefcase"></i>
               </div>
-              <div style={{ flex: 1, minWidth: '250px' }}>
-                <h1 style={{ fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: 800, color: '#1d1d1f', letterSpacing: '-0.02em', margin: 0 }}>
+              <div className="flex-1 min-w-[250px]">
+                <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight mb-2">
                   {service.title}
                 </h1>
-                <span style={{
-                  display: 'inline-block', marginTop: '8px', fontSize: '12px', fontWeight: 700,
-                  color: service.isPublic ? '#34c759' : '#0071e3',
-                  background: service.isPublic ? 'rgba(52,199,89,0.1)' : 'rgba(0,113,227,0.1)',
-                  padding: '4px 10px', borderRadius: '999px'
-                }}>
+                <span className={`inline-flex items-center text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${service.isPublic ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
                   {service.isPublic ? '🌐 Público' : '🏢 Tu empresa'}
                 </span>
               </div>
@@ -87,22 +77,22 @@ export default function ServiceDetail() {
           </div>
         </div>
 
-        {/* CONTENIDO */}
-        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 24px' }}>
-          <div className="content-layout">
+        {/* CONTENIDO (Con Grid de Tailwind en vez de style jsx) */}
+        <div className="max-w-5xl mx-auto px-6 lg:px-8 py-10 lg:py-12">
+          <div className={`grid grid-cols-1 ${hasContactInfo ? 'lg:grid-cols-[1fr_300px]' : ''} gap-10 lg:gap-12`}>
 
             {/* COLUMNA PRINCIPAL */}
             <div>
               {/* Descripción */}
-              <h3 style={{ fontSize: '19px', fontWeight: 700, color: '#1d1d1f', marginBottom: '16px' }}>Sobre el servicio</h3>
-              <p style={{ fontSize: '16px', lineHeight: '1.7', color: '#424245', whiteSpace: 'pre-wrap', marginBottom: '32px' }}>
+              <h3 className="text-xl font-bold text-foreground mb-4">Sobre el servicio</h3>
+              <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-wrap mb-10">
                 {service.description || 'No hay una descripción disponible para este servicio.'}
               </p>
 
               {/* Imagen */}
               {service.mediaUrl && (
-                <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                  <div className="overflow-hidden rounded-[2rem] border border-gray-100 shadow-sm">
+                <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  <div className="overflow-hidden rounded-3xl border border-border shadow-sm">
                     <img
                       ref={zoomRef}
                       src={service.mediaUrl}
@@ -115,37 +105,23 @@ export default function ServiceDetail() {
 
               {/* Info de contacto en móvil (debajo de descripción) */}
               {hasContactInfo && (
-                <div className="action-box-mobile">
+                <div className="block lg:hidden mb-10">
                   <ContactCard service={service} />
                 </div>
               )}
             </div>
 
-            {/* ACTION BOX LATERAL */}
+            {/* ACTION BOX LATERAL (Solo visible en Desktop) */}
             {hasContactInfo && (
-              <div className="action-box">
-                <ContactCard service={service} />
+              <div className="hidden lg:block">
+                <div className="sticky top-8">
+                  <ContactCard service={service} />
+                </div>
               </div>
             )}
           </div>
         </div>
       </main>
-
-      <style jsx>{`
-        .content-layout {
-          display: grid;
-          grid-template-columns: 1fr 300px;
-          gap: 48px;
-        }
-        .action-box { display: block; }
-        .action-box-mobile { display: none; }
-
-        @media (max-width: 1024px) {
-          .content-layout { grid-template-columns: 1fr; gap: 0; }
-          .action-box { display: none; }
-          .action-box-mobile { display: block; margin-bottom: 32px; }
-        }
-      `}</style>
     </div>
   );
 }

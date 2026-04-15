@@ -40,17 +40,17 @@ export default function AdminCourses() {
     });
 
     return (
-        <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'-apple-system', sans-serif" }}>
+        <div className="flex min-h-screen bg-background font-sans">
             <Sidebar role="ADMIN" />
 
-            <main className="flex-1 p-10 overflow-auto">
+            <main className="flex-1 p-6 lg:p-12 overflow-auto">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                     <div>
-                        <h1 className="text-4xl font-bold text-[#1d1d1f] tracking-tight">Formación de Empresa</h1>
-                        <p className="text-[#86868b] mt-1 text-lg">Supervisa el progreso de tus empleados en los cursos.</p>
+                        <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">Formación de Empresa</h1>
+                        <p className="text-muted-foreground mt-2 text-base">Supervisa y gestiona los contenidos formativos.</p>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
                         <SearchInput
                             value={searchQuery}
                             onChange={setSearchQuery}
@@ -59,21 +59,22 @@ export default function AdminCourses() {
 
                         <Link
                             href="/dashboard/administrator/admin/courses/manage"
-                            className="bg-[#0071e3] text-white px-6 py-2.5 rounded-full font-semibold hover:bg-[#0077ed] transition-all shadow-md shrink-0 text-center"
+                            className="bg-secondary text-secondary-foreground w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold hover:opacity-90 transition-opacity shadow-sm shrink-0 text-center flex items-center justify-center gap-2"
                         >
-                            Vista Cursos
+                           <i className="bi bi-gear-fill"></i> Gestionar Cursos
                         </Link>
                     </div>
                 </div>
 
-                <div className="flex gap-8 border-b border-gray-200 mb-8">
+                {/* TABS */}
+                <div className="flex gap-8 border-b border-border mb-8 overflow-x-auto no-scrollbar">
                     {['BASICO', 'ESPECIALIZADO'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
-                            className={`pb-4 text-sm font-semibold cursor-pointer transition-all ${activeTab === tab
-                                ? 'border-b-2 border-[#0071e3] text-[#0071e3]'
-                                : 'text-[#86868b] hover:text-[#1d1d1f]'
+                            className={`pb-4 text-sm font-bold cursor-pointer transition-all whitespace-nowrap ${activeTab === tab
+                                ? 'border-b-2 border-primary text-primary'
+                                : 'text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             {tab === 'BASICO' ? 'Onboarding' : 'Especialización'}
@@ -84,27 +85,29 @@ export default function AdminCourses() {
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="h-64 bg-white rounded-2xl animate-pulse border border-gray-200" />
+                            <div key={i} className="h-64 bg-card rounded-3xl animate-pulse border border-border" />
                         ))}
                     </div>
                 ) : filtered.length === 0 ? (
-                    <div className="text-center py-20 bg-white rounded-[2.5rem] border border-dashed border-gray-300">
-                        <p className="text-[#86868b] font-medium">No se han encontrado cursos en esta sección.</p>
+                    <div className="text-center py-20 bg-card rounded-3xl border border-dashed border-border shadow-sm flex flex-col items-center">
+                        <div className="text-5xl text-muted-foreground/30 mb-4"><i className="bi bi-journal-x"></i></div>
+                        <h3 className="text-xl font-bold text-foreground mb-1">Sin resultados</h3>
+                        <p className="text-muted-foreground font-medium text-sm">No se han encontrado cursos en esta sección.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filtered.map((course) => (
-                            <div key={course.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 flex flex-col justify-between group hover:shadow-md transition-all">
+                            <div key={course.id} className="bg-card rounded-3xl p-6 shadow-sm border border-border flex flex-col justify-between group hover:shadow-xl hover:border-primary transition-all duration-300">
                                 <div>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase ${activeTab === 'BASICO' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'
+                                    <div className="flex justify-between items-start mb-6">
+                                        <span className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${activeTab === 'BASICO' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'
                                             }`}>
                                             {activeTab === 'BASICO' ? 'Onboarding' : 'Especialización'}
                                         </span>
                                     </div>
 
                                     {/* ICONOS BOOTSTRAP ACTUALIZADOS */}
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl mb-4 ${activeTab === 'BASICO' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl mb-5 transition-colors ${activeTab === 'BASICO' ? 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground' : 'bg-secondary/10 text-secondary group-hover:bg-secondary group-hover:text-secondary-foreground'
                                         }`}>
                                         {activeTab === 'BASICO' ? (
                                             <i className="bi bi-book"></i>
@@ -113,15 +116,15 @@ export default function AdminCourses() {
                                         )}
                                     </div>
 
-                                    <h3 className="text-[#1d1d1f] font-semibold text-lg leading-tight mb-4 min-h-12 line-clamp-2">
+                                    <h3 className="text-foreground font-bold text-lg leading-tight mb-6 min-h-[3rem] line-clamp-2 group-hover:text-primary transition-colors">
                                         {course.title}
                                     </h3>
                                 </div>
                                 <Link
                                     href={`/dashboard/administrator/admin/courses/${course.id}`}
-                                    className="w-full py-2.5 bg-[#0071e3] text-white text-sm font-medium rounded-xl text-center hover:bg-[#0077ed] transition-colors shadow-sm"
+                                    className="w-full py-3 bg-secondary text-secondary-foreground text-sm font-bold rounded-xl text-center hover:opacity-90 transition-opacity shadow-sm"
                                 >
-                                    Gestionar Curso
+                                    Ver Contenido
                                 </Link>
                             </div>
                         ))}

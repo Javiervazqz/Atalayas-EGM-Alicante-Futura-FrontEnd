@@ -7,29 +7,26 @@ import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
 
 export default function NewAIContentPage() {
-  const { id } = useParams(); // ID del curso
+  const { id } = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [sourceType, setSourceType] = useState<'file' | 'link'>('file');
   
-  // Opciones de Generación IA (Estado funcional y visual)
   const [options, setOptions] = useState({
     generateSummary: true,
     generateQuiz: false,
     generatePodcast: false,
   });
 
-  // Datos del formulario (nullable/opcionales excepto título)
   const [formData, setFormData] = useState({
     title: '',
-    url: '', // Link si sourceType es link
-    file: null as File | null, // Archivo PDF nullable
+    url: '',
+    file: null as File | null,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validación visual premium
     if (!formData.title.trim()) return alert("⚠️ El título de la lección es obligatorio");
 
     setLoading(true);
@@ -40,14 +37,10 @@ export default function NewAIContentPage() {
       return;
     }
 
-    // 1. Siempre usamos FormData para envíos que INCLUYEN archivos binarios
     const data = new FormData();
     data.append('title', formData.title);
-    
-    // Enviamos las opciones de IA como un string JSON que el backend parseará
     data.append('options', JSON.stringify(options));
 
-    // 2. Lógica Nullable: Solo añadimos el archivo o la URL si existen
     if (sourceType === 'file' && formData.file) {
       data.append('file', formData.file);
     } else if (sourceType === 'link' && formData.url) {
@@ -57,17 +50,15 @@ export default function NewAIContentPage() {
     try {
       const token = localStorage.getItem('token');
       
-      // Llamada al fetch (Sin Content-Type manual)
       const res = await fetch(API_ROUTES.CONTENT.CREATE(id as string), {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${token}` 
         },
-        body: data, // Enviamos FormData directamente
+        body: data, 
       });
 
       if (res.ok) {
-        // Volvemos a la moderación del curso
         router.push(`/dashboard/administrator/admin/courses/${id}`);
         router.refresh();
       } else {
@@ -83,24 +74,23 @@ export default function NewAIContentPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role="ADMIN" />
       
-      <main className="flex-1 p-12 overflow-y-auto">
-        <div className="max-w-3xl mx-auto">
+      <main className="flex-1 p-6 lg:p-12 overflow-y-auto">
+        <div className="max-w-4xl mx-auto">
           
-          {/* NAVEGACIÓN Y TÍTULO (ESTILO PREVIO) */}
-          <header className="mb-12">
-            <Link href={`/dashboard/administrator/admin/courses/${id}`} className="text-[#0071e3] font-medium mb-4 flex items-center gap-2 hover:underline">
-              ← Volver a Moderación
+          <header className="mb-10">
+            <Link href={`/dashboard/administrator/admin/courses/${id}`} className="text-secondary font-bold text-sm mb-6 flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <i className="bi bi-chevron-left"></i> Volver a Moderación
             </Link>
-            <div className="flex items-center gap-4 mt-4">
-              <div className="inline-block p-4 bg-[#d9ff00] rounded-3xl shadow-lg shadow-lime-900/10">
-                <i className="bi bi-robot text-[#005596] text-3xl"></i>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-6 mt-4">
+              <div className="w-20 h-20 bg-secondary/10 rounded-3xl flex items-center justify-center shrink-0 border border-secondary/20 shadow-sm">
+                <i className="bi bi-robot text-secondary text-4xl"></i>
               </div>
               <div>
-                <h1 className="text-4xl font-black text-[#1d1d1f] tracking-tight">Generador de Contenido IA</h1>
-                <p className="text-[#86868b] text-lg">Sube un documento o enlace y deja que la IA cree la lección mágicamente.</p>
+                <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight mb-2">Generador de Contenido IA</h1>
+                <p className="text-muted-foreground text-base font-medium">Sube un documento o enlace y deja que la IA cree la lección mágicamente.</p>
               </div>
             </div>
           </header>
@@ -108,147 +98,139 @@ export default function NewAIContentPage() {
           <form onSubmit={handleSubmit} className="space-y-8">
             
             {/* 1. DATOS BÁSICOS (TÍTULO) */}
-<div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-  <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] mb-2 ml-1">
-    Nombre de la Unidad / Lección
-  </label>
-  <input 
-    type="text" 
-    required
-    // ESTO ES LO QUE ESTABA FALLANDO:
-    value={formData.title} 
-    onChange={(e) => {
-      console.log("Escribiendo:", e.target.value); // Añade este log para ver si detecta el cambio
-      setFormData({ ...formData, title: e.target.value });
-    }}
-    className="w-full px-6 py-5 rounded-2xl bg-[#f5f5f7] border-2 border-transparent focus:border-blue-300 outline-none font-bold text-black"
-    placeholder="Ej: Manual de Bienvenida v2"
-  />
-</div>
+            <div className="bg-card p-6 lg:p-10 rounded-3xl border border-border shadow-sm">
+              <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1">
+                Nombre de la Unidad / Lección
+              </label>
+              <input 
+                type="text" 
+                required
+                value={formData.title} 
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full px-6 py-5 rounded-2xl bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring outline-none font-bold text-foreground text-lg transition-all placeholder:text-muted-foreground/50"
+                placeholder="Ej: Manual de Bienvenida v2"
+              />
+            </div>
 
             {/* 2. FUENTE DEL CONTENIDO (SELECTOR Y INPUTS) */}
-            <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-              <div className="flex gap-4 mb-8">
+            <div className="bg-card p-6 lg:p-10 rounded-3xl border border-border shadow-sm">
+              <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <button 
                   type="button"
                   onClick={() => setSourceType('file')}
-                  className={`flex-1 p-5 rounded-2xl border-2 transition-all font-black text-sm flex items-center justify-center gap-3 cursor-pointer ${sourceType === 'file' ? 'border-[#005596] bg-blue-50 text-[#005596]' : 'border-gray-100 bg-white text-gray-400'}`}
+                  className={`flex-1 p-5 rounded-2xl border-2 transition-all font-bold text-sm flex items-center justify-center gap-3 cursor-pointer ${sourceType === 'file' ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-border bg-background text-muted-foreground hover:border-primary/30'}`}
                 >
                   <i className="bi bi-file-earmark-pdf text-xl"></i> Subir PDF
                 </button>
                 <button 
                   type="button"
                   onClick={() => setSourceType('link')}
-                  className={`flex-1 p-5 rounded-2xl border-2 transition-all font-black text-sm flex items-center justify-center gap-3 cursor-pointer ${sourceType === 'link' ? 'border-[#005596] bg-blue-50 text-[#005596]' : 'border-gray-100 bg-white text-gray-400'}`}
+                  className={`flex-1 p-5 rounded-2xl border-2 transition-all font-bold text-sm flex items-center justify-center gap-3 cursor-pointer ${sourceType === 'link' ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-border bg-background text-muted-foreground hover:border-primary/30'}`}
                 >
                   <i className="bi bi-link-45deg text-xl"></i> Enlace Web
                 </button>
               </div>
 
               {sourceType === 'file' ? (
-                <div className="border-2 border-dashed border-gray-200 rounded-[2rem] p-12 text-center hover:border-blue-400 transition-colors cursor-pointer relative bg-gray-50/50">
+                <div className="border-2 border-dashed border-border rounded-3xl p-12 text-center hover:border-primary hover:bg-primary/5 transition-all cursor-pointer relative bg-muted/30 group">
                   <input 
                     type="file" 
                     accept=".pdf"
-                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
                     onChange={(e) => setFormData({...formData, file: e.target.files?.[0] || null})}
                   />
-                  <i className="bi bi-cloud-arrow-up text-5xl text-gray-300 mb-4 block"></i>
-                  <p className="text-base font-bold text-black">
+                  <i className={`bi bi-cloud-arrow-up text-5xl mb-4 block transition-colors ${formData.file ? 'text-primary' : 'text-muted-foreground/30 group-hover:text-primary/50'}`}></i>
+                  <p className="text-base font-bold text-foreground mb-1">
                     {formData.file ? formData.file.name : "Arrastra tu PDF aquí o haz click"}
                   </p>
-                  <p className="text-xs text-[#86868b] mt-1">{formData.file ? 'Archivo listo para procesar' : 'Máx: 10MB (Formatos: .pdf)'}</p>
+                  <p className="text-xs text-muted-foreground font-medium">{formData.file ? 'Archivo listo para procesar' : 'Máx: 10MB (Formatos: .pdf)'}</p>
                 </div>
               ) : (
                 <div className="relative">
-                    <i className="bi bi-link-45deg absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
+                    <i className="bi bi-link-45deg absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground text-xl"></i>
                     <input 
                       type="url"
                       value={formData.url}
                       placeholder="https://ejemplo.com/articulo-interesante"
-                      className="w-full px-14 py-5 bg-[#f5f5f7] rounded-2xl border-2 border-transparent focus:border-blue-300 outline-none font-bold text-black"
+                      className="w-full pl-14 pr-6 py-5 bg-background rounded-2xl border border-input focus:border-primary focus:ring-2 focus:ring-ring outline-none font-bold text-foreground transition-all placeholder:text-muted-foreground/50"
                       onChange={(e) => setFormData({...formData, url: e.target.value})}
                     />
                 </div>
               )}
             </div>
 
-            {/* 3. OPCIONES DE IA (MODERNAS, CON CURSOR POINTER) */}
-            <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-              <h3 className="text-xl font-black text-[#1d1d1f] mb-6">¿Qué quieres que genere la IA mágicamente?</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* 3. OPCIONES DE IA */}
+            <div className="bg-card p-6 lg:p-10 rounded-3xl border border-border shadow-sm">
+              <h3 className="text-xl font-bold text-foreground mb-6">¿Qué quieres que genere la IA?</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 
-                {/* Checkbox Card: Resumen */}
+                {/* Resumen */}
                 <button
                   type="button" 
                   onClick={() => setOptions({...options, generateSummary: !options.generateSummary})}
-                  className={`p-6 rounded-3xl text-left border-2 transition-all duration-300 cursor-pointer group active:scale-[0.98] ${
+                  className={`p-6 rounded-3xl text-left border-2 transition-all duration-300 cursor-pointer active:scale-[0.98] flex flex-col items-start ${
                     options.generateSummary 
-                      ? 'border-[#d9ff00] bg-white shadow-lg shadow-lime-900/10' 
-                      : 'border-gray-100 opacity-60 grayscale hover:opacity-100 hover:border-gray-200'
+                      ? 'border-primary bg-primary/5 shadow-sm' 
+                      : 'border-border bg-background opacity-70 grayscale hover:opacity-100 hover:border-primary/50'
                   }`}
                 >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${options.generateSummary ? 'bg-blue-100' : 'bg-gray-100'}`}>
-                    <i className={`bi bi-text-paragraph text-2xl ${options.generateSummary ? 'text-[#005596]' : 'text-gray-400'}`}></i>
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${options.generateSummary ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    <i className="bi bi-text-paragraph text-2xl"></i>
                   </div>
-                  <p className="font-black text-base text-[#1d1d1f]">Resumen IA</p>
-                  <p className="text-xs text-gray-400 mt-1 leading-tight">Extrae los puntos clave y crea el resumen de la lección.</p>
+                  <p className="font-bold text-base text-foreground mb-1">Resumen IA</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">Extrae los puntos clave y crea el resumen de la lección.</p>
                 </button>
 
-                {/* Checkbox Card: Quiz */}
+                {/* Quiz */}
                 <button
                   type="button"
                   onClick={() => setOptions({...options, generateQuiz: !options.generateQuiz})}
-                  className={`p-6 rounded-3xl text-left border-2 transition-all duration-300 cursor-pointer group active:scale-[0.98] ${
+                  className={`p-6 rounded-3xl text-left border-2 transition-all duration-300 cursor-pointer active:scale-[0.98] flex flex-col items-start ${
                     options.generateQuiz 
-                      ? 'border-[#d9ff00] bg-white shadow-lg shadow-lime-900/10' 
-                      : 'border-gray-100 opacity-60 grayscale hover:opacity-100 hover:border-gray-200'
+                      ? 'border-secondary bg-secondary/5 shadow-sm' 
+                      : 'border-border bg-background opacity-70 grayscale hover:opacity-100 hover:border-secondary/50'
                   }`}
                 >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${options.generateQuiz ? 'bg-orange-100' : 'bg-gray-100'}`}>
-                    <i className={`bi bi-patch-question text-2xl ${options.generateQuiz ? 'text-orange-600' : 'text-gray-400'}`}></i>
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${options.generateQuiz ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    <i className="bi bi-patch-question text-2xl"></i>
                   </div>
-                  <p className="font-black text-base text-[#1d1d1f]">Test IA</p>
-                  <p className="text-xs text-gray-400 mt-1 leading-tight">Crea 5 preguntas interactivas automáticas.</p>
+                  <p className="font-bold text-base text-foreground mb-1">Test IA</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">Crea preguntas interactivas automáticas para el usuario.</p>
                 </button>
 
-                {/* Checkbox Card: Podcast */}
+                {/* Podcast */}
                 <button
                   type="button"
                   onClick={() => setOptions({...options, generatePodcast: !options.generatePodcast})}
-                  className={`p-6 rounded-3xl text-left border-2 transition-all duration-300 cursor-pointer group active:scale-[0.98] ${
+                  className={`p-6 rounded-3xl text-left border-2 transition-all duration-300 cursor-pointer active:scale-[0.98] flex flex-col items-start ${
                     options.generatePodcast 
-                      ? 'border-[#d9ff00] bg-white shadow-lg shadow-lime-900/10' 
-                      : 'border-gray-100 opacity-60 grayscale hover:opacity-100 hover:border-gray-200'
+                      ? 'border-indigo-500 bg-indigo-500/5 shadow-sm' 
+                      : 'border-border bg-background opacity-70 grayscale hover:opacity-100 hover:border-indigo-500/50'
                   }`}
                 >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${options.generatePodcast ? 'bg-purple-100' : 'bg-gray-100'}`}>
-                    <i className={`bi bi-mic text-2xl ${options.generatePodcast ? 'text-purple-600' : 'text-gray-400'}`}></i>
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${options.generatePodcast ? 'bg-indigo-500 text-white' : 'bg-muted text-muted-foreground'}`}>
+                    <i className="bi bi-mic text-2xl"></i>
                   </div>
-                  <p className="font-black text-base text-[#1d1d1f]">Podcast IA</p>
-                  <p className="text-xs text-gray-400 mt-1 leading-tight">Genera un audio con voz sintetizada realista.</p>
+                  <p className="font-bold text-base text-foreground mb-1">Podcast IA</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">Genera un audio explicativo con voz sintetizada realista.</p>
                 </button>
-
               </div>
             </div>
 
-            {/* BOTÓN SUBMIT (FUNCIONAL Y VISUAL PREMIUM) */}
-            <button 
-              type="submit"
-              // Solo deshabilitamos mientras carga (permitimos nullable)
-              disabled={loading}
-              className="w-full py-6 bg-[#005596] text-white rounded-[2rem] font-black uppercase tracking-widest text-lg hover:bg-[#d9ff00] hover:text-[#005596] transition-all shadow-xl shadow-blue-900/20 disabled:bg-gray-400 disabled:opacity-50 disabled:shadow-none cursor-pointer active:scale-[0.99]"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-3">
-                  <i className="bi bi-arrow-repeat animate-spin text-2xl"></i> Procesando con IA de Atalayas...
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-3">
-                  <i className="bi bi-magic text-xl"></i> Generar Lección Mágicamente
-                </span>
-              )}
-            </button>
+            {/* BOTÓN SUBMIT */}
+            <div className="pt-4">
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full py-6 bg-secondary text-secondary-foreground rounded-[2rem] font-extrabold uppercase tracking-widest text-base hover:opacity-90 transition-all shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+              >
+                {loading ? (
+                  <><i className="bi bi-arrow-repeat animate-spin text-2xl"></i> Procesando con IA de Atalayas...</>
+                ) : (
+                  <><i className="bi bi-magic text-xl"></i> Generar Lección </>
+                )}
+              </button>
+            </div>
           </form>
         </div>
       </main>

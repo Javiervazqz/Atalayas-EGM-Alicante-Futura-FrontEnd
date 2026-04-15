@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-// Importamos nuestras rutas limpias (ya NO importamos supabase)
 import { API_ROUTES } from '@/lib/utils';
 
 export default function LoginPage() {
@@ -14,13 +13,11 @@ export default function LoginPage() {
   const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
-    /*djnjfndj */
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      // Volvemos a llamar a TU backend de NestJS
       const res = await fetch(API_ROUTES.AUTH.LOGIN, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -48,23 +45,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{
-        background: '#f5f5f7',
-        fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
-      }}
-    >
+    // bg-background llama a tu fondo color arena/piedra del globals.css
+    <div className="min-h-screen flex flex-col bg-background font-sans">
+      
       {/* Top nav */}
       <nav className="flex items-center justify-between px-8 py-5">
         <div className="flex items-center gap-2">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #1d1d1f 0%, #434343 100%)' }}
-          >
-            <span className="text-white text-xs font-semibold">A</span>
+          {/* bg-primary usa tu verde azulado corporativo */}
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary shadow-sm">
+            <span className="text-primary-foreground text-sm font-bold">A</span>
           </div>
-          <span style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, letterSpacing: '-0.02em' }}>
+          <span className="text-foreground text-lg font-bold tracking-tight">
             Atalayas
           </span>
         </div>
@@ -75,46 +66,26 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
 
           {/* Card */}
-          <div
-            className="rounded-3xl px-10 py-12"
-            style={{
-              background: '#ffffff',
-              boxShadow: '0 2px 20px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.06)',
-            }}
-          >
+          <div className="rounded-3xl px-10 py-12 bg-card shadow-xl border border-border">
             <div className="text-center mb-10">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-6"
-                style={{ background: 'linear-gradient(135deg, #1d1d1f 0%, #434343 100%)' }}
-              >
-                <span className="text-white text-2xl font-semibold">A</span>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-6 bg-primary shadow-md">
+                <span className="text-primary-foreground text-2xl font-bold">A</span>
               </div>
-              <h1
-                style={{
-                  color: '#1d1d1f',
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  letterSpacing: '-0.03em',
-                  marginBottom: '6px',
-                }}
-              >
+              <h1 className="text-foreground text-2xl font-bold tracking-tight mb-1.5">
                 Iniciar sesión
               </h1>
-              <p style={{ color: '#86868b', fontSize: '14px', fontWeight: 400 }}>
+              <p className="text-muted-foreground text-sm font-medium">
                 Polígono Industrial Alicante Futura
               </p>
             </div>
 
             {error && (
-              <div
-                className="rounded-xl px-4 py-3 mb-6 text-center"
-                style={{ background: '#fff2f2', border: '1px solid #ffd0d0' }}
-              >
-                <p style={{ color: '#ff3b30', fontSize: '13px' }}>{error}</p>
+              <div className="rounded-xl px-4 py-3 mb-6 text-center bg-destructive/10 border border-destructive/20">
+                <p className="text-destructive text-sm font-medium">{error}</p>
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-3">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <input
                   type="email"
@@ -122,25 +93,8 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Correo electrónico"
                   required
-                  style={{
-                    width: '100%',
-                    background: '#f5f5f7',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    borderRadius: '12px',
-                    padding: '13px 16px',
-                    fontSize: '15px',
-                    color: '#1d1d1f',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.border = '1px solid #0071e3';
-                    e.target.style.background = '#fff';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.border = '1px solid rgba(0,0,0,0.08)';
-                    e.target.style.background = '#f5f5f7';
-                  }}
+                  // Estilos de Tailwind para los inputs integrados con tu globals.css
+                  className="w-full bg-background border border-input rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
                 />
               </div>
 
@@ -151,82 +105,43 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Contraseña"
                   required
-                  style={{
-                    width: '100%',
-                    background: '#f5f5f7',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    borderRadius: '12px',
-                    padding: '13px 16px',
-                    fontSize: '15px',
-                    color: '#1d1d1f',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.border = '1px solid #0071e3';
-                    e.target.style.background = '#fff';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.border = '1px solid rgba(0,0,0,0.08)';
-                    e.target.style.background = '#f5f5f7';
-                  }}
+                  className="w-full bg-background border border-input rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  background: loading ? '#86868b' : '#0071e3',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '13px 16px',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  marginTop: '8px',
-                  transition: 'background 0.2s',
-                  fontFamily: 'inherit',
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading) (e.target as HTMLButtonElement).style.background = '#0077ed';
-                }}
-                onMouseLeave={(e) => {
-                  if (!loading) (e.target as HTMLButtonElement).style.background = '#0071e3';
-                }}
+                // bg-secondary llama a tu color Naranja Terracota
+                className="w-full bg-secondary text-secondary-foreground font-semibold rounded-xl px-4 py-3 text-sm mt-2 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {loading ? 'Iniciando sesión...' : 'Continuar'}
               </button>
             </form>
 
             <div className="text-center mt-6">
-              <a
-                href="#"
-                style={{ color: '#0071e3', fontSize: '13px', textDecoration: 'none' }}
-              >
+              <a href="#" className="text-primary text-sm font-medium hover:underline transition-all">
                 ¿Olvidaste tu contraseña?
               </a>
             </div>
           </div>
 
-          {/* Footer note */}
-          <p className="text-center mt-6" style={{ color: '#86868b', fontSize: '12px', lineHeight: '1.6' }}>
+          {/* Footer notes */}
+          <p className="text-center mt-8 text-muted-foreground text-xs leading-relaxed">
             ¿Eres empleado de una empresa del polígono?<br />
             Contacta con tu administrador para obtener acceso.
           </p>
 
-          <p className="text-center mt-4" style={{ color: '#86868b', fontSize: '13px' }}>
+          <p className="text-center mt-4 text-muted-foreground text-sm">
             ¿No tienes cuenta?{' '}
-            <Link href="/register" style={{ color: '#0071e3', textDecoration: 'none' }}>
+            <Link href="/register" className="text-primary font-medium hover:underline transition-all">
               Regístrate
             </Link>
           </p>
 
-          <p className="text-center mt-2" style={{ color: '#86868b', fontSize: '13px' }}>
+          <p className="text-center mt-2 text-muted-foreground text-sm">
             ¿Eres una empresa del polígono?{' '}
-            <Link href="/company-register" style={{ color: '#0071e3', textDecoration: 'none' }}>
+            <Link href="/company-register" className="text-primary font-medium hover:underline transition-all">
               Solicitar alta
             </Link>
           </p>
@@ -237,16 +152,12 @@ export default function LoginPage() {
       <footer className="px-8 py-6">
         <div className="flex items-center justify-center gap-6">
           {['Privacidad', 'Términos', 'Contacto'].map((item) => (
-            <a
-              key={item}
-              href="#"
-              style={{ color: '#86868b', fontSize: '12px', textDecoration: 'none' }}
-            >
+            <a key={item} href="#" className="text-muted-foreground text-xs hover:text-foreground transition-colors">
               {item}
             </a>
           ))}
         </div>
-        <p className="text-center mt-3" style={{ color: '#b0b0b5', fontSize: '11px' }}>
+        <p className="text-center mt-4 text-muted-foreground/60 text-xs">
           © 2026 Atalayas EGM Alicante Futura
         </p>
       </footer>

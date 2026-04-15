@@ -8,21 +8,18 @@ import { API_ROUTES } from '@/lib/utils';
 export default function NewEmployeePage() {
   const router = useRouter();
   
-  // 1. Referencia para el Rol (Uncontrolled)
   const roleRef = useRef<HTMLSelectElement>(null);
 
-  // 2. Estados del resto del formulario
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [companyId, setCompanyId] = useState(''); // Estado para la empresa (General Admin)
+  const [companyId, setCompanyId] = useState(''); 
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [companies, setCompanies] = useState<any[]>([]);
 
-  // Carga de datos de usuario y empresas
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -44,7 +41,6 @@ export default function NewEmployeePage() {
     setLoading(true);
     setError('');
 
-    // LEEMOS EL ROL DIRECTAMENTE DEL ELEMENTO HTML
     const selectedRole = roleRef.current?.value || 'PUBLIC';
     
     try {
@@ -55,7 +51,7 @@ export default function NewEmployeePage() {
         email, 
         password, 
         name, 
-        role: selectedRole, // <--- Valor real del selector
+        role: selectedRole, 
         companyId: finalCompanyId || undefined
       };
 
@@ -83,78 +79,89 @@ export default function NewEmployeePage() {
   if (!currentUser) return null;
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role={currentUser.role} />
-      <main className="flex-1 p-10 overflow-auto">
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-[#86868b] hover:text-[#1d1d1f] font-medium text-sm mb-6 transition-colors">
-          ← Volver
-        </button>
+      <main className="flex-1 p-6 lg:p-12 overflow-auto">
+        <div className="max-w-2xl mx-auto">
+          <header className="mb-10">
+             <button onClick={() => router.back()} className="flex items-center gap-2 text-secondary hover:opacity-80 font-bold text-sm mb-6 transition-opacity">
+               <i className="bi bi-chevron-left"></i> Volver
+             </button>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#1d1d1f] tracking-tight">Añadir nuevo empleado</h1>
-          <p className="text-[#86868b]">Introduce los datos para el nuevo acceso al sistema.</p>
-        </div>
+             <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">Alta de usuario</h1>
+             <p className="text-muted-foreground mt-2 font-medium">Introduce los datos para el nuevo acceso al sistema.</p>
+          </header>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 max-w-2xl">
-          {error && <div className="p-3 mb-6 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm">{error}</div>}
+          <div className="bg-card rounded-3xl shadow-sm border border-border p-6 lg:p-10">
+            {error && <div className="p-4 mb-6 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive font-bold text-sm flex items-center gap-2"><i className="bi bi-exclamation-triangle-fill"></i> {error}</div>}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Nombre</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre completo" required className="w-full bg-[#f5f5f7] border-transparent focus:border-[#0071e3] focus:bg-white rounded-xl px-4 py-3 text-sm outline-none transition-all" />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
+              <div className="bg-muted/30 p-6 rounded-2xl border border-border/50 mb-6 flex items-center gap-5">
+                 <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-2xl shrink-0"><i className="bi bi-person-badge"></i></div>
+                 <div>
+                   <h3 className="font-bold text-foreground">Perfil de acceso</h3>
+                   <p className="text-xs text-muted-foreground font-medium mt-1">Este usuario recibirá un email para acceder a la plataforma.</p>
+                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Email</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@empresa.com" required className="w-full bg-[#f5f5f7] border-transparent focus:border-[#0071e3] focus:bg-white rounded-xl px-4 py-3 text-sm outline-none transition-all" />
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-2 ml-1">Nombre completo *</label>
+                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Ana García" required className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-5 py-4 text-sm font-semibold outline-none transition-all text-foreground placeholder:text-muted-foreground/50 placeholder:font-medium" />
+                </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Contraseña</label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required className="w-full bg-[#f5f5f7] border-transparent focus:border-[#0071e3] focus:bg-white rounded-xl px-4 py-3 text-sm outline-none transition-all" />
-              </div>
+                <div>
+                  <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-2 ml-1">Email corporativo *</label>
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ana@empresa.com" required className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-5 py-4 text-sm font-semibold outline-none transition-all text-foreground placeholder:text-muted-foreground/50 placeholder:font-medium" />
+                </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Rol</label>
-                <select 
-                  ref={roleRef}
-                  defaultValue="PUBLIC"
-                  className="w-full bg-[#f5f5f7] rounded-xl px-4 py-3 text-sm outline-none cursor-pointer border-transparent focus:border-[#0071e3] transition-all"
-                >
-                  {currentUser.role === 'GENERAL_ADMIN' && <option value="PUBLIC">Acceso público</option> }
-                  <option value="EMPLOYEE">Empleado</option>
-                  <option value="ADMIN">Administrador de empresa</option>
-                  {currentUser.role === 'GENERAL_ADMIN' && <option value="GENERAL_ADMIN">Administrador General</option>}
-                </select>
-              </div>
+                <div>
+                  <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-2 ml-1">Contraseña inicial *</label>
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-5 py-4 text-sm font-semibold outline-none transition-all text-foreground placeholder:text-muted-foreground/50 placeholder:font-medium" />
+                </div>
 
-              {currentUser.role === 'GENERAL_ADMIN' && (
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Empresa asignada</label>
+                <div>
+                  <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-2 ml-1">Rol del sistema *</label>
                   <select 
-                    value={companyId} 
-                    onChange={(e) => setCompanyId(e.target.value)} 
-                    required 
-                    className="w-full bg-[#f5f5f7] rounded-xl px-4 py-3 text-sm outline-none cursor-pointer"
+                    ref={roleRef}
+                    defaultValue="PUBLIC"
+                    className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-5 py-4 text-sm font-semibold outline-none cursor-pointer transition-all text-foreground"
                   >
-                    <option value="">Seleccionar empresa...</option>
-                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {currentUser.role === 'GENERAL_ADMIN' && <option value="PUBLIC">Acceso Público (Visitante)</option> }
+                    <option value="EMPLOYEE">Empleado Estándar</option>
+                    <option value="ADMIN">Administrador de Empresa</option>
+                    {currentUser.role === 'GENERAL_ADMIN' && <option value="GENERAL_ADMIN">Administrador General (EGM)</option>}
                   </select>
                 </div>
-              )}
-            </div>
 
-            <div className="pt-6 mt-6 border-t border-gray-100 flex justify-end gap-3">
-              <button 
-                type="submit" 
-                disabled={loading} 
-                className="px-8 py-3 rounded-xl font-bold text-sm text-white bg-[#0071e3] hover:bg-[#0077ed] transition-all shadow-md active:scale-95 disabled:bg-gray-400"
-              >
-                {loading ? 'Creando...' : 'Crear empleado'}
-              </button>
-            </div>
-          </form>
+                {currentUser.role === 'GENERAL_ADMIN' && (
+                  <div className="md:col-span-2">
+                    <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-2 ml-1">Asignar a Empresa (Si aplica)</label>
+                    <select 
+                      value={companyId} 
+                      onChange={(e) => setCompanyId(e.target.value)} 
+                      required 
+                      className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-5 py-4 text-sm font-semibold outline-none cursor-pointer transition-all text-foreground"
+                    >
+                      <option value="">Seleccionar empresa propietaria...</option>
+                      {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-8 mt-4">
+                <button 
+                  type="submit" 
+                  disabled={loading} 
+                  className="w-full py-4 rounded-xl font-bold text-base text-secondary-foreground bg-secondary hover:opacity-90 transition-opacity shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                >
+                  {loading ? <><i className="bi bi-arrow-repeat animate-spin"></i> Registrando...</> : 'Crear cuenta de usuario'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </main>
     </div>

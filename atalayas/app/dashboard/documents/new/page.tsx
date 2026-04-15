@@ -11,8 +11,8 @@ export default function NewDocumentPage() {
   const [title, setTitle] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [file, setFile] = useState<File | null>(null);
-  const [companyId, setCompanyId] = useState(''); // Opcional (UUID) para General Admin
-  const [userId, setUserId] = useState('');       // Opcional (UUID)
+  const [companyId, setCompanyId] = useState(''); 
+  const [userId, setUserId] = useState('');       
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,7 +28,6 @@ export default function NewDocumentPage() {
         const user = JSON.parse(storedUser);
         setCurrentUser(user);
 
-        // Solo cargamos la lista de empresas si es General Admin
         if (user.role === 'GENERAL_ADMIN') {
           try {
             const token = localStorage.getItem('token');
@@ -67,7 +66,6 @@ export default function NewDocumentPage() {
       formData.append('file', file);
       formData.append('isPublic', isPublic.toString());
       
-      // Lógica de envíos de IDs
       if (currentUser.role === 'GENERAL_ADMIN') {
         if (companyId.trim() !== '') formData.append('companyId', companyId);
       } else {
@@ -105,66 +103,65 @@ export default function NewDocumentPage() {
   if (!currentUser) return null;
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role={currentUser.role} />
-      <main className="flex-1 p-10 overflow-auto">
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-[#86868b] hover:text-[#1d1d1f] font-medium text-sm mb-6 transition-colors">
-          ← Volver
+      <main className="flex-1 p-6 lg:p-10 overflow-auto">
+        <button onClick={() => router.back()} className="flex items-center gap-2 text-secondary hover:opacity-80 font-semibold text-sm mb-6 transition-opacity">
+          <i className="bi bi-chevron-left"></i> Volver
         </button>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#1d1d1f] tracking-tight">Subir Documento</h1>
-          <p className="text-[#86868b]">Añade archivos al sistema y configura su visibilidad.</p>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Subir Documento</h1>
+          <p className="text-muted-foreground mt-1">Añade archivos al sistema y configura su visibilidad.</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 max-w-2xl">
-          {error && <div className="p-3 mb-6 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm">{error}</div>}
+        <div className="bg-card rounded-3xl shadow-sm border border-border p-8 max-w-2xl">
+          {error && <div className="p-4 mb-6 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive font-medium text-sm">{error}</div>}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Título del Documento *</label>
+              <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Título del Documento *</label>
               <input 
                 type="text" 
                 value={title} 
                 onChange={(e) => setTitle(e.target.value)} 
                 placeholder="Ej: Manual de Prevención de Riesgos" 
                 required 
-                className="w-full bg-[#f5f5f7] border-transparent focus:border-[#0071e3] focus:bg-white rounded-xl px-4 py-3 text-sm outline-none transition-all" 
+                className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-sm outline-none transition-all text-foreground" 
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Archivo Físico *</label>
+              <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Archivo Físico *</label>
               <input 
                 type="file" 
                 ref={fileInputRef}
                 onChange={(e) => setFile(e.target.files?.[0] || null)} 
                 required 
-                className="w-full bg-[#f5f5f7] border-transparent rounded-xl px-4 py-3 text-sm outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#0071e3] file:text-white hover:file:bg-[#0077ed] cursor-pointer" 
+                className="w-full bg-background border border-input rounded-xl px-4 py-3 text-sm outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer text-muted-foreground" 
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Visibilidad</label>
+                <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Visibilidad</label>
                 <select 
                   value={isPublic ? 'true' : 'false'} 
                   onChange={(e) => setIsPublic(e.target.value === 'true')} 
-                  className="w-full bg-[#f5f5f7] rounded-xl px-4 py-3 text-sm outline-none cursor-pointer border-transparent focus:border-[#0071e3] transition-all"
+                  className="w-full bg-background rounded-xl px-4 py-3 text-sm outline-none cursor-pointer border border-input focus:border-primary focus:ring-2 focus:ring-ring transition-all text-foreground"
                 >
                   <option value="true">Público (Visible para todos)</option>
                   <option value="false">Privado (Solo seleccionados)</option>
                 </select>
               </div>
 
-              {/* 🚀 LÓGICA DE INTERFAZ PARA EMPRESAS */}
               {currentUser.role === 'GENERAL_ADMIN' ? (
                 <div>
-                  <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Empresa asignada</label>
+                  <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Empresa asignada</label>
                   <select 
                     value={companyId} 
                     onChange={(e) => setCompanyId(e.target.value)} 
-                    className="w-full bg-[#f5f5f7] rounded-xl px-4 py-3 text-sm outline-none cursor-pointer border-transparent focus:border-[#0071e3] transition-all"
+                    className="w-full bg-background rounded-xl px-4 py-3 text-sm outline-none cursor-pointer border border-input focus:border-primary focus:ring-2 focus:ring-ring transition-all text-foreground"
                   >
                     <option value="">Global (Sin empresa específica)</option>
                     {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -172,34 +169,34 @@ export default function NewDocumentPage() {
                 </div>
               ) : (
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Empresa asignada</label>
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Empresa asignada</label>
                   <input 
                     type="text" 
                     disabled 
-                    value="Viculado a tu empresa" 
-                    className="w-full bg-gray-100 border-transparent rounded-xl px-4 py-3 text-sm outline-none text-gray-500 cursor-not-allowed" 
+                    value="Vinculado a tu empresa" 
+                    className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm outline-none text-muted-foreground cursor-not-allowed" 
                   />
                 </div>
               )}
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">ID del Empleado (Opcional)</label>
+                <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">ID del Empleado (Opcional)</label>
                 <input 
                   type="text" 
                   value={userId} 
                   onChange={(e) => setUserId(e.target.value)} 
                   placeholder="Pega el UUID del usuario si es exclusivo" 
-                  className="w-full bg-[#f5f5f7] border-transparent focus:border-[#0071e3] focus:bg-white rounded-xl px-4 py-3 text-sm outline-none transition-all" 
+                  className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-sm outline-none transition-all text-foreground" 
                 />
-                <p className="text-xs text-[#86868b] mt-1.5">Si es un documento confidencial para un único usuario, pega aquí su identificador.</p>
+                <p className="text-xs text-muted-foreground mt-2">Si es un documento confidencial para un único usuario, pega aquí su identificador.</p>
               </div>
             </div>
 
-            <div className="pt-6 mt-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="pt-6 mt-6 border-t border-border flex justify-end gap-3">
               <button 
                 type="submit" 
                 disabled={loading || !file || !title} 
-                className="px-8 py-3 rounded-xl font-bold text-sm text-white bg-[#0071e3] hover:bg-[#0077ed] transition-all shadow-md active:scale-95 disabled:bg-gray-400 disabled:shadow-none"
+                className="px-8 py-3 rounded-xl font-bold text-sm text-secondary-foreground bg-secondary hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Subiendo...' : 'Subir documento'}
               </button>

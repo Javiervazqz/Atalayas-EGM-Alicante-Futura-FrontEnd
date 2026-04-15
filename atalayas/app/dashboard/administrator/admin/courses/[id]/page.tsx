@@ -41,134 +41,164 @@ export default function AdminCourseDetailPage() {
   .sort((a: any, b: any) => a.order - b.order);
 
   if (loading) return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role="ADMIN" />
-      <main className="flex-1 p-10 animate-pulse text-[#005596] font-bold">Cargando moderación...</main>
+      <main className="flex-1 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </main>
     </div>
   );
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role="ADMIN" />
 
       <main className="flex-1 h-screen overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-8 py-10">
+        <div className="max-w-6xl mx-auto px-6 lg:px-8 py-10 lg:py-12">
           
           {/* BREADCRUMB */}
-          <Link href="/dashboard/administrator/admin/courses" className="text-[#0071e3] text-sm font-semibold hover:underline mb-6 inline-block">
-            ← Volver a Cursos
+          <Link href="/dashboard/administrator/admin/courses" className="inline-flex items-center gap-2 text-secondary text-sm font-bold hover:opacity-80 transition-opacity mb-8">
+            <i className="bi bi-arrow-left"></i> Volver a Cursos
           </Link>
 
-          {/* HEADER */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-            <div>
-              <span className="text-[11px] font-black text-[#005596] uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full">
-                Moderación de Contenidos
-              </span>
-              <h1 className="text-4xl font-black text-[#1d1d1f] mt-2 tracking-tight">
-                {course?.title}
-              </h1>
-              <p className="text-[#86868b] mt-1">Gestiona las lecciones, cuestionarios y material multimedia.</p>
+          {/* HEADER (Estilo Tarjeta) */}
+          <div className="bg-card rounded-[2.5rem] border border-border p-8 lg:p-10 mb-10 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center text-4xl shrink-0">
+                <i className="bi bi-journal-bookmark"></i>
+              </div>
+              <div>
+                <span className="inline-block text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full mb-3">
+                  Moderación de Contenidos
+                </span>
+                <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight mb-2">
+                  {course?.title}
+                </h1>
+                <p className="text-muted-foreground text-sm font-medium">Gestiona las lecciones, cuestionarios y material multimedia.</p>
+              </div>
             </div>
             
-            <div className="flex items-center gap-3">
-              <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar lección..." />
-              <Link 
-                href={`/dashboard/administrator/admin/courses/${id}/content/new`}
-                className="bg-[#1d1d1f] text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-black transition-all shadow-sm whitespace-nowrap"
-              >
-                Añadir Lección
-              </Link>
-            </div>
+            <Link 
+              href={`/dashboard/administrator/admin/courses/${id}/content/new`}
+              className="shrink-0 bg-secondary text-secondary-foreground px-6 py-3.5 rounded-2xl text-sm font-bold hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2"
+            >
+              <i className="bi bi-plus-lg text-lg"></i> Añadir Lección
+            </Link>
           </div>
 
           {/* INFO CARDS */}
-          <div className="grid grid-cols-2 gap-4 mb-10">
-            <div className="bg-white p-6 rounded-[24px] border border-gray-200 shadow-sm">
-              <p className="text-[11px] font-bold text-[#86868b] uppercase">Categoría</p>
-              <p className="text-lg font-bold text-[#1d1d1f]">{course?.category}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            <div className="bg-card border border-border rounded-3xl p-6 shadow-sm flex flex-col items-start">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg mb-4 text-primary bg-primary/10">
+                <i className="bi bi-tag-fill"></i>
+              </div>
+              <p className="text-2xl font-extrabold text-foreground mb-1 truncate w-full">{course?.category}</p>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Categoría</p>
             </div>
-            <div className="bg-white p-6 rounded-[24px] border border-gray-200 shadow-sm">
-              <p className="text-[11px] font-bold text-[#86868b] uppercase">Total Contenidos</p>
-              <p className="text-lg font-bold text-[#1d1d1f]">{contentList.length} Unidades</p>
+            <div className="bg-card border border-border rounded-3xl p-6 shadow-sm flex flex-col items-start">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg mb-4 text-secondary bg-secondary/10">
+                <i className="bi bi-stack"></i>
+              </div>
+              <p className="text-2xl font-extrabold text-foreground mb-1">{contentList.length}</p>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Unidades</p>
             </div>
           </div>
 
-          {/* TABLA ESTILO APPLE */}
-          <div className="bg-white rounded-[32px] border border-gray-200 overflow-hidden shadow-sm">
+          {/* Buscador */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">Lecciones</h2>
+            <div className="w-full sm:w-auto">
+              <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar lección..." />
+            </div>
+          </div>
+
+          {/* TABLA ESTILO APPLE / TARJETAS */}
+          <div className="bg-card rounded-[2.5rem] border border-border overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
-                  <tr className="bg-[#fbfbfd] border-b border-gray-100">
-                    <th className="px-8 py-5 text-[11px] font-black text-[#86868b] uppercase tracking-widest w-16">Orden</th>
-                    <th className="px-6 py-5 text-[11px] font-black text-[#86868b] uppercase tracking-widest">Título de la Lección</th>
-                    <th className="px-6 py-5 text-[11px] font-black text-[#86868b] uppercase tracking-widest">Multimedia</th>
-                    <th className="px-6 py-5 text-[11px] font-black text-[#86868b] uppercase tracking-widest text-right">Acciones</th>
+                  <tr className="bg-muted/50 border-b border-border">
+                    <th className="px-6 lg:px-8 py-5 text-[11px] font-black text-muted-foreground uppercase tracking-widest w-20 text-center">Orden</th>
+                    <th className="px-6 lg:px-8 py-5 text-[11px] font-black text-muted-foreground uppercase tracking-widest">Título de la Lección</th>
+                    <th className="px-6 lg:px-8 py-5 text-[11px] font-black text-muted-foreground uppercase tracking-widest">Multimedia</th>
+                    <th className="px-6 lg:px-8 py-5 text-[11px] font-black text-muted-foreground uppercase tracking-widest text-right">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-border">
                   {filteredContents.length > 0 ? (
                     filteredContents.map((content: any) => (
                       <tr 
                         key={content.id}
                         // CLICK EN TODA LA FILA PARA IR AL DETALLE
                         onClick={() => router.push(`/dashboard/administrator/admin/courses/${id}/content/${content.id}`)}
-                        className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
+                        className="hover:bg-muted/30 transition-colors group cursor-pointer"
                       >
-                        <td className="px-8 py-5 font-mono text-sm text-[#86868b]">
-                          {String(content.order).padStart(2, '0')}
+                        <td className="px-6 lg:px-8 py-5 text-center">
+                          <div className="w-10 h-10 bg-muted mx-auto rounded-xl flex items-center justify-center font-mono text-sm font-bold text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                            {String(content.order).padStart(2, '0')}
+                          </div>
                         </td>
-                        <td className="px-6 py-5">
-                          <div className="font-bold text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors">{content.title}</div>
-                          <div className="text-[11px] text-[#86868b] line-clamp-1 max-w-xs">{content.summary || 'Sin resumen'}</div>
+                        <td className="px-6 lg:px-8 py-5">
+                          <div className="font-bold text-foreground group-hover:text-primary transition-colors text-base mb-1">{content.title}</div>
+                          <div className="text-sm text-muted-foreground line-clamp-1">{content.summary || 'Sin resumen'}</div>
                         </td>
-                        <td className="px-6 py-5">
-                          <div className="flex gap-2">
-                            {content.quiz && <span className="bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded">QUIZ</span>}
+                        <td className="px-6 lg:px-8 py-5">
+                          <div className="flex flex-wrap gap-2">
+                            {content.quiz && <span className="bg-secondary/10 border border-secondary/20 text-secondary text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg">QUIZ</span>}
                             
                             {/* Si tiene un MP3, le ponemos la etiqueta de PODCAST IA */}
                             {content.url && content.url.includes('.mp3') && (
-                              <span className="bg-purple-50 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded border border-purple-100 flex items-center gap-1">
-                                <i className="bi bi-mic-fill"></i> PODCAST IA
+                              <span className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg flex items-center gap-1">
+                                <i className="bi bi-mic-fill"></i> PODCAST
                               </span>
                             )}
 
                             {/* Si tiene un PDF o web, etiqueta normal */}
                             {content.url && !content.url.includes('.mp3') && (
-                              <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded">DOCUMENTO</span>
+                              <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg">DOCUMENTO</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-5 text-right">
-                          <div className="flex items-center justify-end gap-4">
+                        <td className="px-6 lg:px-8 py-5 text-right">
+                          <div className="flex items-center justify-end gap-2">
                             <button 
                               onClick={(e) => {
-                                e.stopPropagation(); // Evita que se dispare el click de la fila
+                                e.stopPropagation(); 
                                 router.push(`/dashboard/administrator/admin/courses/${id}/content/${content.id}/edit`);
                               }}
-                              className="text-[#0071e3] text-xs font-bold hover:underline"
+                              className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                              title="Editar lección"
                             >
-                              Editar
+                              <i className="bi bi-pencil-square text-lg"></i>
                             </button>
                             <button 
-                              onClick={(e) => e.stopPropagation()} 
-                              className="text-red-500 text-xs font-bold hover:underline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Aquí podrías añadir lógica para abrir el modal de borrado en esta página si quisieras, 
+                                // como lo hicimos en GAdminCourseDetailPage
+                                alert("Ve a la vista de detalle o edición para eliminar."); 
+                              }} 
+                              className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                              title="Eliminar lección"
                             >
-                              Eliminar
+                               <i className="bi bi-trash3 text-lg"></i>
                             </button>
+                            <i className="bi bi-chevron-right text-muted-foreground/50 group-hover:text-primary ml-2 text-lg transition-colors hidden sm:block"></i>
                           </div>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="px-8 py-20 text-center">
-                        <div className="text-[#86868b] font-medium">Este curso aún no tiene lecciones creadas.</div>
+                      <td colSpan={4} className="px-8 py-24 text-center">
+                        <div className="text-4xl text-muted-foreground/30 mb-4"><i className="bi bi-journal-x"></i></div>
+                        <div className="text-foreground font-bold text-lg mb-1">Este curso aún no tiene lecciones creadas.</div>
+                        <div className="text-muted-foreground text-sm mb-4">Añade contenido para que los empleados puedan empezar a aprender.</div>
                         <Link 
                           href={`/dashboard/administrator/admin/courses/${id}/content/new`} 
-                          className="text-[#0071e3] text-sm font-bold mt-2 inline-block hover:underline"
+                          className="text-secondary text-sm font-bold inline-flex items-center gap-1 hover:underline"
                         >
-                          Crear la primera lección ahora
+                          <i className="bi bi-plus-lg"></i> Crear la primera lección
                         </Link>
                       </td>
                     </tr>

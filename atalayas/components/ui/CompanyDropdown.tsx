@@ -32,7 +32,7 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
       <button
         type='button'
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-5 py-3 text-sm font-semibold text-[#1d1d1f] hover:border-gray-400 transition-all w-64"
+        className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-5 py-3 text-sm font-semibold text-foreground hover:border-gray-400 transition-all w-64"
       >
         <span>{selected === 'PUBLIC' ? '🌐 Público' : `🏭 ${selected}`}</span>
         <span className="ml-auto text-gray-400">{open ? '▲' : '▼'}</span>
@@ -45,7 +45,7 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar empresa..."
-              className="w-full text-sm outline-none px-3 py-2 bg-[#f5f5f7] rounded-xl"
+              className="w-full text-sm outline-none px-3 py-2 bg-background rounded-xl"
               autoFocus
             />
           </div>
@@ -54,8 +54,8 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
               <button
                 key={company}
                 onClick={() => { onChange(company); setOpen(false); setSearch(''); }}
-                className={`w-full text-left px-5 py-3 text-sm hover:bg-[#f5f5f7] transition-colors ${
-                  selected === company ? 'font-bold text-[#0071e3]' : 'text-[#1d1d1f]'
+                className={`w-full text-left px-5 py-3 text-sm hover:bg-background transition-colors ${
+                  selected === company ? 'font-bold text-[#0071e3]' : 'text-foreground'
                 }`}
               >
                 {company === 'PUBLIC' ? '🌐 Público' : `🏭 ${company}`}

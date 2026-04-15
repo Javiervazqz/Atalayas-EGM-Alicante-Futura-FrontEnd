@@ -48,94 +48,83 @@ export default function OnboardingConfig() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen font-sans">
-      <header className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">
-          Configuración de Onboarding
-        </h1>
+    <div className="max-w-4xl mx-auto p-6 lg:p-10 min-h-screen font-sans bg-background">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+        <div>
+           <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
+             Configuración de Onboarding
+           </h1>
+           <p className="text-muted-foreground font-medium mt-1">Diseña el plan de bienvenida día a día.</p>
+        </div>
         <button
           onClick={handleSave}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+          className="bg-secondary text-secondary-foreground px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2 shrink-0"
         >
-          Guardar Cambios
+          <i className="bi bi-save"></i> Guardar Plan
         </button>
       </header>
 
       {steps.map((step, sIdx) => (
         <div
           key={sIdx}
-          className="relative bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
-          style={{ position: "relative" }} // Refuerzo manual del ancla
+          className="relative bg-card rounded-3xl shadow-sm border border-border p-6 lg:p-8 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-300"
         >
-          {/* EL BOTÓN FUERA DE TODO FLEX */}
           <button
             onClick={() => removeStep(sIdx)}
             type="button"
-            className="absolute"
-            style={{
-              position: "absolute",
-              top: "1.5rem",
-              right: "1.5rem",
-              zIndex: 50,
-              cursor: "pointer",
-            }}
+            className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+            title="Eliminar día"
           >
-            <svg
-              width="20"
-              height="20"
-              className="text-gray-300 hover:text-red-600 transition-colors"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-            </svg>
+            <i className="bi bi-trash3 text-lg"></i>
           </button>
 
-          {/* EL CONTENIDO VIENE DESPUÉS */}
-          <div className="flex gap-4 mb-6 pr-10">
-            <div className="w-16">
-              <label className="block text-xs font-bold text-gray-400 uppercase">
+          <div className="flex flex-col sm:flex-row gap-6 mb-8 pr-10">
+            <div className="sm:w-20">
+              <label className="block text-[11px] font-black text-primary uppercase tracking-widest mb-1">
                 Día
               </label>
-              <div className="text-lg font-bold text-gray-700">{step.day}</div>
+              <div className="text-4xl font-extrabold text-foreground">{step.day}</div>
             </div>
             <div className="flex-1">
-              <label className="block text-xs font-bold text-gray-400 uppercase">
-                Título
+              <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-2">
+                Título de la jornada
               </label>
               <input
                 type="text"
                 value={step.title}
-                className="w-full border-b py-1 outline-none focus:border-blue-500"
+                className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-base font-bold text-foreground outline-none transition-all placeholder:text-muted-foreground/50 placeholder:font-medium"
                 onChange={(e) => updateStep(sIdx, "title", e.target.value)}
-                placeholder="Título del día..."
+                placeholder="Ej: Bienvenida y herramientas básicas..."
               />
             </div>
           </div>
-          <div className="space-y-3">
-            <label className="block text-xs font-bold text-gray-400 uppercase mb-2">
-              Checklist de tareas
+          
+          <div className="space-y-4 bg-muted/30 p-6 rounded-2xl border border-border/50">
+            <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+              <i className="bi bi-ui-checks"></i> Checklist de tareas
             </label>
-            {step.tasks.map((task, tIdx) => (
-              <input
-                key={tIdx}
-                value={task}
-                placeholder="Escribe una tarea..."
-                className="w-full bg-gray-50 px-4 py-2 rounded-lg text-sm border border-transparent focus:border-blue-200 focus:bg-white outline-none transition"
-                onChange={(e) => {
-                  const newSteps = [...steps];
-                  newSteps[sIdx].tasks[tIdx] = e.target.value;
-                  setSteps(newSteps);
-                }}
-              />
-            ))}
+            <div className="space-y-3">
+               {step.tasks.map((task, tIdx) => (
+                 <div key={tIdx} className="flex items-center gap-3">
+                   <div className="w-6 h-6 rounded-md bg-background border border-input flex items-center justify-center text-muted-foreground/30 text-xs shrink-0"><i className="bi bi-check-lg"></i></div>
+                   <input
+                     value={task}
+                     placeholder={`Tarea ${tIdx + 1}...`}
+                     className="flex-1 bg-background px-4 py-2.5 rounded-xl text-sm border border-input focus:border-primary focus:ring-2 focus:ring-ring outline-none transition-all text-foreground placeholder:text-muted-foreground/50 font-medium"
+                     onChange={(e) => {
+                       const newSteps = [...steps];
+                       newSteps[sIdx].tasks[tIdx] = e.target.value;
+                       setSteps(newSteps);
+                     }}
+                   />
+                 </div>
+               ))}
+            </div>
             <button
               onClick={() => addTask(sIdx)}
-              className="text-sm text-blue-600 font-bold flex items-center gap-1 mt-2 hover:text-blue-800"
+              className="text-xs text-primary font-bold flex items-center gap-1.5 mt-4 hover:opacity-80 transition-opacity bg-primary/10 px-4 py-2 rounded-lg inline-flex"
             >
-              + Añadir tarea
+              <i className="bi bi-plus-lg"></i> Añadir tarea
             </button>
           </div>
         </div>
@@ -143,9 +132,9 @@ export default function OnboardingConfig() {
 
       <button
         onClick={addStep}
-        className="w-full py-6 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 hover:text-gray-600 hover:border-gray-400 hover:bg-white transition font-medium"
+        className="w-full py-6 border-2 border-dashed border-border rounded-3xl text-muted-foreground font-bold hover:text-foreground hover:border-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 text-sm"
       >
-        + Añadir un nuevo día al Onboarding
+        <i className="bi bi-plus-circle-fill text-lg"></i> Añadir un nuevo día al Onboarding
       </button>
     </div>
   );

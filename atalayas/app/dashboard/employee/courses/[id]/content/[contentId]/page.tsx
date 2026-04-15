@@ -7,8 +7,6 @@ import { API_ROUTES } from '@/lib/utils';
 import mediumZoom from 'medium-zoom';
 import Link from 'next/link';
 
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
-
 export default function EmployeeContentDetail() {
   const params = useParams();
   const zoomRef = useRef<HTMLImageElement>(null);
@@ -23,7 +21,7 @@ export default function EmployeeContentDetail() {
       if (!contentId || !courseId) return;
 
       try {
-        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(contentId as string), {
+        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(courseId as string, contentId as string), {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         const data = await res.json();
@@ -46,39 +44,38 @@ export default function EmployeeContentDetail() {
   }, [content?.imageUrl]);
 
   if (loading) return (
-    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary" />
     </div>
   );
 
   if (!content) return null;
 
-  // Verificamos si existen recursos para mostrar la barra lateral
   const hasResources = content.url || content.podcast;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role="EMPLOYEE" />
 
-      <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>
+      <main className="flex-1 h-screen overflow-y-auto">
         
         {/* HEADER */}
-        <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)', padding: '32px 0' }}>
-          <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 24px' }}>
+        <div className="bg-card border-b border-border py-8 lg:py-10">
+          <div className="max-w-5xl mx-auto px-6 lg:px-8">
             <Link href={`/dashboard/employee/courses/${params.id}`}
-              style={{ color: '#0071e3', fontSize: '15px', fontWeight: 500, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '24px' }}>
-              ‹ Volver al curso
+              className="flex items-center gap-1 text-secondary text-sm font-semibold hover:opacity-80 transition-opacity mb-6 inline-flex">
+              <i className="bi bi-chevron-left"></i> Volver al curso
             </Link>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-              <div style={{ width: '64px', height: '64px', background: 'rgba(0,113,227,0.1)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px' }}>
-                📖
+            <div className="flex items-center gap-6 flex-wrap">
+              <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center text-3xl flex-shrink-0">
+                <i className="bi bi-journal-text"></i>
               </div>
-              <div>
-                <h1 style={{ fontSize: 'clamp(22px, 4vw, 30px)', fontWeight: 800, color: '#1d1d1f', letterSpacing: '-0.02em', margin: 0 }}>
+              <div className="flex-1 min-w-[250px]">
+                <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight mb-2">
                   {content.title}
                 </h1>
-                <span className="inline-block mt-1 text-[11px] font-bold text-blue-600 uppercase tracking-wider">
+                <span className="inline-flex items-center text-[10px] font-bold px-3 py-1 rounded-full bg-secondary/10 text-secondary uppercase tracking-wider">
                   Lección {content.order || 1}
                 </span>
               </div>
@@ -86,45 +83,46 @@ export default function EmployeeContentDetail() {
           </div>
         </div>
 
-        {/* CUERPO DINÁMICO */}
-        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 24px' }}>
-          <div className={hasResources ? "content-with-sidebar" : "content-full"}>
+        {/* CUERPO DINÁMICO (Con Grid de Tailwind en vez de style jsx) */}
+        <div className="max-w-5xl mx-auto px-6 lg:px-8 py-10 lg:py-12">
+          <div className={`grid grid-cols-1 ${hasResources ? 'lg:grid-cols-[1fr_300px]' : ''} gap-10 lg:gap-16`}>
             
+            {/* COLUMNA IZQUIERDA: CONTENIDO */}
             <article>
-              <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#1d1d1f', marginBottom: '20px' }}>
+              <h3 className="text-xl font-bold text-foreground mb-6">
                 Desarrollo de la unidad
               </h3>
 
               <div className="prose prose-slate max-w-none">
-                <p style={{ fontSize: '18px', lineHeight: '1.8', color: '#424245', whiteSpace: 'pre-wrap' }}>
+                <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">
                   {content.summary || 'Sin contenido proporcionado'}
                 </p>
               </div>
             </article>
 
-            {/* SOLO SE MUESTRA SI HAY RECURSOS */}
+            {/* COLUMNA DERECHA: RECURSOS EXTRA (Solo si hay) */}
             {hasResources && (
               <aside className="space-y-6">
-                <h4 className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.2em] px-1">Material Extra</h4>
+                <h4 className="text-[11px] font-black text-muted-foreground uppercase tracking-widest px-1">Material Extra</h4>
                 
                 {content.url && (
-                  <div className="bg-white p-6 rounded-[2rem] border border-black/5 shadow-sm text-center">
-                    <div className="text-4xl mb-3">📄</div>
-                    <p className="text-[11px] font-black text-[#1d1d1f] uppercase mb-5">Guía PDF</p>
+                  <div className="bg-card p-6 rounded-3xl border border-border shadow-sm text-center hover:border-secondary transition-colors">
+                    <div className="text-4xl text-primary mb-3"><i className="bi bi-file-earmark-pdf"></i></div>
+                    <p className="text-[11px] font-black text-foreground uppercase mb-5">Guía PDF</p>
                     <a href={content.url} target="_blank" rel="noopener noreferrer"
-                      className="block w-full py-3 bg-[#0071e3] text-white rounded-xl text-xs font-bold hover:bg-[#0077ed] transition-all">
+                      className="block w-full py-3 bg-secondary text-secondary-foreground rounded-xl text-xs font-bold hover:opacity-90 transition-opacity shadow-sm">
                       Abrir PDF
                     </a>
                   </div>
                 )}
                 
                 {content.podcast && (
-                  <div className="bg-[#1d1d1f] p-6 rounded-[2rem] text-white shadow-xl shadow-black/10">
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-lg">🎙️</span>
-                      <p className="text-[10px] font-black opacity-60 tracking-widest uppercase">Podcast</p>
+                  <div className="bg-foreground p-6 rounded-3xl text-background shadow-xl">
+                    <div className="flex items-center gap-3 mb-5">
+                      <span className="text-xl text-secondary"><i className="bi bi-mic-fill"></i></span>
+                      <p className="text-[10px] font-black opacity-80 tracking-widest uppercase text-background">Podcast</p>
                     </div>
-                    <button className="w-full py-2.5 bg-white text-black rounded-lg text-xs font-bold hover:bg-gray-100 transition-colors">
+                    <button className="w-full py-3 bg-background text-foreground rounded-xl text-xs font-bold hover:opacity-90 transition-opacity">
                       Escuchar Resumen
                     </button>
                   </div>
@@ -134,24 +132,6 @@ export default function EmployeeContentDetail() {
           </div>
         </div>
       </main>
-
-      <style jsx>{`
-        .content-with-sidebar { 
-          display: grid; 
-          grid-template-columns: 1fr 300px; 
-          gap: 64px; 
-        }
-        .content-full { 
-          max-width: 800px;
-          margin: 0 auto;
-        }
-        @media (max-width: 1024px) {
-          .content-with-sidebar { 
-            grid-template-columns: 1fr; 
-            gap: 48px; 
-          }
-        }
-      `}</style>
     </div>
   );
 }

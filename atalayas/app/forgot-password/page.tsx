@@ -16,7 +16,6 @@ export default function ForgotPasswordPage() {
     setError('');
 
     try {
-      // Ajusta esta ruta según tu backend de NestJS
       const res = await fetch(`${API_ROUTES.AUTH.FORGOT_PASSWORD}`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -37,23 +36,14 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{
-        background: '#f5f5f7',
-        fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
-      }}
-    >
+    <div className="min-h-screen flex flex-col bg-background font-sans">
       {/* Top nav */}
       <nav className="flex items-center justify-between px-8 py-5">
-        <Link href="/login" className="flex items-center gap-2" style={{ textDecoration: 'none' }}>
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #1d1d1f 0%, #434343 100%)' }}
-          >
-            <span className="text-white text-xs font-semibold">A</span>
+        <Link href="/login" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary shadow-sm">
+            <span className="text-primary-foreground text-sm font-bold">A</span>
           </div>
-          <span style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, letterSpacing: '-0.02em' }}>
+          <span className="text-foreground text-lg font-bold tracking-tight">
             Atalayas
           </span>
         </Link>
@@ -62,27 +52,15 @@ export default function ForgotPasswordPage() {
       {/* Main */}
       <main className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
-          
-          <div
-            className="rounded-3xl px-10 py-12"
-            style={{
-              background: '#ffffff',
-              boxShadow: '0 2px 20px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.06)',
-            }}
-          >
+          <div className="rounded-3xl px-10 py-12 bg-card shadow-xl border border-border">
             <div className="text-center mb-10">
-              <h1
-                style={{
-                  color: '#1d1d1f',
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  letterSpacing: '-0.03em',
-                  marginBottom: '12px',
-                }}
-              >
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-6 bg-primary shadow-md">
+                <i className="bi bi-key text-primary-foreground text-2xl"></i>
+              </div>
+              <h1 className="text-foreground text-2xl font-bold tracking-tight mb-1.5">
                 Recuperar contraseña
               </h1>
-              <p style={{ color: '#86868b', fontSize: '15px', fontWeight: 400, lineHeight: '1.4' }}>
+              <p className="text-muted-foreground text-sm font-medium">
                 {submitted 
                   ? 'Revisa tu bandeja de entrada para restablecer tu contraseña.'
                   : 'Introduce tu correo y te enviaremos instrucciones.'}
@@ -90,72 +68,35 @@ export default function ForgotPasswordPage() {
             </div>
 
             {error && (
-              <div
-                className="rounded-xl px-4 py-3 mb-6 text-center"
-                style={{ background: '#fff2f2', border: '1px solid #ffd0d0' }}
-              >
-                <p style={{ color: '#ff3b30', fontSize: '13px' }}>{error}</p>
+              <div className="rounded-xl px-4 py-3 mb-6 text-center bg-destructive/10 border border-destructive/20">
+                <p className="text-destructive text-sm font-medium">{error}</p>
               </div>
             )}
 
             {!submitted ? (
               <form onSubmit={handleResetRequest} className="space-y-4">
-                <div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Correo electrónico"
-                    required
-                    style={{
-                      width: '100%',
-                      background: '#f5f5f7',
-                      border: '1px solid rgba(0,0,0,0.08)',
-                      borderRadius: '12px',
-                      padding: '13px 16px',
-                      fontSize: '15px',
-                      color: '#1d1d1f',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Correo electrónico"
+                  required
+                  className="w-full bg-background border border-input rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+                />
 
                 <button
                   type="submit"
                   disabled={loading}
-                  style={{
-                    width: '100%',
-                    background: loading ? '#86868b' : '#0071e3',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '12px',
-                    padding: '13px 16px',
-                    fontSize: '15px',
-                    fontWeight: 500,
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    transition: 'background 0.2s',
-                    fontFamily: 'inherit',
-                  }}
+                  className="w-full bg-secondary text-secondary-foreground font-semibold rounded-xl px-4 py-3 text-sm mt-2 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
                   {loading ? 'Enviando...' : 'Recuperar contraseña'}
                 </button>
               </form>
             ) : (
-              <div className="text-center">
+              <div className="text-center mt-4">
                 <Link
                   href="/login"
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    background: '#0071e3',
-                    color: '#ffffff',
-                    textDecoration: 'none',
-                    borderRadius: '12px',
-                    padding: '13px 16px',
-                    fontSize: '15px',
-                    fontWeight: 500,
-                  }}
+                  className="block w-full bg-secondary text-secondary-foreground font-semibold rounded-xl px-4 py-3 text-sm hover:opacity-90 transition-opacity shadow-sm"
                 >
                   Volver al login
                 </Link>
@@ -165,9 +106,9 @@ export default function ForgotPasswordPage() {
         </div>
       </main>
 
-      {/* Footer minimalista similar al original */}
+      {/* Footer */}
       <footer className="px-8 py-6">
-        <p className="text-center" style={{ color: '#b0b0b5', fontSize: '11px' }}>
+        <p className="text-center text-muted-foreground/60 text-xs">
           © 2026 Atalayas EGM Alicante Futura
         </p>
       </footer>

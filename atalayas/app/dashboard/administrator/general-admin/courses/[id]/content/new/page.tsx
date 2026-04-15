@@ -83,7 +83,7 @@ export default function NewAIContentPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
+    <div className="flex min-h-screen bg-background">
       <Sidebar role="GENERAL_ADMIN" />
       
       <main className="flex-1 p-12 overflow-y-auto">
@@ -99,8 +99,8 @@ export default function NewAIContentPage() {
                 <i className="bi bi-robot text-[#005596] text-3xl"></i>
               </div>
               <div>
-                <h1 className="text-4xl font-black text-[#1d1d1f] tracking-tight">Generador de Contenido IA</h1>
-                <p className="text-[#86868b] text-lg">Sube un documento o enlace y deja que la IA cree la lección mágicamente.</p>
+                <h1 className="text-4xl font-black text-foreground tracking-tight">Generador de Contenido IA</h1>
+                <p className="text-muted-foreground text-lg">Sube un documento o enlace y deja que la IA cree la lección mágicamente.</p>
               </div>
             </div>
           </header>
@@ -109,7 +109,7 @@ export default function NewAIContentPage() {
             
             {/* 1. DATOS BÁSICOS (TÍTULO) */}
 <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-  <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] mb-2 ml-1">
+  <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground mb-2 ml-1">
     Nombre de la Unidad / Lección
   </label>
   <input 
@@ -121,7 +121,7 @@ export default function NewAIContentPage() {
       console.log("Escribiendo:", e.target.value); // Añade este log para ver si detecta el cambio
       setFormData({ ...formData, title: e.target.value });
     }}
-    className="w-full px-6 py-5 rounded-2xl bg-[#f5f5f7] border-2 border-transparent focus:border-blue-300 outline-none font-bold text-black"
+    className="w-full px-6 py-5 rounded-2xl bg-background border-2 border-transparent focus:border-blue-300 outline-none font-bold text-black"
     placeholder="Ej: Manual de Bienvenida v2"
   />
 </div>
@@ -157,7 +157,7 @@ export default function NewAIContentPage() {
                   <p className="text-base font-bold text-black">
                     {formData.file ? formData.file.name : "Arrastra tu PDF aquí o haz click"}
                   </p>
-                  <p className="text-xs text-[#86868b] mt-1">{formData.file ? 'Archivo listo para procesar' : 'Máx: 10MB (Formatos: .pdf)'}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{formData.file ? 'Archivo listo para procesar' : 'Máx: 10MB (Formatos: .pdf)'}</p>
                 </div>
               ) : (
                 <div className="relative">
@@ -166,7 +166,7 @@ export default function NewAIContentPage() {
                       type="url"
                       value={formData.url}
                       placeholder="https://ejemplo.com/articulo-interesante"
-                      className="w-full px-14 py-5 bg-[#f5f5f7] rounded-2xl border-2 border-transparent focus:border-blue-300 outline-none font-bold text-black"
+                      className="w-full px-14 py-5 bg-background rounded-2xl border-2 border-transparent focus:border-blue-300 outline-none font-bold text-black"
                       onChange={(e) => setFormData({...formData, url: e.target.value})}
                     />
                 </div>
@@ -175,7 +175,7 @@ export default function NewAIContentPage() {
 
             {/* 3. OPCIONES DE IA (MODERNAS, CON CURSOR POINTER) */}
             <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-              <h3 className="text-xl font-black text-[#1d1d1f] mb-6">¿Qué quieres que genere la IA mágicamente?</h3>
+              <h3 className="text-xl font-black text-foreground mb-6">¿Qué quieres que genere la IA mágicamente?</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 
                 {/* Checkbox Card: Resumen */}
@@ -191,7 +191,7 @@ export default function NewAIContentPage() {
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${options.generateSummary ? 'bg-blue-100' : 'bg-gray-100'}`}>
                     <i className={`bi bi-text-paragraph text-2xl ${options.generateSummary ? 'text-[#005596]' : 'text-gray-400'}`}></i>
                   </div>
-                  <p className="font-black text-base text-[#1d1d1f]">Resumen IA</p>
+                  <p className="font-black text-base text-foreground">Resumen IA</p>
                   <p className="text-xs text-gray-400 mt-1 leading-tight">Extrae los puntos clave y crea el resumen de la lección.</p>
                 </button>
 
@@ -208,7 +208,7 @@ export default function NewAIContentPage() {
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${options.generateQuiz ? 'bg-orange-100' : 'bg-gray-100'}`}>
                     <i className={`bi bi-patch-question text-2xl ${options.generateQuiz ? 'text-orange-600' : 'text-gray-400'}`}></i>
                   </div>
-                  <p className="font-black text-base text-[#1d1d1f]">Test IA</p>
+                  <p className="font-black text-base text-foreground">Test IA</p>
                   <p className="text-xs text-gray-400 mt-1 leading-tight">Crea 5 preguntas interactivas automáticas.</p>
                 </button>
 
@@ -225,7 +225,7 @@ export default function NewAIContentPage() {
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${options.generatePodcast ? 'bg-purple-100' : 'bg-gray-100'}`}>
                     <i className={`bi bi-mic text-2xl ${options.generatePodcast ? 'text-purple-600' : 'text-gray-400'}`}></i>
                   </div>
-                  <p className="font-black text-base text-[#1d1d1f]">Podcast IA</p>
+                  <p className="font-black text-base text-foreground">Podcast IA</p>
                   <p className="text-xs text-gray-400 mt-1 leading-tight">Genera un audio con voz sintetizada realista.</p>
                 </button>
 
