@@ -52,7 +52,7 @@ export default function EmployeesPage() {
         if (Array.isArray(usersData)) {
           if (storedUser.role === 'ADMIN') {
             const filtered = usersData.filter(u => 
-              String(u.companyId) === String(storedUser.companyId)
+              String(u.companyId || '').trim() === String(storedUser.companyId || '').trim()
             );
             setUsers(filtered);
           } else {
@@ -60,7 +60,7 @@ export default function EmployeesPage() {
           }
         }
       } catch (err) {
-        console.error(err);
+        console.error("Error cargando empleados:", err);
       } finally {
         setLoading(false);
       }

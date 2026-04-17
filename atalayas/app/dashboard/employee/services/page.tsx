@@ -5,13 +5,17 @@ import Link from "next/link";
 import Sidebar from "@/components/ui/Sidebar";
 import SearchInput from "@/components/ui/Searchbar";
 import { API_ROUTES } from "@/lib/utils";
+import { useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function EmployeeServices() {
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"ALL" | "PUBLIC" | "COMPANY">("ALL");
+  const [filter, setFilter] = useState<"ALL" | "PUBLIC" | "COMPANY">("PUBLIC");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const searchParams = useSearchParams();
+  const fromTaskId = searchParams.get('fromTask');
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -36,6 +40,29 @@ export default function EmployeeServices() {
     fetchServices();
   }, []);
 
+  useEffect(() => {
+    const autoConfirmTask = async () => {
+      if (fromTaskId) {
+        try {
+          const token = localStorage.getItem("token");
+          await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ taskId: fromTaskId, done: true }),
+          });
+          console.log("Tarea de onboarding completada automáticamente");
+        } catch (err) {
+          console.error("Error al autocompletar:", err);
+        }
+      }
+    };
+
+    autoConfirmTask();
+  }, [fromTaskId]);
+
   const filtered = services.filter((s) => {
     const matchesSearch = s.title
       .toLowerCase()
@@ -53,29 +80,40 @@ export default function EmployeeServices() {
 
   if (!currentUser) return null;
 
+  if (loading) return (
+    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    </div>
+  );
+
   return (
     <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role="EMPLOYEE" />
       <main className="flex-1 h-screen overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8 py-12">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-            <h1 className="text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
-              Servicios
-            </h1>
+        <div className="max-w-6xl mx-auto px-8 py-12">
+          
+          {/* BANNER COMPACTO UNIFICADO */}
+          <header className="bg-white rounded-[2rem] p-8 mb-8 border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+              <h1 className="text-3xl font-bold text-[#1d1d1f] tracking-tight">
+                Servicios disponibles
+              </h1>
+              <p className="text-gray-500 text-sm font-medium mt-1">Explora y gestiona tus beneficios y herramientas corporativas</p>
+            </div>
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder="Buscar servicios..."
             />
-          </div>
+          </header>
 
-          {/* CHIPS DE FILTRADO */}
+          {/* CHIPS DE FILTRADO - ICONOS RESTAURADOS */}
           <div className="flex items-center gap-3 mb-10 overflow-x-auto pb-2 no-scrollbar">
             {["ALL", "PUBLIC", "COMPANY"].map((type) => (
               <button
                 key={type}
                 onClick={() => setFilter(type as any)}
-                className={`shrink-0 px-6 py-2 rounded-full text-sm font-bold transition-all ${
+                className={`relative shrink-0 px-6 py-2 rounded-full text-sm font-bold transition-all ${
                   filter === type
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "bg-card text-muted-foreground border border-border hover:bg-muted"
@@ -114,7 +152,7 @@ export default function EmployeeServices() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {sortedServices.map((service) => (
-                <Link
+                <motion.div
                   key={service.id}
                   href={`/dashboard/employee/services/${service.id}`}
                 >
@@ -148,8 +186,8 @@ export default function EmployeeServices() {
                   </div>
                 </Link>
               ))}
-            </div>
-          )}
+            </AnimatePresence>
+          </motion.div>
         </div>
       </main>
     </div>

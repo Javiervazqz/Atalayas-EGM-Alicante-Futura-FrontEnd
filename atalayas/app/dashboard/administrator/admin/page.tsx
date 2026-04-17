@@ -42,7 +42,7 @@ export default function AdminDashboard() {
         setCourses(Array.isArray(coursesData) ? coursesData : []);
         setStats({
           employees: Array.isArray(usersData) ? usersData.filter((u: any) => u.role === 'EMPLOYEE').length : 0,
-          courses: Array.isArray(coursesData) ? coursesData.length : 0,
+          courses: Array.isArray(coursesData) ? coursesData.filter((c: any) => !c.isPublic).length : 0,
           documents: 0,
           avgProgress: 0,
         });

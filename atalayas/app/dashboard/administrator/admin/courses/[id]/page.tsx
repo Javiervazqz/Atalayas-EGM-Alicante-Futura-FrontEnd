@@ -1,25 +1,28 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Sidebar from '@/components/ui/Sidebar';
-import { API_ROUTES } from '@/lib/utils';
-import SearchInput from '@/components/ui/Searchbar';
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import Sidebar from "@/components/ui/Sidebar";
+import { API_ROUTES } from "@/lib/utils";
+import SearchInput from "@/components/ui/Searchbar";
 
 export default function AdminCourseDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [contentToDelete, setContentToDelete] = useState<string | null>(null);
 
+  // --- CARGAR DATOS DEL CURSO ---
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         const res = await fetch(API_ROUTES.COURSES.GET_BY_ID(id as string), {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         setCourse(data);
@@ -32,13 +35,43 @@ export default function AdminCourseDetailPage() {
     if (id) fetchCourse();
   }, [id]);
 
+
+const confirmDelete = (e: React.MouseEvent, contentId: string) => {
+  e.stopPropagation();
+  setContentToDelete(contentId);
+  setShowDeleteModal(true);
+};
+
+const executeDelete = async () => {
+  if (!contentToDelete) return;
+
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(id as string, contentToDelete), {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.ok) {
+      setCourse((prev: any) => ({
+        ...prev,
+        Content: (prev.Content || prev.content).filter((c: any) => c.id !== contentToDelete),
+      }));
+      setShowDeleteModal(false);
+    }
+  } catch (error) {
+    console.error("Error deleting:", error);
+  }
+};
+
+  // --- FILTRADO Y ORDENACIÓN ---
   const contentList = course?.Content || course?.content || [];
 
   const filteredContents = contentList
-  .filter((c: any) =>
-    c.title.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-  .sort((a: any, b: any) => a.order - b.order);
+    .filter((c: any) =>
+      c.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a: any, b: any) => a.order - b.order);
 
   if (loading) return (
     <div className="flex min-h-screen bg-background font-sans">
@@ -127,9 +160,8 @@ export default function AdminCourseDetailPage() {
                 <tbody className="divide-y divide-border">
                   {filteredContents.length > 0 ? (
                     filteredContents.map((content: any) => (
-                      <tr 
+                      <tr
                         key={content.id}
-                        // CLICK EN TODA LA FILA PARA IR AL DETALLE
                         onClick={() => router.push(`/dashboard/administrator/admin/courses/${id}/content/${content.id}`)}
                         className="hover:bg-muted/30 transition-colors group cursor-pointer"
                       >
@@ -209,6 +241,43 @@ export default function AdminCourseDetailPage() {
           </div>
         </div>
       </main>
+      {/* MODAL DE CONFIRMACIÓN ESTILO PREMIUM */}
+{showDeleteModal && (
+  <div 
+    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200"
+    onClick={() => setShowDeleteModal(false)}
+  >
+    <div 
+      className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl scale-in-center animate-in zoom-in-95 duration-200"
+      onClick={e => e.stopPropagation()}
+    >
+      <div className="text-center">
+        <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
+          <i className="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <h2 className="text-2xl font-black text-[#1d1d1f] mb-2">¿Eliminar lección?</h2>
+        <p className="text-[#86868b] text-sm mb-8">
+          Esta acción borrará permanentemente el contenido y los datos asociados. No se puede deshacer.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <button 
+          onClick={executeDelete}
+          className="w-full py-4 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold transition-colors"
+        >
+          Sí, eliminar permanentemente
+        </button>
+        <button 
+          onClick={() => setShowDeleteModal(false)}
+          className="w-full py-4 text-[#0071e3] font-bold hover:bg-gray-50 rounded-2xl transition-colors"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

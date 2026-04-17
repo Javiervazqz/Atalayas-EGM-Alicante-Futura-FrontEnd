@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Sidebar from '@/components/ui/Sidebar';
-import { API_ROUTES } from '@/lib/utils';
+import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import Sidebar from "@/components/ui/Sidebar";
+import { API_ROUTES } from "@/lib/utils";
 
 export default function NewAIContentPage() {
   const { id } = useParams();
@@ -27,7 +27,8 @@ export default function NewAIContentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title.trim()) return alert("⚠️ El título de la lección es obligatorio");
+    // Validación visual premium
+    if (!formData.title.trim()) return alert("El título de la lección es obligatorio");
 
     setLoading(true);
 
@@ -38,6 +39,10 @@ export default function NewAIContentPage() {
     }
 
     const data = new FormData();
+    data.append("title", formData.title);
+
+    // Enviamos las opciones de IA como un string JSON que el backend parseará
+    data.append("options", JSON.stringify(options));
     data.append('title', formData.title);
     data.append('options', JSON.stringify(options));
 
@@ -51,9 +56,9 @@ export default function NewAIContentPage() {
       const token = localStorage.getItem('token');
       
       const res = await fetch(API_ROUTES.CONTENT.CREATE(id as string), {
-        method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}` 
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
         body: data, 
       });
@@ -63,7 +68,9 @@ export default function NewAIContentPage() {
         router.refresh();
       } else {
         const errorData = await res.json();
-        alert(`Error del servidor: ${errorData.message || 'No se pudo generar el contenido'}`);
+        alert(
+          `Error del servidor: ${errorData.message || "No se pudo generar el contenido"}`,
+        );
       }
     } catch (error) {
       console.error("Error crítico:", error);
@@ -96,7 +103,6 @@ export default function NewAIContentPage() {
           </header>
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            
             {/* 1. DATOS BÁSICOS (TÍTULO) */}
             <div className="bg-card p-6 lg:p-10 rounded-3xl border border-border shadow-sm">
               <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1">
@@ -122,7 +128,7 @@ export default function NewAIContentPage() {
                 >
                   <i className="bi bi-file-earmark-pdf text-xl"></i> Subir PDF
                 </button>
-                <button 
+                <button
                   type="button"
                   onClick={() => setSourceType('link')}
                   className={`flex-1 p-5 rounded-2xl border-2 transition-all font-bold text-sm flex items-center justify-center gap-3 cursor-pointer ${sourceType === 'link' ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-border bg-background text-muted-foreground hover:border-primary/30'}`}

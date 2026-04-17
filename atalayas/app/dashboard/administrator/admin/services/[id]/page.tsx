@@ -6,6 +6,7 @@ import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
 import mediumZoom from 'medium-zoom';
 import ContactCard from '@/components/ui/ContactCard';
+import Link from 'next/link';
 
 const inputClass = "w-full px-5 py-4 bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-2xl outline-none transition-all text-foreground text-sm font-medium placeholder:text-muted-foreground/50";
 

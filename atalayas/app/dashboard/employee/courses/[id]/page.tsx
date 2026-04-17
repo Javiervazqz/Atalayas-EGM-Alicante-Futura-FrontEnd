@@ -8,7 +8,8 @@ import { API_ROUTES } from '@/lib/utils';
 
 export default function CourseDetailPage() {
   const params = useParams();
-  const id = params.id; 
+  // Corregimos nombres y acceso (Next.js pone los parámetros directamente en params)
+  const courseId = params.id as string; 
 
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -17,16 +18,20 @@ export default function CourseDetailPage() {
 
   useEffect(() => {
     const fetchCourseData = async () => {
-      if (!id) return;
+      if (!courseId) return;
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const res = await fetch(API_ROUTES.COURSES.GET_BY_ID(id as string), {
+        
+        // Usamos courseId que es el parámetro que viene de la URL
+        const res = await fetch(API_ROUTES.COURSES.GET_BY_ID(courseId), {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!res.ok) throw new Error("Error en la respuesta");
         const data = await res.json();
+        
+        // Mapeo flexible según cómo responda tu backend
         const finalData = data.course || data.data || data;
         setCourse(finalData);
       } catch (err) { 
@@ -36,8 +41,9 @@ export default function CourseDetailPage() {
         setLoading(false); 
       }
     };
+
     fetchCourseData();
-  }, [id]);
+  }, [courseId]);
 
   const contentList = course?.Content || course?.content || [];
   
@@ -60,6 +66,12 @@ export default function CourseDetailPage() {
     </div>
   );
 
+  if (loading) return (
+    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    </div>
+  );
+
   return (
     <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role="EMPLOYEE" />
@@ -67,11 +79,11 @@ export default function CourseDetailPage() {
       <main className="flex-1 h-screen overflow-y-auto">
         <div className="max-w-6xl mx-auto px-6 lg:px-8 py-12">
           
-          {/* HEADER CON BUSCADOR */}
           <div className="mb-10">
             <Link href="/dashboard/employee/courses" className="text-secondary text-sm font-bold hover:opacity-80 transition-opacity mb-6 inline-flex items-center gap-2">
               <i className="bi bi-arrow-left"></i> Mis cursos
             </Link>
+
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
                 <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">

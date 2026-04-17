@@ -36,14 +36,16 @@ export default function ServiceDetail() {
     }
   }, [service?.mediaUrl]);
 
+  if (!service) return null;
+
+
+  const hasContactInfo = service.providerName || service.phone || service.email || service.address || service.schedule || service.price || service.externalUrl;
+
   if (loading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary" />
     </div>
   );
-  if (!service) return null;
-
-  const hasContactInfo = service.providerName || service.phone || service.email || service.address || service.schedule || service.price || service.externalUrl;
 
   return (
     <div className="flex min-h-screen bg-background font-sans">

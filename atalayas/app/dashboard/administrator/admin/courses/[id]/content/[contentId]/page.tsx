@@ -1,19 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Sidebar from '@/components/ui/Sidebar';
-import { API_ROUTES } from '@/lib/utils';
-import mediumZoom from 'medium-zoom';
-import Link from 'next/link';
+import { useState, useEffect, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Sidebar from "@/components/ui/Sidebar";
+import { API_ROUTES } from "@/lib/utils";
+import mediumZoom from "medium-zoom";
+import Link from "next/link";
 
+const appleFont =
+  "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
+const inputClass =
+  "w-full px-5 py-3.5 bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] focus:bg-white rounded-2xl outline-none transition-all text-[#424245] text-sm placeholder:text-[#c7c7cc]";
 const inputClass = "w-full px-5 py-4 bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-2xl outline-none transition-all text-foreground text-sm placeholder:text-muted-foreground";
 
 export default function AdminContentDetail() {
   const params = useParams();
   const router = useRouter();
   const zoomRef = useRef<HTMLImageElement>(null);
-  
+
   const audioRef = useRef<HTMLAudioElement>(null);
   const lastSavedSecond = useRef<number>(0);
 
@@ -24,7 +28,6 @@ export default function AdminContentDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<{ title?: string }>({});
 
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
@@ -32,28 +35,38 @@ export default function AdminContentDetail() {
   const [quizScore, setQuizScore] = useState(0);
 
   const [formData, setFormData] = useState({
-    title: '',
-    summary: '',
-    imageUrl: '',
-    url: '', 
+    title: "",
+    summary: "",
+    imageUrl: "",
+    url: "",
     quiz: null as any,
     podcast: null as any,
   });
+
+  const getQuizQuestions = (quizSource: any) => {
+    if (!quizSource) return [];
+    if (Array.isArray(quizSource)) return quizSource;
+    return quizSource.questions || [];
+  };
 
   useEffect(() => {
     const fetchContent = async () => {
       const courseId = params.id as string;
       const contentId = params.contentId as string;
-
       if (!courseId || !contentId) return;
 
       try {
-        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(courseId, contentId), {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
+        const res = await fetch(
+          API_ROUTES.CONTENT.GET_BY_ID(courseId, contentId),
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          },
+        );
         const data = await res.json();
         const finalData = data.content || data.data || data;
-        
+
         setContent(finalData);
         hydrateForm(finalData);
       } catch (error) {
@@ -67,10 +80,10 @@ export default function AdminContentDetail() {
 
   const hydrateForm = (c: any) => {
     setFormData({
-      title: c.title || '',
-      summary: c.summary || '',
-      imageUrl: c.imageUrl || '',
-      url: c.url || '',
+      title: c.title || "",
+      summary: c.summary || "",
+      imageUrl: c.imageUrl || "",
+      url: c.url || "",
       quiz: c.quiz || null,
       podcast: c.podcast || null,
     });
@@ -97,42 +110,76 @@ export default function AdminContentDetail() {
 
   const handleSave = async () => {
     setErrors({});
-    if (!formData.title.trim()) { setErrors({ title: 'El título es obligatorio' }); return; }
-    
+    if (!formData.title.trim()) {
+      setErrors({ title: "El título es obligatorio" });
+      return;
+    }
     setSaving(true);
     try {
-      const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify({ ...formData }),
-      });
+      const payload = {
+        ...formData,
+        quiz: Array.isArray(formData.quiz)
+          ? { questions: formData.quiz }
+          : formData.quiz,
+      };
+
+      const res = await fetch(
+        API_ROUTES.CONTENT.GET_BY_ID(
+          params.id as string,
+          params.contentId as string,
+        ),
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+
       if (res.ok) {
         const updated = await res.json();
-        setContent(updated.content || updated);
+        const finalUpdated = updated.content || updated;
+        setContent(finalUpdated);
         setIsEditing(false);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
       }
-    } finally { setSaving(false); }
+    } catch (error) {
+      console.error("❌ Error en la petición:", error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      if (res.ok) { 
-        router.push(`/dashboard/administrator/admin/courses/${params.id}`); 
-        router.refresh(); 
+      const res = await fetch(
+        API_ROUTES.CONTENT.GET_BY_ID(
+          params.id as string,
+          params.contentId as string,
+        ),
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        },
+      );
+      if (res.ok) {
+        router.push(`/dashboard/administrator/admin/courses/${params.id}`);
+        router.refresh();
       }
-    } finally { setDeleting(false); setShowDeleteModal(false); }
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
+    }
   };
 
-  const handleQuizSubmit = async () => {
+  const handleQuizSubmit = () => {
+    const questions = getQuizQuestions(content.quiz);
     let correctCount = 0;
-    content.quiz.forEach((q: any, index: number) => {
+    questions.forEach((q: any, index: number) => {
       if (quizAnswers[index] === q.correctAnswer) correctCount++;
     });
     setQuizScore(correctCount);
@@ -149,8 +196,15 @@ export default function AdminContentDetail() {
     }
   };
 
-  const set = (key: string, value: any) => setFormData(prev => ({ ...prev, [key]: value }));
+  const set = (key: string, value: any) =>
+    setFormData((prev) => ({ ...prev, [key]: value }));
 
+  if (loading)
+    return (
+      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
   if (loading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary" />
@@ -338,6 +392,14 @@ export default function AdminContentDetail() {
                             : <button onClick={() => { setQuizSubmitted(false); setQuizAnswers({}); }} className="mt-4 px-8 py-3 bg-card border border-border text-foreground rounded-xl font-bold hover:bg-muted transition-colors shadow-sm">Reintentar Test</button>
                           }
                         </div>
+                      ) : (
+                        <button
+                          onClick={handleQuizSubmit}
+                          disabled={Object.keys(quizAnswers).length === 0}
+                          className="w-full py-3.5 bg-blue-500 text-white rounded-2xl text-xs font-bold shadow-lg hover:bg-gray-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          Corregir Test
+                        </button>
                       )}
                     </div>
                   )}
@@ -401,11 +463,58 @@ export default function AdminContentDetail() {
                 )}
               </aside>
             )}
+
+            <div className="md:order-1">
+              {isEditing ? (
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm space-y-4">
+                  <p className="text-[10px] font-black uppercase text-gray-400">
+                    Editor de Contenido
+                  </p>
+                  <input
+                    value={formData.title}
+                    onChange={(e) => set("title", e.target.value)}
+                    placeholder="Título..."
+                    className={inputClass}
+                  />
+                  <textarea
+                    rows={10}
+                    value={formData.summary}
+                    onChange={(e) => set("summary", e.target.value)}
+                    placeholder="Cuerpo..."
+                    className={`${inputClass} resize-none`}
+                  />
+                  <input
+                    value={formData.imageUrl}
+                    onChange={(e) => set("imageUrl", e.target.value)}
+                    placeholder="URL Imagen..."
+                    className={inputClass}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="prose prose-gray max-w-none">
+                    <p className="text-base md:text-lg leading-relaxed text-[#424245] whitespace-pre-wrap font-medium">
+                      {content.summary || "Sin contenido."}
+                    </p>
+                  </div>
+
+                  {content.imageUrl && (
+                    <div className="overflow-hidden rounded-3xl border border-gray-100 shadow-md">
+                      <img
+                        ref={zoomRef}
+                        src={content.imageUrl}
+                        alt="Image"
+                        className="w-full h-auto cursor-zoom-in"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </main>
 
-      {/* MODAL ELIMINAR */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowDeleteModal(false)}>
           <div className="bg-card rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl border border-border animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
@@ -427,6 +536,23 @@ export default function AdminContentDetail() {
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        .content-layout {
+          display: grid;
+          grid-template-columns: 1fr 380px;
+          gap: 40px;
+        }
+        @media (max-width: 1024px) {
+          .content-layout {
+            grid-template-columns: 1fr;
+            gap: 24px;
+          }
+          .action-box {
+            order: -1;
+          }
+        }
+      `}</style>
     </div>
   );
 }

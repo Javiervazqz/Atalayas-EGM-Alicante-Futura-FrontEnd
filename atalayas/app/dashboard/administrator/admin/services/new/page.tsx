@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -10,10 +10,17 @@ export default function NewCompanyService() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ title?: string }>({});
   const [formData, setFormData] = useState({
-    title: '', description: '', mediaUrl: '',
-    isPublic: false, 
-    providerName: '', phone: '', email: '',
-    address: '', schedule: '', externalUrl: '', price: '',
+    title: "",
+    description: "",
+    mediaUrl: "",
+    isPublic: false, // Siempre privado — solo para su empresa
+    providerName: "",
+    phone: "",
+    email: "",
+    address: "",
+    schedule: "",
+    externalUrl: "",
+    price: "",
   });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -21,7 +28,7 @@ export default function NewCompanyService() {
     setErrors({});
 
     if (!formData.title.trim()) {
-      setErrors({ title: 'El título es necesario para crear el servicio' });
+      setErrors({ title: "El título es necesario para crear el servicio" });
       return;
     }
 
@@ -30,10 +37,10 @@ export default function NewCompanyService() {
 
     try {
       const res = await fetch(API_ROUTES.SERVICES.CREATE, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
           title: formData.title,
@@ -51,14 +58,14 @@ export default function NewCompanyService() {
       });
 
       if (res.ok) {
-        router.push('/dashboard/administrator/admin/services');
+        router.push("/dashboard/administrator/admin/services");
         router.refresh();
       } else {
         const data = await res.json();
-        alert(`Error: ${data.message || 'No se pudo crear el servicio'}`);
+        alert(`Error: ${data.message || "No se pudo crear el servicio"}`);
       }
     } catch {
-      alert('No se pudo conectar con el servidor.');
+      alert("No se pudo conectar con el servidor.");
     } finally {
       setLoading(false);
     }
@@ -74,7 +81,6 @@ export default function NewCompanyService() {
 
       <main className="flex-1 p-6 lg:p-12 overflow-y-auto">
         <div className="max-w-2xl mx-auto">
-
           <header className="mb-10">
             <button onClick={() => router.back()}
               className="text-secondary font-bold text-sm mb-6 flex items-center gap-1 hover:opacity-80 transition-opacity">
@@ -94,7 +100,6 @@ export default function NewCompanyService() {
           </div>
 
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
-
             {/* ── SECCIÓN 1: INFO PRINCIPAL ──────────────────────────── */}
             <section className="bg-card p-6 lg:p-10 rounded-3xl border border-border shadow-sm space-y-6">
               <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground">
@@ -213,7 +218,6 @@ export default function NewCompanyService() {
                 {loading ? <><i className="bi bi-arrow-repeat animate-spin text-xl"></i> Publicando...</> : 'Publicar Servicio'}
               </button>
             </div>
-
           </form>
         </div>
       </main>

@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/ui/Sidebar";
 import { API_ROUTES } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function EmployeeDashboard() {
   const [onboardingData, setOnboardingData] = useState<any[]>([]);
@@ -18,9 +19,9 @@ export default function EmployeeDashboard() {
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
       setUser(storedUser);
 
-      const referenceDateRaw = storedUser.firstLoginAt
+      const referenceDateRaw = storedUser.firstLoginAt;
 
-      if (referenceDateRaw) {
+      if (referenceDateRaw || storedUser.createdAt) {
         const referenceDate = new Date(storedUser.createdAt);
         const today = new Date();
         const start = new Date(
@@ -53,13 +54,23 @@ export default function EmployeeDashboard() {
 
         const dataCourses = await resCourses.json();
         const dataOnboarding = await resOnboarding.json();
+        const sortedDataCourses = dataCourses.sort((a: any, b: any) => {
+          // Quitamos espacios en blanco al principio/final para comparar limpio
+          const titleA = a.title.trim().toLowerCase();
+          const titleB = b.title.trim().toLowerCase();
 
-        setCourses(Array.isArray(dataCourses) ? dataCourses : []);
+          return titleA.localeCompare(titleB, undefined, {
+            numeric: true,
+            sensitivity: "base",
+          });
+        });
+
+        setCourses(Array.isArray(sortedDataCourses) ? dataCourses : []);
         setOnboardingData(Array.isArray(dataOnboarding) ? dataOnboarding : []);
       } catch (err) {
         console.error("Error cargando dashboard:", err);
       } finally {
-        setLoading(false);
+        setTimeout(() => setLoading(false), 800);
       }
     };
 
@@ -76,9 +87,7 @@ export default function EmployeeDashboard() {
     const updatedData = onboardingData.map((step) => ({
       ...step,
       onboardingTasks: step.onboardingTasks.map((task: any) =>
-        task.id === taskId
-          ? { ...task, userProgress: [{ done: newStatus }] }
-          : task,
+        task.id === taskId ? { ...task, userProgress: [{ done: newStatus }] } : task,
       ),
     }));
     setOnboardingData(updatedData);
@@ -96,10 +105,7 @@ export default function EmployeeDashboard() {
 
       if (newStatus) {
         const currentStep = updatedData.find((s) => s.day === stepDay);
-        const isNowFinished = currentStep.onboardingTasks.every(
-          (t: any) => t.userProgress?.[0]?.done,
-        );
-
+        const isNowFinished = currentStep.onboardingTasks.every((t: any) => t.userProgress?.[0]?.done);
         if (isNowFinished) {
           setShowSuccess(true);
           setTimeout(() => setShowSuccess(false), 2000);
@@ -109,6 +115,23 @@ export default function EmployeeDashboard() {
       console.error("Error al actualizar tarea:", err);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
+        <Sidebar role="EMPLOYEE" />
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="relative flex items-center justify-center">
+            <div className="w-16 h-16 border-4 border-[#005596]/10 border-t-[#005596] rounded-full animate-spin"></div>
+            <div className="absolute w-4 h-4 bg-[#d9ff00] rounded-full shadow-[0_0_15px_rgba(217,255,0,0.8)]"></div>
+          </div>
+          <p className="mt-6 text-[#005596] font-black text-xs uppercase tracking-[0.3em] animate-pulse">
+            Cargando tus datos...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const firstName = user?.name || user?.email?.split("@")[0] || "Empleado";
 
@@ -178,7 +201,9 @@ export default function EmployeeDashboard() {
 
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         <div className="flex-1 h-screen overflow-y-auto px-6 md:px-12 py-10 no-scrollbar">
-          <header className="mb-10 flex items-center justify-between">
+          
+          {/* BANNER DE BIENVENIDA COMPACTO */}
+          <header className="bg-white rounded-[2rem] p-8 mb-10 border border-gray-100 shadow-sm flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-black text-foreground tracking-tight">
                 ¡Hola, {firstName}!
@@ -225,10 +250,7 @@ export default function EmployeeDashboard() {
             )}
 
             {sortedSteps.map((step) => {
-              const isStepDone = step.onboardingTasks?.every(
-                (t: any) => t.userProgress?.[0]?.done,
-              );
-
+              const isStepDone = step.onboardingTasks?.every((t: any) => t.userProgress?.[0]?.done);
               return (
                 <div
                   key={step.id}
@@ -267,6 +289,19 @@ export default function EmployeeDashboard() {
                   <div className="grid gap-3">
                     {step.onboardingTasks?.map((task: any) => {
                       const isDone = task.userProgress?.[0]?.done || false;
+                      const getCorrectUrl = () => {
+                        if (!task.linkAction) return "#";
+                        const urlParts = task.linkAction.split('?');
+                        if (urlParts.length > 1) {
+                          const params = new URLSearchParams(urlParts[1]);
+                          const cId = params.get('courseId');
+                          const contId = params.get('contentId');
+                          if (cId && contId) return `/dashboard/employee/courses/${cId}/content/${contId}?fromTask=${task.id}`;
+                          if (cId) return `/dashboard/employee/courses/${cId}?fromTask=${task.id}`;
+                        }
+                        return `${task.linkAction}${task.linkAction.includes('?') ? '&' : '?'}fromTask=${task.id}`;
+                      };
+
                       return (
                         <div
                           key={task.id}

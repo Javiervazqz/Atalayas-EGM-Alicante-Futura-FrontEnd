@@ -4,46 +4,79 @@ import { useEffect, useState } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSearchParams } from 'next/navigation';
 
-interface Course {
-    id: string;
-    title: string;
-    isPublic: boolean;
-    category: string;
-}
 
 export default function EmployeeCoursesPage() {
-    const [courses, setCourses] = useState<Course[]>([]);
+    const [courses, setCourses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'BASICO' | 'ESPECIALIZADO'>('BASICO');
-    const [activeMenu, setActiveMenu] = useState<string | null>(null);
-
-    const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+    const [selectedTab, setSelectedTab] = useState<'TODOS' | 'BASICO' | 'ESPECIALIZADO'>('TODOS');
+    const [userName, setUserName] = useState('');
+      const searchParams = useSearchParams();
+  const fromTaskId = searchParams.get('fromTask');
 
     useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                const user = JSON.parse(storedUser);
+                setUserName(user.name?.split(' ')[0] || 'Usuario');
+            } catch (err) { console.error(err); }
+        }
+
         const fetchCourses = async () => {
             try {
-                const headers = { Authorization: `Bearer ${getToken()}` };
-                const res = await fetch(API_ROUTES.COURSES.GET_ALL, { headers });
+                const res = await fetch(API_ROUTES.COURSES.GET_ALL, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                });
                 const data = await res.json();
-                const finalData = Array.isArray(data) ? data : (data.courses || []);
-                setCourses(finalData);
-            } catch (err) {
-                console.error("Error cargando cursos:", err);
-            } finally {
-                setLoading(false);
-            }
+                const sortedDataCourses = data.sort((a: any, b: any) => {
+            // Quitamos espacios en blanco al principio/final para comparar limpio
+            const titleA = a.title.trim().toLowerCase();
+            const titleB = b.title.trim().toLowerCase();
+
+            return titleA.localeCompare(titleB, undefined, {
+              numeric: true,
+              sensitivity: "base",
+            });
+          });
+                setCourses(Array.isArray(sortedDataCourses) ? data : (data.courses || []));
+            } catch (err) { console.error(err); } 
+            finally { setLoading(false); }
         };
         fetchCourses();
     }, []);
 
-    const toggleMenu = (id: string) => setActiveMenu(activeMenu === id ? null : id);
+    useEffect(() => {
+    const autoConfirmTask = async () => {
+      if (fromTaskId) {
+        try {
+          const token = localStorage.getItem("token");
+          await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ taskId: fromTaskId, done: true }),
+          });
+          console.log("Tarea de onboarding completada automáticamente");
+        } catch (err) {
+          console.error("Error al autocompletar:", err);
+        }
+      }
+    };
 
-    const filtered = courses.filter(c =>
-        activeTab === 'BASICO'
-            ? (c.category?.toUpperCase() !== 'ESPECIALIZADO')
-            : (c.category?.toUpperCase() === 'ESPECIALIZADO')
-    );
+    autoConfirmTask();
+  }, [fromTaskId]);
+
+    const filtered = courses.filter(c => {
+        if (selectedTab === 'TODOS') return true;
+        return selectedTab === 'BASICO' 
+            ? c.category?.toUpperCase() !== 'ESPECIALIZADO'
+            : c.category?.toUpperCase() === 'ESPECIALIZADO';
+    });
 
     return (
         <div className="flex min-h-screen bg-background font-sans">
@@ -63,11 +96,20 @@ export default function EmployeeCoursesPage() {
                             onClick={() => setActiveTab(tab as any)}
                             className={`pb-4 text-sm font-semibold cursor-pointer transition-all whitespace-nowrap ${activeTab === tab ? 'border-b-2 border-secondary text-secondary' : 'text-muted-foreground hover:text-foreground'
                                 }`}
-                        >
-                            {tab === 'BASICO' ? 'Onboarding' : 'Especialización'}
-                        </button>
-                    ))}
-                </div>
+                            >
+                                <span className="relative z-10">
+                                    {tab === 'TODOS' ? 'Todos' : tab === 'BASICO' ? 'Onboarding' : 'Especialización'}
+                                </span>
+                                {selectedTab === tab && (
+                                    <motion.div 
+                                        layoutId="activeTabCourses"
+                                        className="absolute inset-0 bg-blue-600 rounded-full"
+                                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                                    />
+                                )}
+                            </button>
+                        ))}
+                    </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {loading ? [1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-card rounded-3xl animate-pulse border border-border" />)
@@ -120,9 +162,6 @@ export default function EmployeeCoursesPage() {
                         ))}
                 </div>
             </main>
-
-            {/* Backdrop para cerrar el menú */}
-            {activeMenu && <div className="fixed inset-0 z-0" onClick={() => setActiveMenu(null)} />}
         </div>
     );
 }

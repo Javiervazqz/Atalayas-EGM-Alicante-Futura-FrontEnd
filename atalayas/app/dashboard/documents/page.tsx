@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+
 
 export default function DocumentsExplorerPage() {
   const [documents, setDocuments] = useState<any[]>([]);
@@ -13,6 +15,11 @@ export default function DocumentsExplorerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const searchParams = useSearchParams();
+  const fromTaskId = searchParams.get('fromTask');
+
+
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -44,6 +51,52 @@ export default function DocumentsExplorerPage() {
 
     fetchDocuments();
   }, []);
+
+  useEffect(() => {
+  const autoConfirmTask = async () => {
+    if (fromTaskId) {
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ taskId: fromTaskId, done: true }),
+        });
+        console.log("Tarea de onboarding completada automáticamente");
+      } catch (err) {
+        console.error("Error al autocompletar:", err);
+      }
+    }
+  };
+
+  autoConfirmTask();
+}, [fromTaskId]);
+
+  useEffect(() => {
+  const autoConfirmTask = async () => {
+    if (fromTaskId) {
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ taskId: fromTaskId, done: true }),
+        });
+        console.log("Tarea de onboarding completada automáticamente");
+      } catch (err) {
+        console.error("Error al autocompletar:", err);
+      }
+    }
+  };
+
+  autoConfirmTask();
+}, [fromTaskId]);
 
   const handleDelete = async (docId: string) => {
     if (!window.confirm("¿Estás seguro de que quieres eliminar este documento? Esta acción no se puede deshacer.")) {
