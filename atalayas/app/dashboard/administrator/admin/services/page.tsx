@@ -105,7 +105,7 @@ const searchedServices = services.filter(s =>
               <button
                 key={type}
                 onClick={() => setFilter(type as any)}
-                className={`shrink-0 px-6 py-2 rounded-full text-sm font-bold transition-all ${
+                className={`shrink-0 px-6 py-2 rounded-full text-sm font-bold transition-all cursor-pointer ${
                   filter === type ? 'bg-[#1d1d1f] text-white' : 'bg-white text-[#86868b] border border-gray-200'
                 }`}
               >
@@ -121,7 +121,6 @@ const searchedServices = services.filter(s =>
             ))}
           </div>
 
-          {/* LISTA MODO TABLA (ESTILO APPLE/STRIPE) */}
           <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">

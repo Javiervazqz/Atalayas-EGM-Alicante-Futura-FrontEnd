@@ -12,8 +12,6 @@ export default function ManageCourses() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [filter, setFilter] = useState<'ALL' | 'BASICO' | 'ESPECIALIZADO'>('ALL');
-
-    // ESTADO PARA EL MODAL DE ELIMINACIÓN
     const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
 
     const router = useRouter();
@@ -31,7 +29,15 @@ export default function ManageCourses() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
-            setCourses(Array.isArray(data) ? data : []);
+            const rawCourses = Array.isArray(data) ? data : (data.courses || []);
+
+            const sortedDataCourses = rawCourses.sort((a: any, b: any) => {
+                    const titleA = a.title.trim().toLowerCase();
+                    const titleB = b.title.trim().toLowerCase();
+                    return titleA.localeCompare(titleB, undefined, { numeric: true, sensitivity: "base" });
+                });
+
+                setCourses(sortedDataCourses);
         } catch (err) {
             console.error("Error al obtener cursos:", err);
         } finally {
@@ -41,10 +47,9 @@ export default function ManageCourses() {
 
     const confirmDelete = async () => {
         if (!courseToDelete) return;
-
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`${API_ROUTES.COURSES.GET_ALL}/${courseToDelete}`, {
+            const res = await fetch(`${API_ROUTES.COURSES.GET_ALL.replace(/\/$/, "")}/${courseToDelete}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -78,78 +83,100 @@ export default function ManageCourses() {
             <main className="flex-1 h-screen overflow-y-auto">
                 <div className="max-w-7xl mx-auto px-8 py-10">
 
+                    <Link
+                        href="/dashboard/administrator/admin/courses"
+                        className="group text-[#0071e3] text-sm font-semibold hover:underline mb-6 inline-flex items-center gap-2 transition-all"
+                        >
+                        <i className="bi bi-arrow-left-circle-fill transition-transform duration-300 group-hover:-translate-x-1.5"></i>
+                        <span>Volver al panel</span>
+                        </Link>
+
                     {/* HEADER */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                         <div>
-                            <h1 className="text-3xl font-bold text-[#1d1d1f] tracking-tight">Vista de los Cursos</h1>
-                            <p className="text-[#86868b] text-sm">Administra el contenido privado de tu empresa.</p>
+                            <h1 className="text-3xl font-bold text-[#1d1d1f] tracking-tight">Gestión de Contenidos</h1>
+                            <p className="text-[#86868b] text-sm">Organiza, edita o elimina los cursos privados de tu empresa.</p>
                         </div>
                         <div className="flex items-center gap-3">
                             <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar curso..." />
                             <Link
                                 href="/dashboard/administrator/admin/courses/manage/new"
-                                className="bg-[#0071e3] text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-[#0077ed] transition-all shadow-sm whitespace-nowrap"
+                                className="bg-[#0071e3] text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-[#0077ed] transition-all shadow-md whitespace-nowrap active:scale-95"
                             >
-                                Nuevo curso
+                                Nuevo Curso
                             </Link>
                         </div>
                     </div>
 
-                    {/* FILTROS */}
-                    <div className="flex items-center gap-3 mb-10">
+                    {/* FILTROS TIPO APPLE */}
+                    <div className="flex items-center gap-2 mb-8 bg-gray-200/50 p-1 rounded-2xl w-fit">
                         {['ALL', 'BASICO', 'ESPECIALIZADO'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setFilter(tab as any)}
-                                className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${filter === tab ? 'bg-[#1d1d1f] text-white' : 'bg-white text-[#86868b] border border-gray-200 cursor-pointer hover:bg-[#1d1d1f]'
-                                    }`}
+                                className={`px-6 py-2 rounded-xl text-xs font-black transition-all uppercase tracking-wider ${filter === tab 
+                                    ? 'bg-white text-[#1d1d1f] shadow-sm' 
+                                    : 'text-[#86868b] hover:text-[#1d1d1f] cursor-pointer'
+                                }`}
                             >
                                 {tab === 'ALL' ? 'Todos' : tab === 'BASICO' ? 'Onboarding' : 'Especialización'}
                             </button>
                         ))}
                     </div>
 
-                    {/* TABLA */}
-                    <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
-                        <table className="w-full text-left">
+                    {/* TABLA DE CURSOS */}
+                    <div className="bg-white rounded-[2.5rem] border border-gray-200 overflow-hidden shadow-sm">
+                        <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-[#fbfbfd] border-b border-gray-100">
-                                    <th className="px-8 py-5 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">Nombre</th>
-                                    {/* CENTRADO DE CABECERA */}
-                                    <th className="px-8 py-5 text-[11px] font-bold text-[#86868b] uppercase tracking-widest text-center">Categoría</th>
-                                    <th className="px-8 py-5 text-[11px] font-bold text-[#86868b] uppercase tracking-widest text-right">Acciones</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-[#86868b] uppercase tracking-[0.15em]">Vista Previa</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-[#86868b] uppercase tracking-[0.15em]">Información del Curso</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-[#86868b] uppercase tracking-[0.15em] text-center">Categoría</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-[#86868b] uppercase tracking-[0.15em] text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {filtered.map((course) => (
+                                {!loading && filtered.map((course) => (
                                     <tr key={course.id} className="group hover:bg-[#fbfbfd] transition-colors">
-                                        <td className="px-8 py-5 font-semibold text-[#1d1d1f]">{course.title}</td>
-
-                                        {/* COLUMNA CENTRADA */}
-                                        <td className="px-8 py-5">
-                                            <div className="flex justify-center">
-                                                {course.category?.toUpperCase() === 'ESPECIALIZADO' ? (
-                                                    <span className="text-[10px] font-black px-4 py-1.5 rounded-full bg-purple-50 text-purple-600 uppercase tracking-tight whitespace-nowrap">
-                                                        Especialización
-                                                    </span>
+                                        <td className="px-8 py-4">
+                                            <div className="w-20 h-12 rounded-lg bg-gray-100 overflow-hidden border border-gray-100">
+                                                {course.fileUrl ? (
+                                                    <img src={course.fileUrl} alt="" className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <span className="text-[10px] font-black px-4 py-1.5 rounded-full bg-blue-50 text-blue-600 uppercase tracking-tight whitespace-nowrap">
-                                                        Onboarding
-                                                    </span>
+                                                    <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                                                        <i className="bi bi-image text-gray-300"></i>
+                                                    </div>
                                                 )}
                                             </div>
                                         </td>
-
-                                        <td className="px-8 py-5 text-right">
-                                            <div className="flex justify-end gap-3">
-                                                <Link href={`/dashboard/administrator/admin/courses/manage/${course.id}`} className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-lg">
-                                                    <i className="bi bi-pencil-square text-blue-500 group-hover:scale-110 transition-transform block"></i>
+                                        <td className="px-8 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-[#1d1d1f] text-base">{course.title}</span>
+                                                <span className="text-[11px] text-[#86868b]">ID: {course.id.substring(0,8)}...</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-4 text-center">
+                                            <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-tighter ${
+                                                course.category?.toUpperCase() === 'ESPECIALIZADO' 
+                                                ? 'bg-purple-50 text-purple-600 border border-purple-100' 
+                                                : 'bg-blue-50 text-blue-600 border border-blue-100'
+                                            }`}>
+                                                {course.category === 'ESPECIALIZADO' ? 'Especialización' : 'Onboarding'}
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-4 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <Link 
+                                                    href={`/dashboard/administrator/admin/courses/manage/${course.id}`} 
+                                                    className="p-2.5 bg-[#f5f5f7] hover:bg-blue-50 text-gray-600 hover:text-[#0071e3] rounded-xl transition-all"
+                                                >
+                                                    <i className="bi bi-pencil-square"></i>
                                                 </Link>
                                                 <button
                                                     onClick={() => setCourseToDelete(course.id)}
-                                                    className="p-2 hover:bg-red-50 rounded-lg transition-colors cursor-pointer text-lg"
+                                                    className="p-2.5 bg-[#f5f5f7] hover:bg-red-50 text-gray-600 hover:text-red-500 rounded-xl transition-all cursor-pointer"
                                                 >
-                                                    <i className="bi bi-trash-fill text-red-400 group-hover:text-red-600 block transition-colors"></i>
+                                                    <i className="bi bi-trash3-fill"></i>
                                                 </button>
                                             </div>
                                         </td>
@@ -157,35 +184,34 @@ export default function ManageCourses() {
                                 ))}
                             </tbody>
                         </table>
-
                         {filtered.length === 0 && !loading && (
-                            <div className="py-20 text-center">
-                                <p className="text-[#86868b] font-medium">No se encontraron cursos en esta categoría.</p>
+                            <div className="py-24 text-center">
+                                <p className="text-[#86868b] font-medium">No hay cursos disponibles.</p>
                             </div>
                         )}
                     </div>
                 </div>
             </main>
 
-            {/* MODAL DE CONFIRMACIÓN */}
+            {/* MODAL DE ELIMINACIÓN */}
             {courseToDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-[#1d1d1f]/20 backdrop-blur-md" onClick={() => setCourseToDelete(null)} />
+                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl relative animate-in fade-in zoom-in duration-200">
                         <div className="text-center">
-                            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                                <i className="bi bi-exclamation-triangle-fill text-red-500"></i>
+                            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-5 text-2xl">
+                                <i className="bi bi-trash3-fill"></i>
                             </div>
-                            <h3 className="text-xl font-bold text-[#1d1d1f] mb-2">¿Eliminar curso?</h3>
-                            <p className="text-[#86868b] text-sm mb-8">
-                                Esta acción no se puede deshacer. El curso se borrará permanentemente.
+                            <h3 className="text-xl font-bold text-[#1d1d1f] mb-2">¿Eliminar este curso?</h3>
+                            <p className="text-[#86868b] text-sm mb-8 leading-relaxed">
+                                Esta acción es irreversible y eliminará todo el progreso asociado.
                             </p>
-
-                            <div className="flex flex-col gap-3">
+                            <div className="space-y-3">
                                 <button
                                     onClick={confirmDelete}
                                     className="w-full py-4 bg-red-500 text-white rounded-2xl font-bold hover:bg-red-600 transition-colors cursor-pointer"
                                 >
-                                    Eliminar definitivamente
+                                    Eliminar ahora
                                 </button>
                                 <button
                                     onClick={() => setCourseToDelete(null)}

@@ -101,7 +101,7 @@ export default function LoginPage() {
                 Iniciar sesión
               </h1>
               <p style={{ color: '#86868b', fontSize: '14px', fontWeight: 400 }}>
-                Polígono Industrial Alicante Futura
+                Área Empresarial Atalayas
               </p>
             </div>
 
@@ -203,7 +203,7 @@ export default function LoginPage() {
 
             <div className="text-center mt-6">
               <a
-                href="#"
+                href="/forgot-password"
                 style={{ color: '#0071e3', fontSize: '13px', textDecoration: 'none' }}
               >
                 ¿Olvidaste tu contraseña?

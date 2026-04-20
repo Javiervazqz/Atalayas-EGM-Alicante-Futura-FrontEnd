@@ -1,22 +1,27 @@
-// components/ui/CompanyDropdown.tsx
 'use client';
 
-import { useState } from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 interface CompanyDropdownProps {
   companies: string[];
   selected: string;
   onChange: (company: string) => void;
+  defaultLabel?: string; // Nueva prop: "Todas", "Público", etc.
 }
 
-export default function CompanyDropdown({ companies, selected, onChange }: CompanyDropdownProps) {
+export default function CompanyDropdown({ 
+  companies, 
+  selected, 
+  onChange, 
+  defaultLabel = "Público" // Por defecto será Público
+}: CompanyDropdownProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  const filtered = companies.filter(c =>{
-   if(c==='EGM Atalayas') return false;
-   return c === 'PUBLIC' || c.toLowerCase().includes(search.toLowerCase())
+  const filtered = companies.filter(c => {
+    if (c === 'Atalayas EGM') return false;
+    // Buscamos por el ID interno ('ALL' o 'PUBLIC') o por el nombre
+    return c === 'ALL' || c === 'PUBLIC' || c.toLowerCase().includes(search.toLowerCase());
   });
 
   useEffect(() => {
@@ -27,6 +32,13 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
     return () => window.removeEventListener('click', closeDropdown);
   }, [open]);
 
+  // Función para renderizar el texto bonito
+  const renderLabel = (value: string) => {
+    if (value === 'ALL') return `🏢 ${defaultLabel}`;
+    if (value === 'PUBLIC') return `🌐 ${defaultLabel}`;
+    return `🏭 ${value}`;
+  };
+
   return (
     <div className="relative mb-8">
       <button
@@ -34,7 +46,7 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
         onClick={() => setOpen(!open)}
         className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-5 py-3 text-sm font-semibold text-[#1d1d1f] hover:border-gray-400 transition-all w-64"
       >
-        <span>{selected === 'PUBLIC' ? '🌐 Público' : `🏭 ${selected}`}</span>
+        <span>{renderLabel(selected)}</span>
         <span className="ml-auto text-gray-400">{open ? '▲' : '▼'}</span>
       </button>
 
@@ -44,13 +56,13 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar empresa..."
+              placeholder="Buscar..."
               className="w-full text-sm outline-none px-3 py-2 bg-[#f5f5f7] rounded-xl"
               autoFocus
             />
           </div>
           <div className="max-h-64 overflow-y-auto">
-            {filtered.slice(0,10).map((company) => (
+            {filtered.map((company) => (
               <button
                 key={company}
                 onClick={() => { onChange(company); setOpen(false); setSearch(''); }}
@@ -58,7 +70,7 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
                   selected === company ? 'font-bold text-[#0071e3]' : 'text-[#1d1d1f]'
                 }`}
               >
-                {company === 'PUBLIC' ? '🌐 Público' : `🏭 ${company}`}
+                {renderLabel(company)}
               </button>
             ))}
           </div>

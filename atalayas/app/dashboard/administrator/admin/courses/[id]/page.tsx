@@ -178,19 +178,10 @@ const executeDelete = async () => {
                         <td className="px-6 py-5 text-right">
                           <div className="flex items-center justify-end gap-4">
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(`/dashboard/administrator/admin/courses/${id}/content/${content.id}`);
-                              }}
-                              className="text-[#0071e3] text-xs font-bold hover:underline cursor-pointer"
-                            >
-                              Ver
-                            </button>
-                            <button
                               onClick={(e) => confirmDelete(e, content.id)}
-                              className="text-red-500 text-xs font-bold hover:underline cursor-pointer"
+                              className="p-2.5 hover:bg-red-50 text-gray-600 hover:text-red-500 rounded-xl transition-all cursor-pointer"
                             >
-                              Eliminar
+                              <i className="bi bi-trash3-fill"></i>
                             </button>
                           </div>
                         </td>
