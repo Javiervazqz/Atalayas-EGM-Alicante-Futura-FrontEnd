@@ -6,6 +6,7 @@ import Sidebar from "@/components/ui/Sidebar";
 import { API_ROUTES } from "@/lib/utils";
 import mediumZoom from "medium-zoom";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 
 const appleFont =
   "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
@@ -19,7 +20,7 @@ export default function EmployeeContentDetail() {
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // --- NUEVO ESTADO PARA EL MODAL ---
+  // Estados del Quiz
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -44,11 +45,10 @@ export default function EmployeeContentDetail() {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
-          },
+          }
         );
         const data = await res.json();
         const finalData = data.content || data.data || data;
-
         setContent(finalData);
       } catch (error) {
         console.error("❌ Error cargando el contenido:", error);
@@ -60,16 +60,18 @@ export default function EmployeeContentDetail() {
   }, [params.contentId, params.id]);
 
   useEffect(() => {
-    if (zoomRef.current && content?.imageUrl) {
-      const zoom = mediumZoom(zoomRef.current, {
-        background: "rgba(0,0,0,0.8)",
-        margin: 24,
-      });
-      return () => {
-        zoom.detach();
-      };
-    }
-  }, [content?.imageUrl]);
+  if (zoomRef.current && content?.imageUrl) {
+    const zoom = mediumZoom(zoomRef.current, {
+      background: "rgba(0,0,0,0.8)",
+      margin: 24,
+    });
+    
+    // Cambia esto:
+    return () => {
+      zoom.detach(); // Esto ahora es una sentencia, no un retorno directo
+    };
+  }
+}, [content?.imageUrl]);
 
   const handleQuizSubmit = () => {
     const questions = getQuizQuestions(content.quiz);
@@ -87,16 +89,15 @@ export default function EmployeeContentDetail() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     );
+
   if (!content) return null;
 
   return (
-    <div
-      className="flex flex-col md:flex-row min-h-screen bg-[#f5f5f7]"
-      style={{ fontFamily: appleFont }}
-    >
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#f5f5f7]" style={{ fontFamily: appleFont }}>
       <Sidebar role="EMPLOYEE" />
 
       <main className="flex-1 h-screen overflow-y-auto w-full">
+        {/* HEADER */}
         <div className="bg-white border-b border-black/5 py-6 md:py-8">
           <div className="max-w-5xl mx-auto px-6">
             <Link
@@ -109,16 +110,16 @@ export default function EmployeeContentDetail() {
 
             <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
               <div className="w-14 h-14 md:w-16 md:h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl shrink-0">
-                <i className="bi bi-book-fill text-blue-400"></i>
+                <i className="bi bi-book-half text-blue-500"></i>
               </div>
 
               <div className="flex-1">
-                <h1 className="text-xl md:text-3xl font-extrabold text-[#1d1d1f] leading-tight">
-                  {content?.title}
+                <h1 className="text-xl md:text-3xl font-extrabold text-[#1d1d1f] leading-tight text-balance">
+                  {content.title}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="inline-block mt-2 text-[12px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
-                    Unidad de aprendizaje
+                    Unidad de Aprendizaje
                   </span>
                 </div>
               </div>
@@ -128,22 +129,16 @@ export default function EmployeeContentDetail() {
 
         <div className="max-w-5xl mx-auto px-6 py-8">
           <div className="content-layout">
+            
+            {/* ASIDE DERECHO (RECURSOS) */}
             <aside className="action-box space-y-4 md:order-2">
               {content.podcast?.url && (
                 <div className="bg-[#1d1d1f] p-5 rounded-[2rem] text-white shadow-xl">
-                  <span className="relative flex h-2 w-2 mb-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                  </span>
-                  <p className="text-[9px] font-black uppercase opacity-50 mb-2 flex items-center gap-1">
-                    <i className="bi bi-mic-fill"></i> Podcast de la lección
+                  <p className="text-[9px] font-black uppercase opacity-50 mb-3 tracking-widest flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
+                    Audio Lección
                   </p>
-                  <audio
-                    ref={audioRef}
-                    controls
-                    className="w-full h-8 invert opacity-80"
-                    src={content.podcast.url}
-                  />
+                  <audio ref={audioRef} controls className="w-full h-8 invert opacity-80" src={content.podcast.url} />
                 </div>
               )}
 
@@ -161,42 +156,39 @@ export default function EmployeeContentDetail() {
                       <p className="text-sm font-bold text-gray-800">Realizar Test</p>
                     </div>
                   </div>
-                  <i className="bi bi-caret-down-square-fill text-gray-300 group-hover:text-orange-500 transition-colors"></i>
+                  <i className="bi bi-chevron-right text-gray-300 group-hover:text-orange-500 transition-colors"></i>
                 </button>
               )}
 
               {content.url && !content.url.includes(".mp3") && (
-                <div className="bg-white p-4 rounded-3xl border border-black/5 text-center">
-                  <p className="text-[9px] font-bold text-gray-400 uppercase mb-3">
-                    Material Adjunto
-                  </p>
+                <div className="bg-white p-5 rounded-[2rem] border border-black/5 text-center shadow-sm">
+                  <p className="text-[9px] font-black text-gray-400 uppercase mb-3 tracking-widest">Recursos</p>
                   <a
                     href={content.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full py-2.5 bg-[#f5f5f7] text-black rounded-xl text-[11px] font-bold hover:bg-gray-200 transition-all"
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-[#f5f5f7] text-black rounded-2xl text-[11px] font-bold hover:bg-gray-200 transition-all border border-gray-100"
                   >
-                    <i className="bi bi-file-earmark-pdf"></i> Abrir Documento
+                    <i className="bi bi-file-earmark-pdf-fill text-red-500"></i> Descargar Material
                   </a>
                 </div>
               )}
             </aside>
 
+            {/* CUERPO PRINCIPAL (CONTENIDO) */}
             <div className="md:order-1">
-              <div className="space-y-6">
-                <div className="prose prose-gray max-w-none">
-                  <p className="text-base md:text-lg leading-relaxed text-[#424245] whitespace-pre-wrap font-medium">
-                    {content.summary || "Sin contenido."}
-                  </p>
+              <div className="space-y-8">
+                <div className="markdown-container text-base md:text-lg leading-relaxed text-[#424245] font-medium">
+                  <ReactMarkdown>{content.summary || "Contenido no disponible."}</ReactMarkdown>
                 </div>
 
                 {content.imageUrl && (
-                  <div className="overflow-hidden rounded-3xl border border-gray-100 shadow-md">
-                    <img
-                      ref={zoomRef}
-                      src={content.imageUrl}
-                      alt="Image"
-                      className="w-full h-auto cursor-zoom-in"
+                  <div className="group relative overflow-hidden rounded-[2.5rem] border border-gray-100 shadow-lg">
+                    <img 
+                      ref={zoomRef} 
+                      src={content.imageUrl} 
+                      alt="Ilustración de la unidad" 
+                      className="w-full h-auto cursor-zoom-in transition-transform duration-500 group-hover:scale-[1.01]" 
                     />
                   </div>
                 )}
@@ -206,24 +198,17 @@ export default function EmployeeContentDetail() {
         </div>
       </main>
 
-      {/* --- NUEVO: MODAL DEL TEST CON FONDO DIFUMINADO --- */}
+      {/* MODAL DEL QUIZ */}
       {showQuizModal && (
         <div className="fixed inset-0 z-100 flex items-center justify-center p-4 md:p-6">
-          <div 
-            className="absolute inset-0 bg-black/40 backdrop-blur-md transition-opacity"
-            onClick={() => !quizSubmitted && setShowQuizModal(false)}
-          />
-
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => !quizSubmitted && setShowQuizModal(false)} />
           <div className="relative bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] shadow-2xl p-8 md:p-10">
             <div className="flex justify-between items-center mb-8">
               <div>
-                <h2 className="text-2xl font-black text-gray-900">Test de Unidad</h2>
-                <p className="text-sm text-gray-500">Valida tus conocimientos</p>
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight">Test de Conocimientos</h2>
+                <p className="text-sm text-gray-500">Completa las preguntas para evaluar tu progreso</p>
               </div>
-              <button 
-                onClick={() => setShowQuizModal(false)}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors"
-              >
+              <button onClick={() => setShowQuizModal(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors">
                 <i className="bi bi-x-lg"></i>
               </button>
             </div>
@@ -231,9 +216,8 @@ export default function EmployeeContentDetail() {
             <div className="space-y-8">
               {getQuizQuestions(content.quiz).map((pregunta: any, index: number) => (
                 <div key={index} className="space-y-4">
-                  <p className="text-base font-bold text-gray-800 leading-tight">
-                    <span className="text-blue-500 mr-2">{index + 1}.</span>
-                    {pregunta.question}
+                  <p className="text-base font-bold text-gray-800 leading-snug">
+                    <span className="text-blue-500 mr-2">{index + 1}.</span> {pregunta.question}
                   </p>
                   <div className="grid gap-3">
                     {pregunta.options.map((opcion: string, i: number) => (
@@ -241,8 +225,8 @@ export default function EmployeeContentDetail() {
                         key={i}
                         onClick={() => !quizSubmitted && setQuizAnswers(prev => ({ ...prev, [index]: opcion }))}
                         className={`text-left p-4 rounded-2xl border-2 transition-all text-sm font-semibold ${
-                          quizAnswers[index] === opcion
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                          quizAnswers[index] === opcion 
+                            ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm" 
                             : "border-gray-50 bg-[#f5f5f7] text-gray-600 hover:border-gray-200"
                         }`}
                       >
@@ -256,23 +240,23 @@ export default function EmployeeContentDetail() {
 
             <div className="mt-10 pt-6 border-t border-gray-100">
               {quizSubmitted ? (
-                <div className="flex flex-col md:flex-row items-center gap-6 bg-blue-600 p-6 rounded-[2rem] text-white">
+                <div className="flex flex-col md:flex-row items-center gap-6 bg-[#0071e3] p-6 rounded-[2rem] text-white">
                   <div className="flex-1 text-center md:text-left">
-                    <p className="text-[10px] font-black uppercase opacity-70">Resultado</p>
+                    <p className="text-[10px] font-black uppercase opacity-70">Tu resultado</p>
                     <p className="text-2xl font-black">{quizScore} / {getQuizQuestions(content.quiz).length} aciertos</p>
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => { setQuizSubmitted(false); setQuizAnswers({}); }} className="px-5 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl font-bold text-xs transition-colors">Reintentar</button>
-                    <button onClick={() => setShowQuizModal(false)} className="px-5 py-2.5 bg-white text-blue-600 rounded-xl font-bold text-xs shadow-lg transition-transform active:scale-95">Finalizar</button>
+                    <button onClick={() => setShowQuizModal(false)} className="px-5 py-2.5 bg-white text-blue-600 rounded-xl font-bold text-xs shadow-lg">Finalizar</button>
                   </div>
                 </div>
               ) : (
-                <button
-                  onClick={handleQuizSubmit}
-                  disabled={Object.keys(quizAnswers).length === 0}
-                  className="w-full py-5 bg-[#1d1d1f] text-white rounded-2xl font-bold shadow-xl hover:bg-blue-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                <button 
+                   onClick={handleQuizSubmit} 
+                   disabled={Object.keys(quizAnswers).length === 0}
+                   className="w-full py-5 bg-[#1d1d1f] text-white rounded-2xl font-bold shadow-xl hover:bg-[#0071e3] transition-all disabled:opacity-30"
                 >
-                  Corregir Test
+                  Enviar Respuestas
                 </button>
               )}
             </div>
@@ -286,14 +270,54 @@ export default function EmployeeContentDetail() {
           grid-template-columns: 1fr 380px;
           gap: 40px;
         }
+
+        .markdown-container :global(strong) {
+          color: #1d1d1f;
+          font-weight: 800;
+          display: block;
+          margin-top: 1.8rem;
+          margin-bottom: 0.6rem;
+          font-size: 1.4rem;
+          letter-spacing: -0.02em;
+        }
+
+        .markdown-container :global(p strong) {
+          display: inline;
+          font-size: inherit;
+          margin: 0;
+          color: #000;
+        }
+
+        .markdown-container :global(ul) {
+          margin: 1.5rem 0;
+          padding-left: 0;
+          list-style: none;
+        }
+
+        .markdown-container :global(li) {
+          position: relative;
+          margin-bottom: 1rem;
+          padding-left: 1.5rem;
+        }
+
+        .markdown-container :global(li::before) {
+          content: "•";
+          position: absolute;
+          left: 0;
+          color: #0071e3;
+          font-weight: bold;
+          font-size: 1.4rem;
+          line-height: 1;
+        }
+
+        .markdown-container :global(p) {
+          margin-bottom: 1.4rem;
+          white-space: pre-wrap;
+        }
+
         @media (max-width: 1024px) {
-          .content-layout {
-            grid-template-columns: 1fr;
-            gap: 24px;
-          }
-          .action-box {
-            order: -1;
-          }
+          .content-layout { grid-template-columns: 1fr; gap: 24px; }
+          .action-box { order: -1; }
         }
       `}</style>
     </div>

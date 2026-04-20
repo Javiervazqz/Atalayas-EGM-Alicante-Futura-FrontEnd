@@ -121,7 +121,7 @@ export default function CourseDetailPage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-3xl">
-                          📚
+                          
                         </div>
                       )}
                     </div>

@@ -8,17 +8,16 @@ interface SidebarProps {
   role: 'GENERAL_ADMIN' | 'ADMIN' | 'EMPLOYEE' | 'PUBLIC';
 }
 
-// ... navItems, roleLabels, roleColors se mantienen igual ...
 const navItems = {
   GENERAL_ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: <i className="bi bi-house-fill text-blue-500"></i> },
-    { label: 'Perfiles Empresas', href: '/dashboard/company', icon: <i className="bi bi-building-fill-gear text-blue-500"></i> },
     { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: <i className="bi bi-buildings-fill text-blue-500"></i> },
     { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill text-blue-500"></i>},
     { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i>  },
     { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill text-blue-500"></i>  },
     { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: <i className="bi bi-suitcase-lg-fill text-blue-500"></i> },
     { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: <i className="bi bi-megaphone-fill text-blue-500"></i> },
+    { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-globe-americas text-blue-500"></i>},
     { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: <i className="bi bi-envelope-exclamation-fill text-blue-500"></i> },
   ],
   ADMIN: [
@@ -28,13 +27,21 @@ const navItems = {
     { label: 'Onboarding', href: '/dashboard/administrator/employees/onboarding', icon: <i className="bi bi-person-walking text-[#005596]"></i>},
     { label: 'Cursos', href: '/dashboard/administrator/admin/courses', icon: <i className="bi bi-mortarboard-fill text-[#005596] "></i>  },
     { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill text-[#005596]"></i>  },
-    { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill text-[#005596]"></i> }
+    { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill text-[#005596]"></i> },
+    { label: 'Anuncios', href: '/dashboard/administrator/admin/announcements', icon: <i className="bi bi-megaphone-fill text-blue-500"></i> },
+    { label: 'Ecosistema', href: '/dashboard/administrator/admin/community', icon: <i className="bi bi-globe-americas text-blue-500"></i>},
+
+
   ],
   EMPLOYEE: [
-    { label: 'Inicio', href: '/dashboard/employee', icon: <i className="bi bi-house-fill text-[#005596]"></i> },
+    { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-house-fill text-[#005596]"></i> },
     { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: <i className="bi bi-mortarboard-fill text-[#005596] "></i> },
     { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill text-[#005596]"></i> },
     { label: 'Servicios', href: '/dashboard/employee/services', icon: <i className="bi bi-suitcase-lg-fill text-[#005596]"></i> },
+    { label: 'Anuncios', href: '/dashboard/employee/announcements', icon: <i className="bi bi-megaphone-fill text-blue-500"></i> },
+    { label: 'Ecosistema', href: '/dashboard/employee/community', icon: <i className="bi bi-globe-americas text-blue-500"></i>},
+
+
   ],
   PUBLIC: [
     { label: 'Panel', href: '/dashboard/public', icon: <i className="bi bi-house-fill text-blue-500"></i> },

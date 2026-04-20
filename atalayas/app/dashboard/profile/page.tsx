@@ -77,68 +77,75 @@ export default function ProfilePage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  setError('');
-  setSuccess('');
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
 
-  // ... validaciones de password se mantienen igual ...
-
-  try {
-    const token = localStorage.getItem('token');
-    const formData = new FormData();
-    
-    if (name) formData.append('name', name);
-    if (password) formData.append('password', password);
-    if (newFile) formData.append('file', newFile); 
-
-    const res = await fetch(API_ROUTES.AUTH.PROFILE, {
-      method: 'PATCH',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData,
-    });
-
-    const data = await res.json(); // Estos son los datos nuevos del usuario
-
-    if (!res.ok) {
-      const errorMsg = Array.isArray(data.message) ? data.message.join(', ') : data.message;
-      throw new Error(errorMsg || 'Error actualizando el perfil');
+    // --- VALIDACIONES DE CONTRASEÑA ---
+    if (password) {
+      if (password.length < 6) {
+        setError('La nueva contraseña debe tener al menos 6 caracteres.');
+        setLoading(false);
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('Las contraseñas no coinciden.');
+        setLoading(false);
+        return;
+      }
     }
 
-    // --- SOLUCIÓN AL CAMBIO AUTOMÁTICO ---
-    
-    // 1. Recuperamos el usuario actual del localStorage (que tiene el objeto Company)
-    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-    
-    // 2. Mezclamos: lo que ya teníamos + lo que viene nuevo de la API
-    const updatedUser = {
-      ...storedUser, // Mantiene la propiedad Company: { logoUrl, name, etc. }
-      ...data        // Actualiza name y avatarUrl con la respuesta del servidor
-    };
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      
+      if (name) formData.append('name', name);
+      if (password) formData.append('password', password);
+      if (newFile) formData.append('file', newFile); 
 
-    // 3. Guardamos el objeto completo de nuevo
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    
-    // 4. Actualizamos estados locales
-    setCurrentUser(updatedUser);
-    setCurrentAvatarUrl(updatedUser.avatarUrl);
-    
-    // Limpieza de inputs
-    setNewFile(null);
-    setAvatarPreview(null);
-    setPassword('');
-    setConfirmPassword('');
-    setSuccess('Perfil actualizado correctamente.');
+      const res = await fetch(API_ROUTES.AUTH.PROFILE, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      });
 
-    // 5. El reload ahora sí encontrará los datos correctos
-    window.location.reload();
+      const data = await res.json();
 
-  } catch (err: any) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      if (!res.ok) {
+        const errorMsg = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+        throw new Error(errorMsg || 'Error actualizando el perfil');
+      }
+
+      // Mezclar datos antiguos con nuevos para no perder el objeto Company
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const updatedUser = {
+        ...storedUser,
+        ...data
+      };
+
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      setCurrentUser(updatedUser);
+      setCurrentAvatarUrl(updatedUser.avatarUrl);
+      
+      setNewFile(null);
+      setAvatarPreview(null);
+      setPassword('');
+      setConfirmPassword('');
+      setSuccess('Perfil actualizado correctamente.');
+
+      // Opcional: Solo recargar si cambió la foto para refrescar el Sidebar
+      if (newFile) {
+          window.location.reload();
+      }
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!currentUser) return null;
 

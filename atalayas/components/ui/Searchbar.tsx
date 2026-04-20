@@ -34,7 +34,7 @@ export default function SearchInput({ value, onChange, placeholder }: SearchInpu
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className={`
-            flex items-center justify-center shrink-0 transition-colors
+            flex items-center justify-center shrink-0 transition-colors cursor-pointer
             ${isExpanded ? 'text-[#0071e3]' : 'text-gray-500 hover:text-[#1d1d1f] w-12 h-12 rounded-2xl bg-white border border-gray-200 shadow-sm'}
           `}
         >
@@ -52,7 +52,7 @@ export default function SearchInput({ value, onChange, placeholder }: SearchInpu
           onBlur={() => { if (!value) setIsExpanded(false); }} // Se cierra si está vacío al perder el foco
           placeholder={placeholder}
           className={`
-            ml-3 w-full bg-transparent text-sm text-[#1d1d1f] outline-none placeholder:text-[#86868b] transition-opacity duration-300
+            ml-3 w-full bg-transparent text-sm text-[#1d1d1f] outline-none placeholder:text-[#86868b] transition-opacity duration-300 
             ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}
           `}
         />
