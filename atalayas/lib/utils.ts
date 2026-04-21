@@ -41,7 +41,8 @@ export const API_ROUTES = {
     GET_ALL: (courseId: string) => `${BASE_URL}/courses/${courseId}/content`,
     CREATE: (courseId: string) => `${BASE_URL}/courses/${courseId}/content`,
     GET_BY_ID: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
-  },
+    COMPLETE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}/complete`,
+   },
   ANNOUNCEMENTS: {
     GET_ALL: `${BASE_URL}/announcement`
   },

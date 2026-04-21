@@ -215,13 +215,16 @@ export default function EmployeeDashboard() {
                           </div>
 
                           {task.linkAction && !isDone && (
-                            <Link 
-                              href={getCorrectUrl()}
-                              className="ml-4 px-4 py-2 bg-[#005596] text-[#d9ff00] text-[10px] font-black uppercase tracking-wider rounded-xl hover:scale-105 transition-transform shadow-sm whitespace-nowrap"
-                            >
-                              Ir a la tarea
-                            </Link>
-                          )}
+  <Link 
+    href={getCorrectUrl()}
+    className="ml-4 group flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200 hover:bg-blue-50"
+  >
+    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 group-hover:text-[#005596] transition-colors">
+      Ir
+    </span>
+    <i className="bi bi-chevron-right text-[10px] text-gray-300 group-hover:text-[#005596] group-hover:translate-x-0.5 transition-all"></i>
+  </Link>
+)}
                         </div>
                       );
                     })}

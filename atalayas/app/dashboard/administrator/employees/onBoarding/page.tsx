@@ -449,7 +449,7 @@ export default function OnboardingConfig() {
                                             sIdx,
                                             tIdx,
                                             "label",
-                                            `Ver lección: ${content.title}`,
+                                            `Ver contenido: ${content.title}`,
                                           );
                                         }
                                       }}
