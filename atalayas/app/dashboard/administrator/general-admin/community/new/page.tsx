@@ -11,7 +11,6 @@ export default function NewCollaboratorPage() {
   const [formData, setFormData] = useState({
     name: '',
     website: '',
-    // Categorías basadas en atalayas.com/ecosistema-de-proximidad
     type: 'ADMINISTRACIÓN PÚBLICA', 
     logoUrl: '',
     description: ''
