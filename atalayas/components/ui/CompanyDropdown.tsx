@@ -1,14 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 interface CompanyDropdownProps {
   companies: string[];
   selected: string;
   onChange: (company: string) => void;
+  defaultLabel?: string; // Nueva prop: "Todas", "Público", etc.
 }
 
-export default function CompanyDropdown({ companies, selected, onChange }: CompanyDropdownProps) {
+export default function CompanyDropdown({ 
+  companies, 
+  selected, 
+  onChange, 
+  defaultLabel = "Público" // Por defecto será Público
+}: CompanyDropdownProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -24,6 +31,13 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
     if (open) window.addEventListener('click', closeDropdown);
     return () => window.removeEventListener('click', closeDropdown);
   }, [open]);
+
+  // Función para renderizar el texto bonito
+  const renderLabel = (value: string) => {
+    if (value === 'ALL') return `🏢 ${defaultLabel}`;
+    if (value === 'PUBLIC') return `🌐 ${defaultLabel}`;
+    return `🏭 ${value}`;
+  };
 
   return (
     <div className="relative mb-8">
@@ -55,7 +69,7 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
           </div>
           
           <div className="max-h-64 overflow-y-auto">
-            {filtered.slice(0,10).map((company) => (
+            {filtered.map((company) => (
               <button
                 key={company}
                 onClick={() => { onChange(company); setOpen(false); setSearch(''); }}
@@ -66,7 +80,7 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {company === 'PUBLIC' ? '🌐 Público' : `🏭 ${company}`}
+                {renderLabel(company)}
               </button>
             ))}
           </div>

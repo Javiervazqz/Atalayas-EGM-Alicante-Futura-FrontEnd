@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
 import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
+import Link from 'next/link';
 
 export default function EditCoursePage() {
     const router = useRouter();
@@ -28,7 +29,9 @@ export default function EditCoursePage() {
         const fetchCourseData = async () => {
             try {
                 const token = localStorage.getItem('token');
+                // Limpiamos la URL base de posibles slashes duplicados
                 const baseUrl = API_ROUTES.COURSES.GET_ALL.replace(/\/$/, "");
+                
                 const res = await fetch(`${baseUrl}/${courseId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -39,7 +42,7 @@ export default function EditCoursePage() {
                         title: data.title || '',
                         isPublic: false, 
                         category: data.category?.toUpperCase() === 'ESPECIALIZADO' ? 'ESPECIALIZADO' : 'BASICO',
-                        file: null
+                        file: null // El input file siempre empieza vacío
                     });
                 } else {
                     router.push('/dashboard/administrator/admin/courses/manage');
@@ -77,10 +80,10 @@ export default function EditCoursePage() {
             const res = await fetch(`${baseUrl}/${courseId}`, {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json',
+                    // NOTA: Con FormData NO se pone 'Content-Type', el navegador lo hace solo
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(payload),
+                body: formDataToSend,
             });
 
             if (res.ok) {
@@ -137,6 +140,7 @@ export default function EditCoursePage() {
                             )}
                         </div>
 
+                        {/* 2. CATEGORÍA */}
                         {/* 2. CATEGORÍA */}
                         <div className="space-y-4">
                             <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Tipo de Formación</label>

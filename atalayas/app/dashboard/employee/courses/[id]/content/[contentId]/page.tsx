@@ -9,9 +9,9 @@ import Link from 'next/link';
 
 export default function EmployeeContentDetail() {
   const params = useParams();
-  const router = useRouter();
   const zoomRef = useRef<HTMLImageElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const searchParams = useSearchParams();
+  const fromTaskId = searchParams.get('fromTask');
 
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -21,6 +21,7 @@ export default function EmployeeContentDetail() {
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false)
 
   const getQuizQuestions = (quizSource: any) => {
     if (!quizSource) return [];
@@ -30,26 +31,47 @@ export default function EmployeeContentDetail() {
 
   useEffect(() => {
     const fetchContent = async () => {
-      const courseId = params.id as string;
-      const contentId = params.contentId as string;
-      if (!courseId || !contentId) return;
-
       try {
         const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(courseId, contentId), {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         const data = await res.json();
-        const finalData = data.content || data.data || data;
-
-        setContent(finalData);
+        setContent(data.content || data.data || data);
+        if (data.isCompleted) {
+          setQuizSubmitted(true);
+          setQuizScore(data.quiz?.questions?.length || 0); // Visualmente mostramos éxito
+        }
       } catch (error) {
-        console.error("❌ Error cargando el contenido:", error);
+        console.error("❌ Error:", error);
       } finally {
         setLoading(false);
       }
     };
     fetchContent();
   }, [params.contentId, params.id]);
+
+   useEffect(() => {
+    const autoConfirmTask = async () => {
+      if (fromTaskId) {
+        try {
+          const token = localStorage.getItem("token");
+          await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ taskId: fromTaskId, done: true }),
+          });
+          console.log("Tarea de onboarding completada automáticamente");
+        } catch (err) {
+          console.error("Error al autocompletar:", err);
+        }
+      }
+    };
+
+    autoConfirmTask();
+  }, [fromTaskId]);
 
   useEffect(() => {
     if (zoomRef.current && content?.imageUrl) {
@@ -170,8 +192,130 @@ export default function EmployeeContentDetail() {
               </aside>
             )}
           </div>
+
+          <aside className="w-80 border-l border-gray-200 bg-white p-6 hidden xl:flex flex-col gap-6 overflow-y-auto">
+             <h3 className="text-xs font-black uppercase text-gray-400 tracking-tighter">Material Complementario</h3>
+             <ResourcesList />
+          </aside>
         </div>
       </main>
+
+      {/* MODAL DEL QUIZ CON FEEDBACK VISUAL */}
+      {showQuizModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer" onClick={() => !quizSubmitted && setShowQuizModal(false)} />
+          <div className="relative bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl p-6 md:p-10 custom-scrollbar">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-xl md:text-2xl font-black text-gray-900">Cuestionario</h2>
+              <button onClick={() => setShowQuizModal(false)} className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer">
+                <i className="bi bi-x-circle-fill text-2xl"></i>
+              </button>
+            </div>
+            
+            <div className="space-y-8">
+              {getQuizQuestions(content.quiz).map((q: any, i: number) => (
+                <div key={i} className="space-y-4">
+                  <p className="font-bold text-gray-800">{i + 1}. {q.question}</p>
+                  <div className="grid gap-2">
+                    {q.options.map((opt: string, idx: number) => {
+                      const isSelected = quizAnswers[i] === opt;
+                      const isCorrect = q.correctAnswer === opt;
+                      let style = "border-gray-100 text-gray-600 hover:border-gray-300";
+                      
+                      if (quizSubmitted) {
+                        if (isCorrect) style = "border-green-500 bg-green-50 text-green-700";
+                        else if (isSelected) style = "border-red-500 bg-red-50 text-red-700";
+                        else style = "opacity-50 border-gray-100";
+                      } else if (isSelected) {
+                        style = "border-blue-500 bg-blue-50 text-blue-700";
+                      }
+
+                      return (
+                        <button
+                          key={idx}
+                          disabled={quizSubmitted}
+                          onClick={() => setQuizAnswers(prev => ({ ...prev, [i]: opt }))}
+                          className={`text-left p-4 rounded-xl border-2 transition-all font-medium text-sm md:text-base cursor-pointer ${style}`}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-10 border-t pt-6">
+              {quizSubmitted ? (
+  <div className="space-y-4">
+    <div className={`${quizScore === getQuizQuestions(content.quiz).length ? 'bg-green-600' : 'bg-blue-600'} p-6 rounded-2xl text-white flex flex-col md:flex-row items-center justify-between gap-4 transition-colors`}>
+      <div>
+        <p className="text-sm opacity-80 uppercase font-bold tracking-tighter">
+          {quizScore === getQuizQuestions(content.quiz).length ? '¡Excelente!' : 'Tu puntuación'}
+        </p>
+        <p className="text-3xl font-black">{quizScore} / {getQuizQuestions(content.quiz).length}</p>
+      </div>
+      
+      <div className="flex gap-2">
+        {quizScore < getQuizQuestions(content.quiz).length && (
+          <button 
+            onClick={() => {
+              setQuizAnswers({});
+              setQuizSubmitted(false);
+            }} 
+            className="bg-white/20 hover:bg-white/30 text-white px-6 py-2 rounded-xl font-bold cursor-pointer transition-all"
+          >
+            Reintentar
+          </button>
+        )}
+        <button onClick={() => setShowQuizModal(false)} className="bg-white text-blue-600 px-6 py-2 rounded-xl font-bold cursor-pointer">
+          Cerrar
+        </button>
+      </div>
+    </div>
+    
+    {quizScore < getQuizQuestions(content.quiz).length && (
+      <p className="text-center text-xs text-gray-500 font-medium">
+        Debes acertar todas las preguntas para completar esta unidad.
+      </p>
+    )}
+  </div>
+              ) : (
+                <button 
+                  onClick={handleQuizSubmit}
+                  className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-blue-600 transition-all disabled:opacity-50 cursor-pointer"
+                  disabled={Object.keys(quizAnswers).length < getQuizQuestions(content.quiz).length}
+                >
+                  Enviar Respuestas
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx global>{`
+        .markdown-body { 
+          font-family: ${appleFont} !important; 
+          font-size: 1.1rem; 
+          line-height: 1.75; 
+          color: #374151; 
+        }
+        .markdown-body strong { 
+          display: block; 
+          font-size: 1.5rem; 
+          font-weight: 800; 
+          color: #111827; 
+          margin-top: 2.5rem; 
+          margin-bottom: 1rem; 
+          letter-spacing: -0.02em; 
+          line-height: 1.2;
+        }
+        .markdown-body p { margin-bottom: 1.5rem; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d1d6; border-radius: 10px; }
+      `}</style>
     </div>
   );
 }

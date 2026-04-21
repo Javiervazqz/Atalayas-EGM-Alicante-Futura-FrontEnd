@@ -16,33 +16,34 @@ interface Service {
 
 export default function PublicDashboard() {
   const [courses, setCourses] = useState<any[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
+  const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const headers = { Authorization: `Bearer ${getToken()}` };
+        const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
         const [coursesRes, servicesRes] = await Promise.all([
           fetch(API_ROUTES.COURSES.GET_ALL, { headers }),
           fetch(API_ROUTES.SERVICES.GET_ALL, { headers })
         ]);
-
         const coursesData = await coursesRes.json();
         const servicesData = await servicesRes.json();
 
         setCourses(Array.isArray(coursesData) ? coursesData : []);
         setServices(Array.isArray(servicesData) ? servicesData : []);
       } catch (err) {
-        console.error(err);
+        console.error("❌ Error fetch data:", err);
       } finally {
         setLoading(false);
       }
     };
     fetchData();
   }, []);
+
+  // Separar anuncios de servicios normales
+  const announcements = services.filter(s => s.serviceType === 'ANNOUNCEMENT').slice(0, 3);
+  const otherServices = services.filter(s => s.serviceType !== 'ANNOUNCEMENT').slice(0, 6);
 
   return (
     <div className="flex min-h-screen bg-background font-sans">
@@ -138,6 +139,21 @@ export default function PublicDashboard() {
           )}
         </div>
       </main>
+
+      <style jsx>{`
+        .content-layout {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 32px;
+        }
+
+        @media (min-width: 1024px) {
+          .content-layout {
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 40px;
+          }
+        }
+      `}</style>
     </div>
   );
 }

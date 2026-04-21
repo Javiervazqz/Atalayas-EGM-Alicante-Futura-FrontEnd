@@ -18,22 +18,31 @@ const navItems = {
     { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder2-open"></i>  },
     { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: <i className="bi bi-briefcase-fill"></i> },
     { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
+    { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-globe-americas text-blue-500"></i>},
     { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: <i className="bi bi-envelope-paper-fill"></i> },
   ],
   ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/admin', icon: <i className="bi bi-house-fill"></i> },
-    { label: 'Mi Empresa', href: '/dashboard/company', icon: <i className="bi bi-building-fill"></i> },
+    { label: 'Mi Empresa', href: '/dashboard/administrator/admin/company', icon: <i className="bi bi-building-fill"></i> },
     { label: 'Empleados', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
     { label: 'Onboarding', href: '/dashboard/administrator/employees/onboarding', icon: <i className="bi bi-person-walking"></i>},
     { label: 'Cursos', href: '/dashboard/administrator/admin/courses', icon: <i className="bi bi-mortarboard-fill"></i>  },
     { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill"></i>  },
-    { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill"></i> }
+    { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill"></i> },
+    { label: 'Anuncios', href: '/dashboard/administrator/admin/announcements', icon: <i className="bi bi-megaphone-fill text-blue-500"></i> },
+    { label: 'Ecosistema', href: '/dashboard/administrator/admin/community', icon: <i className="bi bi-globe-americas text-blue-500"></i>},
+
+
   ],
   EMPLOYEE: [
-    { label: 'Inicio', href: '/dashboard/employee', icon: <i className="bi bi-grid-fill"></i> },
+    { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-grid-fill"></i> },
     { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
     { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder2-open"></i> },
     { label: 'Servicios', href: '/dashboard/employee/services', icon: <i className="bi bi-briefcase-fill"></i> },
+    { label: 'Anuncios', href: '/dashboard/employee/announcements', icon: <i className="bi bi-megaphone-fill text-blue-500"></i> },
+    { label: 'Ecosistema', href: '/dashboard/employee/community', icon: <i className="bi bi-globe-americas text-blue-500"></i>},
+
+
   ],
   PUBLIC: [
     { label: 'Panel', href: '/dashboard/public', icon: <i className="bi bi-grid-fill"></i> },

@@ -13,7 +13,8 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -31,14 +32,13 @@ export default function CourseDetailPage() {
         
         const finalData = data.course || data.data || data;
         setCourse(finalData);
-      } catch (err) { 
+      } catch (err) {
         console.error("Error cargando curso:", err);
         setError(true);
-      } finally { 
-        setLoading(false); 
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchCourseData();
   }, [courseId]);
 
@@ -65,14 +65,17 @@ export default function CourseDetailPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      <motion.div 
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" 
+      />
     </div>
   );
 
   return (
     <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role="EMPLOYEE" />
-      
+
       <main className="flex-1 h-screen overflow-y-auto">
         <div className="max-w-6xl mx-auto px-6 lg:px-8 py-12">
           
@@ -92,11 +95,6 @@ export default function CourseDetailPage() {
                   </span>
                 )}
               </div>
-              <SearchInput 
-                value={searchQuery} 
-                onChange={setSearchQuery} 
-                placeholder='Buscar lección...' 
-              />
             </div>
           </div>
 

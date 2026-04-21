@@ -1,25 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Sidebar from '@/components/ui/Sidebar';
 import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
 import CompanyDropdown from '@/components/ui/CompanyDropdown';
+import { API_ROUTES } from '@/lib/utils';
 
 interface Service {
   id: string;
   title: string;
-  description: string;
   isPublic: boolean;
-  Company?: { id: string; name: string };
+  Company?: { name: string };
 }
 
 export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCompany, setSelectedCompany] = useState<string>('PUBLIC');
   const router = useRouter();
 
@@ -50,7 +48,7 @@ export default function ServicesPage() {
       acc[name].push(s);
     }
     return acc;
-  }, {} as Record<string, Service[]>);
+  }, new Set<string>());
 
   const companies = ['PUBLIC', ...Object.keys(byCompany)];
   const currentList = selectedCompany === 'PUBLIC' 

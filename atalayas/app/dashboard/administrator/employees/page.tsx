@@ -6,6 +6,21 @@ import PageHeader from '@/components/ui/pageHeader';
 import Link from 'next/link';
 import { API_ROUTES } from '@/lib/utils';
 
+// 1. Mapeo de roles a Español
+const ROLE_LABELS: Record<string, string> = {
+  GENERAL_ADMIN: 'Súper Admin',
+  ADMIN: 'Admin Empresa',
+  EMPLOYEE: 'Empleado',
+  PUBLIC: 'Público',
+};
+
+const ROLE_COLORS: Record<string, string> = {
+  GENERAL_ADMIN: 'bg-purple-100 text-purple-700',
+  ADMIN: 'bg-blue-100 text-blue-700',
+  EMPLOYEE: 'bg-gray-100 text-gray-700',
+  PUBLIC: 'bg-orange-100 text-orange-700',
+};
+
 interface Company {
   id: string;
   name: string;
@@ -27,6 +42,7 @@ export default function EmployeesPage() {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedCompany, setSelectedCompany] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
   const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';

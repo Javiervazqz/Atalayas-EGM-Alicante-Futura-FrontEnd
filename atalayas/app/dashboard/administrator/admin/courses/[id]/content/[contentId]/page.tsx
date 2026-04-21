@@ -19,9 +19,7 @@ export default function AdminContentDetail() {
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<{ title?: string }>({});
@@ -32,7 +30,7 @@ export default function AdminContentDetail() {
 
   const lastSavedSecond = useRef<number>(0);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     title: "",
     summary: "",
     imageUrl: "",
@@ -43,10 +41,6 @@ export default function AdminContentDetail() {
 
   useEffect(() => {
     const fetchContent = async () => {
-      const courseId = params.id as string;
-      const contentId = params.contentId as string;
-      if (!courseId || !contentId) return;
-
       try {
         const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(courseId, contentId), {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -54,8 +48,17 @@ export default function AdminContentDetail() {
         const data = await res.json();
         const finalData = data.content || data.data || data;
         setContent(finalData);
-        hydrateForm(finalData);
+        setFormData({
+          title: finalData.title || "",
+          summary: finalData.summary || "",
+          imageUrl: finalData.imageUrl || "",
+          url: finalData.url || "",
+          quiz: {
+            questions: Array.isArray(finalData.quiz) ? finalData.quiz : (finalData.quiz?.questions || [])
+          }
+        });
       } catch (error) {
+        console.error("Error:", error);
         console.error("Error:", error);
       } finally {
         setLoading(false);
@@ -96,11 +99,6 @@ export default function AdminContentDetail() {
   };
 
   const handleSave = async () => {
-    setErrors({});
-    if (!formData.title.trim()) {
-      setErrors({ title: "El título es obligatorio" });
-      return;
-    }
     setSaving(true);
     try {
       const payload = {
@@ -119,8 +117,7 @@ export default function AdminContentDetail() {
 
       if (res.ok) {
         const updated = await res.json();
-        const finalUpdated = updated.content || updated;
-        setContent(finalUpdated);
+        setContent(updated.content || updated);
         setIsEditing(false);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);

@@ -1,33 +1,47 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Sidebar from '@/components/ui/Sidebar';
+import { useEffect, useState } from "react";
+import Sidebar from "@/components/ui/Sidebar";
+import Link from "next/link";
+import { API_ROUTES } from "@/lib/utils";
+import SearchInput from "@/components/ui/Searchbar";
 import PageHeader from '@/components/ui/pageHeader';
-import Link from 'next/link';
-import { API_ROUTES } from '@/lib/utils';
 
 export default function AdminCourses() {
-    const [courses, setCourses] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'BASICO' | 'ESPECIALIZADO'>('BASICO');
-    const [searchQuery, setSearchQuery] = useState('');
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"BASICO" | "ESPECIALIZADO">(
+    "BASICO",
+  );
+  const [searchQuery, setSearchQuery] = useState("");
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await fetch(API_ROUTES.COURSES.GET_ALL, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                });
-                const data = await res.json();
-                setCourses(Array.isArray(data) ? data : []);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(API_ROUTES.COURSES.GET_ALL, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        const data = await res.json();
+        const rawCourses = Array.isArray(data) ? data : data.courses || [];
+
+        const sortedDataCourses = rawCourses.sort((a: any, b: any) => {
+          const titleA = a.title.trim().toLowerCase();
+          const titleB = b.title.trim().toLowerCase();
+          return titleA.localeCompare(titleB, undefined, {
+            numeric: true,
+            sensitivity: "base",
+          });
+        });
+
+        setCourses(sortedDataCourses);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
     const filtered = courses.filter(c => {
         const matchesTab = activeTab === 'BASICO'
