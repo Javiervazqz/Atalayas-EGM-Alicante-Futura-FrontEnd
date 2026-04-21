@@ -5,21 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { API_ROUTES } from '@/lib/utils';
 
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
-
-const inputStyle = {
-  width: '100%',
-  background: '#f5f5f7',
-  border: '1px solid rgba(0,0,0,0.08)',
-  borderRadius: '12px',
-  padding: '13px 16px',
-  fontSize: '15px',
-  color: '#1d1d1f',
-  outline: 'none',
-  boxSizing: 'border-box' as const,
-  fontFamily: appleFont,
-};
-
 export default function RegisterCompanyPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -40,39 +25,41 @@ export default function RegisterCompanyPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors({ ...fieldErrors, [e.target.name]: '' });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setFieldErrors({})
+    setFieldErrors({});
 
     const newErrors: Record<string, string> = {};
 
-    if(!form.companyName) newErrors.companyName = 'El nombre es obligatorio';
+    if (!form.companyName) newErrors.companyName = 'El nombre es obligatorio';
     
-    if(!form.cif){
+    if (!form.cif) {
       newErrors.cif = 'El CIF es obligatorio';
-    } else if(!/^[ABCDEFGHJKLMNPQSVW]\d{7}[0-9A-J]$/i.test(form.cif)) {
-      newErrors.cif = 'El formato del CIF no es válido (ej: B12345678)';
+    } else if (!/^[ABCDEFGHJKLMNPQSVW]\d{7}[0-9A-J]$/i.test(form.cif)) {
+      newErrors.cif = 'Formato no válido (ej: B12345678)';
     }
 
     if (!form.contactEmail) {
       newErrors.contactEmail = 'El email es obligatorio';
-     } else if (!/\S+@\S+\.\S+/.test(form.contactEmail)){
+    } else if (!/\S+@\S+\.\S+/.test(form.contactEmail)) {
       newErrors.contactEmail = 'Introduce un email válido';
     }
 
-    if(!form.contactName) newErrors.contactName = 'El nombre del responsable es obligatorio';
+    if (!form.contactName) newErrors.contactName = 'El responsable es obligatorio';
 
-    if(form.phone && !/^\+?[\d\s]{9,}$/.test(form.phone)){
-      newErrors.phone = 'El teléfono no parece válido'
+    if (form.phone && !/^\+?[\d\s]{9,}$/.test(form.phone)) {
+      newErrors.phone = 'Teléfono no válido';
     }
 
     if (Object.keys(newErrors).length > 0) {
       setFieldErrors(newErrors);
       setError('Por favor, revisa los campos marcados en rojo');
-      window.scrollTo({top:0, behavior: 'smooth'})
       return;
     }
 
@@ -106,40 +93,11 @@ export default function RegisterCompanyPage() {
     }
   };
 
-  if (success) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-        <div style={{ background: '#fff', borderRadius: '24px', padding: '48px', maxWidth: '480px', width: '100%', textAlign: 'center', boxShadow: '0 2px 20px rgba(0,0,0,0.08)' }}>
-          <div style={{ width: '64px', height: '64px', background: 'rgba(52,199,89,0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: '28px' }}>
-            ✅
-          </div>
-          <h2 style={{ color: '#1d1d1f', fontSize: '22px', fontWeight: 700, letterSpacing: '-0.03em', margin: '0 0 10px' }}>
-            Solicitud enviada
-          </h2>
-          <p style={{ color: '#86868b', fontSize: '14px', lineHeight: '1.6', margin: '0 0 28px' }}>
-            Hemos recibido tu solicitud. El equipo de Atalayas la revisará y recibirás un email con la respuesta en breve.
-          </p>
-          <Link href="/login" style={{
-            display: 'inline-block',
-            background: '#0071e3',
-            color: '#fff',
-            borderRadius: '12px',
-            padding: '12px 24px',
-            fontSize: '14px',
-            fontWeight: 500,
-            textDecoration: 'none',
-          }}>
-            Volver al inicio
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const renderInput = (name: string, placeholder: string, type = 'text', required= false) =>{
+  const renderInput = (name: string, label: string, placeholder: string, type = 'text', required = false) => {
     const hasError = !!fieldErrors[name];
     return (
-      <div style={{ marginBottom: '4px' }}>
+      <div className="space-y-1.5">
+        <label className="text-sm font-bold text-foreground px-1">{label}</label>
         <input
           name={name}
           type={type}
@@ -147,149 +105,176 @@ export default function RegisterCompanyPage() {
           onChange={handleChange}
           placeholder={placeholder}
           required={required}
-          style={{
-            ...inputStyle,
-            border: hasError ? '1px solid #ff3b30' : '1px solid rgba(0,0,0,0.08)',
-            background: hasError ? '#fff2f2' : '#f5f5f7',
-            transition: 'all 0.2s ease'
-          }}
-          onFocus={(e) => { 
-            if(!hasError) {
-              e.target.style.border = '1px solid #0071e3'; 
-              e.target.style.background = '#fff'; 
-            }
-          }}
-          onBlur={(e) => { 
-            if(!hasError) {
-              e.target.style.border = '1px solid rgba(0,0,0,0.08)'; 
-              e.target.style.background = '#f5f5f7'; 
-            }
-          }}
+          className={`w-full bg-card rounded-2xl px-5 py-4 text-sm outline-none transition-all text-foreground placeholder:text-muted-foreground/50 font-medium shadow-sm ${
+            hasError 
+              ? 'border-2 border-destructive bg-destructive/5' 
+              : 'border border-input focus:border-primary focus:ring-2 focus:ring-primary/30'
+          }`}
         />
         {hasError && (
-          <span style={{ color: '#ff3b30', fontSize: '12px', marginLeft: '4px', marginTop: '2px', display: 'block', fontWeight: 500 }}>
-            {fieldErrors[name]}
+          <span className="text-destructive text-xs font-bold ml-2 mt-1.5 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+            <i className="bi bi-exclamation-triangle-fill"></i> {fieldErrors[name]}
           </span>
         )}
       </div>
     );
-  }
+  };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
-      {/* Nav */}
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '28px', height: '28px', background: 'linear-gradient(135deg, #1d1d1f 0%, #434343 100%)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: 'white', fontSize: '12px', fontWeight: 600 }}>A</span>
-          </div>
-          <span style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, letterSpacing: '-0.02em' }}>Atalayas</span>
-        </div>
-        <Link href="/login" style={{ color: '#0071e3', fontSize: '14px', textDecoration: 'none' }}>
-          Iniciar sesión
-        </Link>
-      </nav>
+    <div className="min-h-screen flex font-sans bg-background">
+      
+      {/* =========================================
+          LADO IZQUIERDO: FORMULARIO CON SCROLL
+      ========================================= */}
+      <div className="w-full lg:w-[55%] flex flex-col relative z-10 h-screen overflow-y-auto no-scrollbar">
+        
+        {/* Cabecera / Logo */}
+        <nav className="flex items-center justify-between px-8 lg:px-12 py-8 shrink-0">
+          <Link href="/login" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary shadow-lg shadow-primary/20">
+              <span className="text-primary-foreground text-lg font-extrabold">A</span>
+            </div>
+            <span className="text-foreground text-xl font-extrabold tracking-tight">Atalayas</span>
+          </Link>
+          <Link href="/login" className="text-muted-foreground hover:text-foreground text-sm font-bold transition-colors flex items-center gap-2">
+            <i className="bi bi-arrow-left"></i> Volver al login
+          </Link>
+        </nav>
 
-      {/* Content */}
-      <main style={{ maxWidth: '560px', margin: '0 auto', padding: '20px 24px 60px' }}>
-        <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ color: '#1d1d1f', fontSize: '28px', fontWeight: 700, letterSpacing: '-0.04em', margin: '0 0 8px' }}>
-            Solicitar alta de empresa
-          </h1>
-          <p style={{ color: '#86868b', fontSize: '14px', margin: 0, lineHeight: '1.6' }}>
-            Rellena el formulario para solicitar acceso al polígono industrial. Revisaremos tu solicitud y nos pondremos en contacto contigo.
+        {/* Contenedor Central */}
+        <main className="flex-1 flex flex-col justify-center px-6 lg:px-12 py-6 max-w-2xl mx-auto w-full">
+          
+          {success ? (
+            // PANTALLA DE ÉXITO INCRUSTADA
+            <div className="bg-card rounded-[2rem] p-10 text-center shadow-xl border border-border animate-in zoom-in-95 duration-500">
+              <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-6 text-4xl text-primary shadow-sm border border-primary/20">
+                <i className="bi bi-check-lg"></i>
+              </div>
+              <h2 className="text-foreground text-3xl font-extrabold mb-3 tracking-tight">
+                ¡Solicitud enviada!
+              </h2>
+              <p className="text-muted-foreground text-base leading-relaxed mb-8">
+                Hemos recibido la información de <strong>{form.companyName}</strong>. El equipo administrador la revisará detalladamente y recibirás un email con la resolución en breve.
+              </p>
+              <Link 
+                href="/login" 
+                className="inline-flex items-center justify-center w-full bg-secondary text-secondary-foreground rounded-2xl px-6 py-4 text-base font-bold transition-all hover:opacity-90 shadow-xl shadow-secondary/20 active:scale-95 gap-2"
+              >
+                Volver al inicio <i className="bi bi-arrow-right"></i>
+              </Link>
+            </div>
+          ) : (
+            // FORMULARIO DE REGISTRO
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
+              <div className="mb-10">
+                <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight mb-3">
+                  Alta de empresa
+                </h1>
+                <p className="text-muted-foreground text-base">
+                  Solicita acceso al ecosistema digital de Atalayas para empezar a gestionar a tu equipo.
+                </p>
+              </div>
+
+              {error && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-5 mb-8 flex items-center gap-3 animate-in fade-in">
+                  <i className="bi bi-exclamation-octagon-fill text-2xl text-destructive"></i>
+                  <p className="text-destructive text-sm font-bold">{error}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} noValidate className="space-y-10">
+                
+                {/* Sección 1 */}
+                <div className="space-y-5">
+                  <h3 className="text-foreground text-lg font-bold tracking-tight border-b border-border pb-2">1. Datos de la entidad</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="md:col-span-2">{renderInput('companyName', 'Nombre de la empresa *', 'Mi Empresa S.L.', 'text', true)}</div>
+                    {renderInput('cif', 'CIF *', 'B12345678', 'text', true)}
+                    {renderInput('activity', 'Sector / Actividad', 'Tecnología, Logística...')}
+                    <div className="md:col-span-2">{renderInput('address', 'Dirección en el polígono', 'C/ Ejemplo, Nave 4')}</div>
+                  </div>
+                </div>
+
+                {/* Sección 2 */}
+                <div className="space-y-5">
+                  <h3 className="text-foreground text-lg font-bold tracking-tight border-b border-border pb-2">2. Persona de contacto</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="md:col-span-2">{renderInput('contactName', 'Nombre y apellidos *', 'Juan Pérez', 'text', true)}</div>
+                    {renderInput('contactEmail', 'Email corporativo *', 'juan@empresa.com', 'email', true)}
+                    {renderInput('phone', 'Teléfono', '+34 600 000 000', 'tel')}
+                  </div>
+                </div>
+
+                {/* Sección 3 */}
+                <div className="space-y-5">
+                  <h3 className="text-foreground text-lg font-bold tracking-tight border-b border-border pb-2">3. Documento acreditativo</h3>
+                  <p className="text-muted-foreground text-sm font-medium">
+                    Adjunta un documento que demuestre tu vinculación con el polígono (contrato, escrituras, recibo).
+                  </p>
+                  
+                  <label className={`relative flex flex-col items-center justify-center gap-3 p-8 rounded-3xl border-2 border-dashed transition-all cursor-pointer group ${
+                      file 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-input bg-card hover:bg-muted hover:border-primary/50'
+                    }`}
+                  >
+                    <span className={`text-4xl transition-transform group-hover:scale-110 ${file ? 'text-primary' : 'text-muted-foreground'}`}>
+                      <i className={`bi ${file ? 'bi-check-circle-fill' : 'bi-file-earmark-arrow-up'}`}></i>
+                    </span>
+                    <span className={`text-sm font-bold text-center ${file ? 'text-primary' : 'text-foreground'}`}>
+                      {file ? file.name : 'Haz clic para seleccionar archivo'}
+                    </span>
+                    {!file && <span className="text-muted-foreground text-xs font-medium">PDF, Word o imagen (máx. 10MB)</span>}
+                    
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={(e) => setFile(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-5 bg-secondary text-secondary-foreground rounded-2xl font-bold text-base hover:opacity-90 transition-opacity shadow-xl shadow-secondary/20 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <><i className="bi bi-arrow-repeat animate-spin text-xl"></i> Procesando solicitud...</>
+                  ) : (
+                    'Enviar solicitud de alta'
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* =========================================
+          LADO DERECHO: IMAGEN Y BRANDING (FIJO)
+      ========================================= */}
+      <div className="hidden lg:flex lg:w-[45%] relative bg-primary items-center justify-center overflow-hidden h-screen sticky top-0">
+        <img 
+          src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop" 
+          alt="Edificios modernos de oficinas" 
+          className="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-40 scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/50 to-primary/20"></div>
+
+        <div className="relative z-10 max-w-lg p-12 animate-in fade-in zoom-in-95 duration-1000">
+          <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 mb-8">
+             <i className="bi bi-briefcase text-white text-3xl"></i>
+          </div>
+          <h2 className="text-4xl xl:text-5xl font-extrabold text-white tracking-tight mb-6 leading-tight">
+            Haz crecer tu negocio en Atalayas.
+          </h2>
+          <p className="text-lg text-white/80 font-medium leading-relaxed">
+            Forma parte de la red de empresas más avanzada. Gestiona a tus empleados, publica servicios y accede a recursos exclusivos del ecosistema de Alicante Futura.
           </p>
         </div>
-
-        {error && (
-          <div style={{ background: '#fff2f2', border: '1px solid #ffd0d0', borderRadius: '12px', padding: '12px 16px', marginBottom: '20px' }}>
-            <p style={{ color: '#ff3b30', fontSize: '13px', margin: 0 }}>{error}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} noValidate>
-          {/* Datos de la empresa */}
-          <div style={{ background: '#fff', borderRadius: '18px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)' }}>
-            <h3 style={{ color: '#1d1d1f', fontSize: '15px', fontWeight: 600, margin: '0 0 16px', letterSpacing: '-0.02em' }}>
-              Datos de la empresa
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {renderInput('companyName', 'Nombre de la empresa', 'text', true)}
-              {renderInput('cif', 'CIF (ej: B12345678)', 'text', true)}
-              {renderInput('activity', 'Sector / Actividad (opcional)')}
-              {renderInput('address', 'Dirección en el polígono (opcional)')}
-            </div>
-          </div>
-
-          {/* Datos de contacto */}
-          <div style={{ background: '#fff', borderRadius: '18px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)' }}>
-            <h3 style={{ color: '#1d1d1f', fontSize: '15px', fontWeight: 600, margin: '0 0 16px', letterSpacing: '-0.02em' }}>
-              Datos de contacto
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-             {renderInput('contactName', 'Nombre del responsable', 'text', true)}
-              {renderInput('contactEmail', 'Email de contacto', 'email', true)}
-              {renderInput('phone', 'Teléfono (opcional)', 'tel')}
-            </div>
-          </div>
-
-          {/* Documento acreditativo */}
-          <div style={{ background: '#fff', borderRadius: '18px', padding: '24px', marginBottom: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)' }}>
-            <h3 style={{ color: '#1d1d1f', fontSize: '15px', fontWeight: 600, margin: '0 0 6px', letterSpacing: '-0.02em' }}>
-              Documento acreditativo
-            </h3>
-            <p style={{ color: '#86868b', fontSize: '12px', margin: '0 0 16px' }}>
-              Adjunta un documento que acredite tu pertenencia al polígono (contrato de arrendamiento, escrituras, etc.)
-            </p>
-            <label style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: '8px', padding: '24px', borderRadius: '12px',
-              border: `2px dashed ${file ? '#34c759' : 'rgba(0,0,0,0.12)'}`,
-              background: file ? 'rgba(52,199,89,0.04)' : '#f5f5f7',
-              cursor: 'pointer', transition: 'all 0.2s',
-            }}>
-              <span style={{ fontSize: '24px' }}>{file ? '✅' : '📄'}</span>
-              <span style={{ color: file ? '#34c759' : '#86868b', fontSize: '13px', fontWeight: 500 }}>
-                {file ? file.name : 'Haz clic para seleccionar archivo'}
-              </span>
-              <span style={{ color: '#b0b0b5', fontSize: '11px' }}>PDF, Word o imagen (máx. 10MB)</span>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                style={{ display: 'none' }}
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-              />
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              background: loading ? '#86868b' : '#0071e3',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '14px',
-              fontSize: '15px',
-              fontWeight: 500,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontFamily: appleFont,
-              transition: 'background 0.2s',
-            }}
-          >
-            {loading ? 'Enviando solicitud...' : 'Enviar solicitud'}
-          </button>
-        </form>
-
-        <p style={{ textAlign: 'center', color: '#86868b', fontSize: '13px', marginTop: '20px' }}>
-          ¿Ya tienes cuenta?{' '}
-          <Link href="/login" style={{ color: '#0071e3', textDecoration: 'none' }}>
-            Iniciar sesión
-          </Link>
-        </p>
-      </main>
+      </div>
     </div>
   );
 }

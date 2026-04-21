@@ -5,6 +5,7 @@ import Sidebar from "@/components/ui/Sidebar";
 import Link from "next/link";
 import { API_ROUTES } from "@/lib/utils";
 import SearchInput from "@/components/ui/Searchbar";
+import PageHeader from '@/components/ui/pageHeader';
 
 export default function AdminCourses() {
   const [courses, setCourses] = useState<any[]>([]);
@@ -42,158 +43,99 @@ export default function AdminCourses() {
     fetchData();
   }, []);
 
-  const filtered = courses.filter((c) => {
-    const matchesTab =
-      activeTab === "BASICO"
-        ? c.category?.toUpperCase() !== "ESPECIALIZADO"
-        : c.category?.toUpperCase() === "ESPECIALIZADO";
+    const filtered = courses.filter(c => {
+        const matchesTab = activeTab === 'BASICO'
+            ? (c.category?.toUpperCase() !== 'ESPECIALIZADO')
+            : (c.category?.toUpperCase() === 'ESPECIALIZADO');
+        const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesTab && matchesSearch;
+    });
 
-    const matchesSearch = c.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
+    return (
+        <div className="flex min-h-screen bg-background font-sans">
+            <Sidebar role="ADMIN" />
 
-    return matchesTab && matchesSearch;
-  });
+            <main className="flex-1 overflow-auto flex flex-col relative">
+                <PageHeader 
+                    title="Formación de Empresa"
+                    description="Supervisa y gestiona los itinerarios formativos de tu equipo."
+                    icon={<i className="bi bi-mortarboard-fill"></i>}
+                    action={
+                        <Link href="/dashboard/administrator/admin/courses/manage"
+                            className="bg-secondary text-secondary-foreground px-6 py-3 rounded-xl font-bold hover:opacity-90 transition-all shadow-sm flex items-center justify-center gap-2"
+                        >
+                            <i className="bi bi-gear-wide-connected"></i> Gestionar Contenido
+                        </Link>
+                    }
+                />
 
-  return (
-    <div
-      className="flex min-h-screen bg-[#f5f5f7]"
-      style={{ fontFamily: "'-apple-system', sans-serif" }}
-    >
-      <Sidebar role="ADMIN" />
-
-      <main className="flex-1 p-10 overflow-auto">
-        {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          <div>
-            <h1 className="text-4xl font-bold text-[#1d1d1f] tracking-tight">
-              Formación de Empresa
-            </h1>
-            <p className="text-[#86868b] mt-1 text-lg">
-              Supervisa y gestiona el contenido formativo de tu organización.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <SearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Buscar cursos..."
-            />
-
-            <Link
-              href="/dashboard/administrator/admin/courses/manage"
-              className="bg-[#1d1d1f] text-white px-6 py-2.5 rounded-full font-semibold hover:bg-black transition-all shadow-md shrink-0 text-center"
-            >
-              <i className="bi bi-gear-fill mr-2"></i>
-              Panel de Control
-            </Link>
-          </div>
-        </div>
-
-        {/* TABS */}
-        <div className="flex gap-8 border-b border-gray-200 mb-8">
-          {["BASICO", "ESPECIALIZADO"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab as any)}
-              className={`pb-4 text-sm font-semibold cursor-pointer transition-all ${
-                activeTab === tab
-                  ? "border-b-2 border-[#0071e3] text-[#0071e3]"
-                  : "text-[#86868b] hover:text-[#1d1d1f]"
-              }`}
-            >
-              {tab === "BASICO" ? "Onboarding" : "Especialización"}
-            </button>
-          ))}
-        </div>
-
-        {/* GRID DE CURSOS */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="h-80 bg-white rounded-[2rem] animate-pulse border border-gray-100"
-              />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-24 bg-white rounded-[3rem] border border-dashed border-gray-200">
-            <i className="bi bi-folder2-open text-4xl text-gray-300 mb-4 block"></i>
-            <p className="text-[#86868b] font-medium text-lg">
-              No hay cursos disponibles en esta categoría.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-7">
-            {filtered.map((course) => (
-              <Link
-                href={`/dashboard/administrator/admin/courses/${course.id}`}
-              >
-                <div
-                  key={course.id}
-                  className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 flex flex-col group hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
-                >
-                  {/* IMAGEN DE PORTADA (Igual que en empleado) */}
-                  <div className="h-44 w-full bg-[#f5f5f7] relative overflow-hidden">
-                    {course.fileUrl ? (
-                      <img
-                        src={course.fileUrl}
-                        alt={course.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            "https://placehold.co/600x400/f5f5f7/86868b?text=Formación";
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <i
-                          className={`bi ${activeTab === "BASICO" ? "bi-book" : "bi-mortarboard"} text-4xl text-gray-300`}
-                        ></i>
-                      </div>
-                    )}
-
-                    {/* Badge de estado */}
-                    {/*<div className="absolute top-4 left-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${
-                          course.isPublic
-                            ? "bg-green-500 text-white"
-                            : "bg-white/90 text-[#1d1d1f] backdrop-blur-md"
-                        }`}
-                      >
-                        {course.isPublic ? "Público" : "Empresa"}
-                      </span>
-                    </div>*/}
-                  </div>
-
-                  {/* CONTENIDO */}
-                  <div className="p-7 flex flex-col flex-1">
-                    <h3 className="text-[#1d1d1f] font-bold text-xl leading-tight mb-4 line-clamp-2 h-14">
-                      {course.title}
-                    </h3>
-
-                    <div className="mt-auto space-y-4">
-                      <div className="flex items-center justify-between text-[#86868b] text-sm mb-4">
-                        <span className="flex items-center gap-1.5 font-medium">
-                          <i className="bi bi-collection-play"></i>
-                          {course._count?.Content || 0} Contenidos
-                        </span>
-                        {/*} <span className="flex items-center gap-1.5 font-medium">
-                                                <i className="bi bi-people"></i>
-                                                {course._count?.UserProgress || 0} Empleados
-                                            </span>*/}
-                      </div>
+                <div className="p-6 lg:p-10 flex-1 w-full max-w-7xl mx-auto">
+                    {/* Barra de herramientas integrada */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-card p-4 rounded-2xl border border-border shadow-sm">
+                        <div className="flex gap-2">
+                            {['BASICO', 'ESPECIALIZADO'].map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab as any)}
+                                    className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${
+                                        activeTab === tab
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'text-muted-foreground hover:bg-muted'
+                                    }`}
+                                >
+                                    {tab === 'BASICO' ? 'Onboarding' : 'Especialización'}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="relative w-full md:w-80">
+                            <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"></i>
+                            <input 
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Buscar cursos..."
+                                className="w-full bg-background border border-input rounded-xl pl-11 pr-4 py-2 text-sm outline-none focus:ring-1 focus:ring-primary transition-all font-medium"
+                            />
+                        </div>
                     </div>
-                  </div>
+
+                    {loading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="h-64 bg-card rounded-[2rem] animate-pulse border border-border" />
+                            ))}
+                        </div>
+                    ) : filtered.length === 0 ? (
+                        <div className="text-center py-20 bg-card rounded-[2rem] border border-dashed border-border shadow-sm">
+                            <i className="bi bi-journal-x text-5xl text-muted-foreground/30 mb-4 block"></i>
+                            <h3 className="text-xl font-bold text-foreground">Sin resultados</h3>
+                            <p className="text-muted-foreground text-sm">No hay cursos disponibles en esta categoría.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {filtered.map((course) => (
+                                <div key={course.id} className="bg-card rounded-[2rem] p-6 shadow-sm border border-border flex flex-col group hover:shadow-xl hover:border-primary/30 transition-all duration-300">
+                                    <div className="mb-4">
+                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl mb-4 ${
+                                            activeTab === 'BASICO' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'
+                                        }`}>
+                                            <i className={activeTab === 'BASICO' ? "bi bi-book" : "bi bi-award"}></i>
+                                        </div>
+                                        <h3 className="text-foreground font-bold text-lg leading-tight line-clamp-2 min-h-[3.5rem]">
+                                            {course.title}
+                                        </h3>
+                                    </div>
+                                    <Link href={`/dashboard/administrator/admin/courses/${course.id}`}
+                                        className="mt-auto w-full py-3 bg-muted text-foreground hover:bg-secondary hover:text-secondary-foreground text-sm font-bold rounded-xl text-center transition-all"
+                                    >
+                                        Ver Contenido
+                                    </Link>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </main>
-    </div>
-  );
+            </main>
+        </div>
+    );
 }

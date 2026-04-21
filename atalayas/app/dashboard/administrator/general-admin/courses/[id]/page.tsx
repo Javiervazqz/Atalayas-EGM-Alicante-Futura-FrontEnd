@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
 import SearchInput from '@/components/ui/Searchbar';
 
@@ -60,146 +61,138 @@ export default function GAdminCourseDetailPage() {
   };
 
   if (loading) return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
-      <Sidebar role="GENERAL_ADMIN" />
-      <main className="flex-1 flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-[#0071e3] border-t-transparent rounded-full animate-spin" />
-      </main>
+    <div className="flex min-h-screen bg-background items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-primary animate-pulse">Sincronizando Currículo...</p>
+      </div>
     </div>
   );
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, sans-serif" }}>
+    <div className="flex min-h-screen bg-muted/30 font-sans text-foreground transition-colors duration-300">
       <Sidebar role="GENERAL_ADMIN" />
 
-      <main className="flex-1 h-screen overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-8 py-10">
-
-          {/* Breadcrumb */}
-          <Link href="/dashboard/administrator/general-admin/courses" className="inline-flex items-center gap-2 text-[#0071e3] text-sm font-medium hover:underline mb-8 group">
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="group-hover:-translate-x-0.5 transition-transform">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Volver a todos los cursos
-          </Link>
-
-          {/* Header con info de empresa destacada */}
-          <div className="bg-white rounded-[28px] border border-gray-200 p-8 mb-8 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-              <div className="flex items-start gap-5">
-                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl shrink-0">📚</div>
-                <div>
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className={`text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${course?.isPublic ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-[#0071e3]'}`}>
-                      {course?.isPublic ? '🌐 Público' : '🔒 Privado'}
-                    </span>
-                    {course?.Company?.name && (
-                      <span className="text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-purple-50 text-purple-600">
-                        🏭 {course.Company.name}
-                      </span>
-                    )}
-                    {course?.category && (
-                      <span className="text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-gray-100 text-[#86868b]">
-                        {course.category}
-                      </span>
-                    )}
-                  </div>
-                  <h1 className="text-3xl font-black text-[#1d1d1f] tracking-tight mb-1">{course?.title}</h1>
-                  <p className="text-[#86868b] text-sm">{filteredContents.length} lecciones · Admin General</p>
-                </div>
-              </div>
-              <Link
+      <main className="flex-1 overflow-auto flex flex-col relative">
+        <PageHeader 
+          title={course?.title || "Detalle del Curso"}
+          description={`Gestionando ${filteredContents.length} unidades de aprendizaje para ${course?.Company?.name || 'Contenido Global'}.`}
+          icon={<i className="bi bi-journal-bookmark-fill"></i>}
+          backUrl="/dashboard/administrator/general-admin/courses"
+          action={
+            <div className="flex items-center gap-4">
+               <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar lección..." />
+               <Link
                 href={`/dashboard/administrator/general-admin/courses/${id}/content/new`}
-                className="shrink-0 bg-[#1d1d1f] text-white px-6 py-3 rounded-2xl text-sm font-bold hover:bg-black transition-all flex items-center gap-2"
+                className="bg-secondary text-white px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-secondary/20 flex items-center gap-2"
               >
-                <span className="text-lg">+</span> Nueva lección
+                <i className="bi bi-robot text-lg"></i> Generar con IA
               </Link>
             </div>
-          </div>
+          }
+        />
 
-          {/* Buscador */}
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-bold text-[#1d1d1f]">Lecciones</h2>
-            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar lección..." />
-          </div>
-
-          {/* Lista */}
-          {filteredContents.length === 0 ? (
-            <div className="bg-white rounded-[24px] border border-dashed border-gray-300 p-16 text-center">
-              <p className="text-4xl mb-4">📝</p>
-              <p className="text-[#1d1d1f] font-bold mb-2">Sin lecciones todavía</p>
-              <Link href={`/dashboard/administrator/general-admin/courses/${id}/content/new`} className="inline-block bg-[#0071e3] text-white px-6 py-3 rounded-2xl text-sm font-bold hover:bg-[#0077ed] transition-all mt-4">
-                Crear primera lección
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredContents.map((content: any) => (
-                <div
-                  key={content.id}
-                  onClick={() => router.push(`/dashboard/administrator/general-admin/courses/${id}/content/${content.id}`)}
-                  className="bg-white rounded-[20px] border border-gray-200 p-5 hover:border-[#0071e3] hover:shadow-md transition-all cursor-pointer group flex items-center gap-5"
-                >
-                  <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center font-mono text-sm font-bold text-[#86868b] shrink-0 group-hover:bg-blue-50 group-hover:text-[#0071e3] transition-colors">
-                    {String(content.order).padStart(2, '0')}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors truncate mb-1">{content.title}</p>
-                    <p className="text-xs text-[#86868b] truncate">{content.summary || 'Sin resumen'}</p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {content.url && <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded-lg">PDF</span>}
-                    {content.quiz && <span className="bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-1 rounded-lg">QUIZ</span>}
-                    {content.podcast && <span className="bg-purple-50 text-purple-600 text-[10px] font-bold px-2 py-1 rounded-lg">AUDIO</span>}
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/administrator/general-admin/courses/${id}/content/${content.id}/edit`); }}
-                      className="p-2 rounded-xl hover:bg-blue-50 text-[#86868b] hover:text-[#0071e3] transition-all"
-                    >
-                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setSelectedContent(content); setShowDeleteModal(true); }}
-                      className="p-2 rounded-xl hover:bg-red-50 text-[#86868b] hover:text-red-500 transition-all"
-                    >
-                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </button>
-                  </div>
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-gray-300 group-hover:text-[#0071e3] transition-colors shrink-0">
-                    <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Stats */}
-          <div className="grid grid-cols-4 gap-4 mt-8">
+        <div className="p-6 lg:p-10 space-y-10 max-w-7xl mx-auto w-full">
+          
+          {/* STATS GRID PREMIUM */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
             {[
-              { label: 'Total lecciones', value: course?.Content?.length || 0, bg: 'bg-blue-50', text: 'text-blue-600' },
-              { label: 'Con Resumen por IA', value: course?.Content?.filter((c: any) => c.summary)?.length || 0, bg: 'bg-orange-50', text: 'text-orange-600' },
-              { label: 'Con Quiz por IA', value: course?.Content?.filter((c: any) => c.quiz)?.length || 0, bg: 'bg-purple-50', text: 'text-purple-600' },
-              { label: 'Con Podcast por IA', value: course?.Content?.filter((c: any) => c.podcast)?.length || 0, bg: 'bg-green-50', text: 'text-green-600' },
+              { label: 'Unidades', value: course?.Content?.length || 0, icon: 'bi-layers', color: 'text-primary' },
+              { label: 'PDFs', value: course?.Content?.filter((c: any) => c.url)?.length || 0, icon: 'bi-file-earmark-pdf', color: 'text-secondary' },
+              { label: 'Quizzes', value: course?.Content?.filter((c: any) => c.quiz)?.length || 0, icon: 'bi-patch-question', color: 'text-indigo-500' },
+              { label: 'Audios', value: course?.Content?.filter((c: any) => c.podcast)?.length || 0, icon: 'bi-mic', color: 'text-emerald-500' },
             ].map((stat) => (
-              <div key={stat.label} className={`${stat.bg} rounded-[20px] p-5`}>
-                <p className={`text-2xl font-black ${stat.text} mb-1`}>{stat.value}</p>
-                <p className="text-xs font-semibold text-[#86868b]">{stat.label}</p>
+              <div key={stat.label} className="bg-card border border-border/60 rounded-[24px] p-6 shadow-sm flex flex-col items-center text-center group hover:border-primary/30 transition-all">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl mb-4 bg-muted/50 ${stat.color} group-hover:scale-110 transition-transform`}>
+                  <i className={`bi ${stat.icon}`}></i>
+                </div>
+                <p className="text-3xl font-black text-foreground tracking-tighter">{stat.value}</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">{stat.label}</p>
               </div>
             ))}
+          </div>
+
+          {/* LISTADO DE LECCIONES */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+              <h2 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Estructura del curso</h2>
+              <span className="text-[10px] font-bold text-primary bg-primary/5 px-2 py-1 rounded-md">Orden ascendente</span>
+            </div>
+
+            {filteredContents.length === 0 ? (
+              <div className="bg-card rounded-[32px] border border-dashed border-border/60 p-20 text-center flex flex-col items-center">
+                <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center text-muted-foreground/20 text-4xl mb-6 shadow-inner">
+                   <i className="bi bi-journal-x"></i>
+                </div>
+                <p className="text-foreground font-black text-xs uppercase tracking-widest">Sin contenidos registrados</p>
+                <p className="text-muted-foreground text-xs mt-2 mb-8">Empieza a construir el curso usando nuestro asistente de IA.</p>
+                <Link href={`/dashboard/administrator/general-admin/courses/${id}/content/new`} className="bg-primary text-white px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest hover:opacity-90 transition-all">
+                  Crear primera unidad
+                </Link>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {filteredContents.map((content: any) => (
+                  <div
+                    key={content.id}
+                    onClick={() => router.push(`/dashboard/administrator/general-admin/courses/${id}/content/${content.id}`)}
+                    className="group bg-card rounded-[24px] border border-border/60 p-5 hover:border-primary/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex items-center gap-6"
+                  >
+                    <div className="w-14 h-14 bg-muted/50 rounded-2xl flex items-center justify-center font-mono text-lg font-black text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all shrink-0 shadow-inner">
+                      {String(content.order).padStart(2, '0')}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors truncate mb-1">{content.title}</h3>
+                      <p className="text-xs text-muted-foreground line-clamp-1">{content.summary || 'Sin descripción redactada...'}</p>
+                    </div>
+                    
+                    <div className="hidden md:flex items-center gap-2 shrink-0">
+                      {content.url && <span className="bg-secondary/10 text-secondary text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg border border-secondary/20">PDF</span>}
+                      {content.quiz && <span className="bg-indigo-500/10 text-indigo-600 text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg border border-indigo-500/20">Quiz</span>}
+                      {content.podcast && <span className="bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg border border-emerald-500/20">Audio</span>}
+                    </div>
+                    
+                    <div className="flex items-center gap-2 shrink-0 pl-4 border-l border-border/60" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/administrator/general-admin/courses/${id}/content/${content.id}/edit`); }}
+                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-muted/30 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all"
+                      >
+                        <i className="bi bi-pencil-square"></i>
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSelectedContent(content); setShowDeleteModal(true); }}
+                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-muted/30 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+                      >
+                        <i className="bi bi-trash3"></i>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </main>
 
+      {/* MODAL ELIMINAR PREMIUM */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowDeleteModal(false)}>
-          <div className="bg-white rounded-[28px] p-8 max-w-sm w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5 text-2xl">🗑️</div>
-            <h2 className="text-xl font-black text-[#1d1d1f] text-center mb-2">¿Eliminar lección?</h2>
-            <p className="text-sm text-[#86868b] text-center mb-6">Se eliminará <strong>"{selectedContent?.title}"</strong> permanentemente.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-card rounded-[40px] p-10 max-w-sm w-full shadow-2xl border border-border animate-in zoom-in-95 duration-300 text-center">
+            <div className="w-20 h-20 bg-destructive/10 text-destructive rounded-[28px] flex items-center justify-center mx-auto mb-6 text-4xl shadow-sm">
+              <i className="bi bi-exclamation-triangle"></i>
+            </div>
+            <h2 className="text-2xl font-black text-foreground mb-2 tracking-tight uppercase">¿Eliminar lección?</h2>
+            <p className="text-xs text-muted-foreground mb-8 leading-relaxed font-medium px-4">
+              Vas a eliminar la unidad <strong className="text-foreground">"{selectedContent?.title}"</strong>. Esta acción es irreversible.
+            </p>
             <div className="flex flex-col gap-3">
-              <button onClick={handleDelete} disabled={!!deletingId} className="w-full py-3.5 rounded-2xl font-bold bg-red-500 text-white hover:bg-red-600 disabled:opacity-60">{deletingId ? 'Eliminando...' : 'Eliminar'}</button>
-              <button onClick={() => setShowDeleteModal(false)} className="w-full py-3.5 rounded-2xl font-semibold text-[#86868b] hover:bg-gray-50">Cancelar</button>
+              <button onClick={handleDelete} disabled={!!deletingId} className="w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] bg-destructive text-white hover:opacity-90 transition-all shadow-lg shadow-destructive/20 disabled:opacity-50">
+                {deletingId ? 'Eliminando...' : 'Confirmar Eliminación'}
+              </button>
+              <button onClick={() => setShowDeleteModal(false)} className="w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] text-muted-foreground hover:bg-muted transition-all">
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
