@@ -1,8 +1,6 @@
-// components/ui/CompanyDropdown.tsx
 'use client';
 
-import { useState } from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 interface CompanyDropdownProps {
   companies: string[];
@@ -14,9 +12,9 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  const filtered = companies.filter(c =>{
-   if(c==='EGM Atalayas') return false;
-   return c === 'PUBLIC' || c.toLowerCase().includes(search.toLowerCase())
+  const filtered = companies.filter(c => {
+    if(c === 'EGM Atalayas') return false;
+    return c === 'PUBLIC' || c.toLowerCase().includes(search.toLowerCase());
   });
 
   useEffect(() => {
@@ -29,39 +27,50 @@ export default function CompanyDropdown({ companies, selected, onChange }: Compa
 
   return (
     <div className="relative mb-8">
+      {/* ── BOTÓN DESPLEGABLE ── */}
       <button
         type='button'
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-5 py-3 text-sm font-semibold text-foreground hover:border-gray-400 transition-all w-64"
+        // Cambiado bg-white por bg-background y los bordes fijos por border-border
+        className="flex items-center gap-3 bg-background border border-border rounded-2xl px-5 py-3 text-sm font-semibold text-foreground hover:border-primary/40 hover:shadow-sm transition-all w-64"
       >
         <span>{selected === 'PUBLIC' ? '🌐 Público' : `🏭 ${selected}`}</span>
-        <span className="ml-auto text-gray-400">{open ? '▲' : '▼'}</span>
+        <span className="ml-auto text-muted-foreground">{open ? '▲' : '▼'}</span>
       </button>
 
+      {/* ── MENÚ DE OPCIONES ── */}
       {open && (
-        <div className="absolute top-14 left-0 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 w-72 overflow-hidden">
-          <div className="p-3 border-b border-gray-100">
+        // Cambiado bg-white por bg-card
+        <div className="absolute top-14 left-0 bg-card border border-border rounded-2xl shadow-xl z-50 w-72 overflow-hidden">
+          
+          <div className="p-3 border-b border-border">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar empresa..."
-              className="w-full text-sm outline-none px-3 py-2 bg-background rounded-xl"
+              // Adaptado el input de búsqueda para que se lea perfecto en oscuro
+              className="w-full text-sm outline-none px-3 py-2 bg-muted/50 focus:bg-background border border-transparent focus:border-primary/30 rounded-xl transition-all text-foreground placeholder:text-muted-foreground"
               autoFocus
             />
           </div>
+          
           <div className="max-h-64 overflow-y-auto">
             {filtered.slice(0,10).map((company) => (
               <button
                 key={company}
                 onClick={() => { onChange(company); setOpen(false); setSearch(''); }}
-                className={`w-full text-left px-5 py-3 text-sm hover:bg-background transition-colors ${
-                  selected === company ? 'font-bold text-[#0071e3]' : 'text-foreground'
+                // Usamos text-primary en lugar de un azul HEX fijo (#0071e3)
+                className={`w-full text-left px-5 py-3 text-sm hover:bg-muted transition-colors ${
+                  selected === company 
+                    ? 'font-bold text-primary bg-primary/5' 
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {company === 'PUBLIC' ? '🌐 Público' : `🏭 ${company}`}
               </button>
             ))}
           </div>
+          
         </div>
       )}
     </div>

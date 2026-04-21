@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
-import SearchInput from '@/components/ui/Searchbar';
 import CompanyDropdown from '@/components/ui/CompanyDropdown';
 
 interface Service {
@@ -23,21 +23,14 @@ export default function ServicesPage() {
   const [selectedCompany, setSelectedCompany] = useState<string>('PUBLIC');
   const router = useRouter();
 
-  const user = typeof window !== 'undefined' 
-    ? JSON.parse(localStorage.getItem('user') || '{}') 
-    : {};
-
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const token = localStorage.getItem('token');
         const res = await fetch(API_ROUTES.SERVICES.GET_ALL, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         const data = await res.json();
         setServices(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Error fetching services:", error);
       } finally {
         setLoading(false);
       }
@@ -60,80 +53,75 @@ export default function ServicesPage() {
   }, {} as Record<string, Service[]>);
 
   const companies = ['PUBLIC', ...Object.keys(byCompany)];
-  const publicServices = filteredServices.filter(s => s.isPublic);
-  
-  const currentList = [...(selectedCompany === 'PUBLIC' ? publicServices : byCompany[selectedCompany] || [])];
-  
-  currentList.sort((a, b) => a.title.localeCompare(b.title));
+  const currentList = selectedCompany === 'PUBLIC' 
+    ? filteredServices.filter(s => s.isPublic) 
+    : byCompany[selectedCompany] || [];
 
   return (
-    <div className="flex min-h-screen bg-background font-sans">
+    <div className="flex min-h-screen bg-background font-sans text-foreground">
       <Sidebar role='GENERAL_ADMIN' />
 
-      <main className="flex-1 h-screen overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8 py-10 lg:py-12">
+      <main className="flex-1 overflow-auto flex flex-col relative">
+        <PageHeader 
+          title="Gestión de Servicios"
+          description="Organiza y supervisa todos los servicios del ecosistema corporativo."
+          icon={<i className="bi bi-briefcase"></i>}
+          action={
+            <Link href="/dashboard/administrator/general-admin/services/new"
+              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-sm flex items-center gap-2"
+            >
+              <i className="bi bi-plus-lg"></i> Nuevo servicio
+            </Link>
+          }
+        />
 
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-            <div>
-              <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">Gestión de Servicios</h1>
-              <p className="text-muted-foreground mt-2 text-base">Organiza y edita los servicios del ecosistema.</p>
+        <div className="p-6 lg:p-10 flex-1 max-w-7xl mx-auto w-full space-y-6">
+          
+          <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm flex flex-col">
+            <div className="p-5 border-b border-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/20">
+              <div className="flex-1 w-full max-w-sm">
+                <CompanyDropdown companies={companies} selected={selectedCompany} onChange={setSelectedCompany} />
+              </div>
+              <div className="relative w-full sm:max-w-xs">
+                <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"></i>
+                <input 
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar servicio..."
+                  className="w-full bg-background border border-input rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:border-primary transition-all font-medium"
+                />
+              </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar..." />
-              <Link href="/dashboard/administrator/general-admin/services/new"
-                className="bg-secondary text-secondary-foreground w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity shadow-sm whitespace-nowrap text-center">
-                <i className="bi bi-plus-lg mr-1"></i> Nuevo servicio
-              </Link>
-            </div>
-          </div>
 
-          <div className="mb-6">
-            <CompanyDropdown companies={companies} selected={selectedCompany} onChange={setSelectedCompany} />
-          </div>
-
-          <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-muted/50 border-b border-border">
-                    <th className="px-6 py-4 text-[11px] font-black text-muted-foreground uppercase tracking-widest">Servicio</th>
-                    <th className="px-6 py-4 text-[11px] font-black text-muted-foreground uppercase tracking-widest">Empresa Propietaria</th>
+                  <tr className="bg-muted/40 border-b border-border">
+                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-3/5">Servicio</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-1/5">Visibilidad</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-1/5 text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {loading ? (
-                    [1, 2, 3].map(i => (
-                      <tr key={i} className="animate-pulse">
-                        <td colSpan={2} className="px-6 py-8 bg-muted/30"></td>
-                      </tr>
-                    ))
+                    [1, 2, 3].map(i => <tr key={i} className="animate-pulse"><td colSpan={3} className="px-6 py-8"><div className="h-4 bg-muted rounded w-full"></div></td></tr>)
                   ) : currentList.length > 0 ? (
                     currentList.map((service) => (
-                      <tr
-                        key={service.id}
-                        onClick={() => router.push(`/dashboard/administrator/general-admin/services/${service.id}`)}
-                        className="hover:bg-muted cursor-pointer transition-colors group"
-                      >
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-foreground group-hover:text-secondary transition-colors">
-                            {service.title}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md ${service.isPublic ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                            {service.isPublic ? 'Global (Atalayas)' : (service.Company?.name || 'Privado')}
+                      <tr key={service.id} onClick={() => router.push(`/dashboard/administrator/general-admin/services/${service.id}`)} className="hover:bg-muted/30 cursor-pointer transition-colors group">
+                        <td className="px-6 py-5"><div className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{service.title}</div></td>
+                        <td className="px-6 py-5">
+                          <span className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-md border ${service.isPublic ? 'bg-primary/5 text-primary border-primary/10' : 'bg-muted text-muted-foreground border-border'}`}>
+                            {service.isPublic ? 'Global' : 'Privado'}
                           </span>
+                        </td>
+                        <td className="px-6 py-5 text-right">
+                          <i className="bi bi-chevron-right text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all"></i>
                         </td>
                       </tr>
                     ))
                   ) : (
-                    <tr>
-                      <td colSpan={2} className="px-6 py-16 text-center">
-                        <div className="text-4xl text-muted-foreground/50 mb-3"><i className="bi bi-search"></i></div>
-                        <p className="text-muted-foreground text-sm font-medium">No se encontraron servicios en esta categoría.</p>
-                      </td>
-                    </tr>
+                    <tr><td colSpan={3} className="px-6 py-20 text-center text-muted-foreground font-medium text-sm italic">No se han encontrado servicios.</td></tr>
                   )}
                 </tbody>
               </table>

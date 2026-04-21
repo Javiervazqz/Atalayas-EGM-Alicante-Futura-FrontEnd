@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
 import Link from 'next/link';
 import { API_ROUTES } from '@/lib/utils';
-import SearchInput from '@/components/ui/Searchbar';
 
 interface Company {
   id: string;
@@ -87,9 +87,9 @@ export default function EmployeesPage() {
 
   const roleColors: Record<string, string> = {
     GENERAL_ADMIN: 'bg-primary text-primary-foreground',
-    ADMIN: 'bg-primary/20 text-primary',
-    EMPLOYEE: 'bg-secondary/20 text-secondary',
-    PUBLIC: 'bg-muted text-muted-foreground',
+    ADMIN: 'bg-primary/20 text-primary border border-primary/30',
+    EMPLOYEE: 'bg-secondary/20 text-secondary border border-secondary/30',
+    PUBLIC: 'bg-muted text-muted-foreground border border-border',
   };
 
   const roleLabels: Record<string, string> = {
@@ -104,87 +104,132 @@ export default function EmployeesPage() {
   return (
     <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role={currentUser.role} />
-      <main className="flex-1 p-6 lg:p-10 overflow-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
-          <div>
-            <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight mb-2">Gestión de Usuarios</h1>
-            <p className="text-muted-foreground text-base font-medium">
-              {currentUser.role === 'GENERAL_ADMIN' ? 'Control total del polígono industrial' : 'Administra los accesos de tu empresa'}
-            </p>
-          </div>
-          <Link href="/dashboard/administrator/employees/new" className="bg-secondary hover:opacity-90 text-secondary-foreground font-bold px-6 py-3 rounded-xl transition-opacity text-sm shadow-sm flex items-center gap-2 shrink-0">
-            <i className="bi bi-person-plus-fill"></i> Nuevo usuario
-          </Link>
-        </div>
+      
+      <main className="flex-1 overflow-auto flex flex-col relative">
+        
+        <PageHeader 
+          title="Gestión de Usuarios"
+          description={currentUser.role === 'GENERAL_ADMIN' ? 'Control total del polígono industrial' : 'Administra los accesos de tu empresa'}
+          icon={<i className="bi bi-people-fill"></i>}
+          action={
+            <Link 
+              href="/dashboard/administrator/employees/new" 
+              className="bg-secondary hover:opacity-90 text-secondary-foreground font-bold px-6 py-3.5 rounded-xl transition-opacity text-sm shadow-sm flex items-center justify-center gap-2 w-full"
+            >
+              <i className="bi bi-person-plus-fill text-lg"></i> Nuevo usuario
+            </Link>
+          }
+        />
 
-        {/* Barra de Filtros */}
-        <div className="bg-card rounded-3xl p-6 shadow-sm border border-border mb-8 flex flex-col sm:flex-row gap-4 justify-between items-center">
-          <div className="w-full sm:w-96">
-             <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar por nombre o email..." />
-          </div>
+        <div className="p-6 lg:p-10 flex-1 max-w-7xl mx-auto w-full">
+          
+          {/* TABLA INTEGRADA CON FILTROS */}
+          <div className="bg-card rounded-3xl shadow-sm border border-border overflow-hidden flex flex-col">
+            
+            {/* Header de la Tabla (Buscador y Filtros) */}
+            <div className="p-5 border-b border-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/20">
+              
+              {/* Buscador minimalista integrado */}
+              <div className="relative w-full sm:max-w-md">
+                <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"></i>
+                <input 
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar por nombre o correo..."
+                  className="w-full bg-background border border-input rounded-xl pl-11 pr-4 py-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium placeholder:text-muted-foreground"
+                />
+              </div>
 
-          {currentUser.role === 'GENERAL_ADMIN' && (
-            <select value={selectedCompany} onChange={(e) => setSelectedCompany(e.target.value)} className="w-full sm:w-64 px-4 py-3 bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl text-sm font-semibold outline-none cursor-pointer text-foreground transition-all">
-              <option value="ALL">Todas las empresas</option>
-              {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          )}
-        </div>
+              {/* Filtro de Empresas (Solo General Admin) */}
+              {currentUser.role === 'GENERAL_ADMIN' && (
+                <div className="w-full sm:w-auto relative shrink-0">
+                  <select 
+                    value={selectedCompany} 
+                    onChange={(e) => setSelectedCompany(e.target.value)} 
+                    className="w-full sm:w-64 appearance-none bg-background border border-input px-4 py-2.5 pr-10 rounded-xl text-sm font-semibold outline-none cursor-pointer text-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                  >
+                    <option value="ALL">Todas las empresas</option>
+                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                  <i className="bi bi-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-xs font-bold"></i>
+                </div>
+              )}
+            </div>
 
-        {/* Tabla */}
-        <div className="bg-card rounded-3xl shadow-sm border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="px-6 py-5 text-[11px] font-black text-muted-foreground uppercase tracking-widest">Usuario</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-muted-foreground uppercase tracking-widest">Rol</th>
-                  {currentUser.role === 'GENERAL_ADMIN' && <th className="px-6 py-5 text-[11px] font-black text-muted-foreground uppercase tracking-widest">Empresa</th>}
-                  <th className="px-6 py-5 text-[11px] font-black text-muted-foreground uppercase tracking-widest text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {loading ? [...Array(3)].map((_, i) => <tr key={i} className="animate-pulse"><td className="px-6 py-6" colSpan={4}><div className="h-6 bg-muted rounded-lg w-full"></div></td></tr>) : 
-                  displayedUsers.length > 0 ? displayedUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-muted/50 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
-                          {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
+            {/* Contenido de la Tabla */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-[40%]">Usuario</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-[25%]">Rol</th>
+                    {currentUser.role === 'GENERAL_ADMIN' && <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-[25%]">Empresa</th>}
+                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right w-[10%]">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {loading ? (
+                    [...Array(3)].map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td className="px-6 py-6" colSpan={currentUser.role === 'GENERAL_ADMIN' ? 4 : 3}>
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-muted rounded-xl"></div>
+                            <div className="space-y-2">
+                              <div className="h-4 bg-muted rounded w-32"></div>
+                              <div className="h-3 bg-muted rounded w-48"></div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : displayedUsers.length > 0 ? (
+                    displayedUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-muted/30 transition-colors group">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0 border border-primary/20">
+                              {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-foreground truncate">{user.name || 'Sin nombre'}</p>
+                              <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">{user.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex px-2.5 py-1 rounded-[6px] text-[9px] uppercase font-black tracking-widest ${roleColors[user.role] || 'bg-muted text-muted-foreground'}`}>
+                            {roleLabels[user.role] || user.role}
+                          </span>
+                        </td>
+                        {currentUser.role === 'GENERAL_ADMIN' && (
+                          <td className="px-6 py-4">
+                            <span className="text-xs font-semibold text-foreground bg-muted/50 px-2.5 py-1 rounded-md border border-border">
+                              {user.Company?.name || 'Sin empresa'}
+                            </span>
+                          </td>
+                        )}
+                        <td className="px-6 py-4 text-right">
+                          <button className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all ml-auto border border-transparent hover:border-primary/20">
+                            <i className="bi bi-pencil-square"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={currentUser.role === 'GENERAL_ADMIN' ? 4 : 3} className="px-6 py-16 text-center">
+                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4 text-2xl text-muted-foreground/50">
+                          <i className="bi bi-search"></i>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-foreground truncate">{user.name || 'Sin nombre'}</p>
-                          <p className="text-xs font-medium text-muted-foreground truncate">{user.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex px-3 py-1 rounded-md text-[10px] uppercase font-black tracking-widest ${roleColors[user.role] || 'bg-muted text-muted-foreground'}`}>
-                        {roleLabels[user.role] || user.role}
-                      </span>
-                    </td>
-                    {currentUser.role === 'GENERAL_ADMIN' && (
-                      <td className="px-6 py-4 text-sm text-foreground font-semibold">
-                        {user.Company?.name || '—'}
+                        <p className="text-foreground font-bold text-sm mb-1">No se encontraron usuarios</p>
+                        <p className="text-muted-foreground text-xs">Prueba con otra búsqueda o cambia los filtros seleccionados.</p>
                       </td>
-                    )}
-                    <td className="px-6 py-4 text-right">
-                      <button className="w-9 h-9 flex items-center justify-center rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors ml-auto">
-                        <i className="bi bi-pencil-square text-lg"></i>
-                      </button>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={currentUser.role === 'GENERAL_ADMIN' ? 4 : 3} className="px-6 py-16 text-center">
-                      <div className="text-4xl text-muted-foreground/30 mb-3"><i className="bi bi-search"></i></div>
-                      <p className="text-foreground font-bold text-base mb-1">No se encontraron usuarios</p>
-                      <p className="text-muted-foreground text-sm">Prueba con otra búsqueda o filtro.</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </main>

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import Sidebar from "@/components/ui/Sidebar";
-import OnboardingPreview from "@/components/views/OnboardingPreview";
-import { API_ROUTES } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import Sidebar from "@/components/ui/Sidebar";
+import PageHeader from "@/components/ui/pageHeader";
+import { API_ROUTES } from "@/lib/utils";
 
 // Definimos los destinos posibles para el auto-completado
 const ROUTE_OPTIONS = [
@@ -14,22 +14,10 @@ const ROUTE_OPTIONS = [
   { label: "Servicios", value: "/dashboard/employee/services" },
 ];
 
-interface CourseContent {
-  id: string;
-  title: string;
-  order?: number;
-}
-
-interface Course {
-  id: string;
-  title: string;
-  Content?: CourseContent[];
-  content?: CourseContent[];
-}
-
 export default function OnboardingConfig() {
-  const [view, setView] = useState<"edit" | "preview">("edit");
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [steps, setSteps] = useState([
     {
       day: 1,
@@ -38,39 +26,8 @@ export default function OnboardingConfig() {
       tasks: [{ label: "", linkAction: "" }],
     },
   ]);
-  const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
-  const [loadingLessons, setLoadingLessons] = useState<string | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
 
-  // Cargamos los cursos al iniciar
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await fetch(API_ROUTES.COURSES.GET_ALL, {
-          // Ajusta tu ruta de cursos
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const sortedData = data.sort((a: any, b: any) => {
-            // Quitamos espacios en blanco al principio/final para comparar limpio
-            const titleA = a.title.trim().toLowerCase();
-            const titleB = b.title.trim().toLowerCase();
-
-            return titleA.localeCompare(titleB, undefined, {
-              numeric: true,
-              sensitivity: "base",
-            });
-          });
-          setAvailableCourses(sortedData);
-        }
-      } catch (e) {
-        console.error("Error cargando cursos", e);
-      }
-    };
-    fetchCourses();
-  }, []);
-
+  // Cargar configuración actual
   useEffect(() => {
     const fetchOnboarding = async () => {
       try {
@@ -84,7 +41,6 @@ export default function OnboardingConfig() {
               day: s.day,
               title: s.title,
               description: s.description || "",
-              // Adaptamos la carga del backend
               tasks: s.onboardingTasks?.map((t: any) => ({
                 label: t.label,
                 linkAction: t.linkAction || "",
@@ -94,35 +50,13 @@ export default function OnboardingConfig() {
           }
         }
       } catch (error) {
-        console.error("Error cargando onboarding:", error);
+        console.error("Error:", error);
       } finally {
         setLoading(false);
       }
     };
     fetchOnboarding();
   }, []);
-
-  const fetchCourseDetail = async (courseId: string, taskId: string) => {
-    const course = availableCourses.find((c) => c.id === courseId);
-    if (course && (course.Content || course.content)) return;
-
-    setLoadingLessons(taskId);
-    try {
-      const res = await fetch(API_ROUTES.COURSES.GET_BY_ID(courseId), {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      if (res.ok) {
-        const fullCourse = await res.json();
-        setAvailableCourses((prev) =>
-          prev.map((c) => (c.id === courseId ? fullCourse : c)),
-        );
-      }
-    } catch (e) {
-      console.error("Error cargando lecciones", e);
-    } finally {
-      setLoadingLessons(null);
-    }
-  };
 
   const addStep = () => {
     setSteps([
@@ -137,10 +71,10 @@ export default function OnboardingConfig() {
   };
 
   const removeStep = (index: number) => {
-    if (steps.length === 1) return; // No permitir borrar el último paso
+    if (steps.length === 1) return;
     const newSteps = steps
       .filter((_, i) => i !== index)
-      .map((step, i) => ({ ...step, day: i + 1 })); // Recalcular los días para que sean correlativos
+      .map((step, i) => ({ ...step, day: i + 1 }));
     setSteps(newSteps);
   };
 
@@ -150,12 +84,7 @@ export default function OnboardingConfig() {
     setSteps(newSteps);
   };
 
-  const updateTask = (
-    stepIndex: number,
-    taskIndex: number,
-    field: "label" | "linkAction",
-    value: string,
-  ) => {
+  const updateTask = (stepIndex: number, taskIndex: number, field: "label" | "linkAction", value: string) => {
     const newSteps = [...steps];
     newSteps[stepIndex].tasks[taskIndex][field] = value;
     setSteps(newSteps);
@@ -164,20 +93,13 @@ export default function OnboardingConfig() {
   const removeTask = (stepIndex: number, taskIndex: number) => {
     const newSteps = [...steps];
     if (newSteps[stepIndex].tasks.length > 1) {
-      newSteps[stepIndex].tasks = newSteps[stepIndex].tasks.filter(
-        (_, i) => i !== taskIndex,
-      );
+      newSteps[stepIndex].tasks = newSteps[stepIndex].tasks.filter((_, i) => i !== taskIndex);
       setSteps(newSteps);
     }
   };
 
-  const updateStep = (index: number, field: string, value: any) => {
-    const newSteps = [...steps];
-    newSteps[index] = { ...newSteps[index], [field]: value };
-    setSteps(newSteps);
-  };
-
   const handleSave = async () => {
+    setSaving(true);
     try {
       const response = await fetch(API_ROUTES.ONBOARDING.SETUP, {
         method: "POST",
@@ -189,118 +111,168 @@ export default function OnboardingConfig() {
       });
       if (response.ok) {
         setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000); // Se oculta tras 3 segundos
+        setTimeout(() => setShowSuccess(false), 3000);
       }
     } catch (error) {
       alert("Error al conectar con el servidor");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const stepsForPreview = steps.map((s) => ({
-    ...s,
-    onboardingTasks: s.tasks.map((t, idx) => ({
-      id: idx.toString(),
-      label: t.label,
-    })),
-  }));
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen bg-[#f5f5f7] items-center justify-center">
-        <div className="w-16 h-16 border-4 border-[#005596]/10 border-t-[#005596] rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="flex min-h-screen bg-background items-center justify-center">
+      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl mx-auto p-6 lg:p-10 min-h-screen font-sans bg-background">
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
-        <div>
-           <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
-             Configuración de Onboarding
-           </h1>
-           <p className="text-muted-foreground font-medium mt-1">Diseña el plan de bienvenida día a día.</p>
-        </div>
-        <button
-          onClick={handleSave}
-          className="bg-secondary text-secondary-foreground px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2 shrink-0"
-        >
-          <i className="bi bi-save"></i> Guardar Plan
-        </button>
-      </header>
+    <div className="flex min-h-screen bg-background font-sans text-foreground">
+      <Sidebar role="ADMIN" />
 
-      {steps.map((step, sIdx) => (
-        <div
-          key={sIdx}
-          className="relative bg-card rounded-3xl shadow-sm border border-border p-6 lg:p-8 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-300"
-        >
-          <button
-            onClick={() => removeStep(sIdx)}
-            type="button"
-            className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-            title="Eliminar día"
+      <main className="flex-1 overflow-auto flex flex-col relative">
+        <PageHeader 
+          title="Configuración de Onboarding"
+          description="Diseña el recorrido estratégico de bienvenida para los nuevos empleados."
+          icon={<i className="bi bi-rocket-takeoff"></i>}
+          backUrl="/dashboard/administrator/admin"
+          action={
+            <div className="flex items-center gap-4">
+              {showSuccess && <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest animate-in fade-in">¡Guardado con éxito!</span>}
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="bg-secondary text-secondary-foreground px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 shadow-sm flex items-center gap-2 transition-all disabled:opacity-50"
+              >
+                {saving ? <i className="bi bi-arrow-repeat animate-spin"></i> : <i className="bi bi-cloud-check"></i>}
+                {saving ? "Guardando..." : "Guardar Plan"}
+              </button>
+            </div>
+          }
+        />
+
+        <div className="p-6 lg:p-10 max-w-5xl mx-auto w-full space-y-8">
+          
+          {steps.map((step, sIdx) => (
+            <div key={sIdx} className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+              
+              {/* Cabecera del Día */}
+              <div className="p-6 lg:px-8 border-b border-border bg-muted/20 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-primary text-white rounded-2xl flex flex-col items-center justify-center shadow-sm">
+                    <span className="text-[10px] font-black uppercase leading-none opacity-70">Día</span>
+                    <span className="text-xl font-bold leading-none">{step.day}</span>
+                  </div>
+                  <div className="flex-1">
+                    <input 
+                      type="text"
+                      value={step.title}
+                      onChange={(e) => {
+                        const newSteps = [...steps];
+                        newSteps[sIdx].title = e.target.value;
+                        setSteps(newSteps);
+                      }}
+                      placeholder="Título de la jornada (ej: Primer contacto)"
+                      className="bg-transparent border-none focus:ring-0 text-lg font-bold text-foreground placeholder:text-muted-foreground/30 w-full"
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={() => removeStep(sIdx)}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+                >
+                  <i className="bi bi-trash3"></i>
+                </button>
+              </div>
+
+              {/* Contenido del Día */}
+              <div className="p-6 lg:p-8 space-y-8">
+                
+                {/* Descripción opcional */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Contexto del día</label>
+                  <textarea 
+                    value={step.description}
+                    onChange={(e) => {
+                      const newSteps = [...steps];
+                      newSteps[sIdx].description = e.target.value;
+                      setSteps(newSteps);
+                    }}
+                    placeholder="Describe brevemente el objetivo de este día..."
+                    className="w-full bg-background border border-input focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-3 text-sm font-medium transition-all resize-none"
+                    rows={2}
+                  />
+                </div>
+
+                {/* Lista de Tareas */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Checklist de tareas</label>
+                  </div>
+
+                  <div className="space-y-3">
+                    {step.tasks.map((task, tIdx) => (
+                      <div key={tIdx} className="group flex flex-col md:flex-row gap-3 p-3 bg-muted/30 rounded-2xl border border-border/50 hover:border-primary/30 transition-all">
+                        
+                        {/* Input de la Tarea */}
+                        <div className="flex-1 flex items-center gap-3">
+                          <div className="w-6 h-6 rounded-lg bg-background border border-input flex items-center justify-center text-muted-foreground/20 text-xs shrink-0"><i className="bi bi-check-lg"></i></div>
+                          <input 
+                            value={task.label}
+                            onChange={(e) => updateTask(sIdx, tIdx, "label", e.target.value)}
+                            placeholder={`Acción ${tIdx + 1}...`}
+                            className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-foreground placeholder:text-muted-foreground/40 w-full"
+                          />
+                        </div>
+
+                        {/* Selector de Acción de Ruta */}
+                        <div className="flex items-center gap-3">
+                          <select 
+                            value={task.linkAction}
+                            onChange={(e) => updateTask(sIdx, tIdx, "linkAction", e.target.value)}
+                            className="bg-background border border-input rounded-lg px-3 py-1.5 text-[11px] font-bold text-muted-foreground focus:border-primary outline-none transition-all cursor-pointer"
+                          >
+                            {ROUTE_OPTIONS.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                          
+                          <button 
+                            onClick={() => removeTask(sIdx, tIdx)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground/40 hover:text-destructive transition-colors"
+                          >
+                            <i className="bi bi-x-circle"></i>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button 
+                    onClick={() => addTask(sIdx)}
+                    className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-primary hover:text-primary/70 transition-all ml-1"
+                  >
+                    <i className="bi bi-plus-lg"></i> Añadir tarea
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Botón Añadir Día */}
+          <button 
+            onClick={addStep}
+            className="w-full py-8 border-2 border-dashed border-border rounded-3xl text-muted-foreground hover:text-primary hover:border-primary hover:bg-primary/5 transition-all flex flex-col items-center justify-center gap-2 group"
           >
-            <i className="bi bi-trash3 text-lg"></i>
+            <div className="w-12 h-12 rounded-full bg-muted group-hover:bg-primary/10 flex items-center justify-center transition-all">
+              <i className="bi bi-plus-lg text-xl"></i>
+            </div>
+            <span className="font-bold text-sm tracking-tight">Expandir plan de onboarding</span>
+            <span className="text-[10px] uppercase font-medium opacity-50 tracking-widest">Siguiente día: {steps.length + 1}</span>
           </button>
 
-          <div className="flex flex-col sm:flex-row gap-6 mb-8 pr-10">
-            <div className="sm:w-20">
-              <label className="block text-[11px] font-black text-primary uppercase tracking-widest mb-1">
-                Día
-              </label>
-              <div className="text-4xl font-extrabold text-foreground">{step.day}</div>
-            </div>
-            <div className="flex-1">
-              <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-2">
-                Título de la jornada
-              </label>
-              <input
-                type="text"
-                value={step.title}
-                className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-base font-bold text-foreground outline-none transition-all placeholder:text-muted-foreground/50 placeholder:font-medium"
-                onChange={(e) => updateStep(sIdx, "title", e.target.value)}
-                placeholder="Ej: Bienvenida y herramientas básicas..."
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-4 bg-muted/30 p-6 rounded-2xl border border-border/50">
-            <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-              <i className="bi bi-ui-checks"></i> Checklist de tareas
-            </label>
-            <div className="space-y-3">
-               {step.tasks.map((task, tIdx) => (
-                 <div key={tIdx} className="flex items-center gap-3">
-                   <div className="w-6 h-6 rounded-md bg-background border border-input flex items-center justify-center text-muted-foreground/30 text-xs shrink-0"><i className="bi bi-check-lg"></i></div>
-                   <input
-                     value={task}
-                     placeholder={`Tarea ${tIdx + 1}...`}
-                     className="flex-1 bg-background px-4 py-2.5 rounded-xl text-sm border border-input focus:border-primary focus:ring-2 focus:ring-ring outline-none transition-all text-foreground placeholder:text-muted-foreground/50 font-medium"
-                     onChange={(e) => {
-                       const newSteps = [...steps];
-                       newSteps[sIdx].tasks[tIdx] = e.target.value;
-                       setSteps(newSteps);
-                     }}
-                   />
-                 </div>
-               ))}
-            </div>
-            <button
-              onClick={() => addTask(sIdx)}
-              className="text-xs text-primary font-bold flex items-center gap-1.5 mt-4 hover:opacity-80 transition-opacity bg-primary/10 px-4 py-2 rounded-lg inline-flex"
-            >
-              <i className="bi bi-plus-lg"></i> Añadir tarea
-            </button>
-          </div>
         </div>
-      ))}
-
-      <button
-        onClick={addStep}
-        className="w-full py-6 border-2 border-dashed border-border rounded-3xl text-muted-foreground font-bold hover:text-foreground hover:border-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 text-sm"
-      >
-        <i className="bi bi-plus-circle-fill text-lg"></i> Añadir un nuevo día al Onboarding
-      </button>
+      </main>
     </div>
   );
 }

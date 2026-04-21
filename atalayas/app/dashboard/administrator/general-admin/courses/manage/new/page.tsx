@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader'; // Importación
 import { API_ROUTES } from '@/lib/utils';
 
 export default function NewCoursePage() {
@@ -10,12 +11,9 @@ export default function NewCoursePage() {
     const [loading, setLoading] = useState(false);
     const [companies, setCompanies] = useState<any[]>([]);
 
-    // Estados para el Selector de Empresas
     const [companySearch, setCompanySearch] = useState('');
     const [isCompanyListOpen, setIsCompanyListOpen] = useState(false);
     const [companyError, setCompanyError] = useState(false);
-
-    // NUEVO: Estado para el error del título
     const [titleError, setTitleError] = useState(false);
 
     const companyRef = useRef<HTMLDivElement>(null);
@@ -58,16 +56,13 @@ export default function NewCoursePage() {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
         let hasError = false;
 
-        // VALIDACIÓN DE TÍTULO
         if (!formData.title.trim()) {
             setTitleError(true);
             hasError = true;
         }
 
-        // VALIDACIÓN DE EMPRESA (Si es privado)
         if (!formData.isPublic && !formData.selectedCompanyId) {
             setCompanyError(true);
             hasError = true;
@@ -106,36 +101,31 @@ export default function NewCoursePage() {
     };
 
     return (
-        <div className="flex min-h-screen bg-background font-sans">
+        <div className="flex min-h-screen bg-muted/30 font-sans text-foreground transition-colors duration-300">
             <Sidebar role="GENERAL_ADMIN" />
 
-            <main className="flex-1 p-6 lg:p-12 overflow-y-auto">
-                <div className="max-w-2xl mx-auto">
-                    <header className="mb-10">
-                        <button
-                            onClick={() => router.back()}
-                            className="text-secondary font-bold text-sm mb-6 flex items-center gap-2 hover:opacity-80 transition-opacity bg-transparent border-none cursor-pointer"
-                        >
-                            <i className="bi bi-chevron-left"></i> Volver
-                        </button>
-                        <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">Nuevo Curso</h1>
-                        <p className="text-muted-foreground mt-2 text-base">Configura un nuevo curso global o específico para una empresa.</p>
-                    </header>
+            <main className="flex-1 overflow-auto flex flex-col relative">
+                <PageHeader 
+                    title="Nuevo Curso"
+                    description="Configura un nuevo curso global o específico para una empresa."
+                    icon={<i className="bi bi-plus-circle"></i>}
+                    backUrl="/dashboard/administrator/general-admin/courses/manage"
+                />
 
-                    <form onSubmit={handleSubmit} className="bg-card p-6 lg:p-10 rounded-3xl border border-border shadow-sm space-y-8">
-
+                <div className="p-6 lg:p-12 flex-1 max-w-3xl mx-auto w-full">
+                    <form onSubmit={handleSubmit} className="bg-card p-6 lg:p-10 rounded-[32px] border border-border/60 shadow-sm space-y-8 transition-colors duration-300">
                         {/* SECCIÓN VISIBILIDAD */}
-                        <div className={`p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 ${formData.isPublic ? 'bg-primary/10 border border-primary/20' : 'bg-muted/50 border border-border'}`}>
+                        <div className={`p-6 rounded-[24px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-500 ${formData.isPublic ? 'bg-primary/5 border border-primary/20' : 'bg-muted/40 border border-border/60'}`}>
                             <div className="flex items-center gap-4">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm text-xl transition-colors ${formData.isPublic ? 'bg-card text-primary' : 'bg-card text-muted-foreground border border-border'}`}>
+                                <div className={`w-12 h-12 rounded-[18px] flex items-center justify-center shadow-sm text-xl transition-all duration-300 ${formData.isPublic ? 'bg-card text-primary' : 'bg-card text-muted-foreground/60 border border-border/60'}`}>
                                     <i className={`bi ${formData.isPublic ? 'bi-globe' : 'bi-lock-fill'}`}></i>
                                 </div>
                                 <div>
-                                    <h3 className={`font-bold text-sm uppercase tracking-wider ${formData.isPublic ? 'text-primary' : 'text-muted-foreground'}`}>
+                                    <h3 className={`font-black text-[11px] uppercase tracking-widest ${formData.isPublic ? 'text-primary' : 'text-muted-foreground'}`}>
                                         {formData.isPublic ? 'Curso Público' : 'Curso Privado'}
                                     </h3>
-                                    <p className="text-muted-foreground text-xs font-medium mt-0.5">
-                                        {formData.isPublic ? 'Accesible para todas las empresas.' : 'Solo visible para la empresa seleccionada.'}
+                                    <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-wider mt-0.5">
+                                        {formData.isPublic ? 'Accesible para todas las empresas' : 'Solo visible para la empresa seleccionada'}
                                     </p>
                                 </div>
                             </div>
@@ -147,16 +137,16 @@ export default function NewCoursePage() {
                                     setCompanySearch('');
                                     setCompanyError(false);
                                 }}
-                                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary cursor-pointer shrink-0 ${formData.isPublic ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+                                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors outline-none cursor-pointer shrink-0 ${formData.isPublic ? 'bg-primary shadow-[0_0_15px_-3px_rgba(var(--primary),0.5)]' : 'bg-muted-foreground/20'}`}
                             >
-                                <span className={`inline-block h-5 w-5 transform rounded-full bg-card shadow-sm transition-transform duration-200 ${formData.isPublic ? 'translate-x-6' : 'translate-x-1'}`} />
+                                <span className={`inline-block h-5 w-5 transform rounded-full bg-card shadow-sm transition-transform duration-300 ${formData.isPublic ? 'translate-x-6' : 'translate-x-1'}`} />
                             </button>
                         </div>
 
                         {/* SELECTOR DE EMPRESA */}
                         {!formData.isPublic && (
-                            <div className="animate-in fade-in slide-in-from-top-2 duration-300" ref={companyRef}>
-                                <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground mb-2 ml-1">Empresa Propietaria</label>
+                            <div className="animate-in fade-in slide-in-from-top-4 duration-500" ref={companyRef}>
+                                <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1 text-center sm:text-left">Empresa Propietaria</label>
                                 <div className="relative">
                                     <input
                                         type="text"
@@ -171,18 +161,8 @@ export default function NewCoursePage() {
                                             const match = companies.find(c => c.name.toLowerCase() === val.toLowerCase());
                                             setFormData(prev => ({ ...prev, selectedCompanyId: match ? match.id : null }));
                                         }}
-                                        className={`w-full px-5 py-4 rounded-2xl bg-background border outline-none font-bold text-foreground transition-all text-sm placeholder:text-muted-foreground/50 ${companyError ? 'border-destructive bg-destructive/5' : 'border-input focus:border-primary focus:ring-2 focus:ring-ring'}`}
+                                        className={`w-full px-5 py-4 rounded-2xl bg-background border outline-none font-bold text-foreground transition-all text-sm placeholder:text-muted-foreground/40 ${companyError ? 'border-destructive bg-destructive/5' : 'border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5'}`}
                                     />
-                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
-                                        <i className={`bi ${isCompanyListOpen ? 'bi-search' : 'bi-building'}`}></i>
-                                    </div>
-
-                                    {companyError && (
-                                        <p className="text-destructive text-xs font-bold mt-2 ml-1 flex items-center gap-1">
-                                            <i className="bi bi-exclamation-triangle-fill"></i> Debes seleccionar una empresa de la lista
-                                        </p>
-                                    )}
-
                                     {isCompanyListOpen && (
                                         <div className="absolute z-20 w-full mt-2 bg-card border border-border rounded-2xl shadow-xl max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
                                             {filteredCompanies.length > 0 ? (
@@ -201,7 +181,7 @@ export default function NewCoursePage() {
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="px-5 py-8 text-center text-muted-foreground text-sm italic">No se encontraron empresas</div>
+                                                <div className="px-5 py-8 text-center text-muted-foreground text-[10px] font-black uppercase tracking-widest italic">No se encontraron empresas</div>
                                             )}
                                         </div>
                                     )}
@@ -209,9 +189,9 @@ export default function NewCoursePage() {
                             </div>
                         )}
 
-                        {/* NOMBRE DEL CURSO (CON VALIDACIÓN DE ERROR) */}
+                        {/* NOMBRE DEL CURSO */}
                         <div>
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground mb-2 ml-1">Nombre del Curso</label>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1 text-center sm:text-left">Nombre del Curso</label>
                             <input
                                 type="text"
                                 value={formData.title}
@@ -219,51 +199,50 @@ export default function NewCoursePage() {
                                     setFormData({ ...formData, title: e.target.value });
                                     if (titleError) setTitleError(false); 
                                 }}
-                                className={`w-full px-5 py-4 rounded-2xl bg-background border outline-none font-bold text-foreground transition-all text-sm placeholder:text-muted-foreground/50 ${titleError ? 'border-destructive bg-destructive/5' : 'border-input focus:border-primary focus:ring-2 focus:ring-ring'}`}
-                                placeholder="Título del curso..."
+                                className={`w-full px-5 py-4 rounded-2xl bg-background border outline-none font-bold text-foreground transition-all text-sm placeholder:text-muted-foreground/40 ${titleError ? 'border-destructive bg-destructive/5' : 'border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5'}`}
+                                placeholder="Ej: Prevención de Riesgos..."
                             />
-                            {titleError && (
-                                <p className="text-destructive text-xs font-bold mt-2 ml-1 flex items-center gap-1">
-                                    <i className="bi bi-exclamation-triangle-fill"></i> El nombre del curso es obligatorio
-                                </p>
-                            )}
                         </div>
 
-                        {/* CATEGORÍA */}
-                        <div className="space-y-3">
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Tipo de Formación</label>
+                        {/* TIPO DE FORMACIÓN */}
+                        <div className="space-y-4">
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center sm:text-left">Tipo de Formación</label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <button
                                     type="button"
                                     onClick={() => setFormData({ ...formData, category: 'BASICO' })}
-                                    className={`p-4 rounded-2xl border-2 flex items-center justify-center gap-2 cursor-pointer transition-all font-bold text-sm ${formData.category === 'BASICO' ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-border bg-background text-muted-foreground hover:border-primary/50'}`}
+                                    className={`p-5 rounded-2xl border-2 flex items-center justify-center gap-3 cursor-pointer transition-all font-black text-[11px] uppercase tracking-widest ${formData.category === 'BASICO' ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-border/60 bg-muted/20 text-muted-foreground hover:border-primary/40'}`}
                                 >
-                                    <i className="bi bi-book"></i> Onboarding
+                                    <i className="bi bi-book text-lg"></i> Onboarding
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setFormData({ ...formData, category: 'ESPECIALIZADO' })}
-                                    className={`p-4 rounded-2xl border-2 flex items-center justify-center gap-2 cursor-pointer transition-all font-bold text-sm ${formData.category === 'ESPECIALIZADO' ? 'border-secondary bg-secondary/5 text-secondary shadow-sm' : 'border-border bg-background text-muted-foreground hover:border-secondary/50'}`}
+                                    className={`p-5 rounded-2xl border-2 flex items-center justify-center gap-3 cursor-pointer transition-all font-black text-[11px] uppercase tracking-widest ${formData.category === 'ESPECIALIZADO' ? 'border-secondary bg-secondary/5 text-secondary shadow-sm' : 'border-border/60 bg-muted/20 text-muted-foreground hover:border-secondary/40'}`}
                                 >
-                                    <i className="bi bi-mortarboard"></i> Especialización
+                                    <i className="bi bi-mortarboard text-lg"></i> Especialización
                                 </button>
                             </div>
                         </div>
 
                         {/* ARCHIVO PDF */}
-                        <div className="space-y-3">
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Material Base (Opcional)</label>
-                            <div className="relative h-[4.5rem] w-full border-2 border-dashed border-border rounded-2xl flex items-center justify-center bg-background hover:bg-muted transition-all cursor-pointer group">
+                        <div className="space-y-4">
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center sm:text-left">Material Base (Opcional)</label>
+                            <div className="relative h-20 w-full border-2 border-dashed border-border/60 rounded-[24px] flex items-center justify-center bg-muted/20 hover:bg-muted/40 transition-all cursor-pointer group overflow-hidden">
                                 <input
                                     type="file"
                                     accept=".pdf"
                                     onChange={e => setFormData({ ...formData, file: e.target.files?.[0] || null })}
                                     className="absolute inset-0 opacity-0 cursor-pointer z-10"
                                 />
-                                <p className="font-bold text-sm text-foreground px-4 truncate flex items-center">
-                                    <i className={`bi ${formData.file ? 'bi-file-earmark-check-fill text-green-500' : 'bi-file-earmark-pdf text-primary'} text-lg mr-2 group-hover:scale-110 transition-transform`}></i>
-                                    {formData.file ? formData.file.name : 'Subir documento PDF inicial'}
-                                </p>
+                                <div className="flex items-center gap-3 px-6">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all ${formData.file ? 'bg-green-500 text-white' : 'bg-card text-primary shadow-sm group-hover:scale-110'}`}>
+                                        <i className={`bi ${formData.file ? 'bi-check2' : 'bi-file-earmark-pdf'}`}></i>
+                                    </div>
+                                    <p className="font-bold text-xs text-foreground truncate max-w-[200px] sm:max-w-md">
+                                        {formData.file ? formData.file.name : 'Subir documento PDF inicial'}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
@@ -271,17 +250,16 @@ export default function NewCoursePage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-4 bg-secondary text-secondary-foreground rounded-2xl font-bold text-base hover:opacity-90 transition-opacity active:scale-[0.98] cursor-pointer shadow-sm disabled:opacity-60 disabled:cursor-not-allowed mt-4"
+                            className="w-full py-4.5 bg-secondary text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all active:scale-[0.98] shadow-md hover:shadow-secondary/20 disabled:opacity-50 mt-6"
                         >
                             {loading ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <i className="bi bi-arrow-repeat animate-spin"></i> Creando...
+                                <span className="flex items-center justify-center gap-3">
+                                    <i className="bi bi-arrow-repeat animate-spin text-lg"></i> Procesando...
                                 </span>
                             ) : (
-                                'Crear Curso'
+                                'Crear Curso Maestro'
                             )}
                         </button>
-
                     </form>
                 </div>
             </main>

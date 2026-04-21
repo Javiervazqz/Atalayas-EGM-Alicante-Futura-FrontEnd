@@ -2,18 +2,18 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
 export default function CompanyProfilePage() {
   const router = useRouter();
   
-  // 1. Estados de contexto (Usuario y Empresas)
+  // Estados de contexto
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [companies, setCompanies] = useState<any[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   
-  // 2. Estados del formulario
+  // Estados del formulario
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [description, setDescription] = useState('');
@@ -23,14 +23,15 @@ export default function CompanyProfilePage() {
   const [cif, setCif] = useState('');
   const [activity, setActivity] = useState('');
   
-  // 3. Estados del Logo
+  // Estados del Logo
   const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(null);
   const [newFile, setNewFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-  // 4. Estados de UI
+  // Estados de UI
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
+  const [initializing, setInitializing] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -38,30 +39,24 @@ export default function CompanyProfilePage() {
 
   useEffect(() => {
     const init = async () => {
-      const storedUser = localStorage.getItem('user');
-      if (!storedUser) return router.push('/login');
-      
-      const user = JSON.parse(storedUser);
-      setCurrentUser(user);
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (!storedUser) return router.push('/login');
+        
+        const user = JSON.parse(storedUser);
+        setCurrentUser(user);
 
-      if (user.role === 'GENERAL_ADMIN') {
-        try {
-          const token = localStorage.getItem('token');
-          const res = await fetch(API_ROUTES.COMPANIES.GET_ALL, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            setCompanies(data);
-            if (data.length > 0) setSelectedCompanyId(data[0].id);
-          }
-        } catch (err) {
-          console.error('Error cargando lista de empresas:', err);
+        // Cargamos únicamente la empresa asociada al perfil del usuario actual
+        if (user.companyId) {
+          setSelectedCompanyId(user.companyId);
+        } else {
+          // Si el usuario no tiene empresa asociada (caso raro para un admin)
+          setError('No tienes una empresa asociada a tu cuenta.');
         }
-      } else if (user.role === 'ADMIN' && user.companyId) {
-        setSelectedCompanyId(user.companyId);
-      } else {
-        router.push('/dashboard');
+      } catch (err) {
+        console.error('Error init:', err);
+      } finally {
+        setInitializing(false);
       }
     };
     init();
@@ -73,17 +68,15 @@ export default function CompanyProfilePage() {
     const fetchCompanyData = async () => {
       setFetching(true);
       setError('');
-      setSuccess('');
       try {
         const token = localStorage.getItem('token');
         const res = await fetch(`${API_ROUTES.COMPANIES.GET_ALL}/${selectedCompanyId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        if (!res.ok) throw new Error('Error al cargar los datos de la empresa');
+        if (!res.ok) throw new Error('No se pudieron obtener los datos de la empresa');
         
         const company = await res.json();
-        
         setName(company.name || '');
         setAddress(company.address || '');
         setDescription(company.description || '');
@@ -93,7 +86,6 @@ export default function CompanyProfilePage() {
         setCif(company.cif || '');
         setActivity(company.activity || '');
         setCurrentLogoUrl(company.logoUrl || null);
-        
         setNewFile(null);
         setLogoPreview(null);
         
@@ -111,7 +103,6 @@ export default function CompanyProfilePage() {
     const file = e.target.files?.[0];
     if (file) {
       setNewFile(file);
-      setError('');
       const reader = new FileReader();
       reader.onloadend = () => setLogoPreview(reader.result as string);
       reader.readAsDataURL(file);
@@ -128,61 +119,34 @@ export default function CompanyProfilePage() {
       const token = localStorage.getItem('token');
       const formData = new FormData();
       
-      if (name) formData.append('name', name);
-      if (address) formData.append('address', address);
-      if (description) formData.append('description', description);
-      if (website) formData.append('website', website);
-      if (contactEmail) formData.append('contactEmail', contactEmail);
-      if (contactPhone) formData.append('contactPhone', contactPhone);
-      if (cif) formData.append('cif', cif);
-      if (activity) formData.append('activity', activity);
-      
+      formData.append('name', name);
+      formData.append('address', address);
+      formData.append('description', description);
+      formData.append('website', website);
+      formData.append('contactEmail', contactEmail);
+      formData.append('contactPhone', contactPhone);
+      formData.append('cif', cif);
+      formData.append('activity', activity);
       if (newFile) formData.append('file', newFile); 
 
       const res = await fetch(`${API_ROUTES.COMPANIES.GET_ALL}/${selectedCompanyId}`, {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}` },
-        headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
       });
 
       const data = await res.json();
+      if (!res.ok) throw new Error('Error al actualizar el perfil');
 
-      if (!res.ok) {
-        const errorMsg = Array.isArray(data.message) ? data.message.join(', ') : data.message;
-        throw new Error(errorMsg || 'Error actualizando el perfil de la empresa');
-      }
-
-      // --- ✨ LÓGICA DE ACTUALIZACIÓN EN TIEMPO REAL ✨ ---
-
-      // 1. Obtenemos el usuario actual del localStorage
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         const userObj = JSON.parse(storedUser);
-
-        // 2. Actualizamos los datos de la empresa dentro del objeto usuario
-        // Solo si la empresa que editamos es la misma que tiene el usuario en su sesión
-        if (userObj.companyId === selectedCompanyId || userObj.role === 'GENERAL_ADMIN') {
-          userObj.Company = {
-            ...userObj.Company,
-            name: name, // El nombre que acabamos de escribir
-            logoUrl: data.logoUrl || currentLogoUrl // El nuevo logo que devolvió el servidor
-          };
-
-          // 3. Guardamos el usuario actualizado en el localStorage
-          localStorage.setItem('user', JSON.stringify(userObj));
-
-        }
+        userObj.Company = { ...userObj.Company, name, logoUrl: data.logoUrl || currentLogoUrl };
+        localStorage.setItem('user', JSON.stringify(userObj));
       }
 
-      // --- ------------------------------------------- ---
-
-      setCurrentLogoUrl(data.logoUrl || currentLogoUrl);
-      setNewFile(null);
-      setLogoPreview(null);
-      setSuccess('Perfil de empresa actualizado correctamente.');
-      window.location.reload();
-
+      setSuccess('Perfil corporativo actualizado correctamente.');
+      setTimeout(() => window.location.reload(), 1500);
 
     } catch (err: any) {
       setError(err.message);
@@ -191,122 +155,153 @@ export default function CompanyProfilePage() {
     }
   };
 
-  if (!currentUser || !selectedCompanyId) return null;
+  if (initializing) {
+    return (
+      <div className="flex min-h-screen bg-background items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-primary animate-pulse">Sincronizando Entidad...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex min-h-screen bg-background font-sans">
+    <div className="flex min-h-screen bg-muted/30 font-sans text-foreground transition-colors duration-300">
       <Sidebar role={currentUser.role} />
       
-      <main className="flex-1 p-6 lg:p-10 overflow-auto flex justify-center">
-        <div className="w-full max-w-2xl">
-          
-          <div className="mb-8 text-center sm:text-left flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground tracking-tight">Perfil de Empresa</h1>
-              <p className="text-muted-foreground mt-1">Gestiona la información pública y de contacto de la entidad.</p>
-            </div>
+      <main className="flex-1 overflow-auto flex flex-col relative">
+        
+        <PageHeader 
+          title="Perfil de Empresa"
+          description="Gestión integral de la identidad y datos operativos de tu organización."
+          icon={<i className="bi bi-building-fill"></i>}
+          // El selector de empresas (action) ha sido eliminado para mostrar solo la propia
+        />
+
+        <div className="p-6 lg:p-10 flex-1 flex justify-center w-full">
+          <div className="w-full max-w-5xl">
             
-            {/* DESPLEGABLE MÁGICO PARA EL GENERAL_ADMIN */}
-            {currentUser.role === 'GENERAL_ADMIN' && (
-              <div className="w-full sm:w-auto">
-                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Editando empresa:</label>
-                <select 
-                  value={selectedCompanyId} 
-                  onChange={(e) => setSelectedCompanyId(e.target.value)} 
-                  className="w-full sm:w-64 bg-card border border-input rounded-xl px-4 py-2.5 text-sm outline-none cursor-pointer focus:border-primary focus:ring-2 focus:ring-ring shadow-sm transition-all font-medium text-foreground"
-                >
-                  {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+            <form onSubmit={handleSubmit} className={`bg-card rounded-[32px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-border/60 p-8 lg:p-14 space-y-12 transition-all duration-500 ${fetching ? 'opacity-40 blur-sm pointer-events-none' : 'opacity-100'}`}>
+              
+              {error && <div className="p-5 bg-destructive/5 border border-destructive/20 rounded-[20px] text-destructive font-black text-[11px] uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-2"><i className="bi bi-exclamation-octagon-fill text-lg"></i> {error}</div>}
+              {success && <div className="p-5 bg-emerald-500/5 border border-emerald-500/20 rounded-[20px] text-emerald-600 font-black text-[11px] uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-2"><i className="bi bi-check-circle-fill text-lg"></i> {success}</div>}
+
+              <div className="grid lg:grid-cols-[220px_1fr] gap-12 items-start">
+                
+                {/* COLUMNA IZQUIERDA: LOGO */}
+                <div className="flex flex-col items-center lg:items-start gap-6">
+                  <div className="relative group" title="Haz clic para subir un nuevo logo">
+                    <div className="w-48 h-48 rounded-[40px] overflow-hidden border-8 border-background shadow-xl relative bg-muted/20">
+                      <img 
+                        src={logoPreview || (currentLogoUrl ? encodeURI(currentLogoUrl) : 'https://placehold.co/400x400/f5f5f7/86868b?text=LOGO')} 
+                        alt="Logo" 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                      <div 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="absolute inset-0 bg-primary/80 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer backdrop-blur-sm"
+                      >
+                        <i className="bi bi-cloud-arrow-up-fill text-white text-3xl mb-2"></i>
+                        <span className="text-white text-[10px] font-black uppercase tracking-widest">Actualizar</span>
+                      </div>
+                    </div>
+                    <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-secondary rounded-2xl flex items-center justify-center text-white shadow-lg border-4 border-card">
+                       <i className="bi bi-pencil-fill text-xs"></i>
+                    </div>
+                  </div>
+                  <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+                  <div className="text-center lg:text-left px-2">
+                    <p className="text-foreground font-black text-xs uppercase tracking-widest">Branding Corporativo</p>
+                    <p className="text-muted-foreground text-[10px] mt-1.5 font-bold uppercase opacity-60">Recomendado: 512x512px</p>
+                  </div>
+                </div>
+
+                {/* COLUMNA DERECHA: FORMULARIO */}
+                <div className="space-y-10">
+                  
+                  {/* SECCIÓN 1: IDENTIDAD */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 border-b border-border/60 pb-3">
+                      <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center text-primary"><i className="bi bi-info-circle"></i></div>
+                      <h2 className="text-xs font-black text-foreground uppercase tracking-[0.2em]">Identidad y Registro</h2>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Nombre Comercial / Razón Social *</label>
+                        <input type="text" value={name} onChange={e => setName(e.target.value)} required className="w-full bg-background border border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5 rounded-[18px] px-6 py-4 text-sm font-bold outline-none transition-all placeholder:text-muted-foreground/30" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Identificación Fiscal (CIF)</label>
+                        <input type="text" value={cif} onChange={e => setCif(e.target.value)} className="w-full bg-background border border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5 rounded-[18px] px-6 py-4 text-sm font-bold outline-none transition-all" placeholder="Ej: B12345678" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Sector de Actividad</label>
+                      <input type="text" value={activity} onChange={e => setActivity(e.target.value)} className="w-full bg-background border border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5 rounded-[18px] px-6 py-4 text-sm font-bold outline-none transition-all" placeholder="Ej: Desarrollo de Software, Hostelería..." />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Propósito / Descripción Corporativa</label>
+                      <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full bg-background border border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5 rounded-[18px] px-6 py-4 text-sm font-bold outline-none transition-all resize-none" placeholder="Describe brevemente la empresa..." />
+                    </div>
+                  </div>
+
+                  {/* SECCIÓN 2: CONTACTO */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 border-b border-border/60 pb-3">
+                      <div className="w-8 h-8 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary"><i className="bi bi-geo-alt"></i></div>
+                      <h2 className="text-xs font-black text-foreground uppercase tracking-[0.2em]">Localización y Contacto</h2>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Dirección de Sede Central</label>
+                      <input type="text" value={address} onChange={e => setAddress(e.target.value)} className="w-full bg-background border border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5 rounded-[18px] px-6 py-4 text-sm font-bold outline-none transition-all" placeholder="C/ Principal 1, Polígono Ind. Atalayas" />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Email de Contacto</label>
+                        <input type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} className="w-full bg-background border border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5 rounded-[18px] px-6 py-4 text-sm font-bold outline-none transition-all" placeholder="info@empresa.com" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Teléfono Directo</label>
+                        <input type="text" value={contactPhone} onChange={e => setContactPhone(e.target.value)} className="w-full bg-background border border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5 rounded-[18px] px-6 py-4 text-sm font-bold outline-none transition-all" placeholder="+34 966 000 000" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Portal Web / LinkedIn</label>
+                      <div className="relative group">
+                        <i className="bi bi-link-45deg absolute left-5 top-1/2 -translate-y-1/2 text-primary text-xl opacity-40 group-focus-within:opacity-100 transition-opacity"></i>
+                        <input type="url" value={website} onChange={e => setWebsite(e.target.value)} className="w-full bg-background border border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5 rounded-[18px] pl-14 pr-6 py-4 text-sm font-bold outline-none transition-all" placeholder="https://www.tuempresa.com" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ACCIÓN FINAL */}
+                  <div className="pt-8 border-t border-border/60 flex flex-col sm:flex-row justify-between items-center gap-6">
+                    <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">Última revisión: {new Date().toLocaleDateString()}</p>
+                    <button 
+                      type="submit" 
+                      disabled={loading || fetching} 
+                      className="bg-secondary text-white px-12 py-5 rounded-[22px] font-black text-xs uppercase tracking-[0.2em] hover:opacity-90 hover:shadow-xl hover:shadow-secondary/20 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-3 shadow-lg"
+                    >
+                      {loading ? (
+                        <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Guardando...</>
+                      ) : (
+                        <><i className="bi bi-shield-check text-lg"></i> Confirmar Cambios</>
+                      )}
+                    </button>
+                  </div>
+
+                </div>
               </div>
-            )}
+
+            </form>
           </div>
-
-          <form onSubmit={handleSubmit} className={`bg-card rounded-3xl shadow-sm border border-border p-8 space-y-8 transition-opacity duration-300 ${fetching ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-            
-            {error && <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive font-medium text-sm">{error}</div>}
-            {success && <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl text-primary font-medium text-sm">{success}</div>}
-
-            {/* SECCIÓN AVATAR / LOGO DE EMPRESA */}
-            <div className="flex flex-col items-center gap-4 border-b border-border pb-8">
-              <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                <img 
-                  src={logoPreview || (currentLogoUrl ? encodeURI(currentLogoUrl) : 'https://placehold.co/400x400/f5f5f7/86868b?text=LOGO')} 
-                  alt="Logo Empresa" 
-                  className="w-32 h-32 rounded-2xl object-cover border-4 border-background shadow-sm transition-all group-hover:opacity-80"
-                />
-                <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white text-xs font-bold text-center px-2">Subir Logo</span>
-                </div>
-              </div>
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-              <p className="text-xs text-muted-foreground">Formato cuadrado recomendado. (JPG, PNG)</p>
-            </div>
-
-            {/* INFORMACIÓN BÁSICA */}
-            <div className="space-y-5">
-              <h2 className="text-lg font-bold text-foreground border-l-4 border-primary pl-3">Identidad Corporativa</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Razón Social / Nombre *</label>
-                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-sm outline-none transition-all text-foreground" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">CIF / NIF</label>
-                  <input type="text" value={cif} onChange={(e) => setCif(e.target.value)} placeholder="B12345678" className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-sm outline-none transition-all text-foreground" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Sector de Actividad</label>
-                <input type="text" value={activity} onChange={(e) => setActivity(e.target.value)} placeholder="Ej: Tecnología, Logística..." className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-sm outline-none transition-all text-foreground" />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Descripción de la Empresa</label>
-                <textarea 
-                  value={description} 
-                  onChange={(e) => setDescription(e.target.value)} 
-                  rows={4}
-                  placeholder="Escribe una breve descripción sobre la empresa..."
-                  className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-sm outline-none transition-all resize-none text-foreground" 
-                />
-              </div>
-            </div>
-
-            {/* CONTACTO Y LOCALIZACIÓN */}
-            <div className="space-y-5 pt-4">
-              <h2 className="text-lg font-bold text-foreground border-l-4 border-primary pl-3">Contacto y Ubicación</h2>
-              
-              <div>
-                <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Dirección Física</label>
-                <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Calle, Número, Planta..." className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-sm outline-none transition-all text-foreground" />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Email Comercial</label>
-                  <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="info@empresa.com" className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-sm outline-none transition-all text-foreground" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Teléfono Público</label>
-                  <input type="text" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+34 600 000 000" className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-sm outline-none transition-all text-foreground" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Sitio Web</label>
-                <input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://www.empresa.com" className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-sm outline-none transition-all text-foreground" />
-              </div>
-            </div>
-
-            <div className="pt-8 mt-8 border-t border-border flex justify-end">
-              <button type="submit" disabled={loading || fetching} className="px-8 py-3 rounded-xl font-bold text-sm text-secondary-foreground bg-secondary hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                {loading ? 'Guardando...' : 'Guardar Perfil de Empresa'}
-              </button>
-            </div>
-
-          </form>
         </div>
       </main>
     </div>

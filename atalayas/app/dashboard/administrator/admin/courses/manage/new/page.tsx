@@ -1,168 +1,108 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/ui/Sidebar';
-import { API_ROUTES } from '@/lib/utils';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Sidebar from "@/components/ui/Sidebar";
+import PageHeader from "@/components/ui/pageHeader";
+import { API_ROUTES } from "@/lib/utils";
 
 export default function NewCoursePage() {
-    const router = useRouter();
-    const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState("");
+  const [useAi, setUseAi] = useState(false);
+  const [formData, setFormData] = useState({ title: "", isPublic: false, category: "BASICO", file: null as File | null });
 
-    // Estado para validación visual de errores
-    const [titleError, setTitleError] = useState(false);
+  const user = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user") || "{}") : {};
 
-    // Obtener datos del usuario logueado
-    const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!formData.title.trim()) return alert("El título es obligatorio");
+    if (useAi && !formData.file) return alert("Sube un PDF para usar la IA.");
 
-    const [formData, setFormData] = useState({
-        title: '',
-        category: 'BASICO' as 'BASICO' | 'ESPECIALIZADO',
-        file: null as File | null,
-    });
+    setLoading(true);
+    setLoadingStep("Iniciando creación...");
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      const resCourse = await fetch(API_ROUTES.COURSES.CREATE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ...formData, fileUrl: formData.file?.name, companyId: user.companyId }),
+      });
 
-        // Validación de Título
-        if (!formData.title.trim()) {
-            setTitleError(true);
-            return;
-        }
+      if (resCourse.ok && useAi && formData.file) {
+        const newCourse = await resCourse.json();
+        setLoadingStep("🧠 Procesando Podcast con IA...");
+        const aiFormData = new FormData();
+        aiFormData.append("title", `Módulo 1: ${formData.title}`);
+        aiFormData.append("file", formData.file);
+        await fetch(`http://localhost:3000/courses/${newCourse.id}/content/ai`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: aiFormData,
+        });
+      }
+      router.push("/dashboard/administrator/admin/courses/manage");
+    } catch (err) {
+      alert("Error en el proceso.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        setLoading(true);
+  return (
+    <div className="flex min-h-screen bg-background font-sans">
+      <Sidebar role="ADMIN" />
+      <main className="flex-1 overflow-auto flex flex-col">
+        <PageHeader 
+          title="Nuevo Curso"
+          description="Crea contenido formativo apoyado por Inteligencia Artificial."
+          icon={<i className="bi bi-plus-circle-fill"></i>}
+          backUrl="/dashboard/administrator/admin/courses/manage"
+        />
 
-        try {
-            const token = localStorage.getItem('token');
+        <div className="p-6 lg:p-10 max-w-3xl mx-auto w-full">
+          <form onSubmit={handleSubmit} className="bg-card p-8 lg:p-10 rounded-[2.5rem] border border-border shadow-sm space-y-8">
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nombre del curso</label>
+              <input type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full px-6 py-4 rounded-2xl bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold transition-all" placeholder="Ej: Prevención de Riesgos" />
+            </div>
 
-            const payload = {
-                title: formData.title.trim(),
-                isPublic: false, 
-                category: formData.category,
-                fileUrl: formData.file ? formData.file.name : null,
-                companyId: user.companyId || null
-            };
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <button type="button" onClick={() => setFormData({...formData, category: 'BASICO'})} className={`p-4 rounded-2xl border-2 font-bold transition-all ${formData.category === 'BASICO' ? 'border-primary bg-primary/5 text-primary' : 'border-transparent bg-muted/50 text-muted-foreground'}`}>📖 Onboarding</button>
+               <button type="button" onClick={() => setFormData({...formData, category: 'ESPECIALIZADO'})} className={`p-4 rounded-2xl border-2 font-bold transition-all ${formData.category === 'ESPECIALIZADO' ? 'border-primary bg-primary/5 text-primary' : 'border-transparent bg-muted/50 text-muted-foreground'}`}>🎓 Especialización</button>
+            </div>
 
-            const resCourse = await fetch(API_ROUTES.COURSES.CREATE, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!resCourse.ok) throw new Error("Error al crear el curso");
-
-            router.push('/dashboard/administrator/admin/courses');
-
-        } catch (err) {
-            console.error(err);
-            alert("Ocurrió un error al crear el curso.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="flex min-h-screen bg-background font-sans">
-            <Sidebar role="ADMIN" />
-
-            <main className="flex-1 p-6 lg:p-12 overflow-y-auto">
-                <div className="max-w-2xl mx-auto">
-                    <header className="mb-10">
-                        <button
-                            onClick={() => router.back()}
-                            className="text-secondary font-bold text-sm mb-6 flex items-center gap-2 hover:opacity-80 transition-opacity bg-transparent border-none cursor-pointer"
-                        >
-                            <i className="bi bi-chevron-left"></i> Volver
-                        </button>
-                        <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">Nuevo Curso</h1>
-                        <p className="text-muted-foreground mt-2 text-base">Crea un nuevo contenido formativo para tu organización.</p>
-                    </header>
-
-                    <form onSubmit={handleSubmit} className="bg-card p-6 lg:p-10 rounded-3xl border border-border shadow-sm space-y-8">
-
-                        {/* 1. NOMBRE DEL CURSO CON ERROR VISUAL */}
-                        <div>
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground mb-2 ml-1">Nombre del Curso</label>
-                            <input
-                                type="text"
-                                value={formData.title}
-                                onChange={e => {
-                                    setFormData({ ...formData, title: e.target.value });
-                                    if (titleError) setTitleError(false);
-                                }}
-                                className={`w-full px-5 py-4 rounded-2xl bg-background border outline-none font-bold text-foreground transition-all text-sm placeholder:text-muted-foreground/50 ${titleError ? 'border-destructive bg-destructive/5' : 'border-input focus:border-primary focus:ring-2 focus:ring-ring'}`}
-                                placeholder="Título del curso..."
-                                disabled={loading}
-                            />
-                            {titleError && (
-                                <p className="text-destructive text-xs font-bold mt-2 ml-1 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
-                                    <i className="bi bi-exclamation-triangle-fill text-[10px]"></i> Error: El nombre del curso es obligatorio
-                                </p>
-                            )}
-                        </div>
-
-                        {/* 2. CATEGORÍA (CON ICONOS) */}
-                        <div className="space-y-4">
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Tipo de Formación</label>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, category: 'BASICO' })}
-                                    disabled={loading}
-                                    className={`p-4 rounded-2xl border-2 flex items-center justify-center gap-2 cursor-pointer transition-all font-bold text-sm ${formData.category === 'BASICO' ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-border bg-background text-muted-foreground hover:border-primary/50'}`}
-                                >
-                                    <i className="bi bi-book"></i> Onboarding
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, category: 'ESPECIALIZADO' })}
-                                    disabled={loading}
-                                    className={`p-4 rounded-2xl border-2 flex items-center justify-center gap-2 cursor-pointer transition-all font-bold text-sm ${formData.category === 'ESPECIALIZADO' ? 'border-secondary bg-secondary/5 text-secondary shadow-sm' : 'border-border bg-background text-muted-foreground hover:border-secondary/50'}`}
-                                >
-                                    <i className="bi bi-mortarboard"></i> Especialización
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* 3. SUBIDA DE PDF */}
-                        <div className="space-y-3">
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Material Base (Opcional)</label>
-                            <div className="relative h-[4.5rem] w-full border-2 border-dashed border-border rounded-2xl flex items-center justify-center bg-background hover:bg-muted transition-all cursor-pointer group">
-                                <input
-                                    type="file"
-                                    accept=".pdf"
-                                    onChange={e => setFormData({ ...formData, file: e.target.files?.[0] || null })}
-                                    disabled={loading}
-                                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                />
-                                <p className="font-bold text-sm text-foreground px-4 truncate flex items-center">
-                                    <i className={`bi ${formData.file ? 'bi-file-earmark-check-fill text-emerald-500' : 'bi-file-earmark-pdf text-primary'} text-lg mr-2 group-hover:scale-110 transition-transform`}></i>
-                                    {formData.file ? formData.file.name : 'Subir documento PDF inicial'}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* 4. BOTÓN SUBMIT */}
-                        <div className="pt-4">
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full py-4 bg-secondary text-secondary-foreground rounded-2xl font-bold text-base hover:opacity-90 transition-opacity active:scale-[0.98] cursor-pointer shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                {loading ? (
-                                    <><i className="bi bi-arrow-repeat animate-spin text-xl"></i> Creando curso...</>
-                                ) : (
-                                    'Crear Curso'
-                                )}
-                            </button>
-                        </div>
-
-                    </form>
+            <div className="space-y-4">
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Material PDF</label>
+              <label className="relative h-32 w-full border-2 border-dashed border-border rounded-3xl flex items-center justify-center bg-muted/30 hover:border-primary transition-all cursor-pointer group">
+                <input type="file" accept=".pdf" onChange={(e) => setFormData({...formData, file: e.target.files?.[0] || null})} className="hidden" />
+                <div className="text-center">
+                   <p className="font-bold text-foreground">{formData.file ? formData.file.name : "Seleccionar PDF"}</p>
+                   <p className="text-xs text-muted-foreground">Click para subir</p>
                 </div>
-            </main>
+              </label>
+            </div>
+
+            {formData.file && (
+              <div onClick={() => !loading && setUseAi(!useAi)} className={`p-5 cursor-pointer rounded-2xl border-2 transition-all flex items-center justify-between ${useAi ? 'border-indigo-500 bg-indigo-50/50' : 'border-transparent bg-muted/50'}`}>
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${useAi ? 'bg-indigo-500 text-white' : 'bg-muted text-muted-foreground'}`}>✨</div>
+                  <div className="flex flex-col"><p className={`font-bold ${useAi ? 'text-indigo-900' : 'text-foreground'}`}>Podcast con IA</p><p className="text-[9px] uppercase font-black opacity-50">Resumen auditivo</p></div>
+                </div>
+                <div className={`w-10 h-5 rounded-full relative transition-colors ${useAi ? 'bg-indigo-500' : 'bg-muted-foreground/30'}`}>
+                   <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${useAi ? 'left-6' : 'left-1'}`} />
+                </div>
+              </div>
+            )}
+
+            <button type="submit" disabled={loading} className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-bold text-lg hover:opacity-90 disabled:opacity-50 shadow-lg">
+              {loading ? loadingStep : "Crear Curso"}
+            </button>
+          </form>
         </div>
-    );
+      </main>
+    </div>
+  );
 }

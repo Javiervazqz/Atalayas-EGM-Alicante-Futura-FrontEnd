@@ -8,7 +8,6 @@ import { API_ROUTES } from '@/lib/utils';
 
 export default function CourseDetailPage() {
   const params = useParams();
-  // Corregimos nombres y acceso (Next.js pone los parámetros directamente en params)
   const courseId = params.id as string; 
 
   const [course, setCourse] = useState<any>(null);
@@ -23,7 +22,6 @@ export default function CourseDetailPage() {
         setLoading(true);
         const token = localStorage.getItem('token');
         
-        // Usamos courseId que es el parámetro que viene de la URL
         const res = await fetch(API_ROUTES.COURSES.GET_BY_ID(courseId), {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -31,7 +29,6 @@ export default function CourseDetailPage() {
         if (!res.ok) throw new Error("Error en la respuesta");
         const data = await res.json();
         
-        // Mapeo flexible según cómo responda tu backend
         const finalData = data.course || data.data || data;
         setCourse(finalData);
       } catch (err) { 
@@ -104,7 +101,6 @@ export default function CourseDetailPage() {
           </div>
 
           {loading ? (
-            /* ESQUELETOS DE CARGA */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[1, 2, 3].map(i => (
                 <div key={i} className="h-64 bg-card rounded-3xl border border-border animate-pulse" />
@@ -117,7 +113,8 @@ export default function CourseDetailPage() {
                   {sortedContent.map((content: any) => (
                     <Link 
                       key={content.id} 
-                      href={`/dashboard/employee/courses/${id}/content/${content.id}`}
+                      /* 👇 AQUÍ ESTABA EL ERROR DEL FRONTEND 👇 */
+                      href={`/dashboard/employee/courses/${courseId}/content/${content.id}`}
                     >
                       <div className="group bg-card rounded-3xl border border-border shadow-sm hover:shadow-xl hover:border-secondary transition-all duration-300 flex flex-col h-full overflow-hidden active:scale-95">
                         
