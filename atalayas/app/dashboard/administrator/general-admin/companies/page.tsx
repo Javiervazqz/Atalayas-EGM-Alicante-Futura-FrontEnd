@@ -128,7 +128,7 @@ export default function CompaniesPage() {
                       <p className="font-mono text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded inline-block text-[12px] mb-1">
                         {company.cif || 'Sin CIF'}
                       </p>
-                      <p className="text-[11px] text-gray-400 truncate max-w-[200px]" title={company.address || ''}>
+                      <p className="text-[11px] text-gray-400 truncate max-w-50" title={company.address || ''}>
                         {company.address || 'Sin dirección'}
                       </p>
                     </td>

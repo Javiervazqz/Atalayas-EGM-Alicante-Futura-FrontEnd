@@ -43,6 +43,16 @@ export default function CompanyRequestsPage() {
 
   const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';
 
+  // --- FUNCIÓN DE UTILIDAD PARA ACTUALIZAR EL SIDEBAR ---
+  const updateSidebarCounter = () => {
+    const current = Number(localStorage.getItem('count_requests')) || 0;
+    const newValue = Math.max(0, current - 1);
+    localStorage.setItem('count_requests', newValue.toString());
+    window.dispatchEvent(new CustomEvent('local-storage-update', { 
+      detail: { requests: newValue } 
+    }));
+  };
+
   const fetchRequests = async () => {
     setRequests([]);
     setLoading(true);
@@ -68,7 +78,12 @@ export default function CompanyRequestsPage() {
         headers: { Authorization: `Bearer ${getToken()}` }
       });
       const data = await res.json();
-      setPendingCount(Array.isArray(data) ? data.filter((r: any) => r.status === 'PENDING').length : 0);
+      const count = Array.isArray(data) ? data.filter((r: any) => r.status === 'PENDING').length : 0;
+      setPendingCount(count);
+      
+      // Sincronizar storage inicial
+      localStorage.setItem('count_requests', count.toString());
+      window.dispatchEvent(new CustomEvent('local-storage-update', { detail: { requests: count } }));
     } catch { }
   };
 
@@ -82,6 +97,8 @@ export default function CompanyRequestsPage() {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (!res.ok) throw new Error('Error al aprobar');
+      
+      updateSidebarCounter(); // Actualización instantánea
       await fetchRequests();
       setSelected(null);
     } catch (err) {
@@ -104,6 +121,8 @@ export default function CompanyRequestsPage() {
         body: JSON.stringify({ rejectReason }),
       });
       if (!res.ok) throw new Error('Error al rechazar');
+      
+      updateSidebarCounter(); // Actualización instantánea
       await fetchRequests();
       setSelected(null);
       setShowRejectModal(false);
@@ -115,6 +134,23 @@ export default function CompanyRequestsPage() {
     }
   };
 
+  const handleArchive = async () => {
+    if (!selected) return;
+    try {
+      const res = await fetch(API_ROUTES.COMPANY_REQUESTS.ARCHIVE(selected.id), {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (res.ok && selected.status === 'PENDING') {
+        updateSidebarCounter(); // Solo restamos si archivamos algo que estaba pendiente
+      }
+      await fetchRequests();
+      setSelected(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const filtered = (filter === 'ALL' || filter === 'ARCHIVED' ? requests : requests.filter(r => r.status === filter))
     .filter(r =>
       r.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -122,6 +158,7 @@ export default function CompanyRequestsPage() {
       r.contactName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.contactEmail.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
       <Sidebar role="GENERAL_ADMIN" />
@@ -145,9 +182,8 @@ export default function CompanyRequestsPage() {
                 </span>
               </div>
             )}
-
           </div>
-          {/* Filtros */}
+
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '20px' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
               {(['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'ARCHIVED'] as const).map((f) => (
@@ -163,7 +199,6 @@ export default function CompanyRequestsPage() {
                     fontSize: '13px',
                     fontWeight: filter === f ? 500 : 400,
                     cursor: 'pointer',
-                    fontFamily: appleFont,
                     transition: 'all 0.15s',
                   }}
                 >
@@ -171,21 +206,16 @@ export default function CompanyRequestsPage() {
                 </button>
               ))}
             </div>
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Buscar solicitud..."
-            />
+            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Buscar solicitud..." />
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 380px' : '1fr', flex: 1, overflow: 'hidden' }}>
-          {/* Lista */}
           <div style={{ padding: '24px 32px', overflowY: 'auto' }}>
             {loading ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {[1, 2, 3].map(i => (
-                  <div key={i} style={{ height: '90px', background: '#fff', borderRadius: '16px', animation: 'pulse 1.5s infinite' }} />
+                  <div key={i} style={{ height: '90px', background: '#fff', borderRadius: '16px', opacity: 0.5 }} />
                 ))}
               </div>
             ) : filtered.length === 0 ? (
@@ -208,47 +238,23 @@ export default function CompanyRequestsPage() {
                         padding: '18px 20px',
                         cursor: 'pointer',
                         border: isSelected ? '1px solid #0071e3' : '1px solid transparent',
-                        boxShadow: isSelected
-                          ? '0 0 0 3px rgba(0,113,227,0.1)'
-                          : '0 2px 8px rgba(0,0,0,0.06)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                         transition: 'all 0.15s',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        gap: '16px',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
-                        <div style={{
-                          width: '42px', height: '42px',
-                          background: '#f5f5f7',
-                          borderRadius: '12px',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          flexShrink: 0, fontSize: '18px',
-                        }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <div style={{ width: '42px', height: '42px', background: '#f5f5f7', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           🏭
                         </div>
-                        <div style={{ minWidth: 0 }}>
-                          <p style={{ color: '#1d1d1f', fontSize: '15px', fontWeight: 600, margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {req.companyName}
-                          </p>
-                          <p style={{ color: '#86868b', fontSize: '12px', margin: '0 0 2px' }}>
-                            CIF: {req.cif} · {req.contactName}
-                          </p>
-                          <p style={{ color: '#b0b0b5', fontSize: '11px', margin: 0 }}>
-                            {req.created_at ? new Date(req.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Sin fecha'}
-                          </p>
+                        <div>
+                          <p style={{ color: '#1d1d1f', fontSize: '15px', fontWeight: 600, margin: '0' }}>{req.companyName}</p>
+                          <p style={{ color: '#86868b', fontSize: '12px', margin: '0' }}>CIF: {req.cif}</p>
                         </div>
                       </div>
-                      <span style={{
-                        padding: '4px 10px',
-                        borderRadius: '20px',
-                        background: status.bg,
-                        color: status.color,
-                        fontSize: '12px',
-                        fontWeight: 500,
-                        flexShrink: 0,
-                      }}>
+                      <span style={{ padding: '4px 10px', borderRadius: '20px', background: status.bg, color: status.color, fontSize: '12px', fontWeight: 500 }}>
                         {status.label.slice(0, -1)}
                       </span>
                     </div>
@@ -258,229 +264,67 @@ export default function CompanyRequestsPage() {
             )}
           </div>
 
-          {/* Panel detalle */}
           {selected && (
             <div style={{ overflowY: 'auto', borderLeft: '1px solid rgba(0,0,0,0.06)', background: '#fff', padding: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                <h2 style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, margin: 0, letterSpacing: '-0.02em' }}>
-                  Detalle solicitud
-                </h2>
-                <button
-                  onClick={() => setSelected(null)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868b', fontSize: '18px' }}
-                >
-                  ✕
-                </button>
+                <h2 style={{ fontSize: '17px', fontWeight: 600, margin: 0 }}>Detalle solicitud</h2>
+                <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868b' }}>✕</button>
               </div>
 
-              {/* Info empresa */}
-              <div style={{ marginBottom: '20px' }}>
-                <div style={{ width: '48px', height: '48px', background: '#f5f5f7', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', marginBottom: '14px' }}>
-                  🏭
-                </div>
-                <h3 style={{ color: '#1d1d1f', fontSize: '20px', fontWeight: 700, margin: '0 0 4px', letterSpacing: '-0.03em' }}>
-                  {selected.companyName}
-                </h3>
-                <span style={{
-                  padding: '3px 10px', borderRadius: '20px',
-                  background: statusConfig[selected.status].bg,
-                  color: statusConfig[selected.status].color,
-                  fontSize: '12px', fontWeight: 500,
-                }}>
-                  {statusConfig[selected.status].label.slice(0, -1)}
-                </span>
-              </div>
-
-              {/* Campos */}
+              <h3 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 10px' }}>{selected.companyName}</h3>
+              
               {[
                 { label: 'CIF', value: selected.cif },
                 { label: 'Actividad', value: selected.activity },
-                { label: 'Dirección', value: selected.address },
                 { label: 'Responsable', value: selected.contactName },
                 { label: 'Email', value: selected.contactEmail },
-                { label: 'Teléfono', value: selected.phone },
               ].filter(f => f.value).map((field) => (
                 <div key={field.label} style={{ marginBottom: '14px' }}>
-                  <p style={{ color: '#86868b', fontSize: '11px', fontWeight: 500, margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {field.label}
-                  </p>
+                  <p style={{ color: '#86868b', fontSize: '11px', textTransform: 'uppercase', margin: '0 0 3px' }}>{field.label}</p>
                   <p style={{ color: '#1d1d1f', fontSize: '14px', margin: 0 }}>{field.value}</p>
                 </div>
               ))}
 
-              {/* Documento */}
-              <div style={{ marginBottom: '24px' }}>
-                <p style={{ color: '#86868b', fontSize: '11px', fontWeight: 500, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Documento acreditativo
-                </p>
-                <a
-                  href={selected.documentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '10px',
-                    padding: '12px 14px',
-                    background: '#f5f5f7',
-                    borderRadius: '12px',
-                    textDecoration: 'none',
-                    color: '#0071e3',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                  }}
-                >
-                  <span>📄</span>
-                  Ver documento
-                  <span style={{ marginLeft: 'auto' }}>↗</span>
+              <div style={{ margin: '20px 0' }}>
+                <a href={selected.documentUrl} target="_blank" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: '#f5f5f7', borderRadius: '12px', textDecoration: 'none', color: '#0071e3', fontSize: '13px' }}>
+                  <span>📄</span> Ver documento acreditativo ↗
                 </a>
               </div>
 
-              {/* Motivo rechazo */}
-              {selected.rejectReason && (
-                <div style={{ background: 'rgba(255,59,48,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '24px' }}>
-                  <p style={{ color: '#ff3b30', fontSize: '12px', fontWeight: 500, margin: '0 0 4px' }}>Motivo de rechazo</p>
-                  <p style={{ color: '#1d1d1f', fontSize: '13px', margin: 0 }}>{selected.rejectReason}</p>
-                </div>
-              )}
-
-              {/* Acciones */}
               {selected.status === 'PENDING' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <button
-                    onClick={() => handleApprove(selected.id)}
-                    disabled={actionLoading}
-                    style={{
-                      width: '100%', padding: '13px',
-                      background: actionLoading ? '#86868b' : '#34c759',
-                      color: '#fff', border: 'none',
-                      borderRadius: '12px', fontSize: '14px',
-                      fontWeight: 500, cursor: actionLoading ? 'not-allowed' : 'pointer',
-                      fontFamily: appleFont,
-                    }}
-                  >
-                    {actionLoading ? 'Procesando...' : '✓ Aprobar solicitud'}
+                  <button onClick={() => handleApprove(selected.id)} disabled={actionLoading} style={{ width: '100%', padding: '13px', background: '#34c759', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 500, cursor: 'pointer' }}>
+                    Aprobar solicitud
                   </button>
-                  <button
-                    onClick={() => setShowRejectModal(true)}
-                    disabled={actionLoading}
-                    style={{
-                      width: '100%', padding: '13px',
-                      background: 'rgba(255,59,48,0.08)',
-                      color: '#ff3b30', border: 'none',
-                      borderRadius: '12px', fontSize: '14px',
-                      fontWeight: 500, cursor: 'pointer',
-                      fontFamily: appleFont,
-                    }}
-                  >
-                    ✕ Rechazar solicitud
+                  <button onClick={() => setShowRejectModal(true)} disabled={actionLoading} style={{ width: '100%', padding: '13px', background: 'rgba(255,59,48,0.08)', color: '#ff3b30', border: 'none', borderRadius: '12px', fontWeight: 500, cursor: 'pointer' }}>
+                    Rechazar solicitud
                   </button>
                 </div>
               )}
 
               {(selected.status === 'APPROVED' || selected.status === 'REJECTED') && !selected.archivedAt && (
-                <button
-                  onClick={async () => {
-                    await fetch(API_ROUTES.COMPANY_REQUESTS.ARCHIVE(selected.id), {
-                      method: 'PATCH',
-                      headers: { Authorization: `Bearer ${getToken()}` },
-                    });
-                    await fetchRequests();
-                    setSelected(null);
-                  }}
-                  style={{
-                    width: '100%', padding: '13px',
-                    background: '#f5f5f7', color: '#424245',
-                    border: 'none', borderRadius: '12px',
-                    fontSize: '14px', cursor: 'pointer',
-                    fontFamily: appleFont, marginTop: '10px',
-                  }}
-                >
+                <button onClick={handleArchive} style={{ width: '100%', padding: '13px', background: '#f5f5f7', color: '#424245', border: 'none', borderRadius: '12px', cursor: 'pointer', marginTop: '10px' }}>
                   📦 Archivar solicitud
                 </button>
               )}
-
-              {selected.archivedAt && (
-                <button
-                onClick={async () => {
-                  await fetch(API_ROUTES.COMPANY_REQUESTS.UNARCHIVE(selected.id), {
-                    method: 'PATCH',
-                    headers: {Authorization: `Bearer ${getToken()}`},
-                  });
-                  setFilter(selected.status as any);
-                  await fetchRequests();
-                  setSelected(null);
-                }}
-                style={{
-                width: '100%', padding: '13px',
-                background: '#f5f5f7', color: '#0071e3',
-                border: 'none', borderRadius: '12px',
-                fontSize: '14px', cursor: 'pointer',
-                fontFamily: appleFont, marginTop: '10px',
-              }}
-              >
-                📤 Desarchivar solicitud
-              </button>
-            )}
-          </div>
+            </div>
           )}
         </div>
 
-        {/* Modal rechazo */}
         {showRejectModal && (
-          <div style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 100, padding: '24px',
-          }}>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
             <div style={{ background: '#fff', borderRadius: '20px', padding: '28px', maxWidth: '420px', width: '100%' }}>
-              <h3 style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, margin: '0 0 8px' }}>
-                Rechazar solicitud
-              </h3>
-              <p style={{ color: '#86868b', fontSize: '13px', margin: '0 0 16px' }}>
-                Indica el motivo del rechazo. Se enviará un email al solicitante.
-              </p>
+              <h3 style={{ margin: '0 0 16px' }}>Rechazar solicitud</h3>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="Motivo del rechazo..."
                 rows={4}
-                style={{
-                  width: '100%', background: '#f5f5f7',
-                  border: '1px solid rgba(0,0,0,0.08)',
-                  borderRadius: '12px', padding: '12px 14px',
-                  fontSize: '14px', color: '#1d1d1f',
-                  outline: 'none', resize: 'none',
-                  fontFamily: appleFont, boxSizing: 'border-box',
-                }}
+                style={{ width: '100%', background: '#f5f5f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '12px', marginBottom: '16px', outline: 'none', resize: 'none' }}
               />
-              <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-                <button
-                  onClick={() => { setShowRejectModal(false); setRejectReason(''); }}
-                  style={{
-                    flex: 1, padding: '12px',
-                    background: '#f5f5f7', color: '#424245',
-                    border: 'none', borderRadius: '12px',
-                    fontSize: '14px', cursor: 'pointer',
-                    fontFamily: appleFont,
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleReject}
-                  disabled={!rejectReason.trim() || actionLoading}
-                  style={{
-                    flex: 1, padding: '12px',
-                    background: !rejectReason.trim() ? '#86868b' : '#ff3b30',
-                    color: '#fff', border: 'none',
-                    borderRadius: '12px', fontSize: '14px',
-                    fontWeight: 500,
-                    cursor: !rejectReason.trim() ? 'not-allowed' : 'pointer',
-                    fontFamily: appleFont,
-                  }}
-                >
-                  {actionLoading ? 'Rechazando...' : 'Confirmar rechazo'}
-                </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={() => setShowRejectModal(false)} style={{ flex: 1, padding: '12px', background: '#f5f5f7', border: 'none', borderRadius: '12px', cursor: 'pointer' }}>Cancelar</button>
+                <button onClick={handleReject} disabled={!rejectReason.trim() || actionLoading} style={{ flex: 1, padding: '12px', background: '#ff3b30', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer' }}>Confirmar rechazo</button>
               </div>
             </div>
           </div>
