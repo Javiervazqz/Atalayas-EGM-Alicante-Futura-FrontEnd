@@ -24,13 +24,22 @@ export default function AdminContentDetail() {
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<{ title?: string }>({});
 
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
 
   const lastSavedSecond = useRef<number>(0);
-
-  const [formData, setFormData] = useState<any>({
+type FormDataType = {
+  title: string;
+  summary: string;
+  imageUrl: string;
+  url: string;
+  quiz: any;
+  podcast: any;
+};
+  const [formData, setFormData] = useState<FormDataType>({
     title: "",
     summary: "",
     imageUrl: "",
@@ -42,6 +51,8 @@ export default function AdminContentDetail() {
   useEffect(() => {
     const fetchContent = async () => {
       try {
+        const courseId = params.id as string;
+        const contentId = params.contentId as string;
         const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(courseId, contentId), {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
@@ -55,7 +66,8 @@ export default function AdminContentDetail() {
           url: finalData.url || "",
           quiz: {
             questions: Array.isArray(finalData.quiz) ? finalData.quiz : (finalData.quiz?.questions || [])
-          }
+          },
+            podcast: finalData.podcast || null,
         });
       } catch (error) {
         console.error("Error:", error);
@@ -84,6 +96,10 @@ export default function AdminContentDetail() {
       return () => { zoom.detach(); };
     }
   }, [content?.imageUrl, isEditing]);
+
+
+
+
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -8,7 +8,6 @@ import { API_ROUTES } from "@/lib/utils";
 
 export default function NewAIContentPage() {
   const { id } = useParams();
-  const { id } = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [sourceType, setSourceType] = useState<'file' | 'link'>('file');
@@ -111,7 +110,7 @@ export default function NewAIContentPage() {
             </div>
 
             {/* 3. OPCIONES */}
-            <div className="bg-card p-6 lg:p-8 rounded-3xl border border-border shadow-sm">
+            <div className="bg-card p-6 lg:p-8 rounded-3xl border border-border shadow-sm"/>
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6 ml-1">Opciones de generación</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
@@ -131,7 +130,7 @@ export default function NewAIContentPage() {
                   </button>
                 ))}
               </div>
-            )}
+            );
 
             <div className="pt-4 flex justify-end items-center gap-4">
               <button type="button" onClick={() => router.back()} className="px-5 py-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">Cancelar</button>
