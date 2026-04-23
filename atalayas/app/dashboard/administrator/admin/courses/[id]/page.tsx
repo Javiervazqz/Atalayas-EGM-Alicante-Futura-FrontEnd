@@ -1,11 +1,22 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Sidebar from "@/components/ui/Sidebar";
+import PageHeader from "@/components/ui/pageHeader";
 import { API_ROUTES } from "@/lib/utils";
-import SearchInput from "@/components/ui/Searchbar";
+
+// Función para limpiar Markdown y dejar solo texto plano para la previsualización
+const cleanMarkdown = (text: string): string => {
+  if (!text) return "";
+  return text
+    .replace(/\*\*?([^*]+)\*\*?/g, "$1") // Elimina **negrita** y *cursiva*
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Elimina enlaces [texto](url) -> texto
+    .replace(/^- /gm, "") // Elimina guiones de lista
+    .replace(/#/g, "") // Elimina almohadillas de títulos
+    .trim();
+};
 
 export default function AdminCourseDetailPage() {
   const { id } = useParams();
@@ -16,7 +27,6 @@ export default function AdminCourseDetailPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [contentToDelete, setContentToDelete] = useState<string | null>(null);
 
-  // --- CARGAR DATOS DEL CURSO ---
   useEffect(() => {
     const fetchCourse = async () => {
       try {
@@ -35,208 +45,170 @@ export default function AdminCourseDetailPage() {
     if (id) fetchCourse();
   }, [id]);
 
+  const executeDelete = async () => {
+    if (!contentToDelete) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(id as string, contentToDelete), {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-const confirmDelete = (e: React.MouseEvent, contentId: string) => {
-  e.stopPropagation();
-  setContentToDelete(contentId);
-  setShowDeleteModal(true);
-};
-
-const executeDelete = async () => {
-  if (!contentToDelete) return;
-
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(id as string, contentToDelete), {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (res.ok) {
-      setCourse((prev: any) => ({
-        ...prev,
-        Content: (prev.Content || prev.content).filter((c: any) => c.id !== contentToDelete),
-      }));
-      setShowDeleteModal(false);
+      if (res.ok) {
+        setCourse((prev: any) => ({
+          ...prev,
+          Content: (prev.Content || prev.content).filter((c: any) => c.id !== contentToDelete),
+        }));
+        setShowDeleteModal(false);
+      }
+    } catch (error) {
+      console.error("Error deleting:", error);
     }
-  } catch (error) {
-    console.error("Error deleting:", error);
-  }
-};
+  };
 
-  // --- FILTRADO Y ORDENACIÓN ---
   const contentList = course?.Content || course?.content || [];
-
   const filteredContents = contentList
-    .filter((c: any) =>
-      c.title.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    .filter((c: any) => c.title.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a: any, b: any) => a.order - b.order);
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', sans-serif" }}>
-        <Sidebar role="ADMIN" />
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <div className="w-16 h-16 border-4 border-[#005596]/10 border-t-[#005596] rounded-full animate-spin"></div>
-          <p className="mt-6 text-[#005596] font-black text-xs uppercase tracking-[0.3em] animate-pulse">
-            Cargando unidad...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', sans-serif" }}>
+    <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
       <Sidebar role="ADMIN" />
 
-      <main className="flex-1 h-screen overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-8 py-10">
-          
-          {/* BREADCRUMB */}
-          <Link
-            href="/dashboard/administrator/admin/courses"
-            className="group text-[#0071e3] text-sm font-semibold hover:underline mb-6 inline-flex items-center gap-2 transition-all"
-          >
-            <i className="bi bi-arrow-left-circle-fill transition-transform duration-300 group-hover:-translate-x-1.5"></i>
-            <span>Volver a Cursos</span>
-          </Link>
-
-          {/* HEADER */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-            <div>
-              <span className="text-[11px] font-black text-[#005596] uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full">
-                Gestión de Lecciones
-              </span>
-              <h1 className="text-4xl font-black text-[#1d1d1f] mt-2 tracking-tight">
-                {course?.title}
-              </h1>
-              <p className="text-[#86868b] mt-1">Administra el temario y recursos multimedia.</p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Buscar lección..."
-              />
-              <Link
-                href={`/dashboard/administrator/admin/courses/${id}/content/new`}
-                className="bg-[#0071e3] text-white px-6 py-2.5 rounded-full font-semibold hover:bg-[#0077ed] transition-all shadow-md shrink-0 text-center"
-              >
-                Añadir Lección
-              </Link>
-            </div>
+      <main className="flex-1 overflow-auto flex flex-col relative">
+        {loading ? (
+          /* ESTADO DE CARGA CON SIDEBAR VISIBLE */
+          <div className="flex-1 flex items-center justify-center">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
+        ) : (
+          /* CONTENIDO REAL UNA VEZ CARGADO */
+          <>
+            <PageHeader 
+              title={course?.title || "Detalle del Curso"}
+              description="Gestión de contenidos y material didáctico."
+              icon={<i className="bi bi-journal-bookmark"></i>}
+              backUrl="/dashboard/administrator/admin/courses/manage"
+              action={
+                <Link 
+                  href={`/dashboard/administrator/admin/courses/${id}/content/new`}
+                  className="bg-primary text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
+                >
+                  <i className="bi bi-plus-lg"></i> Añadir Unidad
+                </Link>
+              }
+            />
 
-          {/* INFO CARDS */}
-          <div className="grid grid-cols-2 gap-4 mb-10">
-            <div className="bg-white p-6 rounded-[24px] border border-gray-200 shadow-sm">
-              <p className="text-[11px] font-bold text-[#86868b] uppercase">Categoría</p>
-              <p className="text-lg font-bold text-[#1d1d1f]">{course?.category || 'General'}</p>
-            </div>
-            <div className="bg-white p-6 rounded-[24px] border border-gray-200 shadow-sm">
-              <p className="text-[11px] font-bold text-[#86868b] uppercase">Contenidos</p>
-              <p className="text-lg font-bold text-[#1d1d1f]">{contentList.length} Unidades</p>
-            </div>
-          </div>
+            <div className="p-4 lg:p-8 flex-1 max-w-6xl mx-auto w-full">
+              <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm flex flex-col">
+                <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/50">
+                  <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Unidades del programa</h2>
+                  <div className="relative w-full sm:max-w-xs">
+                    <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input 
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Buscar unidad..."
+                      className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-1.5 text-xs outline-none focus:border-primary transition-all font-medium placeholder:text-slate-300"
+                    />
+                  </div>
+                </div>
 
-          {/* TABLA DE LECCIONES */}
-          <div className="bg-white rounded-[32px] border border-gray-200 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-[#fbfbfd] border-b border-gray-100">
-                    <th className="px-6 py-5 text-[11px] font-black text-[#86868b] uppercase tracking-widest">Lección</th>
-                    <th className="px-6 py-5 text-[11px] font-black text-[#86868b] uppercase tracking-widest">Recursos</th>
-                    <th className="px-6 py-5 text-[11px] font-black text-[#86868b] uppercase tracking-widest text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {filteredContents.length > 0 ? (
-                    filteredContents.map((content: any) => (
-                      <tr
-                        key={content.id}
-                        onClick={() => router.push(`/dashboard/administrator/admin/courses/${id}/content/${content.id}`)}
-                        className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
-                      >
-                        <td className="px-6 py-5">
-                          <div className="font-bold text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors">
-                            {content.title}
-                          </div>
-                          <div className="text-[11px] text-[#86868b] line-clamp-1 max-w-xs italic">
-                            {content.summary ? "Con resumen generado" : "Sin resumen"}
-                          </div>
-                        </td>
-                        <td className="px-6 py-5">
-                          <div className="flex gap-2">
-                            {content.quiz && <span className="bg-orange-50 text-orange-600 text-[9px] font-black px-2 py-0.5 rounded uppercase">Quiz</span>}
-                            {content.podcast && <span className="bg-purple-50 text-purple-600 text-[9px] font-black px-2 py-0.5 rounded uppercase">Audio</span>}
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 text-right">
-                          <div className="flex items-center justify-end gap-4">
-                            <button
-                              onClick={(e) => confirmDelete(e, content.id)}
-                              className="p-2.5 hover:bg-red-50 text-gray-600 hover:text-red-500 rounded-xl transition-all cursor-pointer"
-                            >
-                              <i className="bi bi-trash3-fill"></i>
-                            </button>
-                          </div>
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse table-fixed">
+                    <thead>
+                      <tr className="bg-slate-50/20 border-b border-slate-100">
+                        <th className="px-5 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest w-16 text-center">Nº</th>
+                        <th className="px-5 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Título y descripción</th>
+                        <th className="px-5 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">Tipo</th>
+                        <th className="px-5 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right w-24">Acciones</th>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className="px-8 py-20 text-center">
-                        <p className="text-[#86868b] font-medium">No hay lecciones en este curso.</p>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredContents.length > 0 ? (
+                        filteredContents.map((content: any) => (
+                          <tr 
+                            key={content.id} 
+                            onClick={() => router.push(`/dashboard/administrator/admin/courses/${id}/content/${content.id}`)}
+                            className="hover:bg-slate-50/50 transition-all group cursor-pointer"
+                          >
+                            <td className="px-5 py-3 text-center align-top">
+                              <span className="font-mono text-[10px] font-bold text-slate-300 group-hover:text-primary transition-colors">
+                                {String(content.order).padStart(2, '0')}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3 align-top">
+                              <div className="font-bold text-sm text-slate-900 group-hover:text-primary transition-colors truncate">
+                                {content.title}
+                              </div>
+                              {content.summary && (
+                                <div className="text-[10.5px] text-slate-400 line-clamp-1 mt-0.5 font-medium italic leading-relaxed">
+                                  {cleanMarkdown(content.summary)}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-5 py-3 align-top">
+                              <div className="flex gap-1.5 mt-0.5">
+                                {content.url?.includes('.mp3') ? (
+                                  <span className="bg-indigo-50 text-indigo-500 text-[9px] font-black px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-tighter">Podcast</span>
+                                ) : (
+                                  <span className="bg-emerald-50 text-emerald-600 text-[9px] font-black px-1.5 py-0.5 rounded border border-emerald-100 uppercase tracking-tighter">Lectura</span>
+                                )}
+                                {content.quiz && (
+                                  <span className="bg-slate-50 text-slate-500 text-[9px] font-black px-1.5 py-0.5 rounded border border-slate-200 uppercase tracking-tighter">Test</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-5 py-3 text-right align-top" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1 mt-0.5">
+                                <button 
+                                  onClick={() => router.push(`/dashboard/administrator/admin/courses/${id}/content/${content.id}/edit`)} 
+                                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-primary transition-all"
+                                >
+                                  <i className="bi bi-pencil-square text-xs"></i>
+                                </button>
+                                <button 
+                                  onClick={() => { setContentToDelete(content.id); setShowDeleteModal(true); }} 
+                                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-all"
+                                >
+                                  <i className="bi bi-trash3 text-xs"></i>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={4} className="px-5 py-12 text-center text-slate-400 font-medium text-xs italic bg-slate-50/20">
+                            No hay unidades disponibles.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </main>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 text-center animate-in zoom-in-95">
+            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl border border-red-100">
+              <i className="bi bi-exclamation-triangle"></i>
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">¿Eliminar unidad?</h3>
+            <p className="text-slate-500 text-sm mb-8 leading-relaxed">Esta acción es irreversible. Se perderá todo el contenido de la lección.</p>
+            <div className="flex flex-col gap-3">
+              <button onClick={executeDelete} className="w-full py-3 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-lg shadow-red-200">Sí, eliminar</button>
+              <button onClick={() => setShowDeleteModal(false)} className="w-full py-3 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all">Cancelar</button>
             </div>
           </div>
         </div>
-      </main>
-      {/* MODAL DE CONFIRMACIÓN ESTILO PREMIUM */}
-{showDeleteModal && (
-  <div 
-    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200"
-    onClick={() => setShowDeleteModal(false)}
-  >
-    <div 
-      className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl scale-in-center animate-in zoom-in-95 duration-200"
-      onClick={e => e.stopPropagation()}
-    >
-      <div className="text-center">
-        <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
-          <i className="bi bi-exclamation-triangle-fill"></i>
-        </div>
-        <h2 className="text-2xl font-black text-[#1d1d1f] mb-2">¿Eliminar lección?</h2>
-        <p className="text-[#86868b] text-sm mb-8">
-          Esta acción borrará permanentemente el contenido y los datos asociados. No se puede deshacer.
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <button 
-          onClick={executeDelete}
-          className="w-full py-4 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold transition-colors"
-        >
-          Sí, eliminar permanentemente
-        </button>
-        <button 
-          onClick={() => setShowDeleteModal(false)}
-          className="w-full py-4 text-[#0071e3] font-bold hover:bg-gray-50 rounded-2xl transition-colors"
-        >
-          Cancelar
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 }

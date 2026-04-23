@@ -12,7 +12,6 @@ export default function SearchInput({ value, onChange, placeholder }: SearchInpu
   const [isExpanded, setIsExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Al expandir, ponemos el foco automáticamente
   useEffect(() => {
     if (isExpanded && inputRef.current) {
       inputRef.current.focus();
@@ -25,17 +24,19 @@ export default function SearchInput({ value, onChange, placeholder }: SearchInpu
         className={`
           flex items-center transition-all duration-500 ease-in-out overflow-hidden
           ${isExpanded 
-            ? 'w-full max-w-md bg-white border border-gray-200 shadow-sm px-4' 
+            ? 'w-full max-w-md bg-card border border-border shadow-sm px-4' 
             : 'w-12 bg-transparent border border-transparent'}
           rounded-2xl h-full
         `}
       >
-        {/* Icono de Lupa / Botón de activación */}
+        {/* Icono de Lupa */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className={`
-            flex items-center justify-center shrink-0 transition-colors cursor-pointer
-            ${isExpanded ? 'text-[#0071e3]' : 'text-gray-500 hover:text-[#1d1d1f] w-12 h-12 rounded-2xl bg-white border border-gray-200 shadow-sm'}
+            flex items-center justify-center shrink-0 transition-colors outline-none
+            ${isExpanded 
+              ? 'text-primary' 
+              : 'text-muted-foreground hover:text-primary w-12 h-12 rounded-2xl bg-card border border-border shadow-sm'}
           `}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,16 +44,22 @@ export default function SearchInput({ value, onChange, placeholder }: SearchInpu
           </svg>
         </button>
 
-        {/* Input Desplegable */}
+        {/* Input con limpieza forzada */}
         <input
           ref={inputRef}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onBlur={() => { if (!value) setIsExpanded(false); }} // Se cierra si está vacío al perder el foco
+          onBlur={() => { if (!value) setIsExpanded(false); }}
           placeholder={placeholder}
+          autoComplete="off"
           className={`
-            ml-3 w-full bg-transparent text-sm text-[#1d1d1f] outline-none placeholder:text-[#86868b] transition-opacity duration-300 
+            ml-3 w-full text-sm text-foreground outline-none placeholder:text-muted-foreground transition-opacity duration-300
+            /* FORZADO DE TRANSPARENCIA TOTAL */
+            appearance-none border-none ring-0 shadow-none
+            !bg-transparent !bg-none !p-0
+            /* Reset para navegadores que fuerzan el fondo en inputs */
+            [-webkit-appearance:none] [background-clip:text]
             ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}
           `}
         />
@@ -61,7 +68,7 @@ export default function SearchInput({ value, onChange, placeholder }: SearchInpu
         {isExpanded && value && (
           <button 
             onClick={() => { onChange(''); inputRef.current?.focus(); }}
-            className="ml-2 text-gray-400 hover:text-gray-600"
+            className="ml-2 text-muted-foreground/60 hover:text-foreground transition-colors outline-none"
           >
             <span className="text-lg">×</span>
           </button>

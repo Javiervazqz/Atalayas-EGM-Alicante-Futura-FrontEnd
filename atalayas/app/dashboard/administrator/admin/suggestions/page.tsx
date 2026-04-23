@@ -1,39 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { API_ROUTES } from '@/lib/utils';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
 
-// --- TIPOS ---
-type SuggestionStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' ;
-
+// ... (Tipos y statusConfig se mantienen igual)
+type SuggestionStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
 interface Suggestion {
-  id: string;
-  title: string;
-  content: string;
-  status: SuggestionStatus;
-  targetRole: 'ADMIN' | 'GENERAL_ADMIN';
-  response?: string;
-  createdAt: string;
+  id: string; title: string; content: string; status: SuggestionStatus;
+  targetRole: 'ADMIN' | 'GENERAL_ADMIN'; response?: string; createdAt: string;
   User?: { name: string; email: string; id: string };
 }
 
-const statusConfig: Record<SuggestionStatus, { label: string; color: string; bg: string }> = {
-  PENDING: { label: 'Pendiente', color: '#9a5b00', bg: '#fff4e5' },
-  ACCEPTED: { label: 'Aceptada', color: '#1a7d32', bg: '#eafaf1' },
-  REJECTED: { label: 'Rechazada', color: '#af231c', bg: '#fff1f0' },
+const statusConfig: Record<SuggestionStatus, { label: string; textColor: string; bgClass: string }> = {
+  PENDING: { label: 'Pendiente', textColor: 'text-amber-500', bgClass: 'bg-amber-500/10 border-amber-500/20' },
+  ACCEPTED: { label: 'Aceptada', textColor: 'text-emerald-600', bgClass: 'bg-emerald-500/10 border-emerald-500/20' },
+  REJECTED: { label: 'Rechazada', textColor: 'text-destructive', bgClass: 'bg-destructive/10 border-destructive/20' },
 };
 
-const Spinner = () => (
-  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0', width: '100%', animation: 'fadeIn 0.5s ease-in' }}>
-    <div style={{ width: '32px', height: '32px', border: '3px solid rgba(0, 113, 227, 0.1)', borderTop: '3px solid #0071e3', borderRadius: '50%', animation: 'spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite' }} />
-    <span style={{ marginTop: '16px', fontSize: '13px', color: '#86868b', fontWeight: 500 }}>Actualizando...</span>
-  </div>
-);
-
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
-
 export default function AdminSuggestionsPage() {
+  const [mounted, setMounted] = useState(false);
   const [view, setView] = useState<'RECEIVED' | 'SENT'>('RECEIVED');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [selected, setSelected] = useState<Suggestion | null>(null);
@@ -45,18 +32,19 @@ export default function AdminSuggestionsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [responseBody, setResponseBody] = useState('');
 
-  const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+  // Memorizamos fetchData para que no cambie la referencia en cada render
+  const fetchData = useCallback(async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+    if (!token) return;
 
-  const fetchData = async () => {
     setLoading(true);
     try {
       const url = view === 'RECEIVED' 
         ? `${API_ROUTES.SUGGESTIONS.GET_ALL}?target=ADMIN`
         : `${API_ROUTES.SUGGESTIONS.GET_MINE}`;
       
-      // CORRECCIÓN: Volvemos a usar 'Authorization'
       const res = await fetch(url, { 
-        headers: { 'Authorization': `Bearer ${getToken()}` } 
+        headers: { 'Authorization': `Bearer ${token}` } 
       });
       
       const data = await res.json();
@@ -64,27 +52,45 @@ export default function AdminSuggestionsPage() {
     } catch (err) { 
       console.error(err); 
     } finally { 
-      setTimeout(() => setLoading(false), 300); 
+      setLoading(false); 
     }
-  };
+  }, [view]); // Solo cambia si cambia la pestaña (view)
 
-  useEffect(() => { 
-    fetchData(); 
-    setSelected(null); 
-    setFilter('PENDING');
-  }, [view]);
+  // 1. Control de montaje (Hydration)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 2. Control de carga de datos (Evita el bucle infinito)
+  useEffect(() => {
+    if (mounted) {
+      fetchData();
+      setSelected(null);
+      setFilter('PENDING');
+    }
+  }, [view, mounted, fetchData]);
 
   const handleSubmitSuggestion = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    const token = localStorage.getItem('token');
+
     try {
       const res = await fetch(API_ROUTES.SUGGESTIONS.CREATE, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json", 
-          "Authorization": `Bearer ${getToken()}` 
+          "Authorization": `Bearer ${token}` 
         },
-        body: JSON.stringify({ title: newTitle, content: newContent, targetRole: "GENERAL_ADMIN" }),
+        body: JSON.stringify({ 
+          title: newTitle, 
+          content: newContent, 
+          targetRole: "GENERAL_ADMIN",
+          authorId: user?.id,
+          authorRole: "ADMIN"
+        }),
       });
       if (res.ok) {
         setNewTitle(""); setNewContent(""); fetchData();
@@ -93,178 +99,159 @@ export default function AdminSuggestionsPage() {
   };
 
   const handleRespond = async (status: SuggestionStatus) => {
-  if (!selected) return;
-  try {
-    const res = await fetch(API_ROUTES.SUGGESTIONS.RESPOND(selected.id), {
-      method: 'PATCH',
-      headers: { 
-        'Content-Type': 'application/json', 
-        'Authorization': `Bearer ${getToken()}` 
-      },
-      body: JSON.stringify({ response: responseBody.trim() || "La administración no ha proporcionado comentarios adicionales." }),
-    });
+    if (!selected) return;
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(API_ROUTES.SUGGESTIONS.RESPOND(selected.id), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ 
+          response: responseBody.trim() || "Procesado.",
+          status 
+        }),
+      });
 
-    if (res.ok) {
-      const current = Number(localStorage.getItem('count_suggestions')) || 0;
-      const newValue = Math.max(0, current - 1);
-      localStorage.setItem('count_suggestions', newValue.toString());
+      if (res.ok) {
+      // --- ACTUALIZACIÓN AUTOMÁTICA ---
       
-      window.dispatchEvent(new Event('local-storage-update'));
-      // -------------------------------------
+      // 1. Actualizamos el contador en localStorage
+      const currentCount = Number(localStorage.getItem('count_suggestions')) || 0;
+      const newCount = Math.max(0, currentCount - 1);
+      localStorage.setItem('count_suggestions', newCount.toString());
 
-      setSelected(null); 
-      setResponseBody(''); 
-      fetchData(); 
+      // 2. Disparamos el evento para que el Sidebar se entere al instante
+      window.dispatchEvent(new Event('local-storage-update'));
+
+      // 3. Limpiamos la selección y refrescamos la lista actual
+      setSelected(null);
+      setResponseBody('');
+      fetchData(); // Esto quita la sugerencia de la lista "Pendientes"
+    } else {
+      alert("Error al procesar la respuesta");
     }
-  } catch (err) { 
-    console.error(err); 
-  }
-};
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('¿Eliminar?')) return;
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(API_ROUTES.SUGGESTIONS.DELETE(id), {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) fetchData();
+    } catch (err) { console.error(err); }
+  };
+
+  if (!mounted) return null;
 
   const filteredSuggestions = suggestions.filter(s => filter === 'ALL' ? true : s.status === filter);
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#fff', overflow: 'hidden', fontFamily: appleFont }}>
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
+    <div className="flex min-h-screen bg-[#fcfcfd] font-sans text-foreground">
       <Sidebar role="ADMIN" />
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <PageHeader 
+          title="Sugerencias"
+          description={view === 'RECEIVED' ? "Bandeja de entrada" : "Mis propuestas"}
+          icon={<i className="bi bi-chat-square-dots"></i>}
+          action={
+            <div className="flex bg-muted/50 p-1 rounded-xl border border-border/50">
+              {(['RECEIVED', 'SENT'] as const).map((v) => (
+                <button key={v} onClick={() => setView(v)}
+                  className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${view === v ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground'}`}
+                >
+                  {v === 'RECEIVED' ? 'Recibidas' : 'Enviadas'}
+                </button>
+              ))}
+            </div>
+          }
+        />
 
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        
-        <header style={{ padding: '30px 40px 0', background: '#fff', zIndex: 10 }}>
-          <div style={{ display: 'flex', gap: '30px', borderBottom: '1px solid #f2f2f2' }}>
-            {(['RECEIVED', 'SENT'] as const).map((v) => (
-              <button 
-                key={v} onClick={() => setView(v)}
-                style={{ 
-                  background: 'none', border: 'none', padding: '0 0 15px', fontSize: '15px', fontWeight: 600, 
-                  color: view === v ? '#1d1d1f' : '#86868b', 
-                  borderBottom: view === v ? '2px solid #1d1d1f' : '2px solid transparent', cursor: 'pointer',
-                  transition: '0.3s'
-                }}
-              >
-                {v === 'RECEIVED' ? 'Bandeja de Entrada' : 'Mis Solicitudes'}
-              </button>
-            ))}
-          </div>
-        </header>
-
-        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-          
+        <div className="flex-1 flex flex-col overflow-hidden">
           {view === 'RECEIVED' ? (
             <>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: selected ? '1px solid #f2f2f2' : 'none' }}>
-                <div style={{ padding: '20px 40px', display: 'flex', gap: '8px' }}>
-                  {(['ALL', 'PENDING', 'ACCEPTED', 'REJECTED'] as const).map((f) => (
-                    <button key={f} onClick={() => setFilter(f)} style={{ padding: '6px 14px', borderRadius: '20px', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', background: filter === f ? '#1d1d1f' : '#f5f5f7', color: filter === f ? '#fff' : '#86868b', transition: '0.2s' }}>
-                      {f === 'ALL' ? 'Todas' : statusConfig[f as SuggestionStatus].label}
-                    </button>
+              <div className="px-8 py-4 flex gap-2 border-b border-border/40 bg-white">
+                {(['ALL', 'PENDING', 'ACCEPTED', 'REJECTED'] as const).map((f) => (
+                  <button key={f} onClick={() => { setFilter(f); setSelected(null); }}
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-bold border transition-all ${filter === f ? 'bg-primary text-white border-primary' : 'bg-background text-muted-foreground border-border/60'}`}
+                  >
+                    {f === 'ALL' ? 'Todas' : statusConfig[f as SuggestionStatus].label}
+                  </button>
+                ))}
+              </div>
+              <div className={`flex-1 grid transition-all duration-500 ${selected ? 'lg:grid-cols-[1fr_450px]' : 'grid-cols-1'}`}>
+                <div className="overflow-y-auto p-8 space-y-3 no-scrollbar">
+                  {loading ? <p className="text-center py-10 opacity-50">Cargando...</p> : filteredSuggestions.map((s) => (
+                    <div key={s.id} onClick={() => setSelected(s)} className={`p-5 rounded-[22px] border cursor-pointer transition-all ${selected?.id === s.id ? 'bg-white border-primary shadow-md' : 'bg-white border-border/50'}`}>
+                      <div className="flex justify-between items-start">
+                        <div><h4 className="font-bold text-sm mb-1">{s.title}</h4><p className="text-xs text-muted-foreground">{s.User?.name} • {new Date(s.createdAt).toLocaleDateString()}</p></div>
+                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${statusConfig[s.status].textColor}`}>{statusConfig[s.status].label}</span>
+                      </div>
+                    </div>
                   ))}
                 </div>
-                
-                <div style={{ flex: 1, overflowY: 'auto', padding: '0 40px 40px' }}>
-                  {loading ? (
-                    <Spinner />
-                  ) : filteredSuggestions.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: '#86868b', marginTop: '40px' }}>No hay sugerencias que mostrar.</p>
-                  ) : (
-                    filteredSuggestions.map((s) => (
-                      <div key={s.id} onClick={() => setSelected(s)} style={{ padding: '20px', borderRadius: '12px', marginBottom: '10px', cursor: 'pointer', background: selected?.id === s.id ? '#f5f5f7' : 'transparent', transition: '0.2s', animation: 'slideIn 0.3s ease-out' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 700, color: statusConfig[s.status].color }}>{statusConfig[s.status].label.toUpperCase()}</span>
-                          <span style={{ fontSize: '11px', color: '#86868b' }}>{new Date(s.createdAt).toLocaleDateString()}</span>
-                        </div>
-                        <h3 style={{ fontSize: '15px', fontWeight: 600, margin: '0' }}>{s.title}</h3>
-                        <p style={{ fontSize: '13px', color: '#86868b', margin: '4px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.content}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {selected && (
-                <div style={{ width: '45%', padding: '40px', overflowY: 'auto', borderLeft: '1px solid #f2f2f2', animation: 'fadeIn 0.4s ease' }}>
-                  <button onClick={() => setSelected(null)} style={{ background: '#f5f5f7', border: 'none', padding: '8px 15px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer', marginBottom: '20px' }}>Cerrar ×</button>
-                  <span style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: statusConfig[selected.status].color, marginBottom: '10px' }}>{statusConfig[selected.status].label.toUpperCase()}</span>
-                  <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '10px' }}>{selected.title}</h2>
-                  
-                  <div style={{ marginBottom: '30px' }}>
-                    <p style={{ fontSize: '14px', color: '#1d1d1f', margin: 0 }}>
-                      Enviado por: <b>{selected.User?.name || 'Usuario no identificado'}</b>
-                    </p>
-                    <p style={{ fontSize: '12px', color: '#86868b', marginTop: '2px' }}>
-                      {selected.User?.email || 'Correo no disponible'}
-                    </p>
-                  </div>
-
-                  <p style={{ fontSize: '16px', lineHeight: 1.6, color: '#424245', marginBottom: '40px' }}>{selected.content}</p>
-                  
-                  <div style={{ borderTop: '1px solid #f2f2f2', paddingTop: '30px' }}>
+                {selected && (
+                  <div className="bg-white border-l border-border/60 p-8 overflow-y-auto animate-in slide-in-from-right-5">
+                    <div className="flex justify-between mb-6">
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${statusConfig[selected.status].textColor}`}>{statusConfig[selected.status].label}</span>
+                      <button onClick={() => setSelected(null)} className="text-muted-foreground hover:text-destructive text-xl"><i className="bi bi-x"></i></button>
+                    </div>
+                    <h2 className="text-xl font-black mb-4">{selected.title}</h2>
+                    <div className="bg-muted/30 p-6 rounded-3xl border border-border/40 mb-8 italic text-sm">"{selected.content}"</div>
                     {selected.status === 'PENDING' ? (
-                      <>
-                        <textarea value={responseBody} onChange={e => setResponseBody(e.target.value)} placeholder="Escribe una respuesta a la sugerencia..." style={{ width: '100%', height: '100px', padding: '15px', borderRadius: '12px', border: '1px solid #e5e5e5', outline: 'none', fontSize: '14px', marginBottom: '15px', resize: 'none' }} />
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                          <button onClick={() => handleRespond('ACCEPTED')} style={{ flex: 1, background: '#34c759', color: '#fff', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>Aceptar</button>
-                          <button onClick={() => handleRespond('REJECTED')} style={{ flex: 1, background: '#ff3b30', color: '#fff', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>Rechazar</button>
+                      <div className="space-y-4 pt-6 border-t">
+                        <textarea value={responseBody} onChange={e => setResponseBody(e.target.value)} placeholder="Respuesta..." className="w-full p-4 bg-muted/20 border border-border/60 rounded-2xl text-sm h-32 focus:outline-none" />
+                        <div className="flex gap-2">
+                          <button onClick={() => handleRespond('ACCEPTED')} className="flex-1 py-3 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Aceptar</button>
+                          <button onClick={() => handleRespond('REJECTED')} className="flex-1 py-3 bg-destructive/10 text-destructive border border-destructive/20 rounded-xl text-[10px] font-black uppercase tracking-widest">Rechazar</button>
                         </div>
-                      </>
-                    ) : (
-                      <div style={{ background: '#f5f5f7', padding: '20px', borderRadius: '12px', borderLeft: `4px solid ${statusConfig[selected.status].color}` }}>
-                        <h4 style={{ fontSize: '11px', color: '#86868b', textTransform: 'uppercase', marginBottom: '8px' }}>Respuesta de Administración</h4>
-                        <p style={{ margin: 0, fontSize: '14px', fontStyle: 'italic', lineHeight: 1.5 }}>"{selected.response}"</p>
                       </div>
+                    ) : (
+                      <div className={`p-5 rounded-2xl border ${statusConfig[selected.status].bgClass}`}><p className="text-sm italic font-medium">"{selected.response}"</p></div>
                     )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </>
           ) : (
-            <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '400px 1fr' }}>
-              <div style={{ padding: '40px', borderRight: '1px solid #f2f2f2', background: '#fff' }}>
-                <h2 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px' }}>Nueva Sugerencia</h2>
-                <p style={{ color: '#86868b', fontSize: '14px', marginBottom: '30px' }}>Envía tus sugerencias directamente a la administración de Atalayas EGM.</p>
-                
-                <form onSubmit={handleSubmitSuggestion} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <input placeholder="Título de la sugerencia..." value={newTitle} onChange={e => setNewTitle(e.target.value)} style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #d2d2d7', outline: 'none', fontSize: '15px' }} required />
-                  <textarea placeholder="Detalla tu sugerencia..." value={newContent} onChange={e => setNewContent(e.target.value)} style={{ width: '100%', height: '180px', padding: '14px', borderRadius: '10px', border: '1px solid #d2d2d7', outline: 'none', fontSize: '15px', resize: 'none' }} required />
-                  <button type="submit" disabled={isSubmitting} style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', background: '#0071e3', color: '#fff', fontSize: '16px', fontWeight: 600, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
-                    {isSubmitting ? 'Enviando...' : 'Enviar Sugerencia'}
-                  </button>
+            <div className="flex-1 grid lg:grid-cols-[400px_1fr] overflow-hidden">
+              <div className="p-8 border-r border-border/40 bg-white overflow-y-auto">
+                <h3 className="font-black text-lg mb-6">Nueva Sugerencia</h3>
+                <form onSubmit={handleSubmitSuggestion} className="space-y-5">
+                  <input placeholder="Asunto" value={newTitle} onChange={e => setNewTitle(e.target.value)} className="w-full p-4 bg-muted/20 border border-border/60 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary/30 outline-none" required />
+                  <textarea placeholder="Descripción..." value={newContent} onChange={e => setNewContent(e.target.value)} className="w-full p-4 bg-muted/20 border border-border/60 rounded-2xl text-sm min-h-50 focus:ring-1 focus:ring-primary/30 outline-none" required />
+                  <button disabled={isSubmitting} className="w-full py-4 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] disabled:opacity-50">{isSubmitting ? 'Enviando...' : 'Enviar a Atalayas EGM'}</button>
                 </form>
               </div>
-
-              <div style={{ padding: '40px', overflowY: 'auto', background: '#f5f5f7' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>Historial de envíos</h3>
-                
-                {loading ? (
-                  <Spinner />
-                ) : suggestions.length === 0 ? (
-                  <p style={{ color: '#86868b', fontSize: '14px' }}>Aún no has enviado ninguna propuesta.</p>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    {suggestions.map((s) => (
-                      <div key={s.id} style={{ background: '#fff', padding: '25px', borderRadius: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', animation: 'slideIn 0.4s ease-out' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                          <span style={{ fontSize: '10px', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', background: statusConfig[s.status].bg, color: statusConfig[s.status].color, textTransform: 'uppercase' }}>
-                            {statusConfig[s.status].label}
-                          </span>
-                          <span style={{ fontSize: '12px', color: '#86868b' }}>{new Date(s.createdAt).toLocaleDateString()}</span>
-                        </div>
-                        <h4 style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 8px' }}>{s.title}</h4>
-                        <p style={{ fontSize: '14px', color: '#424245', lineHeight: 1.5, margin: 0 }}>{s.content}</p>
-                        {s.response && (
-                          <div style={{ marginTop: '15px', padding: '12px', background: '#f9f9fb', borderRadius: '10px', borderLeft: `3px solid ${statusConfig[s.status].color}` }}>
-                            <p style={{ fontSize: '11px', fontWeight: 700, color: '#86868b', textTransform: 'uppercase', marginBottom: '4px' }}>Respuesta:</p>
-                            <p style={{ fontSize: '13px', color: '#1d1d1f', margin: 0 }}>{s.response}</p>
-                          </div>
-                        )}
-                      </div>
+              <div className="p-8 overflow-y-auto bg-[#f8f9fb]">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mis Envíos</h3>
+                  <div className="flex gap-1.5 bg-white p-1 rounded-xl border border-border/40">
+                    {(['ALL', 'PENDING', 'ACCEPTED', 'REJECTED'] as const).map((f) => (
+                      <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all ${filter === f ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'}`}>{f === 'ALL' ? 'Todo' : statusConfig[f as SuggestionStatus].label}</button>
                     ))}
                   </div>
-                )}
+                </div>
+                <div className="space-y-4">
+                  {loading ? <p>Cargando...</p> : filteredSuggestions.map((s) => (
+                    <div key={s.id} className="group bg-white border border-border/40 rounded-[28px] p-6 shadow-sm relative">
+                      <div className="flex justify-between items-start mb-4">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border ${statusConfig[s.status].bgClass} ${statusConfig[s.status].textColor}`}>{statusConfig[s.status].label}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] text-muted-foreground font-bold">{new Date(s.createdAt).toLocaleDateString()}</span>
+                          {s.status === 'PENDING' && (
+                            <button onClick={() => handleDelete(s.id)} className="w-8 h-8 rounded-lg bg-destructive/5 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"><i className="bi bi-trash3"></i></button>
+                          )}
+                        </div>
+                      </div>
+                      <h4 className="font-bold text-foreground mb-1">{s.title}</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed mb-4">{s.content}</p>
+                      {s.response && <div className="mt-4 pt-4 border-t border-border/30"><p className="text-xs font-bold italic opacity-80">"{s.response}"</p></div>}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}

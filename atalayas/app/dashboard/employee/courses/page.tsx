@@ -1,245 +1,188 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Sidebar from "@/components/ui/Sidebar";
-import SearchInput from "@/components/ui/Searchbar"; // Asegúrate de que la ruta sea correcta
-import { API_ROUTES } from "@/lib/utils";
-import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from 'react';
+import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader'; // Banner unificado
+import { API_ROUTES } from '@/lib/utils';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSearchParams } from 'next/navigation';
 
 export default function EmployeeCoursesPage() {
-  const [courses, setCourses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState<
-    "TODOS" | "BASICO" | "ESPECIALIZADO"
-  >("TODOS");
-  const [searchQuery, setSearchQuery] = useState("");
-  const searchParams = useSearchParams();
-  const fromTaskId = searchParams.get("fromTask");
+    const [courses, setCourses] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'TODOS' | 'BASICO' | 'ESPECIALIZADO'>('TODOS');
+    
+    const searchParams = useSearchParams();
+    const fromTaskId = searchParams.get('fromTask');
 
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const res = await fetch(API_ROUTES.COURSES.GET_ALL, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        const data = await res.json();
+    useEffect(() => {
+        const fetchCourses = async () => {
+            try {
+                const res = await fetch(API_ROUTES.COURSES.GET_ALL, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                });
+                const data = await res.json();
+                const rawCourses = Array.isArray(data) ? data : (data.courses || []);
+                
+                const sortedDataCourses = [...rawCourses].sort((a: any, b: any) => {
+                    const titleA = (a.title || '').trim().toLowerCase();
+                    const titleB = (b.title || '').trim().toLowerCase();
+                    return titleA.localeCompare(titleB, undefined, { numeric: true, sensitivity: "base" });
+                });
+                
+                setCourses(sortedDataCourses);
+            } catch (err) { console.error(err); } 
+            finally { setLoading(false); }
+        };
+        fetchCourses();
+    }, []);
 
-        // Normalizamos la data si viene envuelta en un objeto
-        const rawCourses = Array.isArray(data) ? data : data.courses || [];
+    // Lógica de autoconfirmación de tareas (Onboarding)
+    useEffect(() => {
+        const autoConfirmTask = async () => {
+            if (fromTaskId) {
+                try {
+                    const token = localStorage.getItem("token");
+                    await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ taskId: fromTaskId, done: true }),
+                    });
+                } catch (err) { console.error("Error al autocompletar:", err); }
+            }
+        };
+        autoConfirmTask();
+    }, [fromTaskId]);
 
-        const sortedDataCourses = rawCourses.sort((a: any, b: any) => {
-          const titleA = a.title.trim().toLowerCase();
-          const titleB = b.title.trim().toLowerCase();
-          return titleA.localeCompare(titleB, undefined, {
-            numeric: true,
-            sensitivity: "base",
-          });
-        });
+    const filtered = courses.filter(c => {
+        if (activeTab === 'TODOS') return true;
+        const cat = c.category?.toUpperCase();
+        if (activeTab === 'BASICO') return cat !== 'ESPECIALIZADO';
+        return cat === 'ESPECIALIZADO';
+    });
 
-        setCourses(sortedDataCourses);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCourses();
-  }, []);
-
-  // Lógica de autocompletado de tarea (Onboarding)
-  useEffect(() => {
-    const autoConfirmTask = async () => {
-      if (fromTaskId) {
-        try {
-          const token = localStorage.getItem("token");
-          await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ taskId: fromTaskId, done: true }),
-          });
-        } catch (err) {
-          console.error("Error al autocompletar:", err);
-        }
-      }
-    };
-    autoConfirmTask();
-  }, [fromTaskId]);
-
-  // Filtrado combinado: Tab + Buscador
-  const filtered = courses.filter((c) => {
-    const matchesSearch = c.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesTab =
-      selectedTab === "TODOS"
-        ? true
-        : selectedTab === "BASICO"
-          ? c.category?.toUpperCase() !== "ESPECIALIZADO"
-          : c.category?.toUpperCase() === "ESPECIALIZADO";
-
-    return matchesSearch && matchesTab;
-  });
-
-  if (loading)
     return (
-      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-      </div>
-    );
+        <div className="flex min-h-screen bg-background font-sans text-foreground">
+            <Sidebar role="EMPLOYEE" />
 
-  return (
-    <div
-      className="flex min-h-screen bg-[#f5f5f7]"
-      style={{
-        fontFamily:
-          "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
-      }}
-    >
-      <Sidebar role="EMPLOYEE" />
+            <main className="flex-1 overflow-auto flex flex-col relative">
+                
+                {/* BANNER UNIFICADO (Idéntico al Admin) */}
+                <PageHeader 
+                    title="Mi Formación"
+                    description="Explora los programas de capacitación, cursos de onboarding y material especializado diseñado para tu crecimiento."
+                    icon={<i className="bi bi-journal-bookmark-fill"></i>}
+                />
 
-      <main className="flex-1 h-screen overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-8 py-12">
-          {/* BANNER COMPACTO (Estilo Servicios) */}
-          <header className="bg-white rounded-[2rem] p-8 mb-8 border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
-            <div>
-              <h1 className="text-3xl font-bold text-[#1d1d1f] tracking-tight">
-                Cursos disponibles
-              </h1>
-              <p className="text-gray-500 text-sm font-medium mt-1">
-                Gestiona tus cursos de onboarding y especialización.
-              </p>
-            </div>
-            <SearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Buscar cursos..."
-            />
-          </header>
-
-          {/* CHIPS DE FILTRADO (Estilo Servicios) */}
-          <div className="flex items-center gap-3 mb-10 overflow-x-auto pb-2 no-scrollbar">
-            {["TODOS", "BASICO", "ESPECIALIZADO"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setSelectedTab(tab as any)}
-                className={`relative shrink-0 px-6 py-2 rounded-full text-sm font-bold transition-all ${
-                  selectedTab === tab
-                    ? "text-white"
-                    : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  {tab === "TODOS" ? (
-                    "Todos"
-                  ) : tab === "BASICO" ? (
-                    <>
-                      <i className="bi bi-book text-blue-400"></i> Onboarding
-                    </>
-                  ) : (
-                    <>
-                      <i className="bi bi-mortarboard text-purple-400"></i>{" "}
-                      Especialización
-                    </>
-                  )}
-                </span>
-                {selectedTab === tab && (
-                  <motion.div
-                    layoutId="pill-bg-courses"
-                    className="absolute inset-0 bg-[#1d1d1f] rounded-full"
-                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* GRID DE CURSOS (Estilo Servicios con Imagen) */}
-          <motion.div
-            layout
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            <AnimatePresence mode="popLayout">
-              {filtered.map((course) => (
-                <motion.div
-                  key={course.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                >
-                  <Link href={`/dashboard/employee/courses/${course.id}`}>
-                    <div className="group bg-white rounded-[2rem] border border-gray-200/50 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full overflow-hidden active:scale-[0.98]">
-                      {/* IMAGEN DEL CURSO (Usando fileUrl) */}
-                      <div className="relative w-full aspect-video overflow-hidden bg-gray-100 border-b border-gray-100">
-                        {course.fileUrl ? (
-                          <img
-                            src={course.fileUrl}
-                            alt={course.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-300 text-4xl">
-                            <i className="bi bi-journal-bookmark"></i>
-                          </div>
-                        )}
-                        {/* Badge flotante de categoría */}
-                        {/*<div className="absolute top-4 left-4">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-white bg-black/50 backdrop-blur-md px-3 py-1 rounded-full">
-                            {course.category || "General"}
-                          </span>
-                        </div>*/}
-                      </div>
-
-                      <div className="p-6 flex flex-col flex-1">
-                        <h3 className="text-lg font-bold text-[#1d1d1f] mb-4 group-hover:text-blue-600 transition-colors line-clamp-2 h-14 overflow-hidden">
-                          {course.title}
-                        </h3>
-
-                        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-gray-400 flex items-center gap-2">
-                            {course.category?.toUpperCase() ===
-                            "ESPECIALIZADO" ? (
-                              <>
-                                <i className="bi bi-star-fill text-yellow-400"></i>
-                                Especialización
-                              </>
-                            ) : (
-                              <>
-                                <i className="bi bi-check-circle-fill text-green-400"></i>{" "}
-                                Onboarding
-                              </>
-                            )}
-                          </span>
-                          <span className="text-[11px] font-bold text-gray-400 flex items-center gap-2">
-                            <i className="bi bi-collection-play"></i>
-                            {course._count?.Content || 0} Contenidos
-                          </span>{" "}
+                {/* CONTENIDO CON PADDING (Siguiendo estructura Admin) */}
+                <div className="p-6 lg:p-10 flex-1 space-y-8">
+                    
+                    {/* SELECTOR DE CATEGORÍAS (Apple Style Pill) */}
+                    <div className="flex justify-between items-center flex-wrap gap-4">
+                        <div className="flex gap-1 bg-card border border-border p-1.5 rounded-2xl shadow-sm">
+                            {['TODOS', 'BASICO', 'ESPECIALIZADO'].map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab as any)}
+                                    className={`relative px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+                                        activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                                >
+                                    <span className="relative z-10">
+                                        {tab === 'TODOS' ? 'Todos' : tab === 'BASICO' ? 'Onboarding' : 'Especialización'}
+                                    </span>
+                                    {activeTab === tab && (
+                                        <motion.div 
+                                            layoutId="activeTabPill"
+                                            className="absolute inset-0 bg-primary/5 border border-primary/10 rounded-xl"
+                                            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                                        />
+                                    )}
+                                </button>
+                            ))}
                         </div>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
 
-          {/* ESTADO VACÍO */}
-          {!loading && filtered.length === 0 && (
-            <div className="text-center py-20">
-              <i className="bi bi-search text-4xl text-gray-200 mb-4 block"></i>
-              <p className="text-gray-400 font-medium">
-                No se encontraron cursos que coincidan con tu búsqueda.
-              </p>
-            </div>
-          )}
+                        {/* Indicador de progreso rápido o total */}
+                        <div className="hidden md:flex items-center gap-3 px-5 py-2.5 bg-card border border-border rounded-2xl shadow-sm">
+                            <i className="bi bi-lightning-charge-fill text-secondary"></i>
+                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                {courses.length} Programas disponibles
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* GRID DE CURSOS (Estilo moderno y profesional) */}
+                    <AnimatePresence mode="wait">
+                        <motion.div 
+                            key={activeTab}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.3 }}
+                            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8"
+                        >
+                            {loading ? (
+                                Array.from({ length: 4 }).map((_, i) => (
+                                    <div key={i} className="h-80 bg-card rounded-[2rem] border border-border animate-pulse shadow-sm" />
+                                ))
+                            ) : filtered.length === 0 ? (
+                                <div className="col-span-full py-24 text-center bg-card border-2 border-dashed border-border rounded-[2rem]">
+                                    <div className="text-5xl text-muted-foreground/20 mb-6"><i className="bi bi-search"></i></div>
+                                    <p className="text-muted-foreground font-bold text-lg">No hay cursos en esta categoría actualmente</p>
+                                </div>
+                            ) : (
+                                filtered.map((course) => {
+                                    const isBasico = course.category?.toUpperCase() !== 'ESPECIALIZADO';
+                                    return (
+                                        <div key={course.id} className="group bg-card rounded-[2rem] border border-border shadow-sm hover:shadow-xl hover:border-secondary/40 transition-all duration-500 flex flex-col overflow-hidden relative">
+                                            
+                                            {/* Decoración sutil de fondo */}
+                                            <div className={`absolute top-0 right-0 w-32 h-32 blur-[80px] opacity-10 transition-opacity group-hover:opacity-20 ${isBasico ? 'bg-primary' : 'bg-secondary'}`} />
+
+                                            <div className="p-8 flex-1 flex flex-col">
+                                                <div className="flex justify-between items-start mb-8">
+                                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all duration-500 group-hover:scale-110 shadow-sm ${
+                                                        isBasico ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'
+                                                    }`}>
+                                                        <i className={`bi ${isBasico ? 'bi-compass' : 'bi-rocket-takeoff'}`}></i>
+                                                    </div>
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${
+                                                        isBasico ? 'bg-primary/5 text-primary border-primary/20' : 'bg-secondary/5 text-secondary border-secondary/20'
+                                                    }`}>
+                                                        {isBasico ? 'Básico' : 'Pro'}
+                                                    </span>
+                                                </div>
+
+                                                <h3 className="text-xl font-bold text-foreground leading-tight mb-4 group-hover:text-primary transition-colors">
+                                                    {course.title}
+                                                </h3>
+                                                
+                                                <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 mb-8 opacity-80">
+                                                    Explora los fundamentos de este programa y adquiere las habilidades necesarias para destacar en Atalayas EGM.
+                                                </p>
+
+                                                <div className="mt-auto">
+                                                    <Link
+                                                        href={`/dashboard/employee/courses/${course.id}`}
+                                                        className="flex items-center justify-center gap-3 w-full py-4 bg-foreground text-background dark:bg-muted dark:text-foreground text-sm font-black uppercase tracking-widest rounded-2xl transition-all hover:opacity-90 active:scale-[0.97] shadow-lg shadow-black/5"
+                                                    >
+                                                        Empezar curso
+                                                        <i className="bi bi-arrow-right-short text-xl"></i>
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+            </main>
         </div>
-      </main>
-    </div>
-  );
+    );
 }

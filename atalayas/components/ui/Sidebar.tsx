@@ -10,251 +10,266 @@ interface SidebarProps {
 
 const navItems = {
   GENERAL_ADMIN: [
-    { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: <i className="bi bi-house-fill text-blue-500"></i> },
-    { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: <i className="bi bi-buildings-fill text-blue-500"></i> },
-    { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill text-blue-500"></i>},
-    { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i>  },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill text-blue-500"></i>  },
-    { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: <i className="bi bi-suitcase-lg-fill text-blue-500"></i> },
-    { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: <i className="bi bi-megaphone-fill text-blue-500"></i> },
-    { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-globe-americas text-blue-500"></i>},
-    { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: <i className="bi bi-envelope-open-fill text-blue-500"></i> },
-    { label: 'Sugerencias', href: '/dashboard/administrator/general-admin/suggestions', icon: <i className="bi bi-mailbox2 text-blue-500"></i>},
+    { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: <i className="bi bi-grid-fill"></i> },
+    { label: 'Perfil Empresa', href: '/dashboard/company', icon: <i className="bi bi-building-gear"></i> },
+    { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: <i className="bi bi-buildings-fill"></i> },
+    { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
+    { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder2-open"></i> },
+    { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: <i className="bi bi-briefcase-fill"></i> },
+    { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
+    { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-globe-americas"></i>},
+    { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: <i className="bi bi-envelope-open-fill "></i> },
+    { label: 'Sugerencias', href: '/dashboard/administrator/general-admin/suggestions', icon: <i className="bi bi-mailbox2"></i>},
   ],
   ADMIN: [
-    { label: 'Panel', href: '/dashboard/administrator/admin', icon: <i className="bi bi-house-fill text-[#005596]"></i> },
-    { label: 'Mi Empresa', href: '/dashboard/administrator/admin/company', icon: <i className="bi bi-building-fill text-[#005596]"></i> },
-    { label: 'Empleados', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill text-[#005596]"></i>},
-    { label: 'Onboarding', href: '/dashboard/administrator/employees/onboarding', icon: <i className="bi bi-person-walking text-[#005596]"></i>},
-    { label: 'Cursos', href: '/dashboard/administrator/admin/courses', icon: <i className="bi bi-mortarboard-fill text-[#005596] "></i>  },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill text-[#005596]"></i>  },
-    { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill text-[#005596]"></i> },
-    { label: 'Anuncios', href: '/dashboard/administrator/admin/announcements', icon: <i className="bi bi-megaphone-fill text-blue-500"></i> },
-    { label: 'Ecosistema', href: '/dashboard/administrator/admin/community', icon: <i className="bi bi-globe-americas text-blue-500"></i>},
-    { label: 'Sugerencias', href: '/dashboard/administrator/admin/suggestions', icon: <i className="bi bi-mailbox2 text-blue-500"></i>},
+    { label: 'Panel', href: '/dashboard/administrator/admin', icon: <i className="bi bi-house-fill"></i> },
+    { label: 'Mi Empresa', href: '/dashboard/administrator/admin/company', icon: <i className="bi bi-building-fill"></i> },
+    { label: 'Empleados', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
+    { label: 'Onboarding', href: '/dashboard/administrator/employees/onboarding', icon: <i className="bi bi-person-walking"></i>},
+    { label: 'Cursos', href: '/dashboard/administrator/admin/courses', icon: <i className="bi bi-mortarboard-fill"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill"></i> },
+    { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill"></i> },
+    { label: 'Anuncios', href: '/dashboard/administrator/admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
+    { label: 'Ecosistema', href: '/dashboard/administrator/admin/community', icon: <i className="bi bi-globe-americas"></i>},
+    { label: 'Sugerencias', href: '/dashboard/administrator/admin/suggestions', icon: <i className="bi bi-mailbox"></i>},
   ],
   EMPLOYEE: [
-    { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-house-fill text-[#005596]"></i> },
-    { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: <i className="bi bi-mortarboard-fill text-[#005596] "></i> },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill text-[#005596]"></i> },
-    { label: 'Servicios', href: '/dashboard/employee/services', icon: <i className="bi bi-suitcase-lg-fill text-[#005596]"></i> },
-    { label: 'Anuncios', href: '/dashboard/employee/announcements', icon: <i className="bi bi-megaphone-fill text-blue-500"></i> },
-    { label: 'Ecosistema', href: '/dashboard/employee/community', icon: <i className="bi bi-globe-americas text-blue-500"></i>},
-    { label: 'Sugerencias', href: '/dashboard/employee/suggestions', icon: <i className="bi bi-mailbox2 text-blue-500"></i>},
+    { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-grid-fill"></i> },
+    { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder2-open"></i> },
+    { label: 'Servicios', href: '/dashboard/employee/services', icon: <i className="bi bi-briefcase-fill"></i> },
+    { label: 'Anuncios', href: '/dashboard/employee/announcements', icon: <i className="bi bi-megaphone-fill "></i> },
+    { label: 'Ecosistema', href: '/dashboard/employee/community', icon: <i className="bi bi-globe-americas"></i>},
+    { label: 'Sugerencias', href: '/dashboard/employee/suggestions', icon: <i className="bi bi-mailbox2"></i>},
   ],
   PUBLIC: [
-    { label: 'Panel', href: '/dashboard/public', icon: <i className="bi bi-house-fill text-blue-500"></i> },
-    { label: 'Cursos', href: '/dashboard/public/courses', icon: <i className="bi bi-mortarboard-fill text-blue-500 "></i>  },
-    { label: 'Servicios', href: '/dashboard/public/services', icon: <i className="bi bi-suitcase-lg-fill text-blue-500"></i> },
+    { label: 'Panel', href: '/dashboard/public', icon: <i className="bi bi-grid-fill"></i> },
+    { label: 'Cursos', href: '/dashboard/public/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
+    { label: 'Servicios', href: '/dashboard/public/services', icon: <i className="bi bi-briefcase-fill"></i> },
   ],
 };
 
-const roleLabels = { GENERAL_ADMIN: 'Admin General', ADMIN: 'Administrador', EMPLOYEE: 'Empleado', PUBLIC: 'Usuario' };
-const roleColors = { GENERAL_ADMIN: 'bg-purple-100 text-purple-700', ADMIN: 'bg-blue-100 text-blue-700', EMPLOYEE: 'bg-green-100 text-green-700', PUBLIC: 'bg-gray-100 text-gray-700' };
+const roleLabels = {
+  GENERAL_ADMIN: 'Admin General',
+  ADMIN: 'Administrador',
+  EMPLOYEE: 'Empleado',
+  PUBLIC: 'Usuario',
+};
+
+const roleColors = {
+  GENERAL_ADMIN: 'bg-primary text-primary-foreground border-transparent', 
+  ADMIN: 'bg-primary/20 text-primary border-primary/30', 
+  EMPLOYEE: 'bg-secondary/20 text-secondary border-secondary/30', 
+  PUBLIC: 'bg-muted text-muted-foreground border-border', 
+};
 
 export default function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [isDark, setIsDark] = useState(false);
   
-  // ✅ Inicialización con persistencia para evitar reseteos a 0 al navegar
-  const [pendingRequestsCount, setPendingRequestsCount] = useState(() => {
-    if (typeof window !== 'undefined') return Number(localStorage.getItem('count_requests')) || 0;
-    return 0;
-  });
-
-  const [pendingSuggestionsCount, setPendingSuggestionsCount] = useState(() => {
-    if (typeof window !== 'undefined') return Number(localStorage.getItem('count_suggestions')) || 0;
-    return 0;
-  });
+  const [user, setUser] = useState<any>(null);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const [pendingSuggestionsCount, setPendingSuggestionsCount] = useState(0);
 
   useEffect(() => {
+    setMounted(true);
     const savedUser = localStorage.getItem('user');
     if (savedUser) setUser(JSON.parse(savedUser));
-    setMounted(true);
+    
+    if (typeof window !== 'undefined' && document.documentElement.classList.contains('dark')) {
+      setIsDark(true);
+    }
 
     const checkResizing = () => {
-      if (window.innerWidth < 1024) setCollapsed(true);
-      else setCollapsed(false);
+      if (window.innerWidth >= 1024) setMobileOpen(false);
     };
-    checkResizing();
     window.addEventListener('resize', checkResizing);
     return () => window.removeEventListener('resize', checkResizing);
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    const updateCounts = () => {
+      setPendingSuggestionsCount(Number(localStorage.getItem('count_suggestions')) || 0);
+      setPendingRequestsCount(Number(localStorage.getItem('count_requests')) || 0);
+    };
+    window.addEventListener('local-storage-update', updateCounts);
+    updateCounts();
+    return () => window.removeEventListener('local-storage-update', updateCounts);
+  }, [mounted]);
 
-    // 1. Fetch Solicitudes (Solo General Admin)
-    if (role === 'GENERAL_ADMIN') {
-      fetch('http://localhost:3000/company-request', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(res => res.json())
-      .then(data => {
-        const pending = Array.isArray(data) ? data.filter((r: any) => r.status === 'PENDING').length : 0;
-        setPendingRequestsCount(pending);
-        localStorage.setItem('count_requests', pending.toString());
-      })
-      .catch(err => console.error("Error fetching requests", err));
-    }
-
-    // 2. Fetch Sugerencias (Admin y General Admin)
-    if (role === 'GENERAL_ADMIN' || role === 'ADMIN') {
-      const target = role === 'GENERAL_ADMIN' ? 'GENERAL_ADMIN' : 'ADMIN';
-      fetch(`http://localhost:3000/suggestions?target=${target}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(res => res.json())
-      .then(data => {
-        const pending = Array.isArray(data) ? data.filter((s: any) => s.status === 'PENDING').length : 0;
-        setPendingSuggestionsCount(pending);
-        localStorage.setItem('count_suggestions', pending.toString());
-      })
-      .catch(err => console.error("Error fetching suggestions", err));
-    }
-  }, [role, mounted, pathname]); // Se añade pathname para refrescar al navegar
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    const newDark = !isDark;
+    newDark ? root.classList.add('dark') : root.classList.remove('dark');
+    localStorage.setItem('theme', newDark ? 'dark' : 'light');
+    setIsDark(newDark);
+  };
 
   const handleLogout = () => {
     localStorage.clear();
     router.push('/login');
   };
 
-  // Dentro de tu componente Sidebar
-useEffect(() => {
-  const handleUpdate = (event: any) => {
-    // Si el evento trae datos, los usamos, si no, leemos storage
-    const { requests, suggestions } = event.detail || {};
+  // FUNCIÓN DE ACTIVACIÓN MEJORADA
+  const checkActive = (href: string) => {
+    // 1. Coincidencia exacta (Prioridad máxima)
+    if (pathname === href) return true;
+
+    // 2. Excepción para los Paneles de cada rol
+    // Evitamos que /admin/company active el botón de /admin
+    const isBasePanel = href.endsWith('/admin') || 
+                        href.endsWith('/general-admin') || 
+                        href.endsWith('/employee') || 
+                        href.endsWith('/public');
     
-    if (suggestions !== undefined) {
-      setPendingSuggestionsCount(suggestions);
-    } else {
-      setPendingSuggestionsCount(Number(localStorage.getItem('count_suggestions')) || 0);
+    if (isBasePanel) return pathname === href;
+
+    // 3. Excepción para Onboarding (evita activar Empleados)
+    if (href === '/dashboard/administrator/employees' && pathname.includes('/onboarding')) {
+      return false;
     }
 
-    if (requests !== undefined) {
-      setPendingRequestsCount(requests);
-    } else {
-      setPendingRequestsCount(Number(localStorage.getItem('count_requests')) || 0);
-    }
-    
-    console.log("Sidebar actualizado dinámicamente");
+    // 4. Coincidencia de sub-rutas para el resto de items (Cursos, Servicios, etc.)
+    return href !== '/dashboard' && pathname.startsWith(href + '/');
   };
 
-  // Escuchamos el evento personalizado
-  window.addEventListener('local-storage-update', handleUpdate);
+  if (!mounted) return null;
 
-  return () => {
-    window.removeEventListener('local-storage-update', handleUpdate);
-  };
-}, []);
-
+  const currentMenu = navItems[role] || [];
+  const companyData = user?.Company || user?.company;
+  const displayLogo = user.company?.logoUrl || "/images/logo-atalayas.png";
 
   return (
     <>
-      <button onClick={() => setCollapsed(false)} className={`fixed top-1 left-1 z-50 p-1 bg-[#005596] text-white rounded-lg lg:hidden shadow-lg ${!collapsed ? 'hidden' : 'flex'}`}>
-        <i className="bi bi-list text-xl h-7"></i>
-      </button>
+      {!mobileOpen && (
+        <button 
+          onClick={() => setMobileOpen(true)}
+          className="lg:hidden fixed top-4 left-4 z-9999 w-12 h-12 bg-white dark:bg-card border border-border shadow-xl rounded-2xl flex items-center justify-center text-primary transition-all active:scale-90"
+        >
+          <i className="bi bi-list text-2xl"></i>
+        </button>
+      )}
 
-      {!collapsed && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={() => setCollapsed(true)} />}
+      <div 
+        className={`fixed inset-0 bg-background/60 backdrop-blur-sm z-10000 lg:hidden transition-opacity duration-300 ${
+          mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setMobileOpen(false)}
+      />
 
-      <aside className={`${collapsed ? 'w-16 max-lg:-translate-x-full' : 'w-64 max-lg:translate-x-0'} transition-all duration-300 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 left-0 z-40 max-lg:fixed`}>
-        {/* Header con Logo */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          <div className={`flex items-center gap-2 ${collapsed ? 'hidden' : 'flex'}`}>
-            <div className="rounded-2xl flex items-center justify-center shrink-0 shadow-sm overflow-hidden bg-gray-50 h-12 w-12 border border-gray-100">
-              {mounted && user?.Company?.logoUrl ? (
-                <img src={user.Company.logoUrl} className="object-cover h-full w-full" alt="Logo" onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${user?.Company?.name || 'C'}&background=005596&color=fff`; }} />
-              ) : (
-                <div className="h-full w-full bg-[#005596]/10 flex items-center justify-center">
-                  <span className="text-[#005596] font-bold">{mounted ? (user?.Company?.name?.charAt(0) || 'C') : ''}</span>
-                </div>
-              )}
-            </div>
-            <span className="text-[#1d1d1f] font-bold text-lg tracking-tight ml-1 truncate">{mounted ? (user?.Company?.name || 'Mi Empresa') : ''}</span>
+      <aside className={`
+        fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300 z-10001
+        ${mobileOpen ? 'translate-x-0 w-70' : '-translate-x-full lg:translate-x-0'}
+        ${collapsed ? 'lg:w-20' : 'lg:w-64'}
+      `}>
+        
+        <div className={`flex items-center justify-between border-b border-border transition-all duration-300 ${collapsed ? 'h-20 px-0 justify-center' : 'h-24 px-4 gap-3'}`}>
+          <div className={`
+            bg-white rounded-[18px] shadow-sm border border-gray-200/60 dark:border-white/10 flex items-center justify-center overflow-hidden transition-all
+            ${collapsed ? 'w-12 h-12 p-1.5' : 'flex-1 h-14 p-2.5'}
+          `}>
+            <img src={displayLogo} alt="Logo" className="max-w-full max-h-full object-contain" />
           </div>
-          <button onClick={() => setCollapsed(!collapsed)} className="text-[#86868b] hover:text-[#1d1d1f] p-1 rounded-lg hover:bg-[#f5f5f7]">
-            <i className={`bi ${collapsed && mounted && window.innerWidth >= 1024 ? 'bi-chevron-right' : 'bi-list'}`}></i>
+          
+          {!collapsed && (
+            <button onClick={() => setCollapsed(true)} className="hidden lg:flex text-muted-foreground p-2 rounded-lg hover:bg-muted transition-colors">
+              <i className="bi bi-text-indent-right text-lg"></i>
+            </button>
+          )}
+
+          <button onClick={() => setMobileOpen(false)} className="lg:hidden text-muted-foreground p-2 mr-2">
+            <i className="bi bi-x-lg text-xl"></i>
           </button>
         </div>
 
-        {/* Navegación */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {navItems[role]?.map((item) => {
-            const isActive = pathname === item.href;
-            let displayIcon = item.icon;
-            let badgeCount = 0;
-            let badgeColor = "bg-[#0071e3]";
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto no-scrollbar">
+          {collapsed && (
+              <button onClick={() => setCollapsed(false)} className="hidden lg:flex w-12 h-12 mx-auto text-muted-foreground rounded-xl hover:bg-muted items-center justify-center mb-4">
+                <i className="bi bi-text-indent-left text-xl"></i>
+              </button>
+          )}
 
-            // Lógica de Sugerencias: Cambio de Icono y Badge Rojo
-            if (item.label === 'Sugerencias') {
-              badgeCount = pendingSuggestionsCount;
-              badgeColor = "bg-orange-500";
-              if (badgeCount > 0) {
-                displayIcon = <i className="bi bi-mailbox2-flag text-orange-500"></i>;
-              }
-            }
-
-            // Lógica de Solicitudes: Badge Naranja
-            if (item.label === 'Solicitudes') {
-              badgeCount = pendingRequestsCount;
-              badgeColor = "bg-orange-500";
-              if(badgeCount > 0){
-                displayIcon= <i className="bi bi-envelope-exclamation-fill text-orange-500"></i>
-              }
-            }
-
+          {currentMenu.map((item) => {
+            const isActive = checkActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => { if(window.innerWidth < 1024) setCollapsed(true) }}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
-                  isActive ? 'bg-[#0071e3]/10 text-[#0071e3]' : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]'
-                }`}
+                onClick={() => setMobileOpen(false)}
+                className={`
+                  flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-[13px] relative group
+                  ${isActive ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-muted/80'}
+                  ${collapsed ? 'justify-center w-12 h-12 mx-auto px-0' : ''}
+                `}
               >
-                <span className="text-base shrink-0">{displayIcon}</span>
-                <span className={`flex-1 ${collapsed ? 'hidden' : 'block'} truncate`}>{item.label}</span>
-                {!collapsed && badgeCount > 0 && (
-                  <span className={`${badgeColor} text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.2rem] text-center animate-pulse-slow`}>
-                    {badgeCount}
-                  </span>
+                <span className={`text-xl transition-transform group-hover:scale-110 ${isActive ? 'text-primary' : ''}`}>
+                  {item.icon}
+                </span>
+                {!collapsed && <span className="flex-1 truncate tracking-tight">{item.label}</span>}
+
+                {item.label === 'Solicitudes' && pendingRequestsCount > 0 && !collapsed && (
+                   <span className="bg-destructive text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{pendingRequestsCount}</span>
+                )}
+                {item.label === 'Sugerencias' && pendingSuggestionsCount > 0 && !collapsed && (
+                   <span className="bg-destructive text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{pendingSuggestionsCount}</span>
+                )}
+                {collapsed && (pendingRequestsCount > 0 || pendingSuggestionsCount > 0) && (
+                   <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
                 )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Footer Usuario */}
-        <div className="p-3 border-t border-gray-100 bg-white">
-          <Link href="/dashboard/profile">
-            <div className={`flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[#f5f5f7] transition-colors cursor-pointer group ${collapsed ? 'justify-center' : ''}`}>
-              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-gray-200 group-hover:border-[#0071e3]">
-                {mounted && user?.avatarUrl ? (
-                  <img src={user.avatarUrl} alt="Perfil" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-[#0071e3]/10 flex items-center justify-center">
-                    <span className="text-[#0071e3] text-sm font-bold">{mounted && user?.name ? user.name.charAt(0).toUpperCase() : ''}</span>
-                  </div>
-                )}
-              </div>
-              <div className={`flex-1 min-w-0 flex-col items-start gap-0.5 ${collapsed ? 'hidden' : 'flex'}`}>
-                <p className="text-[#1d1d1f] text-sm font-bold truncate w-full group-hover:text-[#0071e3]">
-                  {mounted ? (user?.name || user?.email?.split('@')[0].toUpperCase()) : ''}
-                </p>
-                {mounted && <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded tracking-wider ${roleColors[role]}`}>{roleLabels[role]}</span>}
-              </div>
+        <div className="p-4 border-t border-border bg-card space-y-2">
+          <Link href="/dashboard/profile" onClick={() => setMobileOpen(false)} className="block w-full mb-2">
+            <div className={`flex items-center gap-3 p-2 rounded-2xl hover:bg-muted/70 transition-all ${collapsed ? 'justify-center p-0' : ''}`}>
+               <div className={`rounded-full overflow-hidden shrink-0 border-2 border-border ${collapsed ? 'w-10 h-10' : 'w-9 h-9'}`}>
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="Perfil" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-primary text-xs font-black">{user?.name?.charAt(0)}</span>
+                    </div>
+                  )}
+               </div>
+               {!collapsed && (
+                 <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-bold truncate text-foreground">{user?.name}</p>
+                    <span className={`text-[8px] uppercase font-black px-1.5 py-0.5 rounded border ${roleColors[role]}`}>{roleLabels[role]}</span>
+                 </div>
+               )}
             </div>
           </Link>
-          <button onClick={handleLogout} className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[#86868b] hover:text-red-600 hover:bg-red-50 transition-all text-sm font-medium mt-1 ${collapsed ? 'justify-center' : 'ml-0.5'}`}>
-            <span className="text-lg"><i className="bi bi-door-closed"></i></span>
-            <span className={`${collapsed ? 'hidden' : 'block'}`}>Cerrar sesión</span>
-          </button>
+
+          <div className="space-y-1">
+            <button 
+              onClick={toggleTheme} 
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground hover:bg-muted font-bold text-[13px] transition-all ${collapsed ? 'justify-center' : ''}`}
+            >
+              <span className="text-lg w-6 flex justify-center">
+                <i className={`bi ${isDark ? 'bi-sun-fill text-amber-400' : 'bi-moon-stars-fill text-indigo-400'}`}></i>
+              </span>
+              {!collapsed && <span>{isDark ? 'Modo Claro' : 'Modo Oscuro'}</span>}
+            </button>
+
+            <button 
+              onClick={handleLogout} 
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 font-bold text-[13px] transition-all ${collapsed ? 'justify-center' : ''}`}
+            >
+              <span className="text-lg w-6 flex justify-center">
+                <i className="bi bi-box-arrow-right"></i>
+              </span>
+              {!collapsed && <span>Cerrar sesión</span>}
+            </button>
+          </div>
         </div>
       </aside>
     </>

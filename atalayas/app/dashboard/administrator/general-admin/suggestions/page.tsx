@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { API_ROUTES } from "@/lib/utils";
 import Sidebar from "@/components/ui/Sidebar";
+import PageHeader from "@/components/ui/pageHeader";
 import SearchBar from "@/components/ui/Searchbar";
-
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
 
 interface Suggestion {
   id: string;
@@ -16,20 +15,20 @@ interface Suggestion {
   response?: string;
   respondedAt?: string;
   createdAt: string;
-  User?: { 
+  User?: {
     name: string;
     email: string;
   };
-  Company?: { 
+  Company?: {
     name: string;
   };
 }
 
 const statusConfig = {
-  PENDING: { label: "Pendientes", color: "#ff9500", bg: "rgba(255,149,0,0.1)", icon: "bi-clock" },
-  ACCEPTED: { label: "Aceptadas", color: "#34c759", bg: "rgba(52,199,89,0.1)", icon: "bi-check2-circle" },
-  REJECTED: { label: "Rechazadas", color: "#ff3b30", bg: "rgba(255,59,48,0.1)", icon: "bi-x-circle" },
-  ARCHIVED: { label: "Archivadas", color: "#86868b", bg: "rgba(134,134,139,0.1)", icon: "bi-archive" },
+  PENDING: { label: "Pendientes", textColor: "text-amber-500", bgClass: "bg-amber-500/10 border-amber-500/20", icon: "bi-clock-history" },
+  ACCEPTED: { label: "Aceptadas", textColor: "text-emerald-600", bgClass: "bg-emerald-500/10 border-emerald-500/20", icon: "bi-check-circle" },
+  REJECTED: { label: "Rechazadas", textColor: "text-destructive", bgClass: "bg-destructive/10 border-destructive/20", icon: "bi-x-circle" },
+  ARCHIVED: { label: "Archivadas", textColor: "text-muted-foreground", bgClass: "bg-muted border-border/50", icon: "bi-archive" },
 };
 
 export default function GeneralAdminSuggestionsPage() {
@@ -38,10 +37,16 @@ export default function GeneralAdminSuggestionsPage() {
   const [selected, setSelected] = useState<Suggestion | null>(null);
   const [responseBody, setResponseBody] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
-  const [filter, setFilter] = useState<keyof typeof statusConfig | "ALL">("PENDING"); 
+  const [filter, setFilter] = useState<keyof typeof statusConfig | "ALL">("PENDING");
   const [searchQuery, setSearchQuery] = useState("");
+  const [pendingCount, setPendingCount] = useState(0);
 
   const getToken = () => (typeof window !== "undefined" ? localStorage.getItem("token") : "");
+
+  const updateSidebarCounter = (newValue: number) => {
+    localStorage.setItem("count_suggestions", newValue.toString());
+    window.dispatchEvent(new CustomEvent("local-storage-update", { detail: { suggestions: newValue } }));
+  };
 
   const fetchSuggestions = async () => {
     setLoading(true);
@@ -53,11 +58,9 @@ export default function GeneralAdminSuggestionsPage() {
       const list = Array.isArray(data) ? data : [];
       setSuggestions(list);
 
-      // Sincronizar el contador inicial en el storage al cargar la página
-      const pendingCount = list.filter((s: any) => s.status === "PENDING").length;
-      localStorage.setItem("count_suggestions", pendingCount.toString());
-      window.dispatchEvent(new CustomEvent("local-storage-update", { detail: { suggestions: pendingCount } }));
-      
+      const count = list.filter((s) => s.status === "PENDING").length;
+      setPendingCount(count);
+      updateSidebarCounter(count);
     } catch (err) {
       console.error("Error fetching suggestions:", err);
     } finally {
@@ -65,13 +68,12 @@ export default function GeneralAdminSuggestionsPage() {
     }
   };
 
-  useEffect(() => { 
-    fetchSuggestions(); 
+  useEffect(() => {
+    fetchSuggestions();
   }, []);
 
   const handleRespond = async (status: "ACCEPTED" | "REJECTED") => {
     if (!selected) return;
-    
     setActionLoading(true);
     try {
       const res = await fetch(API_ROUTES.SUGGESTIONS.RESPOND(selected.id), {
@@ -80,33 +82,19 @@ export default function GeneralAdminSuggestionsPage() {
           Authorization: `Bearer ${getToken()}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-            response: responseBody.trim() || "La administración no ha proporcionado comentarios adicionales.", 
-            status 
+        body: JSON.stringify({
+          response: responseBody.trim() || "La administración global ha revisado y procesado esta sugerencia.",
+          status,
         }),
       });
 
       if (!res.ok) throw new Error("Error al responder");
-      
-      // --- LÓGICA DE ACTUALIZACIÓN DINÁMICA ---
-      const current = Number(localStorage.getItem("count_suggestions")) || 0;
-      const newValue = Math.max(0, current - 1);
-      
-      // Actualizamos storage
-      localStorage.setItem("count_suggestions", newValue.toString());
-      
-      // Avisamos al Sidebar por evento (esto cambia el icono y badge al instante)
-      window.dispatchEvent(new CustomEvent("local-storage-update", { 
-        detail: { suggestions: newValue } 
-      }));
 
-      // Refrescar lista local y limpiar UI
       await fetchSuggestions();
       setSelected(null);
       setResponseBody("");
     } catch (err) {
       console.error(err);
-      alert("Hubo un error al procesar la respuesta.");
     } finally {
       setActionLoading(false);
     }
@@ -121,156 +109,196 @@ export default function GeneralAdminSuggestionsPage() {
     );
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f5f5f7", fontFamily: appleFont }}>
+    <div className="flex min-h-screen bg-muted/30 font-sans text-foreground transition-colors duration-300">
       <Sidebar role="GENERAL_ADMIN" />
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        {/* Header */}
-        <div style={{ background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.06)", padding: "24px 32px" }}>
-          <div>
-            <h1 style={{ color: "#1d1d1f", fontSize: "24px", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 4px" }}>
-              Buzón General
-            </h1>
-            <p style={{ color: "#86868b", fontSize: "14px", margin: 0 }}>
-              Sugerencias dirigidas a la administración global de la plataforma
-            </p>
-          </div>
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <PageHeader
+          title="Buzón de Sugerencias"
+          description={
+            pendingCount > 0
+              ? `Hay ${pendingCount} sugerencia${pendingCount > 1 ? "s" : ""} global${pendingCount > 1 ? "es" : ""} sin procesar.`
+              : "Revisa las propuestas de mejora enviadas por empresas y usuarios del ecosistema."
+          }
+          icon={<i className="bi bi-mailbox2"></i>}
+          action={
+            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Buscar sugerencia, empresa..." />
+          }
+        />
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "20px" }}>
-            <div style={{ display: "flex", gap: "8px" }}>
-              {(["ALL", "PENDING", "ACCEPTED", "REJECTED"] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  style={{
-                    padding: "6px 14px", borderRadius: "20px", border: "none",
-                    background: filter === f ? "#1d1d1f" : "#f5f5f7",
-                    color: filter === f ? "#fff" : "#424245",
-                    fontSize: "13px", fontWeight: 500, cursor: "pointer", transition: "all 0.15s",
-                  }}
-                >
-                  {f === "ALL" ? "Todas" : statusConfig[f].label}
-                </button>
-              ))}
-            </div>
-            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Buscar por título, usuario o empresa..." />
-          </div>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: selected ? "1fr 420px" : "1fr", flex: 1, overflow: "hidden" }}>
-          <div style={{ padding: "24px 32px", overflowY: "auto" }}>
-            {loading ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {[1, 2, 3].map((i) => (
-                  <div key={i} style={{ height: "100px", background: "#fff", borderRadius: "20px", opacity: 0.5 }} />
-                ))}
-              </div>
-            ) : filtered.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "100px 0" }}>
-                <p style={{ color: "#86868b" }}>No hay sugerencias {filter !== 'ALL' ? 'pendientes' : ''}</p>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {filtered.map((s) => (
-                  <div
-                    key={s.id}
-                    onClick={() => setSelected(selected?.id === s.id ? null : s)}
-                    style={{
-                      background: "#fff", borderRadius: "20px", padding: "20px", cursor: "pointer",
-                      border: selected?.id === s.id ? "2px solid #0071e3" : "2px solid transparent",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.03)", transition: "all 0.2s",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <span style={{ fontSize: "11px", fontWeight: 700, color: "#0071e3", textTransform: "uppercase" }}>
-                        {s.Company?.name}
-                      </span>
-                      <span style={{ fontSize: "11px", color: "#86868b" }}>
-                        {new Date(s.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#1d1d1f", margin: "0 0 4px" }}>{s.title}</h3>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ background: statusConfig[s.status].bg, color: statusConfig[s.status].color, padding: "4px 12px", borderRadius: "12px", fontSize: "11px", fontWeight: 600 }}>
-                        {statusConfig[s.status].label.slice(0, -1)}
-                      </span>
-                      <span style={{ fontSize: "12px", color: "#86868b" }}>
-                        Por {s.User?.name}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {selected && (
-            <div style={{ overflowY: "auto", borderLeft: "1px solid rgba(0,0,0,0.06)", background: "#fff", padding: "32px" }}>
-              <button onClick={() => setSelected(null)} style={{ background: "none", border: "none", color: "#0071e3", fontSize: "14px", cursor: "pointer", marginBottom: "24px" }}>
-                <i className="bi bi-chevron-left"></i> Cerrar detalle
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* BARRA DE FILTROS */}
+          <div className="px-8 py-4 bg-background/50 border-b border-border/60 flex items-center justify-start gap-2 overflow-x-auto no-scrollbar">
+            {(["ALL", "PENDING", "ACCEPTED", "REJECTED", "ARCHIVED"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => { setFilter(f); setSelected(null); }}
+                className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shrink-0 border ${
+                  filter === f
+                    ? "bg-primary text-white border-primary shadow-md"
+                    : "bg-card text-muted-foreground border-border/60 hover:border-primary/40 hover:text-primary"
+                }`}
+              >
+                {f === "ALL" ? "Todas las propuestas" : statusConfig[f as keyof typeof statusConfig].label}
               </button>
+            ))}
+          </div>
 
-              <div style={{ marginBottom: "32px" }}>
-                <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#1d1d1f" }}>{selected.title}</h2>
-                <p style={{ fontSize: "13px", color: "#1d1d1f", marginTop: "8px", marginBottom: "2px" }}>
-                  <b>{selected.User?.name}</b>
-                </p>
-                <p style={{ fontSize: "12px", color: "#86868b", margin: 0 }}>
-                    {selected.User?.email} • {selected.Company?.name}
-                </p>
-                
-                <div style={{ background: "#f5f5f7", borderRadius: "16px", padding: "20px", marginTop: "20px", lineHeight: 1.5 }}>
-                  {selected.content}
+          <div className={`flex-1 grid overflow-hidden transition-all duration-500 ${selected ? "lg:grid-cols-[1fr_450px]" : "grid-cols-1"}`}>
+            
+            {/* COLUMNA LISTA */}
+            <div className="overflow-y-auto p-6 lg:p-8 space-y-4 no-scrollbar">
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-32 bg-card border border-border/60 rounded-[24px] animate-pulse" />
+                  ))}
                 </div>
-              </div>
-
-              {selected.status === "PENDING" ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                  <h3 style={{ fontSize: "14px", fontWeight: 600 }}>Responder a la propuesta</h3>
-                  <textarea
-                    value={responseBody}
-                    onChange={(e) => setResponseBody(e.target.value)}
-                    placeholder="(Opcional) Escribe aquí los motivos de la decisión..."
-                    rows={6}
-                    style={{
-                      width: "100%", padding: "16px", borderRadius: "16px", border: "1px solid #d2d2d7",
-                      fontSize: "14px", outline: "none", resize: "none"
-                    }}
-                  />
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                    <button
-                      disabled={actionLoading}
-                      onClick={() => handleRespond("ACCEPTED")}
-                      style={{ padding: "14px", borderRadius: "12px", border: "none", background: "#34c759", color: "#fff", fontWeight: 600, cursor: "pointer" }}
-                    >
-                      Aceptar
-                    </button>
-                    <button
-                      disabled={actionLoading}
-                      onClick={() => handleRespond("REJECTED")}
-                      style={{ padding: "14px", borderRadius: "12px", border: "none", background: "#ff3b30", color: "#fff", fontWeight: 600, cursor: "pointer" }}
-                    >
-                      Rechazar
-                    </button>
+              ) : filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-32 bg-card rounded-[32px] border border-dashed border-border/60">
+                  <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center text-muted-foreground/30 text-4xl mb-6 shadow-inner">
+                    <i className="bi bi-chat-square-dots"></i>
                   </div>
+                  <h3 className="text-foreground font-black text-xs uppercase tracking-[0.2em]">Sin resultados</h3>
+                  <p className="text-muted-foreground text-xs mt-1">No se encontraron sugerencias bajo este criterio.</p>
                 </div>
               ) : (
-                <div style={{ background: "rgba(0,0,0,0.02)", borderRadius: "16px", padding: "20px", border: "1px solid #d2d2d7" }}>
-                  <p style={{ fontSize: "11px", fontWeight: 700, color: statusConfig[selected.status].color, textTransform: "uppercase" }}>
-                    Estado: {statusConfig[selected.status].label.slice(0, -1)}
-                  </p>
-                  <p style={{ fontSize: "14px", marginTop: "8px", color: "#424245", fontStyle: "italic" }}>
-                    "{selected.response || "Sin comentarios adicionales."}"
-                  </p>
-                  <p style={{ fontSize: "11px", color: "#86868b", marginTop: "16px" }}>
-                    Gestionada el {new Date(selected.createdAt).toLocaleDateString()}
-                  </p>
+                <div className="grid gap-4">
+                  {filtered.map((s) => {
+                    const status = statusConfig[s.status];
+                    const isSelected = selected?.id === s.id;
+                    return (
+                      <div
+                        key={s.id}
+                        onClick={() => setSelected(isSelected ? null : s)}
+                        className={`group bg-card rounded-[24px] p-6 cursor-pointer border transition-all duration-300 flex items-center justify-between gap-6 ${
+                          isSelected
+                            ? "border-primary ring-4 ring-primary/5 shadow-xl -translate-y-1"
+                            : "border-border/60 hover:border-primary/30 hover:shadow-lg"
+                        }`}
+                      >
+                        <div className="flex items-center gap-5 min-w-0">
+                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 text-2xl transition-colors duration-300 ${isSelected ? "bg-primary text-white" : "bg-muted/50 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"}`}>
+                            <i className="bi bi-lightbulb"></i>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-primary text-[10px] font-black uppercase tracking-widest mb-1 truncate">
+                              {s.Company?.name || "Ecosistema"}
+                            </p>
+                            <h3 className="text-foreground text-base font-bold mb-1 truncate group-hover:text-primary transition-colors">
+                              {s.title}
+                            </h3>
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground text-xs">Por {s.User?.name}</span>
+                              <span className="w-1 h-1 rounded-full bg-border" />
+                              <span className="text-muted-foreground/50 text-[10px] uppercase font-black tracking-tighter">
+                                {new Date(s.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 shrink-0">
+                          <span className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider ${status.bgClass} ${status.textColor}`}>
+                            <i className={`bi ${status.icon}`}></i>
+                            {status.label.slice(0, -1)}
+                          </span>
+                          <i className={`bi bi-chevron-right text-muted-foreground/30 transition-transform duration-300 ${isSelected ? "rotate-90 text-primary" : "group-hover:translate-x-1"}`}></i>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
-          )}
+
+            {/* PANEL DE DETALLE */}
+            {selected && (
+              <div className="overflow-y-auto border-l border-border/60 bg-card p-8 shadow-[-20px_0_40px_rgba(0,0,0,0.03)] animate-in slide-in-from-right-10 duration-500 no-scrollbar">
+                <div className="flex items-center justify-between mb-8">
+                  <span className={`px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest ${statusConfig[selected.status].bgClass} ${statusConfig[selected.status].textColor}`}>
+                    {statusConfig[selected.status].label.slice(0, -1)}
+                  </span>
+                  <button
+                    onClick={() => setSelected(null)}
+                    className="w-10 h-10 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all hover:rotate-90"
+                  >
+                    <i className="bi bi-x-lg"></i>
+                  </button>
+                </div>
+
+                <div className="mb-10">
+                  <div className="w-16 h-16 bg-primary/5 text-primary rounded-[22px] flex items-center justify-center text-3xl mb-6 border border-primary/10">
+                    <i className="bi bi-chat-quote"></i>
+                  </div>
+                  <h2 className="text-foreground text-2xl font-black mb-3 tracking-tight leading-tight">
+                    {selected.title}
+                  </h2>
+                  <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-2xl border border-border/40">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase">
+                      {selected.User?.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-foreground text-[11px] font-bold leading-none">{selected.User?.name}</p>
+                      <p className="text-muted-foreground text-[10px] font-medium">{selected.Company?.name}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-muted/20 p-6 rounded-[24px] border border-border/40 mb-10">
+                  <p className="text-muted-foreground/60 text-[9px] font-black uppercase tracking-[0.2em] mb-4">Mensaje de la Propuesta</p>
+                  <p className="text-foreground text-sm font-medium leading-relaxed italic">
+                    "{selected.content}"
+                  </p>
+                </div>
+
+                {selected.status === "PENDING" ? (
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <label className="text-muted-foreground/60 text-[10px] font-black uppercase tracking-widest ml-1">Comentario de Respuesta</label>
+                      <textarea
+                        value={responseBody}
+                        onChange={(e) => setResponseBody(e.target.value)}
+                        placeholder="Explica los motivos de la decisión o pasos a seguir..."
+                        className="w-full p-4 bg-card border-2 border-border focus:border-primary rounded-[20px] text-sm font-medium outline-none transition-all resize-none h-32 shadow-inner"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => handleRespond("ACCEPTED")}
+                        disabled={actionLoading}
+                        className="py-4 bg-emerald-500 text-white rounded-[18px] font-black text-[10px] uppercase tracking-[0.2em] hover:bg-emerald-600 hover:shadow-lg hover:shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {actionLoading ? <i className="bi bi-arrow-repeat animate-spin"></i> : <i className="bi bi-check-lg"></i>}
+                        Aceptar
+                      </button>
+                      <button
+                        onClick={() => handleRespond("REJECTED")}
+                        disabled={actionLoading}
+                        className="py-4 bg-destructive/10 text-destructive border border-destructive/20 rounded-[18px] font-black text-[10px] uppercase tracking-[0.2em] hover:bg-destructive hover:text-white transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        <i className="bi bi-x-circle"></i>
+                        Rechazar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-card border-2 border-dashed border-border/60 rounded-[28px] p-6 space-y-4">
+                    <p className="text-muted-foreground/60 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                      <i className="bi bi-reply-all"></i> Seguimiento Administrativo
+                    </p>
+                    <p className="text-foreground text-sm font-bold leading-relaxed">
+                      {selected.response || "No se proporcionaron comentarios adicionales."}
+                    </p>
+                    <p className="text-muted-foreground text-[10px] font-medium pt-2 border-t border-border/40">
+                      Gestionado el {new Date(selected.respondedAt || selected.createdAt).toLocaleDateString("es-ES", { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

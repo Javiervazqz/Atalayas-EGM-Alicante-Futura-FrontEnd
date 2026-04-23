@@ -1,14 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import Sidebar from "@/components/ui/Sidebar";
-import { API_ROUTES } from "@/lib/utils";
-import mediumZoom from "medium-zoom";
-import Link from "next/link";
-import ReactMarkdown from "react-markdown";
-
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'";
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Sidebar from '@/components/ui/Sidebar';
+import { API_ROUTES } from '@/lib/utils';
+import mediumZoom from 'medium-zoom';
+import Link from 'next/link';
 
 export default function EmployeeContentDetail() {
   const params = useParams();
@@ -18,6 +15,8 @@ export default function EmployeeContentDetail() {
 
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // --- ESTADO PARA EL MODAL DE QUIZ ---
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -33,8 +32,8 @@ export default function EmployeeContentDetail() {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(courseId, contentId), {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         const data = await res.json();
         setContent(data.content || data.data || data);
@@ -76,146 +75,122 @@ export default function EmployeeContentDetail() {
 
   useEffect(() => {
     if (zoomRef.current && content?.imageUrl) {
-      const zoom = mediumZoom(zoomRef.current, { background: "rgba(0,0,0,0.9)", margin: 24 });
-      return () => { zoom.detach(); };
+      const zoom = mediumZoom(zoomRef.current, {
+        background: "rgba(250,250,249,0.95)", // Usando un fondo claro como tu app
+        margin: 24,
+      });
+      return () => {
+        zoom.detach();
+      };
     }
   }, [content?.imageUrl]);
 
-  const handleQuizSubmit = async () => {
-  const questions = getQuizQuestions(content.quiz);
-  let correctCount = 0;
-  
-  questions.forEach((q: any, index: number) => {
-    if (quizAnswers[index] === q.correctAnswer) correctCount++;
-  });
+  const handleQuizSubmit = () => {
+    const questions = getQuizQuestions(content.quiz);
+    let correctCount = 0;
+    questions.forEach((q: any, index: number) => {
+      if (quizAnswers[index] === q.correctAnswer) correctCount++;
+    });
+    setQuizScore(correctCount);
+    setQuizSubmitted(true);
+  };
 
-  setQuizScore(correctCount);
-  setQuizSubmitted(true);
-
-  // Solo disparamos la API si sacó el 100%
-  if (correctCount === questions.length) {
-    try {
-      const courseId = params.id as string;
-      const contentId = params.contentId as string;
-
-      const res = await fetch(API_ROUTES.CONTENT.COMPLETE(courseId, contentId), {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}` 
-        },
-        body: JSON.stringify({ 
-          score: correctCount,
-          totalQuestions: questions.length
-        }),
-      });
-
-      if (res.ok) {
-  console.log("⭐ ¡Progreso guardado con éxito!");
-  
-  // OPCIÓN A: Si tienes un estado que controla si está completado
-  setIsCompleted(true); 
-
-  // OPCIÓN B: Si usas un objeto "content", actualiza su propiedad
-  // setContent(prev => ({ ...prev, isCompleted: true }));
-}
-    } catch (error) {
-      console.error("❌ Error al conectar con el servidor:", error);
-    }
-  }
-};
-
-  const ResourcesList = () => (
-    <div className="flex flex-col gap-4">
-      {content?.podcast?.url && (
-        <div className="bg-gray-900 p-5 rounded-2xl text-white shadow-lg">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
-            <p className="text-[9px] font-bold opacity-50 tracking-widest uppercase">Audio del contenido</p>
-          </div>
-          <audio src={content.podcast.url} controls className="w-full h-8 invert cursor-pointer" />
-        </div>
-      )}
-
-      {content?.quiz && (
-        <button 
-          onClick={() => {
-            setQuizAnswers({});
-            setQuizSubmitted(false);
-            setShowQuizModal(true);
-          }} 
-          className="group flex items-center justify-between p-4 bg-orange-50 border border-orange-100 rounded-2xl hover:bg-orange-100 transition-all cursor-pointer"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-sm">
-              <i className="bi bi-patch-question-fill text-xl"></i>
-            </div>
-            <div className="text-left">
-              <p className="text-[10px] font-bold text-orange-600 uppercase tracking-tight">Autoevaluación</p>
-              <p className="text-sm font-bold text-gray-900">Realizar Test</p>
-            </div>
-          </div>
-          <i className="bi bi-chevron-right text-orange-300 group-hover:translate-x-1 transition-transform"></i>
-        </button>
-      )}
-
-      {content?.url && (
-        <a href={content.url} target="_blank" className="flex items-center gap-4 p-4 bg-gray-50 border border-gray-100 rounded-2xl hover:border-blue-500 transition-all group cursor-pointer">
-          <i className="bi bi-file-earmark-pdf text-3xl text-red-500"></i>
-          <div>
-            <p className="text-sm font-bold text-gray-900">Documento PDF</p>
-            <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Descargar Material</p>
-          </div>
-        </a>
-      )}
+  // Pantalla de carga (Solo una vez y con estilos corporativos)
+  if (loading) return (
+    <div className="flex min-h-screen bg-background font-sans">
+      <Sidebar role="EMPLOYEE" />
+      <main className="flex-1 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
+      </main>
     </div>
   );
 
-  if (loading) return <div className="h-screen bg-[#f5f5f7] flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>;
   if (!content) return null;
 
+  const hasResources = content.url || content.podcast;
+
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f5f5f7]" style={{ fontFamily: appleFont }}>
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role="EMPLOYEE" />
 
-      <main className="flex-1 flex flex-col min-w-0">    
-        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-6 md:px-8 shrink-0 z-10">
-          <div className="flex items-center gap-4">
-            <Link href={`/dashboard/employee/courses/${params.id}`} className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
-              <i className="bi bi-chevron-left text-xl"></i>
+      <main className="flex-1 h-screen overflow-y-auto">
+        
+        {/* HEADER */}
+        <div className="bg-card border-b border-border py-8 lg:py-10">
+          <div className="max-w-5xl mx-auto px-6 lg:px-8">
+            <Link href={`/dashboard/employee/courses/${params.id}`}
+              className="flex items-center gap-1 text-secondary text-sm font-bold hover:opacity-80 transition-opacity mb-6 inline-flex">
+              <i className="bi bi-chevron-left"></i> Volver al curso
             </Link>
-            <div>
-              <h1 className="text-base md:text-lg font-bold text-gray-900 truncate max-w-45 md:max-w-md">{content.title}</h1>
-              <p className="text-[9px] md:text-[10px] font-bold text-blue-600 uppercase tracking-widest">Unidad de aprendizaje</p>
+
+            <div className="flex items-center gap-6 flex-wrap">
+              <div className="w-16 h-16 bg-primary/10 text-primary rounded-3xl flex items-center justify-center text-3xl flex-shrink-0">
+                <i className="bi bi-journal-text"></i>
+              </div>
+              <div className="flex-1 min-w-[250px]">
+                <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight mb-2">
+                  {content.title}
+                </h1>
+                <span className="inline-flex items-center text-[10px] font-black px-3 py-1 rounded-full bg-secondary/10 text-secondary uppercase tracking-wider">
+                  Lección {content.order || 1}
+                </span>
+              </div>
             </div>
           </div>
-           {/* Si está completado*/}
-            {(isCompleted) && (
-              <div className="bg-green-100 text-green-700 p-4 rounded-lg flex items-center ">
-                <i className="bi bi-trophy-fill text-yellow-300 mr-2"> </i><span>¡Has completado este contenido!</span>
-              </div>
-            )}
-        </header>
+        </div>
 
-        <div className="flex-1 flex flex-col xl:flex-row overflow-hidden">
-          <div className="flex-1 overflow-y-auto bg-[#e4e4e7] p-4 md:p-10 custom-scrollbar">
-            <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-sm min-h-full p-8 md:p-20 mb-10">
-              <article className="markdown-body">
-                <ReactMarkdown>{content.summary || "No hay descripción disponible."}</ReactMarkdown>
-              </article>
+        {/* CUERPO DINÁMICO */}
+        <div className="max-w-5xl mx-auto px-6 lg:px-8 py-10 lg:py-12">
+          <div className={`grid grid-cols-1 ${hasResources ? 'lg:grid-cols-[1fr_300px]' : ''} gap-10 lg:gap-16`}>
+            
+            {/* COLUMNA IZQUIERDA: CONTENIDO */}
+            <article>
+              <h3 className="text-xl font-bold text-foreground mb-6">
+                Desarrollo de la unidad
+              </h3>
+
+              <div className="prose prose-slate max-w-none">
+                <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {content.summary || 'Sin contenido proporcionado.'}
+                </p>
+              </div>
 
               {content.imageUrl && (
-                <div className="mt-12 pt-12 border-t border-gray-100">
-                  <img ref={zoomRef} src={content.imageUrl} className="w-full rounded-lg shadow-sm cursor-zoom-in" alt="Content" />
-                </div>
+                 <div className="mt-8 overflow-hidden rounded-3xl border border-border shadow-sm">
+                   <img ref={zoomRef} src={content.imageUrl} alt={content.title} className="w-full h-auto cursor-zoom-in" />
+                 </div>
               )}
+            </article>
 
-              {/* Visible en móvil al final del texto */}
-              <div className="mt-12 pt-8 border-t border-gray-100 xl:hidden">
-                <h3 className="text-xs font-black uppercase text-gray-400 tracking-tighter mb-6">Material Complementario</h3>
-                <ResourcesList />
-              </div>
-            </div>
+            {/* COLUMNA DERECHA: RECURSOS EXTRA (Solo si hay) */}
+            {hasResources && (
+              <aside className="space-y-6">
+                <h4 className="text-[11px] font-black text-muted-foreground uppercase tracking-widest px-1">Material Extra</h4>
+                
+                {content.url && (
+                  <div className="bg-card p-6 rounded-3xl border border-border shadow-sm text-center hover:border-secondary/50 transition-colors">
+                    <div className="text-4xl text-primary mb-3"><i className="bi bi-file-earmark-pdf"></i></div>
+                    <p className="text-[11px] font-black text-foreground uppercase mb-5 tracking-widest">Guía PDF</p>
+                    <a href={content.url} target="_blank" rel="noopener noreferrer"
+                      className="block w-full py-3 bg-secondary text-secondary-foreground rounded-2xl text-sm font-bold hover:opacity-90 transition-opacity shadow-sm">
+                      Abrir PDF
+                    </a>
+                  </div>
+                )}
+                
+                {content.podcast && (
+                  <div className="bg-indigo-600 p-6 rounded-3xl text-white shadow-xl shadow-indigo-600/20">
+                    <div className="flex items-center gap-3 mb-5">
+                      <span className="text-2xl text-indigo-300"><i className="bi bi-mic-fill"></i></span>
+                      <p className="text-[10px] font-black opacity-80 tracking-widest uppercase text-white">Podcast IA</p>
+                    </div>
+                    <button className="w-full py-3.5 bg-white text-indigo-600 rounded-2xl text-sm font-bold hover:bg-indigo-50 transition-colors shadow-sm">
+                      Escuchar Resumen
+                    </button>
+                  </div>
+                )}
+              </aside>
+            )}
           </div>
 
           <aside className="w-80 border-l border-gray-200 bg-white p-6 hidden xl:flex flex-col gap-6 overflow-y-auto">

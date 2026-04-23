@@ -1,18 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from "@/components/ui/pageHeader";
 import { API_ROUTES } from '@/lib/utils';
-import mediumZoom from 'medium-zoom';
 import ContactCard from '@/components/ui/ContactCard';
-
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
 
 export default function ServiceDetail() {
   const params = useParams();
-  const router = useRouter();
-  const zoomRef = useRef<HTMLImageElement>(null);
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,6 +20,8 @@ export default function ServiceDetail() {
         });
         const data = await res.json();
         setService(data);
+      } catch (err) {
+        console.error("Error cargando servicio:", err);
       } finally {
         setLoading(false);
       }
@@ -31,129 +29,92 @@ export default function ServiceDetail() {
     if (params.id) fetchDetail();
   }, [params.id]);
 
-  useEffect(() => {
-    if (zoomRef.current && service?.mediaUrl) {
-      const zoom = mediumZoom(zoomRef.current, { background: 'rgba(0,0,0,0.8)', margin: 24 });
-      return () => { zoom.detach(); };
-    }
-  }, [service?.mediaUrl]);
-
-  if (!service) return null;
-
-
-  const hasContactInfo = service.providerName || service.phone || service.email || service.address || service.schedule || service.price || service.externalUrl;
-
   if (loading) return (
-    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-      <Sidebar role = 'EMPLOYEE' />
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    <div className="flex min-h-screen bg-background items-center justify-center font-sans">
+      <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
+  if (!service) return null;
+
+  const hasSidebar = !!(service.mediaUrl || service.providerName || service.phone || service.email);
+
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
+    <div className="flex min-h-screen bg-background font-sans text-foreground">
       <Sidebar role="EMPLOYEE" />
 
-      <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>
+      <main className="flex-1 overflow-auto flex flex-col relative">
+        
+        <PageHeader 
+          title={service.title}
+          description={service.isPublic ? "Servicio oficial Atalayas EGM" : "Servicio privado de empresa"}
+          icon={<i className="bi bi-briefcase-fill"></i>}
+          backUrl="/dashboard/employee/services"
+        />
 
-        {/* HEADER */}
-        <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)', padding: '32px 0' }}>
-          <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 24px' }}>
-            <button
-              onClick={() => router.back()}
-              style={{ background: 'none', border: 'none', color: '#0071e3', fontSize: '15px', fontWeight: 500, cursor: 'pointer', marginBottom: '24px', padding: 0 }}
-            >
-              ‹ Volver a servicios
-            </button>
+        <div className="p-6 lg:p-10 flex-1">
+          <div className="max-w-7xl mx-auto">
+            
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
-              <div style={{
-                width: '72px', height: '72px', background: 'rgba(0,113,227,0.1)',
-                borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', flexShrink: 0
-              }}>
-                <i className="bi bi-suitcase-lg-fill text-[#005596]"></i>
-              </div>
-              <div style={{ flex: 1, minWidth: '250px' }}>
-                <h1 style={{ fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: 800, color: '#1d1d1f', letterSpacing: '-0.02em', margin: 0 }}>
-                  {service.title}
-                </h1>
-                <span style={{
-                  display: 'inline-block', marginTop: '8px', fontSize: '12px', fontWeight: 700,
-                  color: service.isPublic ? '#34c759' : '#0071e3',
-                  background: service.isPublic ? 'rgba(52,199,89,0.1)' : 'rgba(0,113,227,0.1)',
-                  padding: '4px 10px', borderRadius: '999px'
-                }}>
-                  {service.isPublic ? <span className="flex items-center gap-2">
-                    <i className="bi bi-globe text-green-400"></i> Público
-                  </span>: <span className="flex items-center gap-2">
-                    <i className="bi bi-building-fill text-blue-400"></i> Mi
-                    empresa{" "}
-                  </span>}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* CONTENIDO */}
-        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 24px' }}>
-          <div className="content-layout">
-
-            {/* COLUMNA PRINCIPAL */}
-            <div>
-              {/* Descripción */}
-              <h3 style={{ fontSize: '19px', fontWeight: 700, color: '#1d1d1f', marginBottom: '16px' }}>Sobre el servicio</h3>
-              <p style={{ fontSize: '16px', lineHeight: '1.7', color: '#424245', whiteSpace: 'pre-wrap', marginBottom: '32px' }}>
-                {service.description || 'No hay una descripción disponible para este servicio.'}
-              </p>
-
-              {/* Imagen */}
-              {service.mediaUrl && (
-                <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                  <div className="overflow-hidden rounded-[2rem] border border-gray-100 shadow-sm">
-                    <img
-                      ref={zoomRef}
-                      src={service.mediaUrl}
-                      alt={service.title}
-                      className="w-full h-auto cursor-zoom-in"
-                    />
+              {/* COLUMNA IZQUIERDA: DESCRIPCIÓN */}
+              <div className="lg:col-span-7 space-y-8">
+                <section className="bg-card border border-border rounded-[2.5rem] p-8 lg:p-12 shadow-sm">
+                  <div className="flex items-center gap-3 mb-8">
+                    <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-[0.15em] border ${
+                      service.isPublic 
+                      ? 'bg-primary/5 text-primary border-primary/20' 
+                      : 'bg-secondary/5 text-secondary border-secondary/20'
+                    }`}>
+                      {service.isPublic ? '🌐 EGM Access' : '🔒 Internal'}
+                    </span>
                   </div>
-                </div>
-              )}
 
-              {/* Info de contacto en móvil (debajo de descripción) */}
-              {hasContactInfo && (
-                <div className="action-box-mobile">
-                  <ContactCard service={service} />
-                </div>
-              )}
-            </div>
-
-            {/* ACTION BOX LATERAL */}
-            {hasContactInfo && (
-              <div className="action-box">
-                <ContactCard service={service} />
+                  <h2 className="text-3xl font-bold mb-8 tracking-tight">Detalles del servicio</h2>
+                  
+                  <div className="prose prose-slate dark:prose-invert max-w-none">
+                    <p className="text-muted-foreground text-lg leading-relaxed whitespace-pre-wrap font-medium opacity-90">
+                      {service.description || 'No hay una descripción detallada disponible actualmente.'}
+                    </p>
+                  </div>
+                </section>
               </div>
-            )}
+
+              {/* COLUMNA DERECHA: MEDIA + CONTACTO */}
+              {hasSidebar && (
+                <aside className="lg:col-span-5 space-y-8">
+                  <div className="sticky top-6 space-y-8">
+                    
+                    {/* IMAGEN ESTÁTICA PREMIUM */}
+                    {service.mediaUrl && (
+                      <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-sm group">
+                        <div className="aspect-[4/3] overflow-hidden bg-muted">
+                          <img
+                            src={service.mediaUrl}
+                            alt={service.title}
+                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="px-6 py-4 bg-muted/30 border-t border-border">
+                            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                                Imagen del servicio
+                            </span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-700">
+                      <ContactCard service={service} />
+                    </div>
+
+                  </div>
+                </aside>
+              )}
+
+            </div>
           </div>
         </div>
       </main>
-
-      <style jsx>{`
-        .content-layout {
-          display: grid;
-          grid-template-columns: 1fr 300px;
-          gap: 48px;
-        }
-        .action-box { display: block; }
-        .action-box-mobile { display: none; }
-
-        @media (max-width: 1024px) {
-          .content-layout { grid-template-columns: 1fr; gap: 0; }
-          .action-box { display: none; }
-          .action-box-mobile { display: block; margin-bottom: 32px; }
-        }
-      `}</style>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
 import Link from 'next/link';
 import { API_ROUTES } from '@/lib/utils';
 
@@ -70,7 +71,7 @@ export default function EmployeesPage() {
             );
             setUsers(filtered);
           } else {
-            setUsers(usersData);
+            setUsers(usersData); 
           }
         }
       } catch (err) {
@@ -84,11 +85,10 @@ export default function EmployeesPage() {
 
   const displayedUsers = users
     .filter(user => {
-      const matchesCompany = selectedCompany === 'ALL' || String(user.companyId) === String(selectedCompany);
-      const matchesSearch = 
-        user.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        user.email?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCompany && matchesSearch;
+      const matchCompany = selectedCompany === 'ALL' || String(user.companyId) === String(selectedCompany);
+      const matchSearch = user.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          user.email?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchCompany && matchSearch;
     })
     .sort((a, b) => {
       const rolesOrder: Record<string, number> = {
@@ -100,107 +100,152 @@ export default function EmployeesPage() {
       return (rolesOrder[a.role] || 99) - (rolesOrder[b.role] || 99);
     });
 
+  const roleColors: Record<string, string> = {
+    GENERAL_ADMIN: 'bg-primary text-primary-foreground',
+    ADMIN: 'bg-primary/20 text-primary border border-primary/30',
+    EMPLOYEE: 'bg-secondary/20 text-secondary border border-secondary/30',
+    PUBLIC: 'bg-muted text-muted-foreground border border-border',
+  };
+
+  const roleLabels: Record<string, string> = {
+    GENERAL_ADMIN: 'Admin General',
+    ADMIN: 'Admin Empresa',
+    EMPLOYEE: 'Empleado',
+    PUBLIC: 'Público',
+  };
+
   if (!currentUser) return null;
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role={currentUser.role} />
-      <main className="flex-1 p-10 overflow-auto">
-        <div className="flex justify-between items-end mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-[#1d1d1f] tracking-tight mb-2">Gestión de Empleados</h1>
-            <p className="text-[#86868b] text-base font-medium">
-              {currentUser.role === 'GENERAL_ADMIN' ? 'Control total del polígono industrial' : 'Administra los accesos de tu empresa'}
-            </p>
-          </div>
-          <Link href="/dashboard/administrator/employees/new" className="bg-[#0071e3] hover:bg-[#0077ed] text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm shadow-sm">
-            Nuevo empleado
-          </Link>
-        </div>
-
-        {/* Barra de Filtros */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
-          <div className="relative w-full md:w-96">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
-            <input 
-              type="text" 
-              placeholder="Buscar por nombre o email..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-[#f5f5f7] border border-transparent focus:border-[#0071e3] focus:bg-white rounded-xl text-sm outline-none transition-all shadow-inner" 
-            />
-          </div>
-
-          {currentUser.role === 'GENERAL_ADMIN' && (
-            <select 
-              value={selectedCompany} 
-              onChange={(e) => setSelectedCompany(e.target.value)} 
-              className="w-full md:w-64 px-4 py-2.5 bg-[#f5f5f7] border border-transparent rounded-xl text-sm outline-none cursor-pointer font-medium text-[#1d1d1f]"
+      
+      <main className="flex-1 overflow-auto flex flex-col relative">
+        
+        <PageHeader 
+          title="Gestión de Usuarios"
+          description={currentUser.role === 'GENERAL_ADMIN' ? 'Control total del polígono industrial' : 'Administra los accesos de tu empresa'}
+          icon={<i className="bi bi-people-fill"></i>}
+          action={
+            <Link 
+              href="/dashboard/administrator/employees/new" 
+              className="bg-secondary hover:opacity-90 text-secondary-foreground font-bold px-6 py-3.5 rounded-xl transition-opacity text-sm shadow-sm flex items-center justify-center gap-2 w-full"
             >
-              <option value="ALL">🏢 Todas las empresas</option>
-              {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          )}
-        </div>
+              <i className="bi bi-person-plus-fill text-lg"></i> Nuevo usuario
+            </Link>
+          }
+        />
 
-        {/* Tabla */}
-        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-200 overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="px-8 py-5 text-[10px] font-black text-[#86868b] uppercase tracking-widest">Usuario</th>
-                <th className="px-8 py-5 text-[10px] font-black text-[#86868b] uppercase tracking-widest">Rol asignado</th>
-                {currentUser.role === 'GENERAL_ADMIN' && <th className="px-8 py-5 text-[10px] font-black text-[#86868b] uppercase tracking-widest">Empresa</th>}
-                <th className="px-8 py-5 text-[10px] font-black text-[#86868b] uppercase tracking-widest text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {loading ? (
-                [...Array(3)].map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td colSpan={5} className="px-8 py-6"><div className="h-4 bg-gray-100 rounded w-full"></div></td>
-                  </tr>
-                ))
-              ) : displayedUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-8 py-20 text-center text-gray-400 text-sm italic font-medium">
-                    No se encontraron empleados vinculados.
-                  </td>
-                </tr>
-              ) : (
-                displayedUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-[#f5f5f7]/50 transition-colors group">
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-sm font-bold text-[#0071e3] shadow-sm">
-                          {user.name?.charAt(0).toUpperCase() || 'U'}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-[#1d1d1f]">{user.name || 'Sin nombre'}</p>
-                          <p className="text-[11px] font-medium text-[#86868b]">{user.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <span className={`inline-flex px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter ${ROLE_COLORS[user.role] || 'bg-gray-100'}`}>
-                        {ROLE_LABELS[user.role] || user.role}
-                      </span>
-                    </td>
-                    {currentUser.role === 'GENERAL_ADMIN' && (
-                      <td className="px-8 py-5">
-                        <p className="text-[13px] font-bold text-[#1d1d1f]">{user.Company?.name || '—'}</p>
-                      </td>
-                    )}
-                    <td className="px-8 py-5 text-right">
-                      <button className="text-[#86868b] hover:text-[#0071e3] transition-all p-2 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-100">
-                        <span className="text-xs font-bold">Editar</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))
+        <div className="p-6 lg:p-10 flex-1 max-w-7xl mx-auto w-full">
+          
+          {/* TABLA INTEGRADA CON FILTROS */}
+          <div className="bg-card rounded-3xl shadow-sm border border-border overflow-hidden flex flex-col">
+            
+            {/* Header de la Tabla (Buscador y Filtros) */}
+            <div className="p-5 border-b border-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/20">
+              
+              {/* Buscador minimalista integrado */}
+              <div className="relative w-full sm:max-w-md">
+                <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"></i>
+                <input 
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar por nombre o correo..."
+                  className="w-full bg-background border border-input rounded-xl pl-11 pr-4 py-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium placeholder:text-muted-foreground"
+                />
+              </div>
+
+              {/* Filtro de Empresas (Solo General Admin) */}
+              {currentUser.role === 'GENERAL_ADMIN' && (
+                <div className="w-full sm:w-auto relative shrink-0">
+                  <select 
+                    value={selectedCompany} 
+                    onChange={(e) => setSelectedCompany(e.target.value)} 
+                    className="w-full sm:w-64 appearance-none bg-background border border-input px-4 py-2.5 pr-10 rounded-xl text-sm font-semibold outline-none cursor-pointer text-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                  >
+                    <option value="ALL">Todas las empresas</option>
+                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                  <i className="bi bi-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-xs font-bold"></i>
+                </div>
               )}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Contenido de la Tabla */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-[40%]">Usuario</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-[25%]">Rol</th>
+                    {currentUser.role === 'GENERAL_ADMIN' && <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-[25%]">Empresa</th>}
+                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right w-[10%]">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {loading ? (
+                    [...Array(3)].map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td className="px-6 py-6" colSpan={currentUser.role === 'GENERAL_ADMIN' ? 4 : 3}>
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-muted rounded-xl"></div>
+                            <div className="space-y-2">
+                              <div className="h-4 bg-muted rounded w-32"></div>
+                              <div className="h-3 bg-muted rounded w-48"></div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : displayedUsers.length > 0 ? (
+                    displayedUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-muted/30 transition-colors group">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0 border border-primary/20">
+                              {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-foreground truncate">{user.name || 'Sin nombre'}</p>
+                              <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">{user.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex px-2.5 py-1 rounded-[6px] text-[9px] uppercase font-black tracking-widest ${roleColors[user.role] || 'bg-muted text-muted-foreground'}`}>
+                            {roleLabels[user.role] || user.role}
+                          </span>
+                        </td>
+                        {currentUser.role === 'GENERAL_ADMIN' && (
+                          <td className="px-6 py-4">
+                            <span className="text-xs font-semibold text-foreground bg-muted/50 px-2.5 py-1 rounded-md border border-border">
+                              {user.Company?.name || 'Sin empresa'}
+                            </span>
+                          </td>
+                        )}
+                        <td className="px-6 py-4 text-right">
+                          <button className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all ml-auto border border-transparent hover:border-primary/20">
+                            <i className="bi bi-pencil-square"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={currentUser.role === 'GENERAL_ADMIN' ? 4 : 3} className="px-6 py-16 text-center">
+                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4 text-2xl text-muted-foreground/50">
+                          <i className="bi bi-search"></i>
+                        </div>
+                        <p className="text-foreground font-bold text-sm mb-1">No se encontraron usuarios</p>
+                        <p className="text-muted-foreground text-xs">Prueba con otra búsqueda o cambia los filtros seleccionados.</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </main>
     </div>

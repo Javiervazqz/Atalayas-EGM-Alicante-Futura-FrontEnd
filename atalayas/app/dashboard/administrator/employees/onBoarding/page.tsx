@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import Sidebar from "@/components/ui/Sidebar";
-import OnboardingPreview from "@/components/views/OnboardingPreview";
-import { API_ROUTES } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import Sidebar from "@/components/ui/Sidebar";
+import PageHeader from "@/components/ui/pageHeader";
+import { API_ROUTES } from "@/lib/utils";
 
 // Definimos los destinos posibles para el auto-completado
 const ROUTE_OPTIONS = [
@@ -14,22 +14,10 @@ const ROUTE_OPTIONS = [
   { label: "Servicios", value: "/dashboard/employee/services" },
 ];
 
-interface CourseContent {
-  id: string;
-  title: string;
-  order?: number;
-}
-
-interface Course {
-  id: string;
-  title: string;
-  Content?: CourseContent[];
-  content?: CourseContent[];
-}
-
 export default function OnboardingConfig() {
-  const [view, setView] = useState<"edit" | "preview">("edit");
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [steps, setSteps] = useState([
     {
       day: 1,
@@ -38,39 +26,8 @@ export default function OnboardingConfig() {
       tasks: [{ label: "", linkAction: "" }],
     },
   ]);
-  const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
-  const [loadingLessons, setLoadingLessons] = useState<string | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
 
-  // Cargamos los cursos al iniciar
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await fetch(API_ROUTES.COURSES.GET_ALL, {
-          // Ajusta tu ruta de cursos
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const sortedData = data.sort((a: any, b: any) => {
-            // Quitamos espacios en blanco al principio/final para comparar limpio
-            const titleA = a.title.trim().toLowerCase();
-            const titleB = b.title.trim().toLowerCase();
-
-            return titleA.localeCompare(titleB, undefined, {
-              numeric: true,
-              sensitivity: "base",
-            });
-          });
-          setAvailableCourses(sortedData);
-        }
-      } catch (e) {
-        console.error("Error cargando cursos", e);
-      }
-    };
-    fetchCourses();
-  }, []);
-
+  // Cargar configuración actual
   useEffect(() => {
     const fetchOnboarding = async () => {
       try {
@@ -84,7 +41,6 @@ export default function OnboardingConfig() {
               day: s.day,
               title: s.title,
               description: s.description || "",
-              // Adaptamos la carga del backend
               tasks: s.onboardingTasks?.map((t: any) => ({
                 label: t.label,
                 linkAction: t.linkAction || "",
@@ -94,35 +50,13 @@ export default function OnboardingConfig() {
           }
         }
       } catch (error) {
-        console.error("Error cargando onboarding:", error);
+        console.error("Error:", error);
       } finally {
         setLoading(false);
       }
     };
     fetchOnboarding();
   }, []);
-
-  const fetchCourseDetail = async (courseId: string, taskId: string) => {
-    const course = availableCourses.find((c) => c.id === courseId);
-    if (course && (course.Content || course.content)) return;
-
-    setLoadingLessons(taskId);
-    try {
-      const res = await fetch(API_ROUTES.COURSES.GET_BY_ID(courseId), {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      if (res.ok) {
-        const fullCourse = await res.json();
-        setAvailableCourses((prev) =>
-          prev.map((c) => (c.id === courseId ? fullCourse : c)),
-        );
-      }
-    } catch (e) {
-      console.error("Error cargando lecciones", e);
-    } finally {
-      setLoadingLessons(null);
-    }
-  };
 
   const addStep = () => {
     setSteps([
@@ -137,10 +71,10 @@ export default function OnboardingConfig() {
   };
 
   const removeStep = (index: number) => {
-    if (steps.length === 1) return; // No permitir borrar el último paso
+    if (steps.length === 1) return;
     const newSteps = steps
       .filter((_, i) => i !== index)
-      .map((step, i) => ({ ...step, day: i + 1 })); // Recalcular los días para que sean correlativos
+      .map((step, i) => ({ ...step, day: i + 1 }));
     setSteps(newSteps);
   };
 
@@ -150,12 +84,7 @@ export default function OnboardingConfig() {
     setSteps(newSteps);
   };
 
-  const updateTask = (
-    stepIndex: number,
-    taskIndex: number,
-    field: "label" | "linkAction",
-    value: string,
-  ) => {
+  const updateTask = (stepIndex: number, taskIndex: number, field: "label" | "linkAction", value: string) => {
     const newSteps = [...steps];
     newSteps[stepIndex].tasks[taskIndex][field] = value;
     setSteps(newSteps);
@@ -164,20 +93,13 @@ export default function OnboardingConfig() {
   const removeTask = (stepIndex: number, taskIndex: number) => {
     const newSteps = [...steps];
     if (newSteps[stepIndex].tasks.length > 1) {
-      newSteps[stepIndex].tasks = newSteps[stepIndex].tasks.filter(
-        (_, i) => i !== taskIndex,
-      );
+      newSteps[stepIndex].tasks = newSteps[stepIndex].tasks.filter((_, i) => i !== taskIndex);
       setSteps(newSteps);
     }
   };
 
-  const updateStep = (index: number, field: string, value: any) => {
-    const newSteps = [...steps];
-    newSteps[index] = { ...newSteps[index], [field]: value };
-    setSteps(newSteps);
-  };
-
   const handleSave = async () => {
+    setSaving(true);
     try {
       const response = await fetch(API_ROUTES.ONBOARDING.SETUP, {
         method: "POST",
@@ -189,331 +111,168 @@ export default function OnboardingConfig() {
       });
       if (response.ok) {
         setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000); // Se oculta tras 3 segundos
+        setTimeout(() => setShowSuccess(false), 3000);
       }
     } catch (error) {
       alert("Error al conectar con el servidor");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const stepsForPreview = steps.map((s) => ({
-    ...s,
-    onboardingTasks: s.tasks.map((t, idx) => ({
-      id: idx.toString(),
-      label: t.label,
-    })),
-  }));
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen bg-[#f5f5f7] items-center justify-center">
-        <div className="w-16 h-16 border-4 border-[#005596]/10 border-t-[#005596] rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="flex min-h-screen bg-background items-center justify-center">
+      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
 
   return (
-    <div
-      className="flex min-h-screen bg-[#f5f5f7]"
-      style={{
-        fontFamily:
-          "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
-      }}
-    >
+    <div className="flex min-h-screen bg-background font-sans text-foreground">
       <Sidebar role="ADMIN" />
 
-      <main className="flex-1 p-8">
-        <div className="max-w-5xl mx-auto">
-          <header className="flex justify-between items-start mb-8">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">
-                Configuración de Onboarding
-              </h1>
-              <p className="text-sm text-gray-500 mb-4">
-                Gestiona el plan de bienvenida y automatiza tareas mediante
-                enlaces inteligentes.
-              </p>
-
-              <div className="flex p-1 bg-gray-200/50 rounded-xl w-fit">
-                <button
-                  onClick={() => setView("edit")}
-                  className={`px-4 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
-                    view === "edit"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  Editor
-                </button>
-                <button
-                  onClick={() => setView("preview")}
-                  className={`px-4 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
-                    view === "preview"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  Vista Previa
-                </button>
-              </div>
-            </div>
-
-            <button
-              onClick={handleSave}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition shadow-md flex items-center gap-2 cursor-pointer active:scale-95"
-            >
-              <i className="bi bi-cloud-arrow-up-fill"></i> Guardar Plan
-            </button>
-          </header>
-
-          {view === "edit" ? (
-            <div className="space-y-6 animate-in fade-in duration-500">
-              {steps.map((step, sIdx) => (
-                <div
-                  key={sIdx}
-                  className="relative bg-white rounded-2xl shadow-sm border border-gray-200 p-6"
-                >
-                  {/* Botón borrar día */}
-                  <button
-                    onClick={() => removeStep(sIdx)}
-                    className="absolute top-6 right-6 text-gray-300 hover:text-red-600 transition-colors cursor-pointer"
-                  >
-                    <i className="bi bi-trash3-fill text-xl"></i>
-                  </button>
-
-                  {/* Cabecera: Día y Título */}
-                  <div className="flex gap-6 mb-8 pr-10">
-                    <div className="text-center">
-                      <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 tracking-tighter">
-                        Día
-                      </label>
-                      <div className="w-12 h-12 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full text-xl font-black border border-blue-100 shadow-inner">
-                        {step.day}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 tracking-tighter">
-                        Título del bloque de bienvenida
-                      </label>
-                      <input
-                        type="text"
-                        value={step.title}
-                        className="w-full text-xl font-bold border-b-2 border-gray-50 py-1 outline-none focus:border-blue-500 transition-all bg-transparent"
-                        onChange={(e) =>
-                          updateStep(sIdx, "title", e.target.value)
-                        }
-                        placeholder="Ej: Integración Cultural"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Listado de tareas */}
-                  <div className="space-y-4">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase mb-2">
-                      Acciones requeridas para el empleado
-                    </label>
-
-                    {step.tasks.map((task, tIdx) => (
-                      <div
-                        key={tIdx}
-                        className="p-4 bg-[#f9fafb] rounded-xl border border-gray-100 space-y-3 transition-shadow hover:shadow-md hover:bg-white group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1">
-                            <input
-                              value={task.label}
-                              placeholder="Nombre de la tarea..."
-                              className="w-full bg-white px-4 py-2 rounded-lg text-sm border border-gray-200 focus:border-blue-300 outline-none transition"
-                              onChange={(e) =>
-                                updateTask(sIdx, tIdx, "label", e.target.value)
-                              }
-                            />
-                          </div>
-
-                          <div className="w-52">
-                            <select
-                              value={task.linkAction?.split("?")[0] || ""}
-                              className="w-full bg-white px-3 py-2 rounded-lg text-[11px] font-black text-blue-700 border border-gray-200 outline-none cursor-pointer uppercase tracking-tighter"
-                              onChange={(e) =>
-                                updateTask(
-                                  sIdx,
-                                  tIdx,
-                                  "linkAction",
-                                  e.target.value,
-                                )
-                              }
-                            >
-                              {ROUTE_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {step.tasks.length > 1 && (
-                            <button
-                              onClick={() => removeTask(sIdx, tIdx)}
-                              className="text-gray-300 hover:text-red-500 transition-colors p-1"
-                            >
-                              <i className="bi bi-x-circle-fill text-lg"></i>
-                            </button>
-                          )}
-                        </div>
-
-                        {/* LÓGICA DE SELECTORES ANIDADOS */}
-                        {task.linkAction?.includes(
-                          "/dashboard/employee/courses",
-                        ) && (
-                          <div className="flex flex-col gap-2 pl-6 border-l-2 border-blue-200 ml-2 animate-in slide-in-from-left-2">
-                            {/* NIVEL 2: CURSO */}
-                            <div className="flex items-center gap-2">
-                              <i className="bi bi-arrow-return-right text-blue-400"></i>
-                              <div className="relative flex-1 flex items-center gap-2">
-                                <select
-                                  className="flex-1 bg-white px-3 py-2 rounded-lg text-xs font-semibold text-blue-800 border border-blue-100 outline-none cursor-pointer"
-                                  value={
-                                    task.linkAction
-                                      .split("courseId=")[1]
-                                      ?.split("&")[0] || ""
-                                  }
-                                  onChange={(e) => {
-                                    const cId = e.target.value;
-                                    const taskId = `${sIdx}-${tIdx}`;
-                                    updateTask(
-                                      sIdx,
-                                      tIdx,
-                                      "linkAction",
-                                      `/dashboard/employee/courses?courseId=${cId}`,
-                                    );
-                                    if (cId) fetchCourseDetail(cId, taskId);
-                                  }}
-                                >
-                                  <option value="">
-                                    -- Seleccionar curso --
-                                  </option>
-                                  {availableCourses.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                      {c.title}
-                                    </option>
-                                  ))}
-                                </select>
-
-                                {/* SPINNER AL LADO DEL SELECTOR */}
-                                {loadingLessons === `${sIdx}-${tIdx}` && (
-                                  <div className="flex items-center animate-in fade-in duration-300">
-                                    <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* NIVEL 3: CONTENIDO (Usando tu lógica de filtrado en memoria) */}
-                            {(() => {
-                              const currentCourseId = task.linkAction
-                                .split("courseId=")[1]
-                                ?.split("&")[0];
-                              const selectedCourse = availableCourses.find(
-                                (c) => c.id === currentCourseId,
-                              );
-                              const contentList = [
-                                ...(selectedCourse?.Content ||
-                                  selectedCourse?.content ||
-                                  []),
-                              ].sort((a, b) => (a.order || 0) - (b.order || 0));
-
-                              if (contentList.length > 0) {
-                                return (
-                                  <div className="flex items-center gap-2 pl-6 animate-in slide-in-from-left-3">
-                                    <i className="bi bi-arrow-return-right text-green-500"></i>
-                                    <select
-                                      className="flex-1 bg-green-50/50 px-3 py-2 rounded-lg text-[11px] font-bold text-green-800 border border-green-100 outline-none cursor-pointer"
-                                      value={
-                                        task.linkAction.split(
-                                          "contentId=",
-                                        )[1] || ""
-                                      }
-                                      onChange={(e) => {
-                                        const contId = e.target.value;
-                                        const content = contentList.find(
-                                          (c: any) => c.id === contId,
-                                        );
-                                        updateTask(
-                                          sIdx,
-                                          tIdx,
-                                          "linkAction",
-                                          `/dashboard/employee/courses?courseId=${currentCourseId}&contentId=${contId}`,
-                                        );
-                                        if (!task.label && content) {
-                                          updateTask(
-                                            sIdx,
-                                            tIdx,
-                                            "label",
-                                            `Ver contenido: ${content.title}`,
-                                          );
-                                        }
-                                      }}
-                                    >
-                                      <option value="">
-                                        -- Ir a una lección específica --
-                                      </option>
-                                      {contentList.map((c: any) => (
-                                        <option key={c.id} value={c.id}>
-                                          {c.title}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            })()}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-
-                    <button
-                      onClick={() => addTask(sIdx)}
-                      className="text-xs text-blue-600 font-black uppercase tracking-widest flex items-center gap-2 mt-4 hover:bg-blue-50 w-fit px-4 py-2 rounded-lg transition-all"
-                    >
-                      <i className="bi bi-plus-circle-fill"></i> Añadir Tarea
-                    </button>
-                  </div>
-                </div>
-              ))}
-
+      <main className="flex-1 overflow-auto flex flex-col relative">
+        <PageHeader 
+          title="Configuración de Onboarding"
+          description="Diseña el recorrido estratégico de bienvenida para los nuevos empleados."
+          icon={<i className="bi bi-rocket-takeoff"></i>}
+          backUrl="/dashboard/administrator/admin"
+          action={
+            <div className="flex items-center gap-4">
+              {showSuccess && <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest animate-in fade-in">¡Guardado con éxito!</span>}
               <button
-                onClick={addStep}
-                className="w-full py-10 border-2 border-dashed border-gray-300 rounded-3xl text-gray-400 hover:text-blue-500 hover:border-blue-300 hover:bg-white transition-all font-bold flex flex-col items-center justify-center gap-3 group"
+                onClick={handleSave}
+                disabled={saving}
+                className="bg-secondary text-secondary-foreground px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 shadow-sm flex items-center gap-2 transition-all disabled:opacity-50"
               >
-                <i className="bi bi-plus-square-dotted text-4xl group-hover:scale-110 transition-transform"></i>
-                <span className="text-sm uppercase tracking-[0.2em]">
-                  Nuevo día de Onboarding
-                </span>
+                {saving ? <i className="bi bi-arrow-repeat animate-spin"></i> : <i className="bi bi-cloud-check"></i>}
+                {saving ? "Guardando..." : "Guardar Plan"}
               </button>
             </div>
-          ) : (
-            <OnboardingPreview steps={stepsForPreview} />
-          )}
+          }
+        />
+
+        <div className="p-6 lg:p-10 max-w-5xl mx-auto w-full space-y-8">
+          
+          {steps.map((step, sIdx) => (
+            <div key={sIdx} className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+              
+              {/* Cabecera del Día */}
+              <div className="p-6 lg:px-8 border-b border-border bg-muted/20 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-primary text-white rounded-2xl flex flex-col items-center justify-center shadow-sm">
+                    <span className="text-[10px] font-black uppercase leading-none opacity-70">Día</span>
+                    <span className="text-xl font-bold leading-none">{step.day}</span>
+                  </div>
+                  <div className="flex-1">
+                    <input 
+                      type="text"
+                      value={step.title}
+                      onChange={(e) => {
+                        const newSteps = [...steps];
+                        newSteps[sIdx].title = e.target.value;
+                        setSteps(newSteps);
+                      }}
+                      placeholder="Título de la jornada (ej: Primer contacto)"
+                      className="bg-transparent border-none focus:ring-0 text-lg font-bold text-foreground placeholder:text-muted-foreground/30 w-full"
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={() => removeStep(sIdx)}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+                >
+                  <i className="bi bi-trash3"></i>
+                </button>
+              </div>
+
+              {/* Contenido del Día */}
+              <div className="p-6 lg:p-8 space-y-8">
+                
+                {/* Descripción opcional */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Contexto del día</label>
+                  <textarea 
+                    value={step.description}
+                    onChange={(e) => {
+                      const newSteps = [...steps];
+                      newSteps[sIdx].description = e.target.value;
+                      setSteps(newSteps);
+                    }}
+                    placeholder="Describe brevemente el objetivo de este día..."
+                    className="w-full bg-background border border-input focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl px-5 py-3 text-sm font-medium transition-all resize-none"
+                    rows={2}
+                  />
+                </div>
+
+                {/* Lista de Tareas */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Checklist de tareas</label>
+                  </div>
+
+                  <div className="space-y-3">
+                    {step.tasks.map((task, tIdx) => (
+                      <div key={tIdx} className="group flex flex-col md:flex-row gap-3 p-3 bg-muted/30 rounded-2xl border border-border/50 hover:border-primary/30 transition-all">
+                        
+                        {/* Input de la Tarea */}
+                        <div className="flex-1 flex items-center gap-3">
+                          <div className="w-6 h-6 rounded-lg bg-background border border-input flex items-center justify-center text-muted-foreground/20 text-xs shrink-0"><i className="bi bi-check-lg"></i></div>
+                          <input 
+                            value={task.label}
+                            onChange={(e) => updateTask(sIdx, tIdx, "label", e.target.value)}
+                            placeholder={`Acción ${tIdx + 1}...`}
+                            className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-foreground placeholder:text-muted-foreground/40 w-full"
+                          />
+                        </div>
+
+                        {/* Selector de Acción de Ruta */}
+                        <div className="flex items-center gap-3">
+                          <select 
+                            value={task.linkAction}
+                            onChange={(e) => updateTask(sIdx, tIdx, "linkAction", e.target.value)}
+                            className="bg-background border border-input rounded-lg px-3 py-1.5 text-[11px] font-bold text-muted-foreground focus:border-primary outline-none transition-all cursor-pointer"
+                          >
+                            {ROUTE_OPTIONS.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                          
+                          <button 
+                            onClick={() => removeTask(sIdx, tIdx)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground/40 hover:text-destructive transition-colors"
+                          >
+                            <i className="bi bi-x-circle"></i>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button 
+                    onClick={() => addTask(sIdx)}
+                    className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-primary hover:text-primary/70 transition-all ml-1"
+                  >
+                    <i className="bi bi-plus-lg"></i> Añadir tarea
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Botón Añadir Día */}
+          <button 
+            onClick={addStep}
+            className="w-full py-8 border-2 border-dashed border-border rounded-3xl text-muted-foreground hover:text-primary hover:border-primary hover:bg-primary/5 transition-all flex flex-col items-center justify-center gap-2 group"
+          >
+            <div className="w-12 h-12 rounded-full bg-muted group-hover:bg-primary/10 flex items-center justify-center transition-all">
+              <i className="bi bi-plus-lg text-xl"></i>
+            </div>
+            <span className="font-bold text-sm tracking-tight">Expandir plan de onboarding</span>
+            <span className="text-[10px] uppercase font-medium opacity-50 tracking-widest">Siguiente día: {steps.length + 1}</span>
+          </button>
+
         </div>
       </main>
-      {/* Banner de éxito al guardar */}
-      {showSuccess && (
-  <div className="fixed bottom-10 right-10 z-50">
-    <div className="bg-gray-900/95 backdrop-blur-sm text-white p-4 rounded-[2rem] shadow-2xl flex flex-col items-center justify-center text-center gap-2 border border-white/10 w-40 h-40 animate-in zoom-in-95 slide-in-from-bottom-5 duration-300">
-      {/* Icono más grande y centrado */}
-      <div className="bg-green-500 rounded-full w-12 h-12 flex items-center justify-center shadow-lg shadow-green-500/20">
-        <i className="bi bi-check2 text-2xl text-white"></i>
-      </div>
-      
-      {/* Texto con ancho controlado para forzar el salto de línea */}
-      <span className="text-[12px] font-black leading-tight uppercase tracking-tight px-2">
-        Configuración Guardada
-      </span>
-    </div>
-  </div>
-)}
     </div>
   );
 }
