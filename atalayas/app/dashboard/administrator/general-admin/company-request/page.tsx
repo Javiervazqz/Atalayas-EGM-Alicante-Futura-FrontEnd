@@ -187,7 +187,7 @@ export default function CompanyRequestsPage() {
           }
         />
 
-        <div className="flex-1 flex flex-col overflow-hidden max-w-[1400px] mx-auto w-full px-6 lg:px-10 pb-10">
+        <div className="flex-1 flex flex-col overflow-hidden max-w-350 mx-auto w-full px-6 lg:px-10 pb-10">
           
           {/* FILTROS NORMALES (Limpios y corporativos) */}
           <div className="flex flex-wrap gap-2 my-8 bg-card border border-border p-1.5 rounded-2xl shadow-sm w-fit">
@@ -195,7 +195,7 @@ export default function CompanyRequestsPage() {
               <button
                 key={f}
                 onClick={() => { setFilter(f); setSelected(null); }}
-                className={`relative px-5 py-2 text-[10px] font-black uppercase tracking-[0.1em] transition-all duration-300 rounded-xl border ${
+                className={`relative px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300 rounded-xl border ${
                   filter === f 
                     ? 'bg-primary/10 text-primary border-primary/20 shadow-sm' 
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'
@@ -247,7 +247,7 @@ export default function CompanyRequestsPage() {
                         className="relative group/row transition-all duration-300 border-b border-border/40 last:border-b-0"
                       >
                         {/* BORDE HOVER EXTRA-FINO (1px y opacidad reducida a 40%) */}
-                        <div className={`absolute inset-[-1px] rounded-[24px] ${PREMIUM_GRADIENT} opacity-0 group-hover/row:opacity-40 transition-opacity duration-300 p-[1px] pointer-events-none z-0`}>
+                        <div className={`absolute inset-px rounded-[24px] ${PREMIUM_GRADIENT} opacity-0 group-hover/row:opacity-40 transition-opacity duration-300 p-px pointer-events-none z-0`}>
                           <div className="w-full h-full bg-card rounded-[23px]"></div>
                         </div>
 
@@ -304,7 +304,7 @@ export default function CompanyRequestsPage() {
                           </div>
 
                           {/* DESPLEGABLE */}
-                          <div className={`overflow-hidden transition-all duration-500 ${isSelected ? 'max-h-[1000px]' : 'max-h-0'}`}>
+                          <div className={`overflow-hidden transition-all duration-500 ${isSelected ? 'max-h-250' : 'max-h-0'}`}>
                             <div className="px-10 py-8 bg-muted/5 grid grid-cols-1 lg:grid-cols-12 gap-10 border-t border-border/40 rounded-b-[22.5px]">
                               
                               {/* COLUMNA 1: DATOS EMPRESA */}
@@ -358,7 +358,7 @@ export default function CompanyRequestsPage() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center gap-4 p-5 bg-background border-2 border-dashed border-border hover:border-teal-500/40 hover:bg-teal-500/[0.02] rounded-3xl transition-all group"
+                                  className="flex items-center gap-4 p-5 bg-background border-2 border-dashed border-border hover:border-teal-500/40 hover:bg-teal-500/2 rounded-3xl transition-all group"
                                 >
                                   <div className="w-12 h-12 bg-teal-500/10 text-teal-600 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
                                     <i className="bi bi-file-earmark-pdf"></i>
@@ -402,10 +402,10 @@ export default function CompanyRequestsPage() {
 
         {/* MODAL RECHAZO */}
         {showRejectModal && selected && (
-          <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-100 p-4 animate-in fade-in duration-200">
             <div className="bg-card border border-border rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden">
               
-              <div className={`absolute top-0 left-0 right-0 h-[4px] z-10 ${PREMIUM_GRADIENT} opacity-80`}></div>
+              <div className={`absolute top-0 left-0 right-0 h-1 z-10 ${PREMIUM_GRADIENT} opacity-80`}></div>
 
               <div className="flex flex-col items-center text-center mt-2">
                 <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-2xl flex items-center justify-center text-3xl mb-6">
