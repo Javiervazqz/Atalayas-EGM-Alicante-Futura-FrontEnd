@@ -51,7 +51,8 @@ export default function AdminContentDetail() {
           url: finalData.url || "",
           quiz: {
             questions: Array.isArray(finalData.quiz) ? finalData.quiz : (finalData.quiz?.questions || [])
-          }
+          },
+            podcast: finalData.podcast || null,
         });
       } catch (error) { 
         console.error("Error fetching content:", error); 

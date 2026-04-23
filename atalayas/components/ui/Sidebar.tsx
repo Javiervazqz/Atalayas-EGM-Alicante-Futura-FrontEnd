@@ -37,7 +37,7 @@ const navItems = {
   EMPLOYEE: [
     { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-grid-fill"></i> },
     { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder2-open"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder-fill"></i> },
     { label: 'Servicios', href: '/dashboard/employee/services', icon: <i className="bi bi-briefcase-fill"></i> },
     { label: 'Anuncios', href: '/dashboard/employee/announcements', icon: <i className="bi bi-megaphone-fill "></i> },
     { label: 'Ecosistema', href: '/dashboard/employee/community', icon: <i className="bi bi-globe-americas"></i>},
@@ -78,13 +78,24 @@ export default function Sidebar({ role }: SidebarProps) {
   const [pendingSuggestionsCount, setPendingSuggestionsCount] = useState(0);
 
   useEffect(() => {
-    setMounted(true);
+    // Cargar Usuario
     const savedUser = localStorage.getItem('user');
     if (savedUser) setUser(JSON.parse(savedUser));
     
-    if (typeof window !== 'undefined' && document.documentElement.classList.contains('dark')) {
-      setIsDark(true);
+    // Cargar Tema desde Cookie (para sincronizar con Welcome)
+    const savedTheme = document.cookie.split('; ').find(row => row.startsWith('theme='))?.split('=')[1];
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    const initialTheme = savedTheme === 'dark' || (!savedTheme && prefersDark);
+    setIsDark(initialTheme);
+    
+    if (initialTheme) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
+
+    setMounted(true);
 
     const checkResizing = () => {
       if (window.innerWidth >= 1024) setMobileOpen(false);
@@ -106,10 +117,16 @@ export default function Sidebar({ role }: SidebarProps) {
 
   const toggleTheme = () => {
     const root = document.documentElement;
-    const newDark = !isDark;
-    newDark ? root.classList.add('dark') : root.classList.remove('dark');
-    localStorage.setItem('theme', newDark ? 'dark' : 'light');
-    setIsDark(newDark);
+    const newTheme = !isDark;
+    
+    if (newTheme) {
+      root.classList.add('dark');
+      document.cookie = "theme=dark; path=/; max-age=31536000";
+    } else {
+      root.classList.remove('dark');
+      document.cookie = "theme=light; path=/; max-age=31536000";
+    }
+    setIsDark(newTheme);
   };
 
   const handleLogout = () => {
