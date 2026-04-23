@@ -55,8 +55,8 @@ export default function LoginPage() {
         {/* Cabecera / Logo */}
         <nav className="flex items-center px-8 lg:px-12 py-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary shadow-lg shadow-primary/20">
-              <span className="text-primary-foreground text-lg font-extrabold">A</span>
+            <div className="w-15 h-15 rounded-xl flex items-center justify-center bg-white shadow-lg shadow-primary/20">
+              <img src="/favicon.ico" alt="Logo" className="w-10 h-10" />
             </div>
             <span className="text-foreground text-xl font-extrabold tracking-tight">
               Atalayas

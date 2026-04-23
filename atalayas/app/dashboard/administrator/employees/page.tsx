@@ -43,7 +43,6 @@ export default function EmployeesPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedCompany, setSelectedCompany] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
 
   const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';
 

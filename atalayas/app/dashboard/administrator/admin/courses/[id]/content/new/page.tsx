@@ -24,7 +24,6 @@ export default function NewAIContentPage() {
     file: null as File | null,
   });
 
-  // El botón de generar se activa solo si hay título y archivo PDF
   const isReady = formData.title.trim().length > 0 && formData.file !== null;
 
   const handleSubmit = async (e: React.FormEvent) => {
