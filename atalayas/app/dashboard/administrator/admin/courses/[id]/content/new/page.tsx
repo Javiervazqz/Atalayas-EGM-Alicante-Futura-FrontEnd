@@ -7,8 +7,7 @@ import PageHeader from "@/components/ui/pageHeader";
 import { API_ROUTES } from "@/lib/utils";
 
 export default function NewAIContentPage() {
-  const { id } = useParams();
-  const { id } = useParams();
+  const { id } = useParams(); // REMOVED THE DUPLICATE DECLARATION
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [sourceType, setSourceType] = useState<'file' | 'link'>('file');
@@ -25,7 +24,6 @@ export default function NewAIContentPage() {
     file: null as File | null,
   });
 
-  // El botón de generar se activa solo si hay título y archivo PDF
   const isReady = formData.title.trim().length > 0 && formData.file !== null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -131,7 +129,7 @@ export default function NewAIContentPage() {
                   </button>
                 ))}
               </div>
-            )}
+            </div> {/* REPLACED )} WITH </div> */}
 
             <div className="pt-4 flex justify-end items-center gap-4">
               <button type="button" onClick={() => router.back()} className="px-5 py-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">Cancelar</button>
