@@ -34,6 +34,7 @@ const navItems = {
   ],
   EMPLOYEE: [
     { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-grid-fill"></i> },
+    { label: 'Onboarding', href: '/dashboard/employee/onboarding', icon: <i className="bi bi-rocket-takeoff-fill"></i> },
     { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
     { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder-fill"></i> },
     { label: 'Servicios', href: '/dashboard/employee/services', icon: <i className="bi bi-briefcase-fill"></i> },
@@ -65,18 +66,17 @@ export default function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [collapsed, setCollapsed] = useState(false);
+  // 1. INICIALIZAMOS EN TRUE PARA QUE APAREZCA CERRADA
+  const [collapsed, setCollapsed] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<any>(null); 
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    // Cargar Usuario
     const savedUser = localStorage.getItem('user');
     if (savedUser) setUser(JSON.parse(savedUser));
     
-    // Cargar Tema desde Cookie (para sincronizar con Welcome)
     const savedTheme = document.cookie.split('; ').find(row => row.startsWith('theme='))?.split('=')[1];
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
@@ -91,16 +91,15 @@ export default function Sidebar({ role }: SidebarProps) {
 
     setMounted(true);
 
+    // 2. EVITAMOS QUE SE ABRA SOLA EN PANTALLAS GRANDES
     const checkResizing = () => {
       if (window.innerWidth < 1024) setCollapsed(true);
-      else setCollapsed(false);
     };
     checkResizing();
     window.addEventListener('resize', checkResizing);
     return () => window.removeEventListener('resize', checkResizing);
   }, []);
 
-  // Fetch de solicitudes pendientes para General Admin
   useEffect(() => {
     if (!mounted || role !== 'GENERAL_ADMIN') return;
 
@@ -153,7 +152,7 @@ export default function Sidebar({ role }: SidebarProps) {
   const displayLogo = companyLogoUrl ? (companyLogoUrl.startsWith('http') ? encodeURI(companyLogoUrl) : companyLogoUrl) : defaultLogo;
 
   return (
-    <aside className={`${collapsed ? 'w-16' : 'w-64'} transition-all duration-300 bg-card border-r border-border flex flex-col h-screen sticky top-0 left-0 z-20 shrink-0 font-sans`}>
+    <aside className={`${collapsed ? 'w-16' : 'w-64'} transition-all duration-300 bg-card border-r border-border flex flex-col h-screen sticky top-0 left-0 z-50 shrink-0 font-sans`}>
       
       {/* HEADER: LOGO */}
       <div className={`flex items-center justify-between border-b border-border transition-all duration-300 ${collapsed ? 'h-16 px-0 justify-center' : 'h-24 px-4 gap-3'}`}>
