@@ -163,6 +163,16 @@ export default function EmployeeContentDetail() {
                   <img ref={zoomRef} src={content.imageUrl} alt={content.title} className="w-full h-auto cursor-zoom-in" />
                 </div>
               )}
+              {content.quiz && (
+                <div className="py-10 flex justify-center">
+                  <button
+                    onClick={() => setShowQuizModal(true)}
+                    className="mx-auto w-1/2 py-3 bg-primary text-white rounded-2xl font-bold block"
+                  >
+                    Realizar cuestionario
+                  </button>
+                </div>
+              )}
             </article>
 
             {/* COLUMNA DERECHA: RECURSOS EXTRA (Solo si hay) */}
@@ -193,7 +203,9 @@ export default function EmployeeContentDetail() {
                   </div>
                 )}
               </aside>
+
             )}
+
           </div>
 
           <aside className="w-80 border-l border-gray-200 bg-white p-6 hidden xl:flex flex-col gap-6 overflow-y-auto">
