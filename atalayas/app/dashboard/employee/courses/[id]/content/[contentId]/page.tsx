@@ -6,6 +6,7 @@ import Sidebar from '@/components/ui/Sidebar';
 import { API_ROUTES } from '@/lib/utils';
 import mediumZoom from 'medium-zoom';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 export default function EmployeeContentDetail() {
   const params = useParams();
@@ -32,6 +33,8 @@ export default function EmployeeContentDetail() {
   useEffect(() => {
     const fetchContent = async () => {
       try {
+        const courseId = params.id as string;
+        const contentId = params.contentId as string;
         const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(courseId, contentId), {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
@@ -50,7 +53,7 @@ export default function EmployeeContentDetail() {
     fetchContent();
   }, [params.contentId, params.id]);
 
-   useEffect(() => {
+  useEffect(() => {
     const autoConfirmTask = async () => {
       if (fromTaskId) {
         try {
@@ -114,7 +117,7 @@ export default function EmployeeContentDetail() {
       <Sidebar role="EMPLOYEE" />
 
       <main className="flex-1 h-screen overflow-y-auto">
-        
+
         {/* HEADER */}
         <div className="bg-card border-b border-border py-8 lg:py-10">
           <div className="max-w-5xl mx-auto px-6 lg:px-8">
@@ -142,7 +145,7 @@ export default function EmployeeContentDetail() {
         {/* CUERPO DINÁMICO */}
         <div className="max-w-5xl mx-auto px-6 lg:px-8 py-10 lg:py-12">
           <div className={`grid grid-cols-1 ${hasResources ? 'lg:grid-cols-[1fr_300px]' : ''} gap-10 lg:gap-16`}>
-            
+
             {/* COLUMNA IZQUIERDA: CONTENIDO */}
             <article>
               <h3 className="text-xl font-bold text-foreground mb-6">
@@ -156,9 +159,9 @@ export default function EmployeeContentDetail() {
               </div>
 
               {content.imageUrl && (
-                 <div className="mt-8 overflow-hidden rounded-3xl border border-border shadow-sm">
-                   <img ref={zoomRef} src={content.imageUrl} alt={content.title} className="w-full h-auto cursor-zoom-in" />
-                 </div>
+                <div className="mt-8 overflow-hidden rounded-3xl border border-border shadow-sm">
+                  <img ref={zoomRef} src={content.imageUrl} alt={content.title} className="w-full h-auto cursor-zoom-in" />
+                </div>
               )}
             </article>
 
@@ -166,7 +169,7 @@ export default function EmployeeContentDetail() {
             {hasResources && (
               <aside className="space-y-6">
                 <h4 className="text-[11px] font-black text-muted-foreground uppercase tracking-widest px-1">Material Extra</h4>
-                
+
                 {content.url && (
                   <div className="bg-card p-6 rounded-3xl border border-border shadow-sm text-center hover:border-secondary/50 transition-colors">
                     <div className="text-4xl text-primary mb-3"><i className="bi bi-file-earmark-pdf"></i></div>
@@ -177,7 +180,7 @@ export default function EmployeeContentDetail() {
                     </a>
                   </div>
                 )}
-                
+
                 {content.podcast && (
                   <div className="bg-indigo-600 p-6 rounded-3xl text-white shadow-xl shadow-indigo-600/20">
                     <div className="flex items-center gap-3 mb-5">
@@ -194,8 +197,8 @@ export default function EmployeeContentDetail() {
           </div>
 
           <aside className="w-80 border-l border-gray-200 bg-white p-6 hidden xl:flex flex-col gap-6 overflow-y-auto">
-             <h3 className="text-xs font-black uppercase text-gray-400 tracking-tighter">Material Complementario</h3>
-             <ResourcesList />
+            <h3 className="text-xs font-black uppercase text-gray-400 tracking-tighter">Material Complementario</h3>
+            {/*<ResourcesList /> */}
           </aside>
         </div>
       </main>
@@ -211,7 +214,7 @@ export default function EmployeeContentDetail() {
                 <i className="bi bi-x-circle-fill text-2xl"></i>
               </button>
             </div>
-            
+
             <div className="space-y-8">
               {getQuizQuestions(content.quiz).map((q: any, i: number) => (
                 <div key={i} className="space-y-4">
@@ -221,7 +224,7 @@ export default function EmployeeContentDetail() {
                       const isSelected = quizAnswers[i] === opt;
                       const isCorrect = q.correctAnswer === opt;
                       let style = "border-gray-100 text-gray-600 hover:border-gray-300";
-                      
+
                       if (quizSubmitted) {
                         if (isCorrect) style = "border-green-500 bg-green-50 text-green-700";
                         else if (isSelected) style = "border-red-500 bg-red-50 text-red-700";
@@ -248,41 +251,41 @@ export default function EmployeeContentDetail() {
 
             <div className="mt-10 border-t pt-6">
               {quizSubmitted ? (
-  <div className="space-y-4">
-    <div className={`${quizScore === getQuizQuestions(content.quiz).length ? 'bg-green-600' : 'bg-blue-600'} p-6 rounded-2xl text-white flex flex-col md:flex-row items-center justify-between gap-4 transition-colors`}>
-      <div>
-        <p className="text-sm opacity-80 uppercase font-bold tracking-tighter">
-          {quizScore === getQuizQuestions(content.quiz).length ? '¡Excelente!' : 'Tu puntuación'}
-        </p>
-        <p className="text-3xl font-black">{quizScore} / {getQuizQuestions(content.quiz).length}</p>
-      </div>
-      
-      <div className="flex gap-2">
-        {quizScore < getQuizQuestions(content.quiz).length && (
-          <button 
-            onClick={() => {
-              setQuizAnswers({});
-              setQuizSubmitted(false);
-            }} 
-            className="bg-white/20 hover:bg-white/30 text-white px-6 py-2 rounded-xl font-bold cursor-pointer transition-all"
-          >
-            Reintentar
-          </button>
-        )}
-        <button onClick={() => setShowQuizModal(false)} className="bg-white text-blue-600 px-6 py-2 rounded-xl font-bold cursor-pointer">
-          Cerrar
-        </button>
-      </div>
-    </div>
-    
-    {quizScore < getQuizQuestions(content.quiz).length && (
-      <p className="text-center text-xs text-gray-500 font-medium">
-        Debes acertar todas las preguntas para completar esta unidad.
-      </p>
-    )}
-  </div>
+                <div className="space-y-4">
+                  <div className={`${quizScore === getQuizQuestions(content.quiz).length ? 'bg-green-600' : 'bg-blue-600'} p-6 rounded-2xl text-white flex flex-col md:flex-row items-center justify-between gap-4 transition-colors`}>
+                    <div>
+                      <p className="text-sm opacity-80 uppercase font-bold tracking-tighter">
+                        {quizScore === getQuizQuestions(content.quiz).length ? '¡Excelente!' : 'Tu puntuación'}
+                      </p>
+                      <p className="text-3xl font-black">{quizScore} / {getQuizQuestions(content.quiz).length}</p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      {quizScore < getQuizQuestions(content.quiz).length && (
+                        <button
+                          onClick={() => {
+                            setQuizAnswers({});
+                            setQuizSubmitted(false);
+                          }}
+                          className="bg-white/20 hover:bg-white/30 text-white px-6 py-2 rounded-xl font-bold cursor-pointer transition-all"
+                        >
+                          Reintentar
+                        </button>
+                      )}
+                      <button onClick={() => setShowQuizModal(false)} className="bg-white text-blue-600 px-6 py-2 rounded-xl font-bold cursor-pointer">
+                        Cerrar
+                      </button>
+                    </div>
+                  </div>
+
+                  {quizScore < getQuizQuestions(content.quiz).length && (
+                    <p className="text-center text-xs text-gray-500 font-medium">
+                      Debes acertar todas las preguntas para completar esta unidad.
+                    </p>
+                  )}
+                </div>
               ) : (
-                <button 
+                <button
                   onClick={handleQuizSubmit}
                   className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-blue-600 transition-all disabled:opacity-50 cursor-pointer"
                   disabled={Object.keys(quizAnswers).length < getQuizQuestions(content.quiz).length}
@@ -297,7 +300,7 @@ export default function EmployeeContentDetail() {
 
       <style jsx global>{`
         .markdown-body { 
-          font-family: ${appleFont} !important; 
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; !important; 
           font-size: 1.1rem; 
           line-height: 1.75; 
           color: #374151; 
