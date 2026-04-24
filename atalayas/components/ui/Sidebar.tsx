@@ -14,11 +14,11 @@ const navItems = {
     { label: 'Perfil Empresa', href: '/dashboard/company', icon: <i className="bi bi-building-gear"></i> },
     { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: <i className="bi bi-buildings-fill"></i> },
     { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
-    { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses/manage', icon: <i className="bi bi-journal-bookmark-fill"></i>  },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder2-open"></i>  },
+    { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder-fill"></i> },
     { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: <i className="bi bi-briefcase-fill"></i> },
     { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
-    { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-globe-americas text-blue-500"></i>},
+    { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-globe-americas"></i>},
     { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: <i className="bi bi-envelope-paper-fill"></i> },
   ],
   ADMIN: [
@@ -26,27 +26,24 @@ const navItems = {
     { label: 'Mi Empresa', href: '/dashboard/administrator/admin/company', icon: <i className="bi bi-building-fill"></i> },
     { label: 'Empleados', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
     { label: 'Onboarding', href: '/dashboard/administrator/employees/onboarding', icon: <i className="bi bi-person-walking"></i>},
-    { label: 'Cursos', href: '/dashboard/administrator/admin/courses/manage', icon: <i className="bi bi-mortarboard-fill"></i>  },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill"></i>  },
+    { label: 'Cursos', href: '/dashboard/administrator/admin/courses', icon: <i className="bi bi-mortarboard-fill"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill"></i> },
     { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill"></i> },
-    { label: 'Anuncios', href: '/dashboard/administrator/admin/announcements', icon: <i className="bi bi-megaphone-fill text-blue-500"></i> },
-    { label: 'Ecosistema', href: '/dashboard/administrator/admin/community', icon: <i className="bi bi-globe-americas text-blue-500"></i>},
-
-
+    { label: 'Anuncios', href: '/dashboard/administrator/admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
+    { label: 'Ecosistema', href: '/dashboard/employee/community', icon: <i className="bi bi-globe-americas"></i>},
   ],
   EMPLOYEE: [
     { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-grid-fill"></i> },
+    { label: 'Onboarding', href: '/dashboard/employee/onboarding', icon: <i className="bi bi-rocket-takeoff-fill"></i> },
     { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder2-open"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder-fill"></i> },
     { label: 'Servicios', href: '/dashboard/employee/services', icon: <i className="bi bi-briefcase-fill"></i> },
-    { label: 'Anuncios', href: '/dashboard/employee/announcements', icon: <i className="bi bi-megaphone-fill text-blue-500"></i> },
-    { label: 'Ecosistema', href: '/dashboard/employee/community', icon: <i className="bi bi-globe-americas text-blue-500"></i>},
-
-
+    { label: 'Anuncios', href: '/dashboard/employee/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
+    { label: 'Ecosistema', href: '/dashboard/employee/community', icon: <i className="bi bi-globe-americas"></i>},
   ],
   PUBLIC: [
     { label: 'Panel', href: '/dashboard/public', icon: <i className="bi bi-grid-fill"></i> },
-    { label: 'Cursos', href: '/dashboard/public/courses', icon: <i className="bi bi-journal-bookmark-fill"></i>  },
+    { label: 'Cursos', href: '/dashboard/public/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
     { label: 'Servicios', href: '/dashboard/public/services', icon: <i className="bi bi-briefcase-fill"></i> },
   ],
 };
@@ -69,7 +66,8 @@ export default function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [collapsed, setCollapsed] = useState(false);
+  // 1. INICIALIZAMOS EN TRUE PARA QUE APAREZCA CERRADA
+  const [collapsed, setCollapsed] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<any>(null); 
@@ -78,28 +76,28 @@ export default function Sidebar({ role }: SidebarProps) {
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) setUser(JSON.parse(savedUser));
+    
+    const savedTheme = document.cookie.split('; ').find(row => row.startsWith('theme='))?.split('=')[1];
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    const initialTheme = savedTheme === 'dark' || (!savedTheme && prefersDark);
+    setIsDark(initialTheme);
+    
+    if (initialTheme) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
     setMounted(true);
 
+    // 2. EVITAMOS QUE SE ABRA SOLA EN PANTALLAS GRANDES
     const checkResizing = () => {
       if (window.innerWidth < 1024) setCollapsed(true);
-      else setCollapsed(false);
     };
     checkResizing();
     window.addEventListener('resize', checkResizing);
     return () => window.removeEventListener('resize', checkResizing);
-  }, []);
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      document.documentElement.classList.add('dark');
-      setIsDark(true);
-    } else {
-      document.documentElement.classList.remove('dark');
-      setIsDark(false);
-    }
   }, []);
 
   useEffect(() => {
@@ -129,28 +127,24 @@ export default function Sidebar({ role }: SidebarProps) {
 
   const toggleTheme = () => {
     const root = document.documentElement;
-    if (isDark) {
-      root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    } else {
+    const newTheme = !isDark;
+    
+    if (newTheme) {
       root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+      document.cookie = "theme=dark; path=/; max-age=31536000";
+    } else {
+      root.classList.remove('dark');
+      document.cookie = "theme=light; path=/; max-age=31536000";
     }
-    setIsDark(!isDark);
+    setIsDark(newTheme);
   };
 
   const currentMenu = navItems[role] || [];
-  
-  const matchingItems = currentMenu.filter(item => 
-    pathname === item.href || pathname.startsWith(`${item.href}/`)
-  );
-
-  const activeItem = matchingItems.reduce((prev, curr) => 
-    (curr.href.length > prev.href.length ? curr : prev), 
+  const activeItem = currentMenu.reduce((prev, curr) => 
+    (pathname === curr.href || pathname.startsWith(`${curr.href}/`) ? (curr.href.length > prev.href.length ? curr : prev) : prev), 
     { href: '' }
   );
 
-  // ── LÓGICA DE LOGO DE EMPRESA Y FALLBACK ──
   const companyData = user?.Company || user?.company;
   const companyLogoUrl = companyData?.logoUrl;
   const companyName = companyData?.name || "Atalayas";
@@ -158,22 +152,16 @@ export default function Sidebar({ role }: SidebarProps) {
   const displayLogo = companyLogoUrl ? (companyLogoUrl.startsWith('http') ? encodeURI(companyLogoUrl) : companyLogoUrl) : defaultLogo;
 
   return (
-    <aside className={`${collapsed ? 'w-16 lg:w-16' : 'w-60'} transition-all duration-300 bg-card border-r border-border flex flex-col h-screen sticky top-0 left-0 z-20 shrink-0 font-sans`}>
+    <aside className={`${collapsed ? 'w-16' : 'w-64'} transition-all duration-300 bg-card border-r border-border flex flex-col h-screen sticky top-0 left-0 z-50 shrink-0 font-sans`}>
       
-      {/* ── RECUADRO BLANCO CON BORDES REDONDEADOS Y LÍNEA FINA ── */}
+      {/* HEADER: LOGO */}
       <div className={`flex items-center justify-between border-b border-border transition-all duration-300 ${collapsed ? 'h-16 px-0 justify-center' : 'h-24 px-4 gap-3'}`}>
         {!collapsed ? (
-          /* Aquí está el recuadro blanco que solicitaste */
-          <div className="flex-1 w-full h-14 bg-white rounded-[20px] shadow-sm border border-gray-200/60 dark:border-white/10 flex items-center justify-center overflow-hidden p-2.5">
-            <img
-              src={displayLogo}
-              alt={companyName}
-              className="w-full h-full object-contain"
-            />
+          <div className="flex-1 w-full h-14 bg-white rounded-[20px] shadow-sm border border-gray-200/60 dark:border-white/10 flex items-center justify-center overflow-hidden p-2.5 transition-all">
+            <img src={displayLogo} alt={companyName} className="w-full h-full object-contain" />
           </div>
         ) : (
-          /* Versión mínima para cuando se colapsa */
-          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-200/60 dark:border-white/10 overflow-hidden p-1.5">
+          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-200/60 dark:border-white/10 overflow-hidden p-1.5 shadow-sm">
               <span className="text-primary font-black text-lg tracking-tighter">
                 {companyName.charAt(0).toUpperCase()}
               </span>
@@ -181,23 +169,16 @@ export default function Sidebar({ role }: SidebarProps) {
         )}
         
         {!collapsed && (
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-lg hover:bg-muted flex shrink-0 items-center justify-center"
-              title="Colapsar menú"
-            >
+            <button onClick={() => setCollapsed(true)} className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-lg hover:bg-muted flex shrink-0 items-center justify-center">
               <i className="bi bi-text-indent-right text-lg"></i>
             </button>
         )}
       </div>
 
+      {/* NAVEGACIÓN */}
       <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto no-scrollbar">
         {collapsed && (
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className="w-10 h-10 mx-auto text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted flex items-center justify-center mb-5"
-              title="Expandir menú"
-            >
+            <button onClick={() => setCollapsed(false)} className="w-10 h-10 mx-auto text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted flex items-center justify-center mb-5">
               <i className="bi bi-list text-2xl"></i>
             </button>
         )}
@@ -214,14 +195,13 @@ export default function Sidebar({ role }: SidebarProps) {
                   ? 'bg-primary/5 text-primary border-primary shadow-sm'
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 border-transparent'
               } ${collapsed ? 'justify-center rounded-xl border-none p-3 w-10 h-10 mx-auto' : ''}`}
-              title={collapsed ? item.label : undefined}
             >
               <span className={`text-[19px] flex shrink-0 items-center justify-center ${collapsed ? '' : 'w-6'}`}>{item.icon}</span>
               {!collapsed && (
                 <>
                   <span className="flex-1 truncate tracking-tight">{item.label}</span>
                   {item.label === 'Solicitudes' && pendingCount > 0 && (
-                    <span className="bg-destructive text-destructive-foreground text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0">
+                    <span className="bg-destructive text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">
                       {pendingCount}
                     </span>
                   )}
@@ -232,21 +212,18 @@ export default function Sidebar({ role }: SidebarProps) {
         })}
       </nav>
 
-      <div className="p-4 border-t border-border bg-card">
+      {/* FOOTER: PERFIL Y AJUSTES */}
+      <div className="p-4 border-t border-border bg-card/50 backdrop-blur-sm">
         {mounted && user && (
           <Link href="/dashboard/profile" className="block w-full mb-3">
             <div className={`flex items-center gap-3 p-2 rounded-xl hover:bg-muted/70 transition-colors cursor-pointer group ${collapsed ? 'justify-center p-0' : ''}`}>
               <div className={`w-9 h-9 rounded-full overflow-hidden shrink-0 border-2 border-border group-hover:border-primary transition-colors ${collapsed ? 'w-11 h-11' : ''}`}>
                 {user?.avatarUrl ? (
-                  <img
-                    src={encodeURI(user.avatarUrl)}
-                    alt="Perfil"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={encodeURI(user.avatarUrl)} alt="Perfil" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-primary/10 flex items-center justify-center">
                     <span className="text-primary text-sm font-extrabold">
-                      {user?.name ? user.name.charAt(0).toUpperCase() : (user?.email?.[0]?.toUpperCase() || 'U')}
+                      {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </span>
                   </div>
                 )}
@@ -255,7 +232,7 @@ export default function Sidebar({ role }: SidebarProps) {
               {!collapsed && (
                 <div className="flex-1 min-w-0 flex flex-col items-start justify-center">
                   <p className="text-foreground text-[13px] font-bold truncate w-full group-hover:text-primary transition-colors tracking-tight">
-                    {user?.name || (user?.email ? user.email.split('@')[0] : 'Usuario')}
+                    {user?.name || 'Usuario'}
                   </p>
                   <span className={`text-[8.5px] uppercase font-black px-2 py-0.5 mt-0.5 rounded-md border tracking-[0.2em] ${roleColors[role]}`}>
                     {roleLabels[role]}
@@ -270,7 +247,6 @@ export default function Sidebar({ role }: SidebarProps) {
             <button
               onClick={toggleTheme}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all font-bold text-[13px] ${collapsed ? 'w-10 h-10 justify-center' : ''}`}
-              title={collapsed ? (isDark ? "Modo Claro" : "Modo Oscuro") : undefined}
             >
               <span className="text-[19px] flex shrink-0 items-center justify-center w-6">
                 <i className={`bi ${isDark ? 'bi-sun-fill text-amber-400' : 'bi-moon-stars-fill text-indigo-400'}`}></i>
@@ -281,7 +257,6 @@ export default function Sidebar({ role }: SidebarProps) {
             <button
               onClick={handleLogout}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all font-bold text-[13px] ${collapsed ? 'w-10 h-10 justify-center' : ''}`}
-              title={collapsed ? "Cerrar sesión" : undefined}
             >
               <span className="text-[19px] flex shrink-0 items-center justify-center w-6"><i className="bi bi-box-arrow-right"></i></span>
               {!collapsed && <span className="truncate flex-1 tracking-tight">Cerrar sesión</span>}

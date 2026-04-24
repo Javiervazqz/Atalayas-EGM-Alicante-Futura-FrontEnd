@@ -49,19 +49,20 @@ export default function ManageCourses() {
 
     const filtered = courses.filter(c => {
         const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase());
+        const isNotPublic = c.isPublic === false || c.isPublic === 0;
         let matchesTab = true;
         if (filter === 'BASICO') matchesTab = c.category?.toUpperCase() !== 'ESPECIALIZADO';
         if (filter === 'ESPECIALIZADO') matchesTab = c.category?.toUpperCase() === 'ESPECIALIZADO';
-        return matchesSearch && matchesTab;
+        return matchesSearch && isNotPublic && matchesTab;
     });
 
     return (
         <div className="flex min-h-screen bg-background font-sans relative">
             <Sidebar role="ADMIN" />
             <main className="flex-1 overflow-auto flex flex-col relative">
-                <PageHeader
+                <PageHeader 
                     title="Gestión de Contenido"
-                    description="Administra los cursos de formación de tu empresa y el contenido global."
+                    description="Administra los cursos privados y el material de formación de tu empresa."
                     icon={<i className="bi bi-gear-fill"></i>}
                     backUrl="/dashboard/administrator/admin/courses"
                     action={
@@ -81,8 +82,9 @@ export default function ManageCourses() {
                                     <button
                                         key={tab}
                                         onClick={() => setFilter(tab as any)}
-                                        className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${filter === tab ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                                            }`}
+                                        className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                                            filter === tab ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                                        }`}
                                     >
                                         {tab === 'ALL' ? 'Todos' : tab === 'BASICO' ? 'Onboarding' : 'Especialización'}
                                     </button>
@@ -90,7 +92,7 @@ export default function ManageCourses() {
                             </div>
                             <div className="relative w-full sm:max-w-xs">
                                 <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"></i>
-                                <input
+                                <input 
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -116,67 +118,32 @@ export default function ManageCourses() {
                                         filtered.map((course) => (
                                             <tr key={course.id} className="group hover:bg-muted/30 transition-colors">
                                                 <td className="px-6 lg:px-8 py-5">
-                                                    {/* Envolvemos el contenido en un Link para que sea clicable */}
-                                                    <Link
-                                                        href={`/dashboard/administrator/admin/courses/manage/view/${course.id}`}
-                                                        className="flex items-center gap-4 cursor-pointer group/link"
-                                                    >
-                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${course.isPublic
-                                                                ? 'bg-green-500/10 text-green-600 border-green-500/20 group-hover/link:bg-green-600 group-hover/link:text-white'
-                                                                : 'bg-primary/5 text-primary border border-primary/10 group-hover/link:bg-primary group-hover/link:text-white'
-                                                            }`}>
-                                                            <i className={`bi ${course.isPublic ? 'bi-globe' : 'bi-journal-text'} text-lg`}></i>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 bg-primary/5 rounded-xl flex items-center justify-center text-primary border border-primary/10 group-hover:bg-primary group-hover:text-white transition-all">
+                                                            <i className="bi bi-journal-text text-lg"></i>
                                                         </div>
-                                                        <div className="flex flex-col">
-                                                            <span className="font-bold text-foreground group-hover/link:text-primary transition-colors">
-                                                                {course.title}
-                                                            </span>
-                                                            <span className="text-[10px] font-bold uppercase tracking-tighter flex items-center gap-1 opacity-60">
-                                                                {course.isPublic ? (
-                                                                    <span className="text-green-600 flex items-center gap-1">
-                                                                        <i className="bi bi-globe"></i> Público
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="text-primary flex items-center gap-1">
-                                                                        <i className="bi bi-building"></i> Privado
-                                                                    </span>
-                                                                )}
-                                                                <span className="mx-1">•</span> Click para ver contenido
-                                                            </span>
-                                                        </div>
-                                                    </Link>
+                                                        <span className="font-bold text-foreground group-hover:text-primary transition-colors">{course.title}</span>
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 lg:px-8 py-5 text-center">
-                                                    <span className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${course.category?.toUpperCase() === 'ESPECIALIZADO' ? 'bg-secondary/10 text-secondary border border-secondary/20' : 'bg-primary/10 text-primary border border-primary/20'
-                                                        }`}>
+                                                    <span className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${
+                                                        course.category?.toUpperCase() === 'ESPECIALIZADO' ? 'bg-secondary/10 text-secondary border border-secondary/20' : 'bg-primary/10 text-primary border border-primary/20'
+                                                    }`}>
                                                         {course.category?.toUpperCase() === 'ESPECIALIZADO' ? 'Especialización' : 'Onboarding'}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 lg:px-8 py-5 text-right">
-                                                    <div className="flex items-center justify-end gap-2 relative z-10">
-                                                        {!course.isPublic ? (
-                                                            <>
-                                                                <Link href={`/dashboard/administrator/admin/courses/manage/${course.id}`}
-                                                                    className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all border border-transparent hover:border-primary/20"
-                                                                    title="Editar curso"
-                                                                >
-                                                                    <i className="bi bi-pencil-square"></i>
-                                                                </Link>
-                                                                <button onClick={(e) => {
-                                                                    e.stopPropagation(); // Evita conflictos si pusieras el link en toda la fila
-                                                                    setCourseToDelete(course.id);
-                                                                }}
-                                                                    className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all border border-transparent hover:border-destructive/20 cursor-pointer bg-transparent"
-                                                                    title="Eliminar curso"
-                                                                >
-                                                                    <i className="bi bi-trash3"></i>
-                                                                </button>
-                                                            </>
-                                                        ) : (
-                                                            <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest px-3">
-                                                                Gestionado por Global
-                                                            </span>
-                                                        )}
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Link href={`/dashboard/administrator/admin/courses/manage/${course.id}`} 
+                                                            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all border border-transparent hover:border-primary/20"
+                                                        >
+                                                            <i className="bi bi-pencil-square"></i>
+                                                        </Link>
+                                                        <button onClick={() => setCourseToDelete(course.id)}
+                                                            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all border border-transparent hover:border-destructive/20 cursor-pointer bg-transparent"
+                                                        >
+                                                            <i className="bi bi-trash3"></i>
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -191,7 +158,6 @@ export default function ManageCourses() {
                 </div>
             </main>
 
-            {/* Modal de eliminación (Sin cambios) */}
             {courseToDelete && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="bg-card w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl text-center border border-border">

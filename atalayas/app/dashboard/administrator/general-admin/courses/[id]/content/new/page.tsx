@@ -67,7 +67,7 @@ export default function NewAIContentPage() {
           title="Generador IA"
           description="Transforma documentos técnicos o enlaces en lecciones interactivas completas."
           icon={<i className="bi bi-robot"></i>}
-          backUrl={`/dashboard/administrator/general-admin/courses//manage/view/${id}`}
+          backUrl={`/dashboard/administrator/general-admin/courses/${id}`}
         />
 
         <div className="p-6 lg:p-12 flex-1 max-w-4xl mx-auto w-full">
