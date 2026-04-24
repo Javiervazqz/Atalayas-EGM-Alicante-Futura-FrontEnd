@@ -8,6 +8,7 @@ import mediumZoom from 'medium-zoom';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
+
 export default function EmployeeContentDetail() {
   const params = useParams();
   const zoomRef = useRef<HTMLImageElement>(null);
@@ -37,7 +38,9 @@ export default function EmployeeContentDetail() {
         const contentId = params.contentId as string;
         const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(courseId, contentId), {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          
         });
+        
         const data = await res.json();
         setContent(data.content || data.data || data);
         if (data.isCompleted) {
@@ -88,7 +91,7 @@ export default function EmployeeContentDetail() {
     }
   }, [content?.imageUrl]);
 
-  const handleQuizSubmit = () => {
+   const handleQuizSubmit = async () => {
     const questions = getQuizQuestions(content.quiz);
     let correctCount = 0;
     questions.forEach((q: any, index: number) => {
@@ -96,6 +99,31 @@ export default function EmployeeContentDetail() {
     });
     setQuizScore(correctCount);
     setQuizSubmitted(true);
+
+    try {
+      const token = localStorage.getItem('token');
+
+          await fetch(
+      API_ROUTES.CONTENT.COMPLETE(
+        params.id as string,
+        content.id
+      ),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          score: correctCount,
+          totalQuestions: questions.length,
+        }),
+      });
+
+      console.log("Quiz enviado al backend");
+    } catch (error) {
+      console.error("Error enviando quiz:", error);
+    }
   };
 
   // Pantalla de carga (Solo una vez y con estilos corporativos)
