@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
 import PageHeader from '@/components/ui/pageHeader';
 import Link from 'next/link';
 import { API_ROUTES } from '@/lib/utils';
 
 export default function GlobalManageCourses() {
+  const router = useRouter();
   const [courses, setCourses] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,17 +88,36 @@ export default function GlobalManageCourses() {
 
   const filtered = courses.filter(c => {
     const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase());
-    let matchesCategory = true;
-    if (categoryFilter === 'BASICO') matchesCategory = c.category?.toUpperCase() !== 'ESPECIALIZADO';
-    if (categoryFilter === 'ESPECIALIZADO') matchesCategory = c.category?.toUpperCase() === 'ESPECIALIZADO';
-    const matchesPublic = showOnlyPublic ? (c.isPublic === true || c.isPublic === 1) : true;
+    const isCoursePublic = !!(c.isPublic === true || c.isPublic === 1);
+    const courseCat = c.category?.toUpperCase();
     const matchesCompany = selectedCompanyId ? (c.companyId === selectedCompanyId) : true;
-    return matchesSearch && matchesCategory && matchesPublic && matchesCompany;
+
+    let matchesCategoryAndPublic = true;
+    if (categoryFilter === 'BASICO') {
+      const isOnboarding = courseCat !== 'ESPECIALIZADO';
+      matchesCategoryAndPublic = showOnlyPublic ? (isOnboarding && isCoursePublic) : isOnboarding;
+    } else if (categoryFilter === 'ESPECIALIZADO') {
+      matchesCategoryAndPublic = (courseCat === 'ESPECIALIZADO');
+    } else {
+      matchesCategoryAndPublic = showOnlyPublic ? isCoursePublic : true;
+    }
+
+    return matchesSearch && matchesCompany && matchesCategoryAndPublic;
   });
 
   const filteredCompanies = companies.filter(comp =>
     comp.name.toLowerCase().includes(companySearch.toLowerCase())
   );
+
+  // Lógica de navegación al hacer click en la fila
+  const handleRowClick = (id: string, e: React.MouseEvent) => {
+    // Evitamos la navegación si el usuario hace click en los botones de acción o links
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a')) {
+      return;
+    }
+    router.push(`/dashboard/administrator/general-admin/courses/manage/view/${id}`);
+  };
 
   if (!mounted) return <div className="min-h-screen bg-background transition-colors duration-300" />;
 
@@ -105,24 +126,22 @@ export default function GlobalManageCourses() {
       <Sidebar role="GENERAL_ADMIN" />
 
       <main className="flex-1 overflow-auto flex flex-col relative">
-        {/* ── HEADER CON BOTÓN VOLVER ── */}
-        <PageHeader 
+        <PageHeader
           title="Gestión Global de Cursos"
-          description={`Control de contenidos para ${companies.length} empresas.`}
-          icon={<i className="bi bi-journal-bookmark"></i>}
-          backUrl="/dashboard/administrator/general-admin/courses" // Enlace de retorno al catálogo
+          description={`Control maestro de contenidos para ${companies.length} empresas registradas.`}
+          icon={<i className="bi bi-journal-bookmark-fill"></i>}
           action={
             <Link
               href="/dashboard/administrator/general-admin/courses/manage/new"
               className="bg-secondary text-white px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-sm hover:shadow-md flex items-center gap-2"
             >
-              <i className="bi bi-plus-lg"></i> Nuevo curso
+              <i className="bi bi-plus-lg"></i> Nuevo curso público
             </Link>
           }
         />
 
         <div className="p-6 lg:p-10 space-y-8 max-w-7xl mx-auto w-full">
-          
+
           {/* BARRA DE FILTROS */}
           <div className="bg-card p-6 lg:p-8 rounded-[24px] border border-border/60 shadow-sm flex flex-col gap-6 transition-colors duration-300">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -191,24 +210,30 @@ export default function GlobalManageCourses() {
               {/* CATEGORÍA Y VISIBILIDAD */}
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Categoría y Visibilidad</label>
-                <div className="flex gap-2 h-full">
-                  <div className="bg-background border border-border p-1 rounded-xl flex flex-1 items-center">
+                <div className="flex flex-col gap-2">
+                  <div className="bg-background border border-border p-1 rounded-xl flex items-center">
                     {(['ALL', 'BASICO', 'ESPECIALIZADO'] as const).map((t) => (
                       <button
                         key={t}
-                        onClick={() => setCategoryFilter(t)}
+                        onClick={() => {
+                          setCategoryFilter(t);
+                          if (t === 'ESPECIALIZADO' || t === 'ALL') setShowOnlyPublic(false);
+                        }}
                         className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${categoryFilter === t ? 'bg-card shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                       >
-                        {t === 'ALL' ? 'Todos' : t === 'BASICO' ? 'Básico' : 'Espec.'}
+                        {t === 'ALL' ? 'Todos' : t === 'BASICO' ? 'Onboarding' : 'Especializ.'}
                       </button>
                     ))}
                   </div>
-                  <button
-                    onClick={() => setShowOnlyPublic(!showOnlyPublic)}
-                    className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider border transition-all ${showOnlyPublic ? 'bg-primary border-primary text-white shadow-sm' : 'bg-background border-border text-muted-foreground hover:bg-muted'}`}
-                  >
-                    {showOnlyPublic ? '✓ Públicos' : 'Públicos'}
-                  </button>
+
+                  {categoryFilter !== 'ESPECIALIZADO' && (
+                    <button
+                      onClick={() => setShowOnlyPublic(!showOnlyPublic)}
+                      className={`w-full py-2 rounded-xl text-[9px] font-black uppercase tracking-wider border transition-all animate-in fade-in slide-in-from-top-1 ${showOnlyPublic ? 'bg-primary border-primary text-white shadow-sm' : 'bg-background border-border text-muted-foreground hover:bg-muted'}`}
+                    >
+                      {showOnlyPublic ? '✓ Viendo solo Públicos' : 'Filtrar por Públicos'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -228,8 +253,21 @@ export default function GlobalManageCourses() {
                 </thead>
                 <tbody className="divide-y divide-border/60">
                   {filtered.map((course) => (
-                    <tr key={course.id} className="group hover:bg-muted/20 transition-colors">
-                      <td className="px-8 py-5 font-bold text-sm text-foreground group-hover:text-primary transition-colors">{course.title}</td>
+                    <tr
+                      key={course.id}
+                      className="group hover:bg-muted/20 transition-colors cursor-pointer"
+                      onClick={(e) => handleRowClick(course.id, e)}
+                    >
+                      <td className="px-8 py-5">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">
+                            {course.title}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground/50 font-medium mt-1">
+                            Click para ver contenido del curso
+                          </span>
+                        </div>
+                      </td>
                       <td className="px-8 py-5 text-center">
                         <span className={`text-[9px] font-black px-3 py-1 rounded-lg tracking-wider uppercase border ${course.isPublic ? 'bg-primary/5 text-primary border-primary/10' : 'bg-muted text-muted-foreground border-border/50'}`}>
                           {getCompanyName(course)}
@@ -242,10 +280,21 @@ export default function GlobalManageCourses() {
                       </td>
                       <td className="px-8 py-5 text-right">
                         <div className="flex justify-end gap-2">
-                          <Link href={`/dashboard/administrator/general-admin/courses/manage/${course.id}`} className="w-9 h-9 flex items-center justify-center bg-muted/50 hover:bg-primary/10 rounded-xl transition-all group/btn border border-border/40">
+                          {/* BOTÓN EDITAR */}
+                          <Link
+                            href={`/dashboard/administrator/general-admin/courses/manage/${course.id}`}
+                            className="w-10 h-10 flex items-center justify-center bg-muted/50 hover:bg-primary/10 rounded-xl transition-all group/btn border border-border/40"
+                            title="Editar curso"
+                          >
                             <i className="bi bi-pencil-square text-primary group-hover/btn:scale-110 transition-transform"></i>
                           </Link>
-                          <button onClick={() => setCourseToDelete(course.id)} className="w-9 h-9 flex items-center justify-center bg-muted/50 hover:bg-destructive/10 rounded-xl transition-all group/btn cursor-pointer border border-border/40">
+
+                          {/* BOTÓN ELIMINAR */}
+                          <button
+                            onClick={() => setCourseToDelete(course.id)}
+                            className="w-10 h-10 flex items-center justify-center bg-muted/50 hover:bg-destructive/10 rounded-xl transition-all group/btn cursor-pointer border border-border/40"
+                            title="Eliminar curso"
+                          >
                             <i className="bi bi-trash3 text-destructive/60 group-hover/btn:text-destructive transition-colors"></i>
                           </button>
                         </div>
@@ -280,7 +329,7 @@ export default function GlobalManageCourses() {
         </div>
       </main>
 
-      {/* MODAL DE CONFIRMACIÓN (DARK MODE READY) */}
+      {/* MODAL DE CONFIRMACIÓN */}
       {courseToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
           <div className="bg-card w-full max-w-sm rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95 duration-300 text-center border border-border">

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Sidebar from '@/components/ui/Sidebar';
 import SearchInput from '@/components/ui/Searchbar'; 
 import { API_ROUTES } from '@/lib/utils';
-import { motion } from "framer-motion";
 
 export default function CourseDetailPage() {
   const params = useParams();
