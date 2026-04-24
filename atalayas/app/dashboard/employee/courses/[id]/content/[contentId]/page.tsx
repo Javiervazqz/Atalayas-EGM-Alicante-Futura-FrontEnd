@@ -1,29 +1,31 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
 import mediumZoom from 'medium-zoom';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 
 export default function EmployeeContentDetail() {
   const params = useParams();
-  const zoomRef = useRef<HTMLImageElement>(null);
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const zoomRef = useRef<HTMLImageElement>(null);
+  
   const fromTaskId = searchParams.get('fromTask');
 
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
-  // --- ESTADO PARA EL MODAL DE QUIZ ---
+  
+  // Estados para el Quiz
   const [showQuizModal, setShowQuizModal] = useState(false);
-  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
-  const [quizScore, setQuizScore] = useState(0);
-  const [isCompleted, setIsCompleted] = useState(false)
+  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+  const [isCorrected, setIsCorrected] = useState(false);
 
+  // Helper para normalizar preguntas del quiz
   const getQuizQuestions = (quizSource: any) => {
     if (!quizSource) return [];
     if (Array.isArray(quizSource)) return quizSource;
@@ -32,227 +34,212 @@ export default function EmployeeContentDetail() {
 
   useEffect(() => {
     const fetchContent = async () => {
+      if (!params.id || !params.contentId) return;
       try {
-        const courseId = params.id as string;
-        const contentId = params.contentId as string;
-        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(courseId, contentId), {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         const data = await res.json();
-        setContent(data.content || data.data || data);
-        if (data.isCompleted) {
-          setQuizSubmitted(true);
-          setQuizScore(data.quiz?.questions?.length || 0); // Visualmente mostramos éxito
-        }
-      } catch (error) {
-        console.error("❌ Error:", error);
-      } finally {
-        setLoading(false);
+        const rawData = data?.data || data?.content || data || {};
+        setContent(rawData);
+      } catch (error) { 
+        console.error("Error cargando unidad:", error); 
+      } finally { 
+        setLoading(false); 
       }
     };
     fetchContent();
   }, [params.contentId, params.id]);
 
+  // Autocompletar tarea de onboarding si viene de un link específico
   useEffect(() => {
     const autoConfirmTask = async () => {
       if (fromTaskId) {
         try {
-          const token = localStorage.getItem("token");
           await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
             body: JSON.stringify({ taskId: fromTaskId, done: true }),
           });
-          console.log("Tarea de onboarding completada automáticamente");
         } catch (err) {
           console.error("Error al autocompletar:", err);
         }
       }
     };
-
     autoConfirmTask();
   }, [fromTaskId]);
 
-  useEffect(() => {
-    if (zoomRef.current && content?.imageUrl) {
-      const zoom = mediumZoom(zoomRef.current, {
-        background: "rgba(250,250,249,0.95)", // Usando un fondo claro como tu app
-        margin: 24,
-      });
-      return () => {
-        zoom.detach();
-      };
-    }
-  }, [content?.imageUrl]);
-
-  const handleQuizSubmit = () => {
-    const questions = getQuizQuestions(content.quiz);
-    let correctCount = 0;
-    questions.forEach((q: any, index: number) => {
-      if (quizAnswers[index] === q.correctAnswer) correctCount++;
-    });
-    setQuizScore(correctCount);
-    setQuizSubmitted(true);
+  const handleSelectOption = (qIdx: number, option: string) => {
+    if (isCorrected) return;
+    setUserAnswers(prev => ({ ...prev, [qIdx]: option }));
   };
 
-  // Pantalla de carga (Solo una vez y con estilos corporativos)
+  const resetQuiz = () => {
+    setUserAnswers({});
+    setIsCorrected(false);
+    setShowQuizModal(false);
+  };
+
+  const questions = getQuizQuestions(content?.quiz);
+  const score = questions.reduce((acc: number, q: any, idx: number) => {
+    return userAnswers[idx] === q.correctAnswer ? acc + 1 : acc;
+  }, 0);
+  const totalQuestions = questions.length;
+
   if (loading) return (
-    <div className="flex min-h-screen bg-background font-sans">
-      <Sidebar role="EMPLOYEE" />
-      <main className="flex-1 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
-      </main>
+    <div className="flex h-screen bg-background font-sans items-center justify-center">
+      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
-  if (!content) return null;
-
-  const hasResources = content.url || content.podcast;
-
   return (
-    <div className="flex min-h-screen bg-background font-sans">
+    <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
       <Sidebar role="EMPLOYEE" />
 
-      <main className="flex-1 h-screen overflow-y-auto">
+      <main className="flex-1 flex flex-col min-w-0 relative">
+        <PageHeader 
+          title={content?.title || "Unidad Didáctica"}
+          description={`Lección ${content?.order || ''}`}
+          icon={<i className="bi bi-book"></i>}
+          backUrl={`/dashboard/employee/courses/${params.id}`}
+        />
 
-        {/* HEADER */}
-        <div className="bg-card border-b border-border py-8 lg:py-10">
-          <div className="max-w-5xl mx-auto px-6 lg:px-8">
-            <Link href={`/dashboard/employee/courses/${params.id}`}
-              className="flex items-center gap-1 text-secondary text-sm font-bold hover:opacity-80 transition-opacity mb-6 inline-flex">
-              <i className="bi bi-chevron-left"></i> Volver al curso
-            </Link>
+        <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 overflow-y-auto bg-muted/30 p-8 no-scrollbar">
+            <div className="max-w-4xl mx-auto bg-card shadow-xl border border-border/50 rounded-xl p-8 md:p-16 mb-10">
+              
+              <div className="prose dark:prose-invert max-w-none">
+                <h1 className="text-4xl font-black mb-8 border-b-4 border-primary/10 pb-4">{content?.title}</h1>
+                
+                <ReactMarkdown
+                  components={{
+                    h2: ({ ...props }) => <h2 className="text-2xl font-black text-foreground mt-14 mb-6 flex items-center gap-3" {...props} />,
+                    h3: ({ ...props }) => <h3 className="text-xl font-bold text-foreground/90 mt-10 mb-4" {...props} />,
+                    p: ({ ...props }) => <p className="text-[17px] leading-[1.8] text-muted-foreground mb-8 whitespace-pre-wrap" {...props} />,
+                    ul: ({ ...props }) => <ul className="my-8 space-y-4" {...props} />,
+                    li: ({ ...props }) => (
+                      <li className="flex items-start gap-3 text-[16px] text-muted-foreground leading-relaxed">
+                        <span className="mt-2.5 w-2 h-2 rounded-full bg-primary/40 shrink-0" />
+                        <span {...props} />
+                      </li>
+                    ),
+                    blockquote: ({ ...props }) => (
+                      <blockquote className="border-l-4 border-primary bg-muted/40 p-6 rounded-r-2xl my-10 italic text-foreground/80 shadow-inner" {...props} />
+                    )
+                  }}
+                >
+                  {content?.summary}
+                </ReactMarkdown>
 
-            <div className="flex items-center gap-6 flex-wrap">
-              <div className="w-16 h-16 bg-primary/10 text-primary rounded-3xl flex items-center justify-center text-3xl flex-shrink-0">
-                <i className="bi bi-journal-text"></i>
-              </div>
-              <div className="flex-1 min-w-[250px]">
-                <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight mb-2">
-                  {content.title}
-                </h1>
-                <span className="inline-flex items-center text-[10px] font-black px-3 py-1 rounded-full bg-secondary/10 text-secondary uppercase tracking-wider">
-                  Lección {content.order || 1}
-                </span>
+                {content?.imageUrl && (
+                  <div className="mt-12 rounded-3xl overflow-hidden border border-border shadow-2xl">
+                    <img 
+                      ref={zoomRef}
+                      src={content.imageUrl} 
+                      alt="Ilustración de la unidad" 
+                      className="w-full h-auto cursor-zoom-in"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </div>
 
-        {/* CUERPO DINÁMICO */}
-        <div className="max-w-5xl mx-auto px-6 lg:px-8 py-10 lg:py-12">
-          <div className={`grid grid-cols-1 ${hasResources ? 'lg:grid-cols-[1fr_300px]' : ''} gap-10 lg:gap-16`}>
-
-            {/* COLUMNA IZQUIERDA: CONTENIDO */}
-            <article>
-              <h3 className="text-xl font-bold text-foreground mb-6">
-                Desarrollo de la unidad
-              </h3>
-
-              <div className="prose prose-slate max-w-none">
-                <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                  {content.summary || 'Sin contenido proporcionado.'}
-                </p>
+          <aside className="w-80 border-l border-border bg-card p-6 flex flex-col gap-6">
+            <h4 className="text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block">Recursos</h4>
+            
+            {content?.podcast?.url && (
+              <div className="relative group overflow-hidden bg-linear-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 rounded-[2rem] p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg">
+                    <i className="bi bi-mic-fill text-lg"></i>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-emerald-600 tracking-tighter">Audio Podcast</p>
+                    <p className="text-xs font-bold opacity-80">Resumen por IA</p>
+                  </div>
+                </div>
+                <audio ref={audioRef} src={content.podcast.url} controls className="w-full h-8 accent-emerald-500 mb-2" />
               </div>
-
-              {content.imageUrl && (
-                <div className="mt-8 overflow-hidden rounded-3xl border border-border shadow-sm">
-                  <img ref={zoomRef} src={content.imageUrl} alt={content.title} className="w-full h-auto cursor-zoom-in" />
-                </div>
-              )}
-              {content.quiz && (
-                <div className="py-10 flex justify-center">
-                  <button
-                    onClick={() => setShowQuizModal(true)}
-                    className="mx-auto w-1/2 py-3 bg-primary text-white rounded-2xl font-bold block"
-                  >
-                    Realizar cuestionario
-                  </button>
-                </div>
-              )}
-            </article>
-
-            {/* COLUMNA DERECHA: RECURSOS EXTRA (Solo si hay) */}
-            {hasResources && (
-              <aside className="space-y-6">
-                <h4 className="text-[11px] font-black text-muted-foreground uppercase tracking-widest px-1">Material Extra</h4>
-
-                {content.url && (
-                  <div className="bg-card p-6 rounded-3xl border border-border shadow-sm text-center hover:border-secondary/50 transition-colors">
-                    <div className="text-4xl text-primary mb-3"><i className="bi bi-file-earmark-pdf"></i></div>
-                    <p className="text-[11px] font-black text-foreground uppercase mb-5 tracking-widest">Guía PDF</p>
-                    <a href={content.url} target="_blank" rel="noopener noreferrer"
-                      className="block w-full py-3 bg-secondary text-secondary-foreground rounded-2xl text-sm font-bold hover:opacity-90 transition-opacity shadow-sm">
-                      Abrir PDF
-                    </a>
-                  </div>
-                )}
-
-                {content.podcast && (
-                  <div className="bg-indigo-600 p-6 rounded-3xl text-white shadow-xl shadow-indigo-600/20">
-                    <div className="flex items-center gap-3 mb-5">
-                      <span className="text-2xl text-indigo-300"><i className="bi bi-mic-fill"></i></span>
-                      <p className="text-[10px] font-black opacity-80 tracking-widest uppercase text-white">Podcast IA</p>
-                    </div>
-                    <button className="w-full py-3.5 bg-white text-indigo-600 rounded-2xl text-sm font-bold hover:bg-indigo-50 transition-colors shadow-sm">
-                      Escuchar Resumen
-                    </button>
-                  </div>
-                )}
-              </aside>
-
             )}
 
-          </div>
+            {questions.length > 0 && (
+              <button 
+                onClick={() => setShowQuizModal(true)} 
+                className="w-full p-4 bg-orange-400 text-white rounded-2xl flex items-center gap-4 hover:bg-orange-500 transition-all shadow-lg active:scale-95"
+              >
+                <i className="bi bi-patch-question text-2xl"></i>
+                <div className="text-left">
+                  <p className="text-[8px] font-bold uppercase opacity-70">Evaluación</p>
+                  <p className="text-sm font-bold">Realizar Test</p>
+                </div>
+              </button>
+            )}
 
-          <aside className="w-80 border-l border-gray-200 bg-white p-6 hidden xl:flex flex-col gap-6 overflow-y-auto">
-            <h3 className="text-xs font-black uppercase text-gray-400 tracking-tighter">Material Complementario</h3>
-            {/*<ResourcesList /> */}
+            {content?.url?.toLowerCase().includes('.pdf') && (
+              <a href={content.url} target="_blank" rel="noopener noreferrer"
+                className="group w-full p-3 bg-muted border border-border rounded-2xl flex items-center gap-3 hover:border-primary transition-all active:scale-95">
+                <div className="w-10 h-10 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center shrink-0">
+                  <i className="bi bi-file-earmark-pdf text-xl"></i>
+                </div>
+                <div className="text-left overflow-hidden">
+                  <p className="text-[8px] font-black uppercase text-muted-foreground tracking-tighter">Material PDF</p>
+                  <p className="text-xs font-bold text-foreground truncate">Descargar guía</p>
+                </div>
+              </a>
+            )}
           </aside>
         </div>
       </main>
 
-      {/* MODAL DEL QUIZ CON FEEDBACK VISUAL */}
+      {/* MODAL DEL QUIZ INTERACTIVO */}
       {showQuizModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer" onClick={() => !quizSubmitted && setShowQuizModal(false)} />
-          <div className="relative bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl p-6 md:p-10 custom-scrollbar">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-xl md:text-2xl font-black text-gray-900">Cuestionario</h2>
-              <button onClick={() => setShowQuizModal(false)} className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer">
-                <i className="bi bi-x-circle-fill text-2xl"></i>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="bg-card border border-border rounded-[32px] p-8 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center mb-8 shrink-0">
+              <div>
+                <h3 className="text-2xl font-black">Cuestionario de Unidad</h3>
+                <p className="text-xs text-muted-foreground">Responde correctamente para completar la lección</p>
+              </div>
+              <button onClick={resetQuiz} className="text-muted-foreground hover:text-foreground transition-colors">
+                <i className="bi bi-x-circle text-2xl"></i>
               </button>
             </div>
 
-            <div className="space-y-8">
-              {getQuizQuestions(content.quiz).map((q: any, i: number) => (
-                <div key={i} className="space-y-4">
-                  <p className="font-bold text-gray-800">{i + 1}. {q.question}</p>
-                  <div className="grid gap-2">
-                    {q.options.map((opt: string, idx: number) => {
-                      const isSelected = quizAnswers[i] === opt;
-                      const isCorrect = q.correctAnswer === opt;
-                      let style = "border-gray-100 text-gray-600 hover:border-gray-300";
-
-                      if (quizSubmitted) {
-                        if (isCorrect) style = "border-green-500 bg-green-50 text-green-700";
-                        else if (isSelected) style = "border-red-500 bg-red-50 text-red-700";
-                        else style = "opacity-50 border-gray-100";
-                      } else if (isSelected) {
-                        style = "border-blue-500 bg-blue-50 text-blue-700";
+            <div className="flex-1 overflow-y-auto pr-2 space-y-10 no-scrollbar">
+              {questions.map((q: any, qIdx: number) => (
+                <div key={qIdx} className="space-y-4">
+                  <p className="font-bold text-lg flex gap-3">
+                    <span className="text-primary/40">0{qIdx + 1}.</span>
+                    {q.question}
+                  </p>
+                  <div className="grid grid-cols-1 gap-3">
+                    {q.options.map((opt: string, oIdx: number) => {
+                      const isSelected = userAnswers[qIdx] === opt;
+                      const isCorrect = opt === q.correctAnswer;
+                      
+                      let variantClasses = "border-border hover:border-primary/50 bg-muted/30";
+                      if (isSelected) variantClasses = "border-primary bg-primary/5 ring-2 ring-primary/20";
+                      
+                      if (isCorrected) {
+                        if (isCorrect) variantClasses = "border-emerald-500 bg-emerald-500/10 text-emerald-700 ring-2 ring-emerald-500/20 font-bold";
+                        else if (isSelected && !isCorrect) variantClasses = "border-destructive bg-destructive/10 text-destructive ring-2 ring-destructive/20";
+                        else variantClasses = "border-border opacity-50 bg-muted/10";
                       }
 
                       return (
                         <button
-                          key={idx}
-                          disabled={quizSubmitted}
-                          onClick={() => setQuizAnswers(prev => ({ ...prev, [i]: opt }))}
-                          className={`text-left p-4 rounded-xl border-2 transition-all font-medium text-sm md:text-base cursor-pointer ${style}`}
+                          key={oIdx}
+                          disabled={isCorrected}
+                          onClick={() => handleSelectOption(qIdx, opt)}
+                          className={`w-full p-4 rounded-2xl border text-left text-sm transition-all flex items-center justify-between group ${variantClasses}`}
                         >
                           {opt}
+                          {isCorrected && isCorrect && <i className="bi bi-check-circle-fill text-emerald-500"></i>}
+                          {isCorrected && isSelected && !isCorrect && <i className="bi bi-x-circle-fill text-destructive"></i>}
                         </button>
                       );
                     })}
@@ -261,76 +248,44 @@ export default function EmployeeContentDetail() {
               ))}
             </div>
 
-            <div className="mt-10 border-t pt-6">
-              {quizSubmitted ? (
-                <div className="space-y-4">
-                  <div className={`${quizScore === getQuizQuestions(content.quiz).length ? 'bg-green-600' : 'bg-blue-600'} p-6 rounded-2xl text-white flex flex-col md:flex-row items-center justify-between gap-4 transition-colors`}>
-                    <div>
-                      <p className="text-sm opacity-80 uppercase font-bold tracking-tighter">
-                        {quizScore === getQuizQuestions(content.quiz).length ? '¡Excelente!' : 'Tu puntuación'}
-                      </p>
-                      <p className="text-3xl font-black">{quizScore} / {getQuizQuestions(content.quiz).length}</p>
+            <div className="pt-6 mt-6 border-t border-border shrink-0 space-y-4">
+              {isCorrected && (
+                <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/10 rounded-2xl animate-in fade-in slide-in-from-bottom-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center font-black">
+                      {score}
                     </div>
-
-                    <div className="flex gap-2">
-                      {quizScore < getQuizQuestions(content.quiz).length && (
-                        <button
-                          onClick={() => {
-                            setQuizAnswers({});
-                            setQuizSubmitted(false);
-                          }}
-                          className="bg-white/20 hover:bg-white/30 text-white px-6 py-2 rounded-xl font-bold cursor-pointer transition-all"
-                        >
-                          Reintentar
-                        </button>
-                      )}
-                      <button onClick={() => setShowQuizModal(false)} className="bg-white text-blue-600 px-6 py-2 rounded-xl font-bold cursor-pointer">
-                        Cerrar
-                      </button>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-primary tracking-widest">Tu Resultado</p>
+                      <p className="text-sm font-bold">Has acertado {score} de {totalQuestions}</p>
                     </div>
                   </div>
-
-                  {quizScore < getQuizQuestions(content.quiz).length && (
-                    <p className="text-center text-xs text-gray-500 font-medium">
-                      Debes acertar todas las preguntas para completar esta unidad.
-                    </p>
-                  )}
+                  <p className="text-2xl font-black text-primary">{Math.round((score / totalQuestions) * 100)}%</p>
                 </div>
-              ) : (
-                <button
-                  onClick={handleQuizSubmit}
-                  className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-blue-600 transition-all disabled:opacity-50 cursor-pointer"
-                  disabled={Object.keys(quizAnswers).length < getQuizQuestions(content.quiz).length}
-                >
-                  Enviar Respuestas
-                </button>
               )}
+
+              <div className="flex gap-4">
+                {!isCorrected ? (
+                  <button
+                    onClick={() => setIsCorrected(true)}
+                    disabled={Object.keys(userAnswers).length < totalQuestions}
+                    className="flex-1 bg-primary text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20 disabled:opacity-50 transition-all active:scale-95"
+                  >
+                    Enviar Respuestas
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => { setIsCorrected(false); setUserAnswers({}); }}
+                    className="flex-1 bg-muted text-foreground py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all active:scale-95"
+                  >
+                    Reintentar Test
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
       )}
-
-      <style jsx global>{`
-        .markdown-body { 
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; !important; 
-          font-size: 1.1rem; 
-          line-height: 1.75; 
-          color: #374151; 
-        }
-        .markdown-body strong { 
-          display: block; 
-          font-size: 1.5rem; 
-          font-weight: 800; 
-          color: #111827; 
-          margin-top: 2.5rem; 
-          margin-bottom: 1rem; 
-          letter-spacing: -0.02em; 
-          line-height: 1.2;
-        }
-        .markdown-body p { margin-bottom: 1.5rem; }
-        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d1d6; border-radius: 10px; }
-      `}</style>
     </div>
   );
 }

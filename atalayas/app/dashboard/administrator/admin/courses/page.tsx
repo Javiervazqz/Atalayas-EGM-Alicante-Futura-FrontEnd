@@ -121,7 +121,7 @@ export default function AdminCourses() {
                                         }`}>
                                             <i className={activeTab === 'BASICO' ? "bi bi-book" : "bi bi-award"}></i>
                                         </div>
-                                        <h3 className="text-foreground font-bold text-lg leading-tight line-clamp-2 min-h-[3.5rem]">
+                                        <h3 className="text-foreground font-bold text-lg leading-tight line-clamp-2 min-h-14">
                                             {course.title}
                                         </h3>
                                     </div>

@@ -7,14 +7,13 @@ import Sidebar from "@/components/ui/Sidebar";
 import PageHeader from "@/components/ui/pageHeader";
 import { API_ROUTES } from "@/lib/utils";
 
-// Función para limpiar Markdown y dejar solo texto plano para la previsualización
 const cleanMarkdown = (text: string): string => {
   if (!text) return "";
   return text
-    .replace(/\*\*?([^*]+)\*\*?/g, "$1") // Elimina **negrita** y *cursiva*
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Elimina enlaces [texto](url) -> texto
-    .replace(/^- /gm, "") // Elimina guiones de lista
-    .replace(/#/g, "") // Elimina almohadillas de títulos
+    .replace(/\*\*?([^*]+)\*\*?/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^- /gm, "")
+    .replace(/#/g, "")
     .trim();
 };
 
@@ -72,17 +71,15 @@ export default function AdminCourseDetailPage() {
     .sort((a: any, b: any) => a.order - b.order);
 
   return (
-    <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
+    <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden transition-colors duration-300">
       <Sidebar role="ADMIN" />
 
       <main className="flex-1 overflow-auto flex flex-col relative">
         {loading ? (
-          /* ESTADO DE CARGA CON SIDEBAR VISIBLE */
           <div className="flex-1 flex items-center justify-center">
             <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          /* CONTENIDO REAL UNA VEZ CARGADO */
           <>
             <PageHeader 
               title={course?.title || "Detalle del Curso"}
@@ -100,17 +97,18 @@ export default function AdminCourseDetailPage() {
             />
 
             <div className="p-4 lg:p-8 flex-1 max-w-6xl mx-auto w-full">
-              <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm flex flex-col">
-                <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/50">
-                  <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Unidades del programa</h2>
+              <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm flex flex-col">
+                {/* Header de la tabla */}
+                <div className="p-4 border-b border-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/30">
+                  <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Unidades del programa</h2>
                   <div className="relative w-full sm:max-w-xs">
-                    <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-xs"></i>
                     <input 
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Buscar unidad..."
-                      className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-1.5 text-xs outline-none focus:border-primary transition-all font-medium placeholder:text-slate-300"
+                      className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-1.5 text-xs outline-none focus:border-primary transition-all font-medium placeholder:text-muted-foreground/50 text-foreground"
                     />
                   </div>
                 </div>
@@ -118,32 +116,32 @@ export default function AdminCourseDetailPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse table-fixed">
                     <thead>
-                      <tr className="bg-slate-50/20 border-b border-slate-100">
-                        <th className="px-5 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest w-16 text-center">Nº</th>
-                        <th className="px-5 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Título y descripción</th>
-                        <th className="px-5 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">Tipo</th>
-                        <th className="px-5 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right w-24">Acciones</th>
+                      <tr className="bg-muted/10 border-b border-border">
+                        <th className="px-5 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-16 text-center">Nº</th>
+                        <th className="px-5 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Título y descripción</th>
+                        <th className="px-5 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-32">Tipo</th>
+                        <th className="px-5 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right w-24">Acciones</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-border">
                       {filteredContents.length > 0 ? (
                         filteredContents.map((content: any) => (
                           <tr 
                             key={content.id} 
                             onClick={() => router.push(`/dashboard/administrator/admin/courses/${id}/content/${content.id}`)}
-                            className="hover:bg-slate-50/50 transition-all group cursor-pointer"
+                            className="hover:bg-muted/40 transition-all group cursor-pointer"
                           >
                             <td className="px-5 py-3 text-center align-top">
-                              <span className="font-mono text-[10px] font-bold text-slate-300 group-hover:text-primary transition-colors">
+                              <span className="font-mono text-[10px] font-bold text-muted-foreground/60 group-hover:text-primary transition-colors">
                                 {String(content.order).padStart(2, '0')}
                               </span>
                             </td>
                             <td className="px-5 py-3 align-top">
-                              <div className="font-bold text-sm text-slate-900 group-hover:text-primary transition-colors truncate">
+                              <div className="font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate">
                                 {content.title}
                               </div>
                               {content.summary && (
-                                <div className="text-[10.5px] text-slate-400 line-clamp-1 mt-0.5 font-medium italic leading-relaxed">
+                                <div className="text-[10.5px] text-muted-foreground line-clamp-1 mt-0.5 font-medium italic leading-relaxed">
                                   {cleanMarkdown(content.summary)}
                                 </div>
                               )}
@@ -151,12 +149,12 @@ export default function AdminCourseDetailPage() {
                             <td className="px-5 py-3 align-top">
                               <div className="flex gap-1.5 mt-0.5">
                                 {content.url?.includes('.mp3') ? (
-                                  <span className="bg-indigo-50 text-indigo-500 text-[9px] font-black px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-tighter">Podcast</span>
+                                  <span className="bg-indigo-500/10 text-indigo-500 text-[9px] font-black px-1.5 py-0.5 rounded border border-indigo-500/20 uppercase tracking-tighter">Podcast</span>
                                 ) : (
-                                  <span className="bg-emerald-50 text-emerald-600 text-[9px] font-black px-1.5 py-0.5 rounded border border-emerald-100 uppercase tracking-tighter">Lectura</span>
+                                  <span className="bg-emerald-500/10 text-emerald-500 text-[9px] font-black px-1.5 py-0.5 rounded border border-emerald-500/20 uppercase tracking-tighter">Lectura</span>
                                 )}
                                 {content.quiz && (
-                                  <span className="bg-slate-50 text-slate-500 text-[9px] font-black px-1.5 py-0.5 rounded border border-slate-200 uppercase tracking-tighter">Test</span>
+                                  <span className="bg-muted text-muted-foreground text-[9px] font-black px-1.5 py-0.5 rounded border border-border uppercase tracking-tighter">Test</span>
                                 )}
                               </div>
                             </td>
@@ -164,13 +162,13 @@ export default function AdminCourseDetailPage() {
                               <div className="flex items-center justify-end gap-1 mt-0.5">
                                 <button 
                                   onClick={() => router.push(`/dashboard/administrator/admin/courses/${id}/content/${content.id}/edit`)} 
-                                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-primary transition-all"
+                                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-all"
                                 >
                                   <i className="bi bi-pencil-square text-xs"></i>
                                 </button>
                                 <button 
                                   onClick={() => { setContentToDelete(content.id); setShowDeleteModal(true); }} 
-                                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-all"
+                                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
                                 >
                                   <i className="bi bi-trash3 text-xs"></i>
                                 </button>
@@ -180,7 +178,7 @@ export default function AdminCourseDetailPage() {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={4} className="px-5 py-12 text-center text-slate-400 font-medium text-xs italic bg-slate-50/20">
+                          <td colSpan={4} className="px-5 py-12 text-center text-muted-foreground font-medium text-xs italic bg-muted/5">
                             No hay unidades disponibles.
                           </td>
                         </tr>
@@ -194,17 +192,18 @@ export default function AdminCourseDetailPage() {
         )}
       </main>
 
+      {/* Modal de eliminación */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 text-center animate-in zoom-in-95">
-            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl border border-red-100">
+        <div className="fixed inset-0 z-10002 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-border text-center animate-in zoom-in-95">
+            <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-6 text-2xl border border-destructive/20">
               <i className="bi bi-exclamation-triangle"></i>
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">¿Eliminar unidad?</h3>
-            <p className="text-slate-500 text-sm mb-8 leading-relaxed">Esta acción es irreversible. Se perderá todo el contenido de la lección.</p>
+            <h3 className="text-xl font-bold text-foreground mb-2">¿Eliminar unidad?</h3>
+            <p className="text-muted-foreground text-sm mb-8 leading-relaxed">Esta acción es irreversible. Se perderá todo el contenido de la lección.</p>
             <div className="flex flex-col gap-3">
-              <button onClick={executeDelete} className="w-full py-3 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-lg shadow-red-200">Sí, eliminar</button>
-              <button onClick={() => setShowDeleteModal(false)} className="w-full py-3 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all">Cancelar</button>
+              <button onClick={executeDelete} className="w-full py-3 bg-destructive text-white rounded-xl font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-destructive/20">Sí, eliminar</button>
+              <button onClick={() => setShowDeleteModal(false)} className="w-full py-3 bg-muted text-muted-foreground rounded-xl font-bold text-sm hover:bg-muted/80 transition-all">Cancelar</button>
             </div>
           </div>
         </div>

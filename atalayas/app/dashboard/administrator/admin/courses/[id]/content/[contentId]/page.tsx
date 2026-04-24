@@ -7,7 +7,7 @@ import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 
-const inputClass = "w-full px-5 py-3 bg-background border border-input focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl outline-none transition-all text-foreground text-sm font-medium placeholder:text-muted-foreground/50 shadow-sm";
+const inputClass = "w-full px-4 py-2.5 bg-background border border-border focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl outline-none transition-all text-foreground text-sm font-medium shadow-sm placeholder:text-muted-foreground/40";
 const labelClass = "text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block";
 
 export default function AdminContentDetail() {
@@ -19,12 +19,13 @@ export default function AdminContentDetail() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
-  const [quizScore, setQuizScore] = useState(0);
-
+  // Estados para el Quiz
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+  const [isCorrected, setIsCorrected] = useState(false);
+  
   const [formData, setFormData] = useState<any>({
     title: "",
     summary: "",
@@ -32,6 +33,26 @@ export default function AdminContentDetail() {
     url: "",
     quiz: { questions: [] },
   });
+
+  const sanitizeData = (data: any) => {
+    const raw = data?.data || data?.content || data || {};
+    let cleanQuestions = [];
+    if (raw.quiz) {
+      const source = Array.isArray(raw.quiz) ? raw.quiz : (raw.quiz.questions || []);
+      cleanQuestions = source.map((q: any) => ({
+        question: q.question || "",
+        options: Array.isArray(q.options) ? [...q.options] : ["", "", "", ""],
+        correctAnswer: q.correctAnswer || ""
+      }));
+    }
+    return {
+      ...raw,
+      title: raw.title || "Sin título",
+      summary: raw.summary || "",
+      url: raw.url || "",
+      quiz: { questions: cleanQuestions }
+    };
+  };
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -41,21 +62,11 @@ export default function AdminContentDetail() {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         const data = await res.json();
-        const finalData = data.content || data.data || data;
-        
-        setContent(finalData);
-        setFormData({
-          title: finalData.title || "",
-          summary: finalData.summary || "",
-          imageUrl: finalData.imageUrl || "",
-          url: finalData.url || "",
-          quiz: {
-            questions: Array.isArray(finalData.quiz) ? finalData.quiz : (finalData.quiz?.questions || [])
-          },
-            podcast: finalData.podcast || null,
-        });
+        const cleanData = sanitizeData(data);
+        setContent(cleanData);
+        setFormData(JSON.parse(JSON.stringify(cleanData)));
       } catch (error) { 
-        console.error("Error fetching content:", error); 
+        console.error("Error cargando unidad:", error); 
       } finally { 
         setLoading(false); 
       }
@@ -63,335 +74,377 @@ export default function AdminContentDetail() {
     fetchContent();
   }, [params.contentId, params.id]);
 
-  const addQuestion = () => {
-    const newQuestions = [...formData.quiz.questions, { question: "", options: ["", "", ""], correctAnswer: "" }];
-    setFormData({ ...formData, quiz: { questions: newQuestions } });
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const payload = {
+        title: formData.title,
+        summary: formData.summary,
+        url: formData.url,
+        imageUrl: formData.imageUrl,
+        quiz: formData.quiz
+      };
+
+      const res = await fetch(API_ROUTES.CONTENT.UPDATE(params.id as string, params.contentId as string), {
+        method: "PATCH",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}` 
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        setContent(sanitizeData(result));
+        setIsEditing(false);
+      }
+    } catch (error) {
+      alert("Error al guardar");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeQuestion = (index: number) => {
-    const newQuestions = formData.quiz.questions.filter((_: any, i: number) => i !== index);
-    setFormData({ ...formData, quiz: { questions: newQuestions } });
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch(API_ROUTES.CONTENT.DELETE(params.id as string, params.contentId as string), {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+
+      if (res.ok) {
+        router.push(`/dashboard/administrator/admin/courses/${params.id}`);
+      } else {
+        alert("No se pudo eliminar la unidad");
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+    }
   };
 
-  const updateQuestion = (index: number, field: string, value: any) => {
+  const handleDiscard = () => {
+    setFormData(JSON.parse(JSON.stringify(content)));
+    setIsEditing(false);
+  };
+
+  const updateQuestionText = (index: number, text: string) => {
     const newQuestions = [...formData.quiz.questions];
-    newQuestions[index] = { ...newQuestions[index], [field]: value };
+    newQuestions[index].question = text;
     setFormData({ ...formData, quiz: { questions: newQuestions } });
   };
 
-  const handleQuizSubmit = () => {
-    const questions = content?.quiz?.questions || (Array.isArray(content?.quiz) ? content.quiz : []);
-    let correctCount = 0;
-    questions.forEach((q: any, index: number) => {
-      if (quizAnswers[index] === q.correctAnswer) correctCount++;
-    });
-    setQuizScore(correctCount);
-    setQuizSubmitted(true);
+  const updateOptionText = (qIndex: number, oIndex: number, text: string) => {
+    const newQuestions = [...formData.quiz.questions];
+    newQuestions[qIndex].options[oIndex] = text;
+    setFormData({ ...formData, quiz: { questions: newQuestions } });
   };
 
-  const currentQuestions = content?.quiz?.questions || (Array.isArray(content?.quiz) ? content.quiz : []);
+  const updateCorrectAnswer = (qIndex: number, text: string) => {
+    const newQuestions = [...formData.quiz.questions];
+    newQuestions[qIndex].correctAnswer = text;
+    setFormData({ ...formData, quiz: { questions: newQuestions } });
+  };
+
+  const handleSelectOption = (qIdx: number, option: string) => {
+    if (isCorrected) return;
+    setUserAnswers(prev => ({ ...prev, [qIdx]: option }));
+  };
+
+  const resetQuiz = () => {
+    setUserAnswers({});
+    setIsCorrected(false);
+    setShowQuizModal(false);
+  };
+
+  const score = content?.quiz?.questions.reduce((acc: number, q: any, idx: number) => {
+    return userAnswers[idx] === q.correctAnswer ? acc + 1 : acc;
+  }, 0);
+
+  const totalQuestions = content?.quiz?.questions.length || 0;
 
   return (
-    <div className="flex h-screen bg-[#fcfcfd] font-sans text-foreground overflow-hidden">
+    <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
       <Sidebar role="ADMIN" />
 
       <main className="flex-1 flex flex-col min-w-0 relative">
-        {loading ? (
-          /* SPINNER SOLO EN EL CONTENIDO */
-          <div className="flex-1 flex items-center justify-center bg-[#fcfcfd]">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : (
-          <>
-            <PageHeader 
-              title={isEditing ? "Modo Editor" : content?.title}
-              description="Gestión y visualización de unidad didáctica"
-              icon={<i className="bi bi-file-earmark-text"></i>}
-              backUrl={`/dashboard/administrator/admin/courses/${params.id}`}
-              action={
-                <button 
-                  onClick={() => setIsEditing(!isEditing)} 
-                  className={`${isEditing ? 'bg-emerald-500 shadow-emerald-200' : 'bg-primary'} text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 shadow-lg active:scale-95`}
-                >
-                  {isEditing ? (<span><i className="bi bi-check-lg mr-2"></i>Guardar Cambios</span>) : (<span><i className="bi bi-pencil-square mr-2"></i>Editar Contenido</span>)}
+        <PageHeader 
+          title={isEditing ? "Modo Editor" : content?.title || "Cargando..."}
+          description="Gestión de unidad didáctica"
+          icon={<i className="bi bi-file-earmark-text"></i>}
+          backUrl={`/dashboard/administrator/admin/courses/${params.id}`}
+          action={
+            <div className="flex gap-3">
+              {isEditing && (
+                <button onClick={handleDiscard} className="bg-muted text-foreground px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-muted/80">
+                  Descartar
                 </button>
-              }
-            />
-
-            <div className="flex-1 flex overflow-hidden">
-              <div className="flex-1 overflow-y-auto bg-slate-200/50 p-4 md:p-8 lg:p-12 no-scrollbar">
-                <div className="max-w-4xl mx-auto bg-white shadow-2xl shadow-slate-300/50 rounded-sm min-h-screen mb-20 p-10 md:p-16 lg:p-24 transition-all">
-                  
-                  {isEditing ? (
-                    <div className="space-y-12 text-left animate-in fade-in slide-in-from-bottom-4 duration-500">
-                      <div className="space-y-2">
-                        <label className={labelClass}>Título de la Unidad</label>
-                        <input 
-                          value={formData.title} 
-                          onChange={e => setFormData({...formData, title: e.target.value})} 
-                          className={`${inputClass} text-2xl font-bold py-6 border-slate-100`} 
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className={labelClass}>Cuerpo del Resumen (Markdown)</label>
-                        <textarea 
-                          rows={15} 
-                          value={formData.summary} 
-                          onChange={e => setFormData({...formData, summary: e.target.value})} 
-                          className={`${inputClass} font-mono text-xs leading-loose p-8 bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-primary/20`} 
-                        />
-                      </div>
-
-                      <div className="pt-10 border-t border-slate-100">
-                        <div className="flex items-center justify-between mb-8">
-                            <div>
-                                <label className={labelClass}>Configuración del Test</label>
-                                <p className="text-xs text-slate-400">Gestiona las preguntas evaluativas de esta unidad</p>
-                            </div>
-                            <button 
-                                onClick={addQuestion}
-                                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-primary transition-all"
-                            >
-                                <i className="bi bi-plus-lg"></i> Añadir Pregunta
-                            </button>
-                        </div>
-
-                        <div className="space-y-6">
-                          {formData.quiz.questions.map((q: any, idx: number) => (
-                            <div key={idx} className="p-6 bg-slate-50 rounded-[32px] border border-slate-200/60 relative group">
-                              <button 
-                                onClick={() => removeQuestion(idx)}
-                                className="absolute top-4 right-4 w-8 h-8 bg-white text-red-400 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:text-red-600 shadow-sm"
-                              >
-                                <i className="bi bi-trash text-sm"></i>
-                              </button>
-
-                              <div className="space-y-4">
-                                <div>
-                                    <span className="text-[9px] font-black text-slate-400 mb-2 block tracking-tighter">PREGUNTA #0{idx+1}</span>
-                                    <input 
-                                        placeholder="Escribe la pregunta..."
-                                        className={inputClass}
-                                        value={q.question}
-                                        onChange={(e) => updateQuestion(idx, 'question', e.target.value)}
-                                    />
-                                </div>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    {q.options.map((opt: string, optIdx: number) => (
-                                        <div key={optIdx}>
-                                            <input 
-                                                placeholder={`Opción ${optIdx + 1}`}
-                                                className={`${inputClass} bg-white! py-2! text-xs`}
-                                                value={opt}
-                                                onChange={(e) => {
-                                                    const newOpts = [...q.options];
-                                                    newOpts[optIdx] = e.target.value;
-                                                    updateQuestion(idx, 'options', newOpts);
-                                                }}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100">
-                                    <span className="text-[9px] font-black uppercase text-slate-400 ml-2">Correcta:</span>
-                                    <select 
-                                        className="flex-1 bg-transparent text-xs font-bold outline-none cursor-pointer text-primary"
-                                        value={q.correctAnswer}
-                                        onChange={(e) => updateQuestion(idx, 'correctAnswer', e.target.value)}
-                                    >
-                                        <option value="">Selecciona la respuesta correcta</option>
-                                        {q.options.map((o: string, i: number) => (
-                                            <option key={i} value={o}>{o || `Opción ${i+1}`}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="animate-in fade-in duration-700 text-left">
-                      <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-10 text-slate-900 leading-tight">
-                        {content.title}
-                      </h1>
-                      
-                      {content.imageUrl && (
-                        <div className="mb-12 rounded-[40px] overflow-hidden shadow-2xl shadow-slate-200 border border-slate-100">
-                          <img src={content.imageUrl} className="w-full h-auto object-cover" alt="Cover" />
-                        </div>
-                      )}
-
-                      <ReactMarkdown
-                        components={{
-                          h2: ({ ...props }) => (
-                            <h2 className="text-2xl font-black text-slate-900 mt-16 mb-6 tracking-tight border-b border-slate-100 pb-3" {...props} />
-                          ),
-                          p: ({ ...props }) => (
-                            <p className="text-[17px] leading-[1.8] text-slate-600 mb-8" {...props} />
-                          ),
-                          ul: ({ ...props }) => (
-                            <ul className="space-y-4 mb-10 mt-2 list-none" {...props} />
-                          ),
-                          li: ({ ...props }) => (
-                            <li className="flex items-start gap-3 text-[16.5px] text-slate-600">
-                              <span className="mt-2.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                              <span {...props} />
-                            </li>
-                          ),
-                          strong: ({ ...props }) => (
-                            <strong className="font-bold text-slate-900" {...props} />
-                          )
-                        }}
-                      >
-                        {content.summary}
-                      </ReactMarkdown>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <aside className="w-80 border-l border-slate-100 bg-white p-8 flex flex-col gap-8 overflow-y-auto no-scrollbar">
-                <div className="flex flex-col gap-1">
-                  <h4 className={labelClass}>Recursos de aprendizaje</h4>
-                </div>
-
-                {currentQuestions.length > 0 && (
-                  <button 
-                    onClick={() => setShowQuizModal(true)}
-                    className="group w-full p-6 bg-slate-900 rounded-[32px] text-white flex flex-col gap-4 hover:bg-primary transition-all duration-500 shadow-xl shadow-indigo-100 hover:-translate-y-1"
-                  >
-                    <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform shadow-inner">
-                      <i className="bi bi-patch-question text-2xl"></i>
-                    </div>
-                    <div className="text-left">
-                      <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">Cuestionario</p>
-                      <p className="text-base font-bold tracking-tight">Realizar Evaluación</p>
-                    </div>
-                  </button>
-                )}
-
-                {content.url?.includes('.mp3') && (
-                  <div className="bg-emerald-50/50 border border-emerald-100 rounded-[32px] p-6 space-y-5 transition-all hover:bg-emerald-50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-100">
-                          <i className="bi bi-headphones"></i>
-                        </div>
-                        <div>
-                            <span className="text-[9px] font-black uppercase text-emerald-700 block tracking-tight">Audio Guía</span>
-                            <span className="text-[8px] font-medium text-emerald-600/60 uppercase">Disponible offline</span>
-                        </div>
-                      </div>
-                    </div>
-                    <audio 
-                      ref={audioRef} 
-                      controls 
-                      className="w-full h-10 accent-emerald-600" 
-                      src={content.url} 
-                    />
-                  </div>
-                )}
-
-                {content.url && !content.url.includes('.mp3') && (
-                  <div className="space-y-4">
-                    <p className={labelClass}>Material Descargable</p>
-                    <a 
-                      href={content.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-5 p-5 bg-white rounded-[28px] hover:bg-slate-50 transition-all border border-slate-100 group shadow-sm hover:shadow-md"
-                    >
-                      <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
-                        <i className="bi bi-file-earmark-pdf text-2xl"></i>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-black uppercase tracking-tight text-slate-700">Documento PDF</span>
-                        <span className="text-[10px] font-bold text-slate-400">Ver material original</span>
-                      </div>
-                    </a>
-                  </div>
-                )}
-                
-                <div className="mt-auto pt-8 border-t border-slate-50">
-                    <button 
-                      onClick={() => setShowDeleteModal(true)} 
-                      className="flex items-center justify-center gap-3 w-full py-4 text-[9px] font-black uppercase text-red-400 hover:text-red-600 transition-all tracking-[0.2em] hover:bg-red-50 rounded-[20px] border border-transparent hover:border-red-100"
-                    >
-                      <i className="bi bi-trash3 text-xs"></i> Eliminar Unidad
-                    </button>
-                </div>
-              </aside>
-            </div>
-          </>
-        )}
-      </main>
-
-      {/* MODALES SE MANTIENEN FUERA DEL MAIN */}
-      {showQuizModal && (
-        <div className="fixed inset-0 z-100 flex justify-end animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setShowQuizModal(false)} />
-          <div className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
-              <div>
-                <h3 className="text-xl font-black tracking-tight text-slate-900">Test de Evaluación</h3>
-                <p className="text-[10px] font-black uppercase text-primary tracking-widest mt-1">0{currentQuestions.length} Preguntas</p>
-              </div>
-              <button onClick={() => setShowQuizModal(false)} className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center hover:rotate-90 transition-all hover:bg-slate-200">
-                <i className="bi bi-x-lg"></i>
+              )}
+              <button 
+                onClick={isEditing ? handleSave : () => setIsEditing(true)} 
+                disabled={loading}
+                className={`${isEditing ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-primary shadow-primary/20'} text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95`}
+              >
+                {isEditing ? "Guardar Cambios" : "Editar Unidad"}
               </button>
             </div>
-            
-            <div className="flex-1 overflow-y-auto p-8 space-y-10 no-scrollbar pb-32">
-              {currentQuestions.map((q: any, idx: number) => (
-                <div key={idx} className="space-y-5">
-                  <p className="font-bold text-base leading-tight text-slate-900"><span className="text-primary mr-2">Q0{idx+1}.</span> {q.question}</p>
-                  <div className="grid gap-3">
-                    {q.options.map((opt: string, i: number) => (
-                      <button 
-                        key={i} 
-                        onClick={() => !quizSubmitted && setQuizAnswers({...quizAnswers, [idx]: opt})}
-                        className={`text-left px-6 py-5 rounded-[24px] border-2 text-[11px] font-black transition-all ${quizAnswers[idx] === opt ? 'border-primary bg-primary/5 text-primary shadow-lg shadow-indigo-100' : 'border-slate-100 bg-white hover:border-slate-200'}`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
+          }
+        />
+
+        <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 overflow-y-auto bg-muted/30 p-8 no-scrollbar">
+            <div className="max-w-4xl mx-auto bg-card shadow-xl border border-border/50 rounded-xl p-8 md:p-16 mb-10">
+              {isEditing ? (
+                <div className="space-y-10">
+                  <section className="space-y-6">
+  <h3 className="text-lg font-black border-l-4 border-primary pl-4 uppercase tracking-tighter">Información General</h3>
+  
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {/* Título */}
+    <div className="md:col-span-2">
+      <label className={labelClass}>Título de la Unidad</label>
+      <input 
+        value={formData.title} 
+        onChange={e => setFormData({...formData, title: e.target.value})} 
+        className={inputClass} 
+        placeholder="Ej: Introducción a la IA"
+      />
+    </div>
+
+    {/* Input de Image URL */}
+    <div className="space-y-2">
+      <label className={labelClass}>URL de la Imagen de Portada</label>
+      <input 
+        value={formData.imageUrl} 
+        onChange={e => setFormData({...formData, imageUrl: e.target.value})} 
+        className={inputClass} 
+        placeholder="https://ejemplo.com/imagen.jpg"
+      />
+    </div>
+
+    {/* Previsualización de Imagen */}
+    <div className="space-y-2">
+      <label className={labelClass}>Previsualización</label>
+      <div className="h-[42px] rounded-xl border border-border bg-muted/20 flex items-center px-4 overflow-hidden">
+        {formData.imageUrl ? (
+          <div className="flex items-center gap-3 w-full">
+            <img 
+              src={formData.imageUrl} 
+              alt="Preview" 
+              className="w-6 h-6 rounded shadow-sm object-cover"
+              onError={(e) => (e.currentTarget.src = "https://placehold.co/400x400?text=Error")}
+            />
+            <span className="text-[10px] text-muted-foreground truncate flex-1">{formData.imageUrl}</span>
+          </div>
+        ) : (
+          <span className="text-[10px] text-muted-foreground italic">No hay imagen seleccionada</span>
+        )}
+      </div>
+    </div>
+  </div>
+
+  {/* Contenido Markdown */}
+  <div>
+    <label className={labelClass}>Contenido (Markdown)</label>
+    <textarea 
+      rows={12} 
+      value={formData.summary} 
+      onChange={e => setFormData({...formData, summary: e.target.value})} 
+      className={`${inputClass} font-mono text-xs leading-relaxed`} 
+      placeholder="# Escribe aquí el contenido..."
+    />
+  </div>
+</section>
+
+                  <section className="space-y-6 pt-10 border-t border-border">
+                    <h3 className="text-lg font-black border-l-4 border-orange-400 pl-4 uppercase tracking-tighter text-orange-500">Editor de Quiz</h3>
+                    <div className="space-y-12">
+                      {formData.quiz.questions.map((q: any, qIdx: number) => (
+                        <div key={qIdx} className="bg-muted/20 p-6 rounded-2xl border border-border/50 space-y-4">
+                          <input value={q.question} onChange={e => updateQuestionText(qIdx, e.target.value)} className={inputClass} placeholder="Pregunta..." />
+                          <div className="grid grid-cols-2 gap-4">
+                            {q.options.map((opt: string, oIdx: number) => (
+                              <input key={oIdx} value={opt} onChange={e => updateOptionText(qIdx, oIdx, e.target.value)} className={`${inputClass} text-xs`} placeholder={`Opción ${oIdx+1}`} />
+                            ))}
+                          </div>
+                          <select value={q.correctAnswer} onChange={e => updateCorrectAnswer(qIdx, e.target.value)} className={inputClass}>
+                            <option value="">Selecciona la correcta</option>
+                            {q.options.map((opt: string, oIdx: number) => <option key={oIdx} value={opt}>{opt}</option>)}
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              ) : (
+                <div className="prose dark:prose-invert max-w-none">
+                  <h1 className="text-4xl font-black mb-8 border-b-4 border-primary/10 pb-4">{content?.title}</h1>
+                   <ReactMarkdown
+                    components={{
+                      h2: ({ ...props }) => <h2 className="text-2xl font-black text-foreground mt-14 mb-6 flex items-center gap-3" {...props} />,
+                      h3: ({ ...props }) => <h3 className="text-xl font-bold text-foreground/90 mt-10 mb-4" {...props} />,
+                      p: ({ ...props }) => <p className="text-[17px] leading-[1.8] text-muted-foreground mb-8 whitespace-pre-wrap" {...props} />,
+                      ul: ({ ...props }) => <ul className="my-8 space-y-4" {...props} />,
+                      li: ({ ...props }) => (
+                        <li className="flex items-start gap-3 text-[16px] text-muted-foreground leading-relaxed">
+                          <span className="mt-2.5 w-2 h-2 rounded-full bg-primary/40 shrink-0" />
+                          <span {...props} />
+                        </li>
+                      ),
+                      blockquote: ({ ...props }) => (
+                        <blockquote className="border-l-4 border-primary bg-muted/40 p-6 rounded-r-2xl my-10 italic text-foreground/80 shadow-inner" {...props} />
+                      )
+                    }}
+                  >
+                    {content?.summary}
+                  </ReactMarkdown> 
+                </div>
+              )}
+            </div>
+          </div>
+
+          <aside className="w-80 border-l border-border bg-card p-6 flex flex-col gap-6">
+            <h4 className={labelClass}>Recursos</h4>
+            {content?.podcast?.url && (
+              <div className="relative group overflow-hidden bg-linear-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 rounded-[2rem] p-5 transition-all hover:shadow-xl hover:shadow-emerald-500/5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                    <i className="bi bi-mic-fill text-lg"></i>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-tighter">Audio Podcast</p>
+                    <p className="text-xs font-bold opacity-80">Locución por IA</p>
+                  </div>
+                </div>
+                <audio ref={audioRef} src={content.podcast.url} controls className="w-full h-8 accent-emerald-500 mb-2" />
+              </div>
+            )}
+            {content?.quiz?.questions?.length > 0 && (
+              <button onClick={() => setShowQuizModal(true)} className="w-full p-4 bg-orange-400 text-white rounded-2xl flex items-center gap-4 hover:bg-orange-500 transition-all shadow-lg active:scale-95">
+                <i className="bi bi-patch-question text-2xl"></i>
+                <div className="text-left">
+                  <p className="text-[8px] font-bold uppercase opacity-70">Evaluación</p>
+                  <p className="text-sm font-bold">Probar Test</p>
+                </div>
+              </button>
+            )}
+
+            {content?.url?.toLowerCase().includes('.pdf') && (
+              <a href={content.url} target="_blank" rel="noopener noreferrer"
+                className="group w-full p-3 bg-muted border border-border rounded-2xl flex items-center gap-3 hover:border-primary transition-all active:scale-95">
+                <div className="w-10 h-10 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <i className="bi bi-file-earmark-pdf text-xl"></i>
+                </div>
+                <div className="text-left overflow-hidden">
+                  <p className="text-[8px] font-bold uppercase text-muted-foreground tracking-tighter">Material PDF</p>
+                  <p className="text-xs font-bold text-foreground truncate">Ver documento</p>
+                </div>
+              </a>
+            )} 
+            <button onClick={() => setShowDeleteModal(true)} className="mt-auto py-3 text-[9px] font-black uppercase text-destructive border-t border-border tracking-widest hover:text-red-500">
+              Eliminar Unidad
+            </button>
+          </aside>
+        </div>
+      </main>
+
+      {/* MODAL DEL QUIZ INTERACTIVO */}
+      {showQuizModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="bg-card border border-border rounded-[32px] p-8 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center mb-8 shrink-0">
+              <div>
+                <h3 className="text-2xl font-black">Simulación de Test</h3>
+                <p className="text-xs text-muted-foreground">Prueba la experiencia del estudiante</p>
+              </div>
+              <button onClick={resetQuiz} className="text-muted-foreground hover:text-foreground transition-colors">
+                <i className="bi bi-x-circle text-2xl"></i>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-2 space-y-10 no-scrollbar">
+              {content?.quiz?.questions.map((q: any, qIdx: number) => (
+                <div key={qIdx} className="space-y-4">
+                  <p className="font-bold text-lg flex gap-3">
+                    <span className="text-primary/40">0{qIdx + 1}.</span>
+                    {q.question}
+                  </p>
+                  <div className="grid grid-cols-1 gap-3">
+                    {q.options.map((opt: string, oIdx: number) => {
+                      const isSelected = userAnswers[qIdx] === opt;
+                      const isCorrect = opt === q.correctAnswer;
+                      let variantClasses = "border-border hover:border-primary/50 bg-muted/30";
+                      if (isSelected) variantClasses = "border-primary bg-primary/5 ring-2 ring-primary/20";
+                      if (isCorrected) {
+                        if (isCorrect) variantClasses = "border-emerald-500 bg-emerald-500/10 text-emerald-700 ring-2 ring-emerald-500/20 font-bold";
+                        else if (isSelected && !isCorrect) variantClasses = "border-destructive bg-destructive/10 text-destructive ring-2 ring-destructive/20";
+                        else variantClasses = "border-border opacity-50 bg-muted/10";
+                      }
+                      return (
+                        <button key={oIdx} disabled={isCorrected} onClick={() => handleSelectOption(qIdx, opt)}
+                          className={`w-full p-4 rounded-2xl border text-left text-sm transition-all flex items-center justify-between group ${variantClasses}`}>
+                          {opt}
+                          {isCorrected && isCorrect && <i className="bi bi-check-circle-fill text-emerald-500"></i>}
+                          {isCorrected && isSelected && !isCorrect && <i className="bi bi-x-circle-fill text-destructive"></i>}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="absolute bottom-0 left-0 right-0 p-8 border-t border-slate-100 bg-white/90 backdrop-blur-md">
-              {!quizSubmitted ? (
-                <button onClick={handleQuizSubmit} className="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-primary transition-all hover:scale-[1.02] active:scale-95">Finalizar y Evaluar</button>
-              ) : (
-                <div className="text-center space-y-4">
-                  <div className="text-5xl font-black text-primary animate-bounce">{quizScore} / {currentQuestions.length}</div>
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Resultado de la prueba</p>
-                  <button onClick={() => {setQuizSubmitted(false); setQuizAnswers({});}} className="text-[10px] font-black uppercase underline text-slate-400 hover:text-slate-900 transition-colors">Intentar de nuevo</button>
+            <div className="pt-6 mt-6 border-t border-border shrink-0 space-y-4">
+              {isCorrected && (
+                <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/10 rounded-2xl">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-primary tracking-widest">Resultado Final</p>
+                      <p className="text-sm font-bold">Has acertado {score} de {totalQuestions} preguntas</p>
+                    </div>
+                  </div>
+                  <p className="text-2xl font-black text-primary">{Math.round((score / totalQuestions) * 100)}%</p>
                 </div>
               )}
+              <div className="flex gap-4">
+                {!isCorrected ? (
+                  <button onClick={() => setIsCorrected(true)} disabled={Object.keys(userAnswers).length < totalQuestions}
+                    className="flex-1 bg-primary text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20 disabled:opacity-50 transition-all active:scale-95">
+                    Corregir Cuestionario
+                  </button>
+                ) : (
+                  <button onClick={() => { setIsCorrected(false); setUserAnswers({}); }}
+                    className="flex-1 bg-muted text-foreground py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all active:scale-95">
+                    Reiniciar Intento
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
       )}
 
+      {/* MODAL DE ELIMINAR */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[48px] p-12 max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95 duration-300 border border-white/20">
-             <div className="w-24 h-24 bg-red-50 text-red-500 rounded-[32px] flex items-center justify-center mx-auto mb-8 text-4xl shadow-inner">
-               <i className="bi bi-exclamation-octagon"></i>
-             </div>
-             <h2 className="text-2xl font-black mb-3 text-slate-900 tracking-tight">¿Eliminar unidad?</h2>
-             <p className="text-sm text-slate-400 mb-10 leading-relaxed font-medium">Esta acción no se puede deshacer. Se perderán todos los datos y archivos.</p>
-             <div className="flex flex-col gap-3">
-               <button className="w-full py-5 bg-red-500 text-white rounded-[24px] font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg shadow-red-100 hover:scale-[1.02] active:scale-95">Confirmar Eliminación</button>
-               <button onClick={() => setShowDeleteModal(false)} className="w-full py-4 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-slate-900 transition-colors">Volver atrás</button>
-             </div>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-card border border-border rounded-[32px] p-8 max-w-sm w-full shadow-2xl text-center">
+            <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-6">
+              <i className="bi bi-exclamation-triangle text-3xl"></i>
+            </div>
+            <h3 className="text-xl font-black mb-2">¿Eliminar Unidad?</h3>
+            <p className="text-sm text-muted-foreground mb-8">Esta acción es irreversible.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteModal(false)} className="flex-1 px-6 py-3 rounded-xl bg-muted text-foreground text-[10px] font-black uppercase tracking-widest transition-all">
+                Cancelar
+              </button>
+              <button onClick={handleDelete} disabled={isDeleting} className="flex-1 px-6 py-3 rounded-xl bg-destructive text-white text-[10px] font-black uppercase tracking-widest shadow-lg transition-all disabled:opacity-50">
+                {isDeleting ? "Eliminando..." : "Sí, Eliminar"}
+              </button>
+            </div>
           </div>
         </div>
       )}

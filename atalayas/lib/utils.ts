@@ -42,6 +42,8 @@ export const API_ROUTES = {
     CREATE: (courseId: string) => `${BASE_URL}/courses/${courseId}/content`,
     GET_BY_ID: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
     COMPLETE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}/complete`,
+    UPDATE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
+    DELETE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
    },
   ANNOUNCEMENTS: {
     GET_ALL: `${BASE_URL}/announcement`
