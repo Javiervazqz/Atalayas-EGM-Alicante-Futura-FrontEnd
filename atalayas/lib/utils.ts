@@ -66,6 +66,6 @@ ONBOARDING: {
     SEND:`${BASE_URL}/chatbot`
   },
   ENROLLMENTS: {
-    BASE: `${BASE_URL}/enrollment`
+    BASE: `${BASE_URL}/enrollment`,
   }
 }

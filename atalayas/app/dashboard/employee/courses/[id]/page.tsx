@@ -3,13 +3,13 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Sidebar from '@/components/ui/Sidebar';
-import SearchInput from '@/components/ui/Searchbar'; 
+import SearchInput from '@/components/ui/Searchbar';
 import { API_ROUTES } from '@/lib/utils';
 import { motion } from "framer-motion";
 
 export default function CourseDetailPage() {
   const params = useParams();
-  const courseId = params.id as string; 
+  const courseId = params.id as string;
 
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -23,14 +23,14 @@ export default function CourseDetailPage() {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        
+
         const res = await fetch(API_ROUTES.COURSES.GET_BY_ID(courseId), {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!res.ok) throw new Error("Error en la respuesta");
         const data = await res.json();
-        
+
         const finalData = data.course || data.data || data;
         setCourse(finalData);
       } catch (err) {
@@ -44,8 +44,8 @@ export default function CourseDetailPage() {
   }, [courseId]);
 
   const contentList = course?.Content || course?.content || [];
-  
-  const filteredContent = contentList.filter((c: any) => 
+
+  const filteredContent = contentList.filter((c: any) =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -53,22 +53,22 @@ export default function CourseDetailPage() {
 
   if (error) return (
     <div className="flex min-h-screen bg-background font-sans">
-       <Sidebar role="EMPLOYEE" />
-       <main className="flex-1 p-10 flex flex-col items-center justify-center">
-         <div className="bg-destructive/10 p-8 rounded-3xl border border-destructive/20 text-center max-w-md">
-           <i className="bi bi-exclamation-triangle text-4xl text-destructive mb-4 block"></i>
-           <h2 className="text-destructive font-bold text-xl mb-2">Error al cargar el curso</h2>
-           <p className="text-muted-foreground text-sm">No se ha podido conectar con el servidor. Por favor, vuelve a intentarlo más tarde.</p>
-         </div>
-       </main>
+      <Sidebar role="EMPLOYEE" />
+      <main className="flex-1 p-10 flex flex-col items-center justify-center">
+        <div className="bg-destructive/10 p-8 rounded-3xl border border-destructive/20 text-center max-w-md">
+          <i className="bi bi-exclamation-triangle text-4xl text-destructive mb-4 block"></i>
+          <h2 className="text-destructive font-bold text-xl mb-2">Error al cargar el curso</h2>
+          <p className="text-muted-foreground text-sm">No se ha podido conectar con el servidor. Por favor, vuelve a intentarlo más tarde.</p>
+        </div>
+      </main>
     </div>
   );
 
   if (loading) return (
     <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-        className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" 
+        className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
       />
     </div>
   );
@@ -79,7 +79,7 @@ export default function CourseDetailPage() {
 
       <main className="flex-1 h-screen overflow-y-auto">
         <div className="max-w-6xl mx-auto px-6 lg:px-8 py-12">
-          
+
           <div className="mb-10">
             <Link href="/dashboard/employee/courses" className="text-secondary text-sm font-bold hover:opacity-80 transition-opacity mb-6 inline-flex items-center gap-2">
               <i className="bi bi-arrow-left"></i> Mis cursos
@@ -110,13 +110,13 @@ export default function CourseDetailPage() {
               {sortedContent.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {sortedContent.map((content: any) => (
-                    <Link 
-                      key={content.id} 
+                    <Link
+                      key={content.id}
                       /* 👇 AQUÍ ESTABA EL ERROR DEL FRONTEND 👇 */
                       href={`/dashboard/employee/courses/${courseId}/content/${content.id}`}
                     >
                       <div className="group bg-card rounded-3xl border border-border shadow-sm hover:shadow-xl hover:border-secondary transition-all duration-300 flex flex-col h-full overflow-hidden active:scale-95">
-                        
+
                         {/* IMAGEN DE LA LECCIÓN */}
                         <div className="relative w-full aspect-video overflow-hidden bg-muted border-b border-border flex items-center justify-center">
                           <div className="absolute top-3 left-3 z-10 bg-background/90 backdrop-blur-md w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black text-foreground shadow-sm">
@@ -131,6 +131,11 @@ export default function CourseDetailPage() {
                           ) : (
                             <i className="bi bi-image text-4xl text-muted-foreground/30"></i>
                           )}
+                          {content.isCompleted && (
+                            <div className="absolute top-3 right-3 z-10 bg-yellow-400 text-white w-8 h-8 rounded-xl flex items-center justify-center shadow-lg">
+                              <i className="bi bi-trophy-fill"></i>
+                            </div>
+                          )}
                         </div>
 
                         {/* INFO DE LA LECCIÓN */}
@@ -138,7 +143,7 @@ export default function CourseDetailPage() {
                           <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-secondary transition-colors line-clamp-2 h-14 overflow-hidden">
                             {content.title}
                           </h3>
-                          
+
                           <p className="text-sm text-muted-foreground line-clamp-2 mb-6">
                             {content.summary || "Sin descripción disponible para esta lección."}
                           </p>
