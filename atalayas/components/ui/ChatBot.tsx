@@ -22,7 +22,7 @@ const SUGGESTED = [
 const WELCOME: Message = {
     id: 'welcome',
     role: 'assistant',
-    content: '¡Hola! 👋 Soy el asistente de Atalayas. Puedo ayudarte con información sobre servicios, cursos y documentos del polígono. ¿En qué te puedo ayudar?',
+    content: '¡Hola! 👋 Soy el asistente de Atalayas. Puedo ayudarte con información sobre servicios, cursos y documentos disponibles. ¿En qué te puedo ayudar?',
     timestamp: new Date(),
 };
 

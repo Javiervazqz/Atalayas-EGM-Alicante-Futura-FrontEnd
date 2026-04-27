@@ -66,7 +66,7 @@ export default function ServiceDetail() {
                       ? 'bg-primary/5 text-primary border-primary/20' 
                       : 'bg-secondary/5 text-secondary border-secondary/20'
                     }`}>
-                      {service.isPublic ? '🌐 EGM Access' : '🔒 Internal'}
+                      {service.isPublic ? '🌐 Servicio de Atalayas EGM' : '🔒 Servicio de mi empresa'}
                     </span>
                   </div>
 
@@ -77,17 +77,9 @@ export default function ServiceDetail() {
                       {service.description || 'No hay una descripción detallada disponible actualmente.'}
                     </p>
                   </div>
-                </section>
-              </div>
 
-              {/* COLUMNA DERECHA: MEDIA + CONTACTO */}
-              {hasSidebar && (
-                <aside className="lg:col-span-5 space-y-8">
-                  <div className="sticky top-6 space-y-8">
-                    
-                    {/* IMAGEN ESTÁTICA PREMIUM */}
-                    {service.mediaUrl && (
-                      <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-sm group">
+                  {service.mediaUrl && (
+                      <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-sm group mt-10">
                         <div className="aspect-[4/3] overflow-hidden bg-muted">
                           <img
                             src={service.mediaUrl}
@@ -102,6 +94,13 @@ export default function ServiceDetail() {
                         </div>
                       </div>
                     )}
+                </section>
+              </div>
+
+              {/* COLUMNA DERECHA: MEDIA + CONTACTO */}
+              {hasSidebar && (
+                <aside className="lg:col-span-5 space-y-8">
+                  <div className="sticky top-6 space-y-8">                    
 
                     <div className="animate-in fade-in slide-in-from-right-4 duration-700">
                       <ContactCard service={service} />

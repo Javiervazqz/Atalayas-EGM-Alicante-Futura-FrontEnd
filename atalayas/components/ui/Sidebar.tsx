@@ -237,9 +237,15 @@ export default function Sidebar({ role }: SidebarProps) {
                 {item.label === 'Sugerencias' && pendingSuggestionsCount > 0 && !collapsed && (
                    <span className="bg-destructive text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{pendingSuggestionsCount}</span>
                 )}
-                {collapsed && (pendingRequestsCount > 0 || pendingSuggestionsCount > 0) && (
-                   <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
-                )}
+               {/* Badge para Solicitudes (Colapsado) */}
+{collapsed && item.label === 'Solicitudes' && pendingRequestsCount > 0 && (
+  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
+)}
+
+{/* Badge para Sugerencias (Colapsado) */}
+{collapsed && item.label === 'Sugerencias' && pendingSuggestionsCount > 0 && (
+  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
+)}
               </Link>
             );
           })}

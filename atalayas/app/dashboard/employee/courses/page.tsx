@@ -110,7 +110,7 @@ export default function EmployeeCoursesPage() {
                         <div className="hidden md:flex items-center gap-3 px-5 py-2.5 bg-card border border-border rounded-2xl shadow-sm">
                             <i className="bi bi-lightning-charge-fill text-secondary"></i>
                             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                                {courses.length} Programas disponibles
+                                {courses.length} Cursos disponibles
                             </span>
                         </div>
                     </div>
@@ -153,7 +153,7 @@ export default function EmployeeCoursesPage() {
                                                     <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${
                                                         isBasico ? 'bg-primary/5 text-primary border-primary/20' : 'bg-secondary/5 text-secondary border-secondary/20'
                                                     }`}>
-                                                        {isBasico ? 'Básico' : 'Pro'}
+                                                        {isBasico ? 'Básico' : 'Especializado'}
                                                     </span>
                                                 </div>
 

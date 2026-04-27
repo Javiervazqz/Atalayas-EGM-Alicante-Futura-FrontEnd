@@ -202,7 +202,7 @@ export default function CompanyRequestsPage() {
                 }`}
               >
                 <span className="relative z-10 flex items-center justify-center">
-                  {f === 'ALL' ? 'Historial' : statusConfig[f].label}
+                  {f === 'ALL' ? 'Todas' : statusConfig[f].label}
                   {f === 'PENDING' && pendingCount > 0 && (
                     <span className={`ml-2 px-1.5 py-0.5 rounded-md text-[9px] font-black ${filter === f ? 'bg-primary text-white' : 'bg-primary text-white animate-pulse'}`}>
                       {pendingCount}
