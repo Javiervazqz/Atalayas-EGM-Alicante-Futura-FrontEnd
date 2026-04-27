@@ -24,7 +24,9 @@ export default function NewAIContentPage() {
     file: null as File | null,
   });
 
-  const isReady = formData.title.trim().length > 0 && formData.file !== null;
+  // Validación corregida para considerar ambos tipos de fuente
+  const isReady = formData.title.trim().length > 0 && 
+                  (sourceType === 'file' ? formData.file !== null : formData.url.trim().length > 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,8 +69,8 @@ export default function NewAIContentPage() {
       
       <main className="flex-1 overflow-auto flex flex-col relative">
         <PageHeader 
-          title="Generador IA"
-          description="Crea lecciones automáticamente a partir de documentos o enlaces."
+          title="Generar Contenido"
+          description="Crea lecciones automáticamente con IA a partir de documentos o enlaces."
           icon={<i className="bi bi-robot"></i>}
           backUrl={`/dashboard/administrator/admin/courses/${id}`}
         />
@@ -108,8 +110,8 @@ export default function NewAIContentPage() {
               )}
             </div>
 
-            {/* 3. OPCIONES */}
-            <div className="bg-card p-6 lg:p-8 rounded-3xl border border-border shadow-sm"/>
+            {/* 3. OPCIONES (ERROR CORREGIDO AQUÍ: Se eliminó el /> que cerraba el div antes de tiempo) */}
+            <div className="bg-card p-6 lg:p-8 rounded-3xl border border-border shadow-sm">
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6 ml-1">Opciones de generación</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
@@ -129,12 +131,12 @@ export default function NewAIContentPage() {
                   </button>
                 ))}
               </div>
-            );
+            </div>
 
             <div className="pt-4 flex justify-end items-center gap-4">
               <button type="button" onClick={() => router.back()} className="px-5 py-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">Cancelar</button>
               <button 
-                type="submit" disabled={loading} 
+                type="submit" disabled={loading || !isReady} 
                 className="px-8 py-2.5 bg-secondary text-secondary-foreground rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 shadow-md transition-all flex items-center gap-2 disabled:opacity-50"
               >
                 {loading ? <><i className="bi bi-arrow-repeat animate-spin"></i> Procesando...</> : <><i className="bi bi-magic"></i> Generar Contenido</>}

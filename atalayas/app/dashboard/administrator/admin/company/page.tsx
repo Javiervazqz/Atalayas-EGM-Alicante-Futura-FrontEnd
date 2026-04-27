@@ -111,7 +111,7 @@ export default function EditCompanyPage() {
                     <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1">Nombre Legal</label>
                     <input 
                       type="text" 
-                      value={formData.name} 
+                      value='Test S.L'
                       disabled 
                       className="w-full bg-muted/50 border border-transparent rounded-xl px-5 py-3 text-sm font-semibold text-muted-foreground cursor-not-allowed opacity-80"
                     />
@@ -120,7 +120,7 @@ export default function EditCompanyPage() {
                     <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1">CIF</label>
                     <input 
                       type="text" 
-                      value={formData.cif} 
+                      value='B1234567'
                       disabled 
                       className="w-full bg-muted/50 border border-transparent rounded-xl px-5 py-3 text-sm font-semibold text-muted-foreground cursor-not-allowed opacity-80"
                     />

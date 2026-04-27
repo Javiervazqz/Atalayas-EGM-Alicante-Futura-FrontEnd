@@ -39,7 +39,7 @@ export default function NewCompanyService() {
     }
   };
 
-  const inputClass = "w-full px-5 py-3 bg-background border border-input focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl outline-none transition-all text-sm font-medium";
+  const inputClass = "w-full px-5 py-3 bg-background border border-input focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl outline-none transition-all text-sm font-medium placeholder:text-muted-foreground/40";
 
   return (
     <div className="flex min-h-screen bg-background font-sans text-foreground">
@@ -71,6 +71,7 @@ export default function NewCompanyService() {
                   className={`${inputClass} text-base font-bold ${errors.title ? 'border-destructive' : ''}`}
                   placeholder="Ej: Servicio de Fisioterapia"
                 />
+                {errors.title && <p className="text-[10px] text-destructive font-bold ml-1 uppercase">{errors.title}</p>}
               </div>
 
               <div className="space-y-2">
@@ -90,11 +91,11 @@ export default function NewCompanyService() {
               </div>
             </section>
 
-            {/* SECCIÓN 2: CONTACTO */}
+            {/* SECCIÓN 2: CONTACTO Y ENLACES */}
             <section className="bg-card p-6 lg:p-10 rounded-3xl border border-border shadow-sm space-y-6">
               <div className="flex items-center gap-3 pb-4 border-b border-border/60">
                 <div className="w-8 h-8 bg-secondary/10 text-secondary rounded-lg flex items-center justify-center text-sm"><i className="bi bi-telephone"></i></div>
-                <h3 className="font-bold text-sm uppercase tracking-widest">Datos de Contacto</h3>
+                <h3 className="font-bold text-sm uppercase tracking-widest">Datos de Contacto y Enlaces</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -113,6 +114,15 @@ export default function NewCompanyService() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Horario</label>
                   <input value={formData.schedule} onChange={e => setFormData({...formData, schedule: e.target.value})} className={inputClass} placeholder="Lun-Vie 9:00 a 18:00" />
+                </div>
+                {/* NUEVOS CAMPOS AÑADIDOS */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Enlace Externo (Web/Reserva)</label>
+                  <input value={formData.externalUrl} onChange={e => setFormData({...formData, externalUrl: e.target.value})} className={inputClass} placeholder="https://reserva-tu-cita.com" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Precio o Tarifa</label>
+                  <input value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className={inputClass} placeholder="Ej: 20€ / sesión o Gratis" />
                 </div>
               </div>
             </section>

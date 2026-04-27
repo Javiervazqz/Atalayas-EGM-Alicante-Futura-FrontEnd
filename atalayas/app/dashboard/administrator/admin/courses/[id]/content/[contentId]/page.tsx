@@ -5,396 +5,444 @@ import { useParams, useRouter } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
 import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
-import mediumZoom from 'medium-zoom';
-import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 
-const inputClass = "w-full px-5 py-3 bg-background border border-input focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl outline-none transition-all text-foreground text-sm font-medium placeholder:text-muted-foreground/50 shadow-sm";
+const inputClass = "w-full px-4 py-2.5 bg-background border border-border focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl outline-none transition-all text-foreground text-sm font-medium shadow-sm placeholder:text-muted-foreground/40";
+const labelClass = "text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block";
 
 export default function AdminContentDetail() {
   const params = useParams();
   const router = useRouter();
-  const zoomRef = useRef<HTMLImageElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [errors, setErrors] = useState<{ title?: string }>({});
-
-  const [deleting, setDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
-  const [quizScore, setQuizScore] = useState(0);
-
-  const lastSavedSecond = useRef<number>(0);
-type FormDataType = {
-  title: string;
-  summary: string;
-  imageUrl: string;
-  url: string;
-  quiz: any;
-  podcast: any;
-};
-  const [formData, setFormData] = useState<FormDataType>({
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Estados para el Quiz
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+  const [isCorrected, setIsCorrected] = useState(false);
+  
+  const [formData, setFormData] = useState<any>({
     title: "",
     summary: "",
     imageUrl: "",
     url: "",
-    quiz: null as any,
-    podcast: null as any,
+    quiz: { questions: [] },
   });
+
+  const sanitizeData = (data: any) => {
+    const raw = data?.data || data?.content || data || {};
+    let cleanQuestions = [];
+    if (raw.quiz) {
+      const source = Array.isArray(raw.quiz) ? raw.quiz : (raw.quiz.questions || []);
+      cleanQuestions = source.map((q: any) => ({
+        question: q.question || "",
+        options: Array.isArray(q.options) ? [...q.options] : ["", "", "", ""],
+        correctAnswer: q.correctAnswer || ""
+      }));
+    }
+    return {
+      ...raw,
+      title: raw.title || "Sin título",
+      summary: raw.summary || "",
+      url: raw.url || "",
+      quiz: { questions: cleanQuestions }
+    };
+  };
 
   useEffect(() => {
     const fetchContent = async () => {
+      if (!params.id || !params.contentId) return;
       try {
-        const courseId = params.id as string;
-        const contentId = params.contentId as string;
-        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(courseId, contentId), {
+        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         const data = await res.json();
-        const finalData = data.content || data.data || data;
-        setContent(finalData);
-        setFormData({
-          title: finalData.title || "",
-          summary: finalData.summary || "",
-          imageUrl: finalData.imageUrl || "",
-          url: finalData.url || "",
-          quiz: {
-            questions: Array.isArray(finalData.quiz) ? finalData.quiz : (finalData.quiz?.questions || [])
-          },
-            podcast: finalData.podcast || null,
-        });
-      } catch (error) {
-        console.error("Error:", error);
-        console.error("Error:", error);
-      } finally {
-        setLoading(false);
+        const cleanData = sanitizeData(data);
+        setContent(cleanData);
+        setFormData(JSON.parse(JSON.stringify(cleanData)));
+      } catch (error) { 
+        console.error("Error cargando unidad:", error); 
+      } finally { 
+        setLoading(false); 
       }
     };
     fetchContent();
   }, [params.contentId, params.id]);
 
-  const hydrateForm = (c: any) => {
-    setFormData({
-      title: c.title || "",
-      summary: c.summary || "",
-      imageUrl: c.imageUrl || "",
-      url: c.url || "",
-      quiz: c.quiz || null,
-      podcast: c.podcast || null,
-    });
-  };
-
-  useEffect(() => {
-    if (zoomRef.current && content?.imageUrl && !isEditing) {
-      const zoom = mediumZoom(zoomRef.current, { background: 'rgba(0,0,0,0.8)', margin: 24 });
-      return () => { zoom.detach(); };
-    }
-  }, [content?.imageUrl, isEditing]);
-
-
-
-
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      // Simulación de subida
-      const fakeUrl = "https://storage.atalayas.com/pdf-actualizado.pdf"; 
-      setFormData(prev => ({ ...prev, url: fakeUrl }));
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleSave = async () => {
-    setSaving(true);
+    setLoading(true);
     try {
       const payload = {
-        ...formData,
-        quiz: Array.isArray(formData.quiz) ? { questions: formData.quiz } : formData.quiz,
+        title: formData.title,
+        summary: formData.summary,
+        url: formData.url,
+        imageUrl: formData.imageUrl,
+        quiz: formData.quiz
       };
 
-      const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
+      const res = await fetch(API_ROUTES.CONTENT.UPDATE(params.id as string, params.contentId as string), {
         method: "PATCH",
-        headers: {
+        headers: { 
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}` 
         },
         body: JSON.stringify(payload),
       });
 
       if (res.ok) {
-        const updated = await res.json();
-        setContent(updated.content || updated);
+        const result = await res.json();
+        setContent(sanitizeData(result));
         setIsEditing(false);
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
       }
+    } catch (error) {
+      alert("Error al guardar");
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    setDeleting(true);
+    setIsDeleting(true);
     try {
-      const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
+      const res = await fetch(API_ROUTES.CONTENT.DELETE(params.id as string, params.contentId as string), {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
+
       if (res.ok) {
         router.push(`/dashboard/administrator/admin/courses/${params.id}`);
+      } else {
+        alert("No se pudo eliminar la unidad");
       }
+    } catch (error) {
+      console.error(error);
     } finally {
-      setDeleting(false);
+      setIsDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
-  const handleQuizSubmit = async () => {
-    const questions = content.quiz?.questions || content.quiz || [];
-    let correctCount = 0;
-    questions.forEach((q: any, index: number) => {
-      if (quizAnswers[index] === q.correctAnswer) correctCount++;
-    });
-    setQuizScore(correctCount);
-    setQuizSubmitted(true);
+  const handleDiscard = () => {
+    setFormData(JSON.parse(JSON.stringify(content)));
+    setIsEditing(false);
   };
 
-  if (loading) return (
-    <div className="flex min-h-screen bg-background items-center justify-center font-sans">
-      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
+  const updateQuestionText = (index: number, text: string) => {
+    const newQuestions = [...formData.quiz.questions];
+    newQuestions[index].question = text;
+    setFormData({ ...formData, quiz: { questions: newQuestions } });
+  };
+
+  const updateOptionText = (qIndex: number, oIndex: number, text: string) => {
+    const newQuestions = [...formData.quiz.questions];
+    newQuestions[qIndex].options[oIndex] = text;
+    setFormData({ ...formData, quiz: { questions: newQuestions } });
+  };
+
+  const updateCorrectAnswer = (qIndex: number, text: string) => {
+    const newQuestions = [...formData.quiz.questions];
+    newQuestions[qIndex].correctAnswer = text;
+    setFormData({ ...formData, quiz: { questions: newQuestions } });
+  };
+
+  const handleSelectOption = (qIdx: number, option: string) => {
+    if (isCorrected) return;
+    setUserAnswers(prev => ({ ...prev, [qIdx]: option }));
+  };
+
+  const resetQuiz = () => {
+    setUserAnswers({});
+    setIsCorrected(false);
+    setShowQuizModal(false);
+  };
+
+  const score = content?.quiz?.questions.reduce((acc: number, q: any, idx: number) => {
+    return userAnswers[idx] === q.correctAnswer ? acc + 1 : acc;
+  }, 0);
+
+  const totalQuestions = content?.quiz?.questions.length || 0;
 
   return (
-    <div className="flex min-h-screen bg-background font-sans text-foreground">
+    <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
       <Sidebar role="ADMIN" />
 
-      <main className="flex-1 overflow-auto flex flex-col relative">
-        
-        {/* BANNER ULTRA-SLIM CON ACCIONES INTEGRADAS */}
+      <main className="flex-1 flex flex-col min-w-0 relative">
         <PageHeader 
-          title={isEditing ? "Editando unidad" : (content?.title || "Detalle")}
-          description={isEditing ? "Modifica el texto, imágenes y recursos de la lección." : "Vista de moderación y previsualización de contenidos."}
-          icon={<i className="bi bi-journal-text"></i>}
+          title={isEditing ? "Modo Editor" : content?.title || "Cargando..."}
+          description="Gestión de unidad didáctica"
+          icon={<i className="bi bi-file-earmark-text"></i>}
           backUrl={`/dashboard/administrator/admin/courses/${params.id}`}
           action={
-            <div className="flex items-center gap-3">
-              {saveSuccess && <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest animate-pulse"><i className="bi bi-check-lg"></i> Guardado</span>}
-              
-              {!isEditing ? (
-                <>
-                  <button onClick={() => setIsEditing(true)} className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-2 shadow-sm">
-                    <i className="bi bi-pencil-square"></i> Editar
-                  </button>
-                  <button onClick={() => setShowDeleteModal(true)} className="bg-white/10 text-white hover:bg-destructive hover:text-white w-9 h-9 rounded-xl transition-all flex items-center justify-center border border-white/10">
-                    <i className="bi bi-trash3"></i>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button onClick={handleSave} disabled={saving} className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-2 shadow-sm">
-                    {saving ? <i className="bi bi-arrow-repeat animate-spin"></i> : <i className="bi bi-cloud-arrow-up"></i>} Guardar
-                  </button>
-                  <button onClick={() => { hydrateForm(content); setIsEditing(false); }} className="text-white/60 hover:text-white text-xs font-bold px-4 transition-colors">
-                    Descartar
-                  </button>
-                </>
+            <div className="flex gap-3">
+              {isEditing && (
+                <button onClick={handleDiscard} className="bg-muted text-foreground px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-muted/80">
+                  Descartar
+                </button>
               )}
+              <button 
+                onClick={isEditing ? handleSave : () => setIsEditing(true)} 
+                disabled={loading}
+                className={`${isEditing ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-primary shadow-primary/20'} text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95`}
+              >
+                {isEditing ? "Guardar Cambios" : "Editar Unidad"}
+              </button>
             </div>
           }
         />
 
-        <div className="p-6 lg:p-10 flex-1 max-w-6xl mx-auto w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 lg:gap-12">
-
-            {/* COLUMNA IZQUIERDA: CONTENIDO / FORMULARIO */}
-            <div className="space-y-8">
-              
+        <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 overflow-y-auto bg-muted/30 p-8 no-scrollbar">
+            <div className="max-w-4xl mx-auto bg-card shadow-xl border border-border/50 rounded-xl p-8 md:p-16 mb-10">
               {isEditing ? (
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  {/* EDITOR DE TEXTO */}
-                  <div className="bg-card rounded-3xl border border-border p-6 lg:p-8 shadow-sm space-y-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Título de la lección</label>
-                      <input 
-                        value={formData.title} 
-                        onChange={e => setFormData({...formData, title: e.target.value})} 
-                        className={`${inputClass} text-base font-bold ${errors.title ? 'border-destructive ring-1 ring-destructive/20' : ''}`}
-                        placeholder="Ej: Introducción a la Seguridad"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Cuerpo del contenido</label>
-                      <textarea 
-                        rows={12} 
-                        value={formData.summary} 
-                        onChange={e => setFormData({...formData, summary: e.target.value})} 
-                        className={`${inputClass} resize-none leading-relaxed`}
-                        placeholder="Escribe aquí el material didáctico..."
-                      />
-                    </div>
+                <div className="space-y-10">
+                  <section className="space-y-6">
+  <h3 className="text-lg font-black border-l-4 border-primary pl-4 uppercase tracking-tighter">Información General</h3>
+  
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {/* Título */}
+    <div className="md:col-span-2">
+      <label className={labelClass}>Título de la Unidad</label>
+      <input 
+        value={formData.title} 
+        onChange={e => setFormData({...formData, title: e.target.value})} 
+        className={inputClass} 
+        placeholder="Ej: Introducción a la IA"
+      />
+    </div>
 
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">URL de Imagen de apoyo</label>
-                      <input 
-                        value={formData.imageUrl} 
-                        onChange={e => setFormData({...formData, imageUrl: e.target.value})} 
-                        className={inputClass}
-                        placeholder="https://images.unsplash.com/..."
-                      />
-                    </div>
-                  </div>
+    {/* Input de Image URL */}
+    <div className="space-y-2">
+      <label className={labelClass}>URL de la Imagen de Portada</label>
+      <input 
+        value={formData.imageUrl} 
+        onChange={e => setFormData({...formData, imageUrl: e.target.value})} 
+        className={inputClass} 
+        placeholder="https://ejemplo.com/imagen.jpg"
+      />
+    </div>
 
-                  {/* MATERIAL DESCARGABLE */}
-                  <div className="bg-card rounded-3xl border border-border p-6 lg:p-8 shadow-sm space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-foreground">Documentación Adjunta</h3>
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      <input value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} className={inputClass} placeholder="Enlace externo o PDF..." />
-                      <label className="shrink-0 relative h-[46px] px-6 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-muted/30 hover:bg-muted hover:border-secondary transition-all cursor-pointer">
-                         <input type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" />
-                         <span className="text-xs font-bold text-secondary flex items-center gap-2">
-                           <i className="bi bi-cloud-arrow-up text-base"></i> {uploading ? 'Subiendo...' : 'Subir PDF'}
-                         </span>
-                      </label>
+    {/* Previsualización de Imagen */}
+    <div className="space-y-2">
+      <label className={labelClass}>Previsualización</label>
+      <div className="h-[42px] rounded-xl border border-border bg-muted/20 flex items-center px-4 overflow-hidden">
+        {formData.imageUrl ? (
+          <div className="flex items-center gap-3 w-full">
+            <img 
+              src={formData.imageUrl} 
+              alt="Preview" 
+              className="w-6 h-6 rounded shadow-sm object-cover"
+              onError={(e) => (e.currentTarget.src = "https://placehold.co/400x400?text=Error")}
+            />
+            <span className="text-[10px] text-muted-foreground truncate flex-1">{formData.imageUrl}</span>
+          </div>
+        ) : (
+          <span className="text-[10px] text-muted-foreground italic">No hay imagen seleccionada</span>
+        )}
+      </div>
+    </div>
+  </div>
+
+  {/* Contenido Markdown */}
+  <div>
+    <label className={labelClass}>Contenido (Markdown)</label>
+    <textarea 
+      rows={12} 
+      value={formData.summary} 
+      onChange={e => setFormData({...formData, summary: e.target.value})} 
+      className={`${inputClass} font-mono text-xs leading-relaxed`} 
+      placeholder="# Escribe aquí el contenido..."
+    />
+  </div>
+</section>
+
+                  <section className="space-y-6 pt-10 border-t border-border">
+                    <h3 className="text-lg font-black border-l-4 border-orange-400 pl-4 uppercase tracking-tighter text-orange-500">Editor de Quiz</h3>
+                    <div className="space-y-12">
+                      {formData.quiz.questions.map((q: any, qIdx: number) => (
+                        <div key={qIdx} className="bg-muted/20 p-6 rounded-2xl border border-border/50 space-y-4">
+                          <input value={q.question} onChange={e => updateQuestionText(qIdx, e.target.value)} className={inputClass} placeholder="Pregunta..." />
+                          <div className="grid grid-cols-2 gap-4">
+                            {q.options.map((opt: string, oIdx: number) => (
+                              <input key={oIdx} value={opt} onChange={e => updateOptionText(qIdx, oIdx, e.target.value)} className={`${inputClass} text-xs`} placeholder={`Opción ${oIdx+1}`} />
+                            ))}
+                          </div>
+                          <select value={q.correctAnswer} onChange={e => updateCorrectAnswer(qIdx, e.target.value)} className={inputClass}>
+                            <option value="">Selecciona la correcta</option>
+                            {q.options.map((opt: string, oIdx: number) => <option key={oIdx} value={opt}>{opt}</option>)}
+                          </select>
+                        </div>
+                      ))}
                     </div>
-                  </div>
+                  </section>
                 </div>
               ) : (
-                <div className="space-y-10 animate-in fade-in duration-500">
-                  {/* VISTA DE LECTURA */}
-                  <div className="prose prose-slate max-w-none">
-                    <h2 className="text-2xl font-bold text-foreground tracking-tight mb-6">{content.title}</h2>
-                    <div className="text-base text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                      {content.summary || <span className="italic opacity-50">Esta lección no contiene texto descriptivo.</span>}
-                    </div>
-                  </div>
-
-                  {content.imageUrl && (
-                    <div className="overflow-hidden rounded-3xl border border-border shadow-md">
-                      <img ref={zoomRef} src={content.imageUrl} alt={content.title} className="w-full h-auto cursor-zoom-in hover:opacity-95 transition-opacity" />
-                    </div>
-                  )}
-
-                  {/* TEST INTERACTIVO (PREVISUALIZACIÓN) */}
-                  {content.quiz && (
-                    <div className="bg-card rounded-[2rem] border border-border p-8 lg:p-10 shadow-sm border-l-4 border-l-secondary">
-                      <div className="flex items-center gap-4 mb-8">
-                        <div className="w-12 h-12 bg-secondary/10 text-secondary rounded-2xl flex items-center justify-center shrink-0 border border-secondary/20">
-                          <i className="bi bi-patch-question text-2xl"></i>
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-bold text-foreground tracking-tight">Evaluación de la unidad</h3>
-                          <p className="text-xs text-muted-foreground font-medium">Previsualización del test para el alumno.</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-6">
-                        {(content.quiz?.questions || content.quiz).map((q: any, idx: number) => (
-                          <div key={idx} className={`p-6 rounded-2xl border transition-all ${quizSubmitted ? (quizAnswers[idx] === q.correctAnswer ? 'bg-primary/5 border-primary/30' : 'bg-destructive/5 border-destructive/30') : 'bg-muted/20 border-transparent'}`}>
-                            <p className="font-bold text-sm text-foreground mb-4 flex gap-2">
-                              <span className="opacity-40">{idx + 1}.</span> {q.question}
-                            </p>
-                            <div className="grid grid-cols-1 gap-2">
-                              {q.options.map((opt: string, i: number) => (
-                                <button 
-                                  key={i} 
-                                  onClick={() => !quizSubmitted && setQuizAnswers({...quizAnswers, [idx]: opt})}
-                                  className={`text-left px-4 py-3 rounded-xl border-2 text-sm transition-all font-medium ${quizAnswers[idx] === opt ? 'border-secondary bg-secondary/5 text-secondary' : 'border-transparent bg-background text-muted-foreground hover:border-secondary/30'}`}
-                                >
-                                  {opt}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {!quizSubmitted ? (
-                        <button onClick={handleQuizSubmit} className="mt-8 w-full py-4 bg-foreground text-background rounded-2xl font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-all shadow-lg">Corregir Previsualización</button>
-                      ) : (
-                        <div className="mt-8 p-6 bg-primary text-primary-foreground rounded-2xl text-center shadow-lg animate-in zoom-in-95">
-                           <p className="text-xs font-black uppercase tracking-widest mb-1 opacity-80">Resultado del test</p>
-                           <h4 className="text-3xl font-black">{quizScore} / {(content.quiz?.questions || content.quiz).length}</h4>
-                           <button onClick={() => {setQuizSubmitted(false); setQuizAnswers({});}} className="mt-4 text-[10px] font-black uppercase underline tracking-widest">Reiniciar Test</button>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                <div className="prose dark:prose-invert max-w-none">
+                  <h1 className="text-4xl font-black mb-8 border-b-4 border-primary/10 pb-4">{content?.title}</h1>
+                   <ReactMarkdown
+                    components={{
+                      h2: ({ ...props }) => <h2 className="text-2xl font-black text-foreground mt-14 mb-6 flex items-center gap-3" {...props} />,
+                      h3: ({ ...props }) => <h3 className="text-xl font-bold text-foreground/90 mt-10 mb-4" {...props} />,
+                      p: ({ ...props }) => <p className="text-[17px] leading-[1.8] text-muted-foreground mb-8 whitespace-pre-wrap" {...props} />,
+                      ul: ({ ...props }) => <ul className="my-8 space-y-4" {...props} />,
+                      li: ({ ...props }) => (
+                        <li className="flex items-start gap-3 text-[16px] text-muted-foreground leading-relaxed">
+                          <span className="mt-2.5 w-2 h-2 rounded-full bg-primary/40 shrink-0" />
+                          <span {...props} />
+                        </li>
+                      ),
+                      blockquote: ({ ...props }) => (
+                        <blockquote className="border-l-4 border-primary bg-muted/40 p-6 rounded-r-2xl my-10 italic text-foreground/80 shadow-inner" {...props} />
+                      )
+                    }}
+                  >
+                    {content?.summary}
+                  </ReactMarkdown> 
                 </div>
               )}
             </div>
-
-            {/* COLUMNA DERECHA: RECURSOS */}
-            <aside className="space-y-6">
-              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Recursos de la unidad</h4>
-              
-              {/* PODCAST IA */}
-              {content.url?.includes('.mp3') && (
-                <div className="bg-primary rounded-3xl p-6 shadow-lg shadow-primary/20 text-white relative overflow-hidden group">
-                   <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
-                     <i className="bi bi-mic text-8xl"></i>
-                   </div>
-                   <div className="relative z-10">
-                     <div className="flex items-center gap-2 mb-4">
-                        <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">AI Generated</span>
-                        <i className="bi bi-robot"></i>
-                     </div>
-                     <h5 className="font-bold text-sm mb-6 leading-tight">Audio-guía inteligente de la unidad</h5>
-                     <audio 
-                       ref={audioRef}
-                       controls 
-                       className="w-full h-10 accent-secondary"
-                       src={content.url}
-                     />
-                   </div>
-                </div>
-              )}
-
-              {/* DOCUMENTO PDF */}
-              {content.url && !content.url.includes('.mp3') && (
-                <div className="bg-card border border-border rounded-3xl p-6 shadow-sm text-center">
-                  <div className="w-12 h-12 bg-emerald-500/10 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <i className="bi bi-file-earmark-pdf text-2xl"></i>
-                  </div>
-                  <p className="text-xs font-bold text-foreground mb-1">Documentación PDF</p>
-                  <p className="text-[10px] text-muted-foreground mb-5 uppercase tracking-widest">Material de apoyo</p>
-                  <a href={content.url} target="_blank" rel="noreferrer" className="inline-flex w-full py-2.5 bg-muted text-foreground rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-border transition-all justify-center items-center gap-2">
-                    <i className="bi bi-box-arrow-up-right"></i> Abrir Recurso
-                  </a>
-                </div>
-              )}
-            </aside>
           </div>
+
+          <aside className="w-80 border-l border-border bg-card p-6 flex flex-col gap-6">
+            <h4 className={labelClass}>Recursos</h4>
+            {content?.podcast?.url && (
+              <div className="relative group overflow-hidden bg-linear-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 rounded-[2rem] p-5 transition-all hover:shadow-xl hover:shadow-emerald-500/5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                    <i className="bi bi-mic-fill text-lg"></i>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-tighter">Audio Podcast</p>
+                    <p className="text-xs font-bold opacity-80">Locución por IA</p>
+                  </div>
+                </div>
+                <audio ref={audioRef} src={content.podcast.url} controls className="w-full h-8 accent-emerald-500 mb-2" />
+              </div>
+            )}
+            {content?.quiz?.questions?.length > 0 && (
+              <button onClick={() => setShowQuizModal(true)} className="w-full p-4 bg-orange-400 text-white rounded-2xl flex items-center gap-4 hover:bg-orange-500 transition-all shadow-lg active:scale-95">
+                <i className="bi bi-patch-question text-2xl"></i>
+                <div className="text-left">
+                  <p className="text-[8px] font-bold uppercase opacity-70">Evaluación</p>
+                  <p className="text-sm font-bold">Probar Test</p>
+                </div>
+              </button>
+            )}
+
+            {content?.url?.toLowerCase().includes('.pdf') && (
+              <a href={content.url} target="_blank" rel="noopener noreferrer"
+                className="group w-full p-3 bg-muted border border-border rounded-2xl flex items-center gap-3 hover:border-primary transition-all active:scale-95">
+                <div className="w-10 h-10 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <i className="bi bi-file-earmark-pdf text-xl"></i>
+                </div>
+                <div className="text-left overflow-hidden">
+                  <p className="text-[8px] font-bold uppercase text-muted-foreground tracking-tighter">Material PDF</p>
+                  <p className="text-xs font-bold text-foreground truncate">Ver documento</p>
+                </div>
+              </a>
+            )} 
+            <button onClick={() => setShowDeleteModal(true)} className="mt-auto py-3 text-[9px] font-black uppercase text-destructive border-t border-border tracking-widest hover:text-red-500">
+              Eliminar Unidad
+            </button>
+          </aside>
         </div>
       </main>
 
-      {/* MODAL ELIMINAR PREMIUM */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowDeleteModal(false)}>
-          <div className="bg-card rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl border border-border animate-in zoom-in-95 duration-200 text-center" onClick={e => e.stopPropagation()}>
-            <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">
-              <i className="bi bi-exclamation-triangle"></i>
-            </div>
-            <h2 className="text-xl font-bold text-foreground mb-2">¿Eliminar unidad?</h2>
-            <p className="text-sm text-muted-foreground mb-8 leading-relaxed">
-              Esta acción borrará permanentemente la lección y sus datos asociados. No se puede deshacer.
-            </p>
-            <div className="flex flex-col gap-3">
-              <button onClick={handleDelete} disabled={deleting} className="w-full py-3.5 rounded-xl font-bold bg-destructive text-white hover:opacity-90 transition-opacity shadow-lg shadow-destructive/20 text-sm">
-                {deleting ? 'Borrando...' : 'Sí, eliminar contenido'}
+      {/* MODAL DEL QUIZ INTERACTIVO */}
+      {showQuizModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="bg-card border border-border rounded-[32px] p-8 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center mb-8 shrink-0">
+              <div>
+                <h3 className="text-2xl font-black">Simulación de Test</h3>
+                <p className="text-xs text-muted-foreground">Prueba la experiencia del estudiante</p>
+              </div>
+              <button onClick={resetQuiz} className="text-muted-foreground hover:text-foreground transition-colors">
+                <i className="bi bi-x-circle text-2xl"></i>
               </button>
-              <button onClick={() => setShowDeleteModal(false)} className="w-full py-3.5 rounded-xl font-bold text-muted-foreground hover:bg-muted transition-colors text-sm border border-transparent hover:border-border">
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-2 space-y-10 no-scrollbar">
+              {content?.quiz?.questions.map((q: any, qIdx: number) => (
+                <div key={qIdx} className="space-y-4">
+                  <p className="font-bold text-lg flex gap-3">
+                    <span className="text-primary/40">0{qIdx + 1}.</span>
+                    {q.question}
+                  </p>
+                  <div className="grid grid-cols-1 gap-3">
+                    {q.options.map((opt: string, oIdx: number) => {
+                      const isSelected = userAnswers[qIdx] === opt;
+                      const isCorrect = opt === q.correctAnswer;
+                      let variantClasses = "border-border hover:border-primary/50 bg-muted/30";
+                      if (isSelected) variantClasses = "border-primary bg-primary/5 ring-2 ring-primary/20";
+                      if (isCorrected) {
+                        if (isCorrect) variantClasses = "border-emerald-500 bg-emerald-500/10 text-emerald-700 ring-2 ring-emerald-500/20 font-bold";
+                        else if (isSelected && !isCorrect) variantClasses = "border-destructive bg-destructive/10 text-destructive ring-2 ring-destructive/20";
+                        else variantClasses = "border-border opacity-50 bg-muted/10";
+                      }
+                      return (
+                        <button key={oIdx} disabled={isCorrected} onClick={() => handleSelectOption(qIdx, opt)}
+                          className={`w-full p-4 rounded-2xl border text-left text-sm transition-all flex items-center justify-between group ${variantClasses}`}>
+                          {opt}
+                          {isCorrected && isCorrect && <i className="bi bi-check-circle-fill text-emerald-500"></i>}
+                          {isCorrected && isSelected && !isCorrect && <i className="bi bi-x-circle-fill text-destructive"></i>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-6 mt-6 border-t border-border shrink-0 space-y-4">
+              {isCorrected && (
+                <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/10 rounded-2xl">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-primary tracking-widest">Resultado Final</p>
+                      <p className="text-sm font-bold">Has acertado {score} de {totalQuestions} preguntas</p>
+                    </div>
+                  </div>
+                  <p className="text-2xl font-black text-primary">{Math.round((score / totalQuestions) * 100)}%</p>
+                </div>
+              )}
+              <div className="flex gap-4">
+                {!isCorrected ? (
+                  <button onClick={() => setIsCorrected(true)} disabled={Object.keys(userAnswers).length < totalQuestions}
+                    className="flex-1 bg-primary text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20 disabled:opacity-50 transition-all active:scale-95">
+                    Corregir Cuestionario
+                  </button>
+                ) : (
+                  <button onClick={() => { setIsCorrected(false); setUserAnswers({}); }}
+                    className="flex-1 bg-muted text-foreground py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all active:scale-95">
+                    Reiniciar Intento
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE ELIMINAR */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-card border border-border rounded-[32px] p-8 max-w-sm w-full shadow-2xl text-center">
+            <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-6">
+              <i className="bi bi-exclamation-triangle text-3xl"></i>
+            </div>
+            <h3 className="text-xl font-black mb-2">¿Eliminar Unidad?</h3>
+            <p className="text-sm text-muted-foreground mb-8">Esta acción es irreversible.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteModal(false)} className="flex-1 px-6 py-3 rounded-xl bg-muted text-foreground text-[10px] font-black uppercase tracking-widest transition-all">
                 Cancelar
+              </button>
+              <button onClick={handleDelete} disabled={isDeleting} className="flex-1 px-6 py-3 rounded-xl bg-destructive text-white text-[10px] font-black uppercase tracking-widest shadow-lg transition-all disabled:opacity-50">
+                {isDeleting ? "Eliminando..." : "Sí, Eliminar"}
               </button>
             </div>
           </div>

@@ -42,6 +42,8 @@ export const API_ROUTES = {
     CREATE: (courseId: string) => `${BASE_URL}/courses/${courseId}/content`,
     GET_BY_ID: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
     COMPLETE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}/complete`,
+    UPDATE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
+    DELETE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
    },
   ANNOUNCEMENTS: {
     GET_ALL: `${BASE_URL}/announcement`
@@ -56,16 +58,31 @@ export const API_ROUTES = {
     GET_ARCHIVED: `${BASE_URL}/company-request?archived=true`,
   },
 
-ONBOARDING: {
-  SETUP:`${BASE_URL}/onboarding/setup`,
-  ME:`${BASE_URL}/onboarding/me`,
-  TOGGLE: `${BASE_URL}/onboarding/toggle`,
-},
-
-  CHATBOT: {
-    SEND:`${BASE_URL}/chatbot`
+  ONBOARDING: {
+    SETUP:`${BASE_URL}/onboarding/setup`,
+    ME:`${BASE_URL}/onboarding/me`,
+    TOGGLE: `${BASE_URL}/onboarding/toggle`,
   },
-  ENROLLMENTS: {
-    BASE: `${BASE_URL}/enrollment`
-  }
+
+    CHATBOT: {
+      SEND:`${BASE_URL}/chatbot`
+    },
+    
+    ENROLLMENTS: {
+      BASE: `${BASE_URL}/enrollment`
+    },
+
+    SUGGESTIONS: {
+      CREATE: `${BASE_URL}/suggestions`,
+
+      GET_ALL: `${BASE_URL}/suggestions`,
+
+      GET_MINE: `${BASE_URL}/suggestions/mine`,
+
+      GET_ONE: (id: string) => `${BASE_URL}/suggestions/${id}`,
+
+      RESPOND: (id: string) => `${BASE_URL}/suggestions/${id}/respond`,
+
+      DELETE: (id: string) => `${BASE_URL}/suggestions/${id}`,
+    },
 }
