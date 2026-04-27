@@ -38,9 +38,9 @@ export default function EmployeeContentDetail() {
         const contentId = params.contentId as string;
         const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(courseId, contentId), {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          
+
         });
-        
+
         const data = await res.json();
         setContent(data.content || data.data || data);
         if (data.isCompleted) {
@@ -54,6 +54,22 @@ export default function EmployeeContentDetail() {
       }
     };
     fetchContent();
+
+    const markAccess = async () => {
+      const contentId = params.contentId as string;
+      await fetch(`${API_ROUTES.ENROLLMENTS.BASE}/content-access`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ contentId }),
+      });
+    };
+    
+    if (params.contentId) {
+      markAccess();
+    }
   }, [params.contentId, params.id]);
 
   useEffect(() => {
@@ -91,7 +107,7 @@ export default function EmployeeContentDetail() {
     }
   }, [content?.imageUrl]);
 
-   const handleQuizSubmit = async () => {
+  const handleQuizSubmit = async () => {
     const questions = getQuizQuestions(content.quiz);
     let correctCount = 0;
     questions.forEach((q: any, index: number) => {
@@ -103,22 +119,22 @@ export default function EmployeeContentDetail() {
     try {
       const token = localStorage.getItem('token');
 
-          await fetch(
-      API_ROUTES.CONTENT.COMPLETE(
-        params.id as string,
-        content.id
-      ),
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          score: correctCount,
-          totalQuestions: questions.length,
-        }),
-      });
+      await fetch(
+        API_ROUTES.CONTENT.COMPLETE(
+          params.id as string,
+          content.id
+        ),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            score: correctCount,
+            totalQuestions: questions.length,
+          }),
+        });
 
       console.log("Quiz enviado al backend");
     } catch (error) {
