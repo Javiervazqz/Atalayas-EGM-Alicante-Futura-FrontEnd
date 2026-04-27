@@ -36,6 +36,7 @@ const navItems = {
   ],
   EMPLOYEE: [
     { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-grid-fill"></i> },
+    { label: 'Onboarding', href: '/dashboard/employee/onboarding', icon: <i className="bi bi-rocket-takeoff-fill"></i> },
     { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
     { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder-fill"></i> },
     { label: 'Servicios', href: '/dashboard/employee/services', icon: <i className="bi bi-briefcase-fill"></i> },
@@ -78,11 +79,9 @@ export default function Sidebar({ role }: SidebarProps) {
   const [pendingSuggestionsCount, setPendingSuggestionsCount] = useState(0);
 
   useEffect(() => {
-    // Cargar Usuario
     const savedUser = localStorage.getItem('user');
     if (savedUser) setUser(JSON.parse(savedUser));
     
-    // Cargar Tema desde Cookie (para sincronizar con Welcome)
     const savedTheme = document.cookie.split('; ').find(row => row.startsWith('theme='))?.split('=')[1];
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
@@ -97,6 +96,7 @@ export default function Sidebar({ role }: SidebarProps) {
 
     setMounted(true);
 
+    // 2. EVITAMOS QUE SE ABRA SOLA EN PANTALLAS GRANDES
     const checkResizing = () => {
       if (window.innerWidth >= 1024) setMobileOpen(false);
     };
