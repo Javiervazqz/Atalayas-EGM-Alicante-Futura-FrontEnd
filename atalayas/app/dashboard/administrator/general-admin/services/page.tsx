@@ -1,34 +1,40 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // Error: Faltaba importar Link
 import Sidebar from '@/components/ui/Sidebar';
 import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
 import CompanyDropdown from '@/components/ui/CompanyDropdown';
-import { API_ROUTES } from '@/lib/utils';
 
 interface Service {
   id: string;
   title: string;
   isPublic: boolean;
-  Company?: { name: string };
+  Company?: {
+    name: string;
+  };
 }
 
 export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState<string>('PUBLIC');
+  const [searchQuery, setSearchQuery] = useState(''); // Error: No estaba definido el estado de búsqueda
   const router = useRouter();
 
   useEffect(() => {
     const fetchServices = async () => {
+      setLoading(true);
       try {
         const res = await fetch(API_ROUTES.SERVICES.GET_ALL, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         const data = await res.json();
         setServices(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error al cargar servicios:", error);
       } finally {
         setLoading(false);
       }
@@ -36,21 +42,31 @@ export default function ServicesPage() {
     fetchServices();
   }, []);
 
-  const filteredServices = services.filter(s =>
-    s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.Company?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Usamos useMemo para agrupar empresas y filtrar, evitando cálculos innecesarios en cada render
+  const { filteredServices, byCompany, companies } = useMemo(() => {
+    // 1. Filtrado por texto
+    const filtered = services.filter(s =>
+      s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.Company?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-  const byCompany = filteredServices.reduce((acc, s) => {
-    if (!s.isPublic) {
-      const name = s.Company?.name || 'Sin empresa';
-      if (!acc[name]) acc[name] = [];
-      acc[name].push(s);
-    }
-    return acc;
-  }, new Set<string>());
+    // 2. Agrupación por empresa (usando un objeto Record, no un Set)
+    const grouped = filtered.reduce((acc, s) => {
+      if (!s.isPublic) {
+        const name = s.Company?.name || 'Sin empresa';
+        if (!acc[name]) acc[name] = [];
+        acc[name].push(s);
+      }
+      return acc;
+    }, {} as Record<string, Service[]>); // Error: El acumulador inicial debe ser un objeto {}
 
-  const companies = ['PUBLIC', ...Object.keys(byCompany)];
+    // 3. Lista de nombres para el dropdown
+    const companyNames = ['PUBLIC', ...Object.keys(grouped)];
+
+    return { filteredServices: filtered, byCompany: grouped, companies: companyNames };
+  }, [services, searchQuery]);
+
+  // Determinar la lista que se muestra actualmente
   const currentList = selectedCompany === 'PUBLIC' 
     ? filteredServices.filter(s => s.isPublic) 
     : byCompany[selectedCompany] || [];
@@ -103,11 +119,24 @@ export default function ServicesPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {loading ? (
-                    [1, 2, 3].map(i => <tr key={i} className="animate-pulse"><td colSpan={3} className="px-6 py-8"><div className="h-4 bg-muted rounded w-full"></div></td></tr>)
+                    [1, 2, 3].map(i => (
+                      <tr key={i} className="animate-pulse">
+                        <td colSpan={3} className="px-6 py-8">
+                          <div className="h-4 bg-muted rounded w-full"></div>
+                        </td>
+                      </tr>
+                    ))
                   ) : currentList.length > 0 ? (
                     currentList.map((service) => (
-                      <tr key={service.id} onClick={() => router.push(`/dashboard/administrator/general-admin/services/${service.id}`)} className="hover:bg-muted/30 cursor-pointer transition-colors group">
-                        <td className="px-6 py-5"><div className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{service.title}</div></td>
+                      <tr key={service.id} 
+                        onClick={() => router.push(`/dashboard/administrator/general-admin/services/${service.id}`)} 
+                        className="hover:bg-muted/30 cursor-pointer transition-colors group"
+                      >
+                        <td className="px-6 py-5">
+                          <div className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">
+                            {service.title}
+                          </div>
+                        </td>
                         <td className="px-6 py-5">
                           <span className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-md border ${service.isPublic ? 'bg-primary/5 text-primary border-primary/10' : 'bg-muted text-muted-foreground border-border'}`}>
                             {service.isPublic ? 'Global' : 'Privado'}
@@ -119,7 +148,11 @@ export default function ServicesPage() {
                       </tr>
                     ))
                   ) : (
-                    <tr><td colSpan={3} className="px-6 py-20 text-center text-muted-foreground font-medium text-sm italic">No se han encontrado servicios.</td></tr>
+                    <tr>
+                      <td colSpan={3} className="px-6 py-20 text-center text-muted-foreground font-medium text-sm italic">
+                        No se han encontrado servicios.
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>

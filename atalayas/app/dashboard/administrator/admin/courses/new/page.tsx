@@ -78,12 +78,12 @@ export default function NewCoursePage() {
             </div>
 
             <div className="space-y-4">
-              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Material PDF</label>
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Imagen del curso</label>
               <label className="relative h-32 w-full border-2 border-dashed border-border rounded-3xl flex items-center justify-center bg-muted/30 hover:border-primary transition-all cursor-pointer group">
                 <input type="file" accept=".pdf" onChange={(e) => setFormData({...formData, file: e.target.files?.[0] || null})} className="hidden" />
                 <div className="text-center group-hover:scale-105 transition-transform">
                    <p className="font-bold text-foreground">{formData.file ? formData.file.name : "Seleccionar PDF"}</p>
-                   <p className="text-xs text-muted-foreground">Click para buscar archivo</p>
+                   <p className="text-xs text-muted-foreground">Click para subir una imagen</p>
                 </div>
               </label>
             </div>
