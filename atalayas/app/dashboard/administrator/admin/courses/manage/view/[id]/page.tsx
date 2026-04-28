@@ -34,8 +34,11 @@ export default function AdminCourseDetailPage() {
     if (id) fetchCourse();
   }, [id]);
 
+  // --- Lógica de Restricción ---
+  const isPublicCourse = course?.isPublic === true || course?.isPublic === "true";
+
   const executeDelete = async () => {
-    if (!contentToDelete) return;
+    if (!contentToDelete || isPublicCourse) return;
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(id as string, contentToDelete), {
@@ -71,33 +74,38 @@ export default function AdminCourseDetailPage() {
       <Sidebar role="ADMIN" />
 
       <main className="flex-1 overflow-auto flex flex-col relative">
-        <PageHeader 
+        <PageHeader
           title={course?.title || "Detalle del Curso"}
-          description="Gestión de contenidos y material didáctico."
+          description={isPublicCourse ? "Vista de solo lectura (Curso Público)." : "Gestión de contenidos y material didáctico."}
           icon={<i className="bi bi-journal-bookmark"></i>}
           backUrl="/dashboard/administrator/admin/courses/manage"
           action={
-            <Link 
-              href={`/dashboard/administrator/admin/courses/${id}/content/new`}
-              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
-            >
-              <i className="bi bi-plus-lg"></i> Añadir Unidad
-            </Link>
+            /* Ocultamos el botón de añadir si es público */
+            !isPublicCourse ? (
+              <Link
+                href={`/dashboard/administrator/admin/courses/manage/view/${id}/content/new`}
+                className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
+              >
+                <i className="bi bi-plus-lg"></i> Añadir Unidad
+              </Link>
+            ) : (
+              <div className="bg-amber-500/10 text-amber-600 border border-amber-500/20 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                <i className="bi bi-shield-lock-fill mr-1"></i> Biblioteca Pública
+              </div>
+            )
           }
         />
 
         <div className="p-6 lg:p-10 flex-1 max-w-6xl mx-auto w-full">
-          
-          {/* TABLA DE UNIDADES */}
+
           <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm flex flex-col">
-            
-            {/* Cabecera de la tabla */}
+
             <div className="p-5 border-b border-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/20">
               <h2 className="text-sm font-bold uppercase tracking-widest text-foreground ml-2">Unidades</h2>
-              
+
               <div className="relative w-full sm:max-w-xs">
                 <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"></i>
-                <input 
+                <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -114,15 +122,18 @@ export default function AdminCourseDetailPage() {
                     <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-20 text-center">Nº</th>
                     <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Título</th>
                     <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Tipo</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Acciones</th>
+                    {/* Solo mostramos la columna de acciones si NO es público */}
+                    {!isPublicCourse && (
+                      <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Acciones</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {filteredContents.length > 0 ? (
                     filteredContents.map((content: any) => (
-                      <tr 
-                        key={content.id} 
-                        onClick={() => router.push(`/dashboard/administrator/admin/courses/${id}/content/${content.id}`)}
+                      <tr
+                        key={content.id}
+                        onClick={() => router.push(`/dashboard/administrator/admin/courses/manage/view/${id}/content/${content.id}`)}
                         className="hover:bg-muted/40 transition-all group cursor-pointer"
                       >
                         <td className="px-6 py-5 text-center">
@@ -150,32 +161,43 @@ export default function AdminCourseDetailPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-5 text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end gap-1">
-                            <button 
-                              onClick={() => router.push(`/dashboard/administrator/admin/courses/${id}/content/${content.id}/edit`)} 
-                              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all"
-                              title="Editar"
-                            >
-                              <i className="bi bi-pencil-square"></i>
-                            </button>
-                            <button 
-                              onClick={() => { setContentToDelete(content.id); setShowDeleteModal(true); }} 
-                              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
-                              title="Eliminar"
-                            >
-                              <i className="bi bi-trash3"></i>
-                            </button>
-                            <div className="ml-2 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all">
+
+                        {/* ACCIONES CONDICIONALES */}
+                        {!isPublicCourse ? (
+                          <td className="px-6 py-5 text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => router.push(`/dashboard/administrator/admin/courses/manage/view/${id}/content/${content.id}/edit`)}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all"
+                                title="Editar"
+                              >
+                                <i className="bi bi-pencil-square"></i>
+                              </button>
+                              <button
+                                onClick={() => { setContentToDelete(content.id); setShowDeleteModal(true); }}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                                title="Eliminar"
+                              >
+                                <i className="bi bi-trash3"></i>
+                              </button>
+                              <div className="ml-2 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all">
                                 <i className="bi bi-chevron-right text-sm"></i>
+                              </div>
                             </div>
-                          </div>
-                        </td>
+                          </td>
+                        ) : (
+                          /* Si es público, mostramos solo la flecha indicadora de entrada */
+                          <td className="px-6 py-5 text-right">
+                            <div className="text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all">
+                              <i className="bi bi-chevron-right text-sm"></i>
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="px-6 py-20 text-center text-muted-foreground font-medium text-sm italic">
+                      <td colSpan={isPublicCourse ? 3 : 4} className="px-6 py-20 text-center text-muted-foreground font-medium text-sm italic">
                         No se han encontrado unidades en este curso.
                       </td>
                     </tr>
@@ -187,8 +209,8 @@ export default function AdminCourseDetailPage() {
         </div>
       </main>
 
-      {/* Modal de eliminación sutil */}
-      {showDeleteModal && (
+      {/* Modal de eliminación (Protegido con check isPublicCourse) */}
+      {showDeleteModal && !isPublicCourse && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-card w-full max-w-sm rounded-[2rem] p-8 shadow-2xl border border-border text-center animate-in zoom-in-95">
             <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">
