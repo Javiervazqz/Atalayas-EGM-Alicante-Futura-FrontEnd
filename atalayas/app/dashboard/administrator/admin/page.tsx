@@ -101,7 +101,7 @@ export default function AdminDashboard() {
             <div className="lg:col-span-2 bg-card border border-border rounded-[2rem] p-8 shadow-sm">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-xl font-bold text-foreground tracking-tight">Cursos de la empresa</h2>
-                <Link href="/dashboard/administrator/admin/courses" className="text-secondary text-xs font-black uppercase tracking-widest hover:underline flex items-center gap-1">
+                <Link href="/dashboard/administrator/admin/courses/manage" className="text-secondary text-xs font-black uppercase tracking-widest hover:underline flex items-center gap-1">
                   Ver todos <i className="bi bi-arrow-right-short text-lg"></i>
                 </Link>
               </div>
