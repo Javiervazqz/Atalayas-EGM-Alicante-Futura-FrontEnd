@@ -117,7 +117,6 @@ export default function AdminCourseDetailPage() {
                   <table className="w-full text-left border-collapse table-fixed">
                     <thead>
                       <tr className="bg-muted/10 border-b border-border">
-                        <th className="px-5 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-16 text-center">Nº</th>
                         <th className="px-5 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Título y descripción</th>
                         <th className="px-5 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-32">Tipo</th>
                         <th className="px-5 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right w-24">Acciones</th>
@@ -131,11 +130,6 @@ export default function AdminCourseDetailPage() {
                             onClick={() => router.push(`/dashboard/administrator/admin/courses/${id}/content/${content.id}`)}
                             className="hover:bg-muted/40 transition-all group cursor-pointer"
                           >
-                            <td className="px-5 py-3 text-center align-top">
-                              <span className="font-mono text-[10px] font-bold text-muted-foreground/60 group-hover:text-primary transition-colors">
-                                {String(content.order).padStart(2, '0')}
-                              </span>
-                            </td>
                             <td className="px-5 py-3 align-top">
                               <div className="font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate">
                                 {content.title}

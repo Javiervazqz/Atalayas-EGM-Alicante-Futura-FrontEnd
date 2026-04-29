@@ -65,9 +65,9 @@ export default function EmployeeDashboard() {
       href: '/dashboard/employee/courses' 
     },
     { 
-      title: 'Formación', // <-- CAMBIO REALIZADO AQUÍ
-      desc: 'Explora el catálogo completo de cursos.', 
-      icon: 'bi-mortarboard-fill', 
+      title: 'Onboarding', // <-- CAMBIO REALIZADO AQUÍ
+      desc: 'Explora la ruta actual de tu onboarding.', 
+      icon: 'bi-rocket-takeoff-fill', 
       color: 'text-secondary', 
       href: '/dashboard/employee/onboarding' 
     },

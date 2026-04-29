@@ -197,7 +197,7 @@ export default function EmployeeContentDetail() {
                 <audio ref={audioRef} src={content.podcast.url} controls className="w-full h-8 accent-emerald-500" />
               </div>
             )}
-
+            
             <h4 className={labelClass}>Material Descargable</h4>
 
             {content?.url?.toLowerCase().includes('.pdf') && (

@@ -6,6 +6,7 @@ import Sidebar from '@/components/ui/Sidebar';
 import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
+import zoom from 'medium-zoom'
 
 const inputClass = "w-full px-4 py-2.5 bg-background border border-border focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl outline-none transition-all text-foreground text-sm font-medium shadow-sm placeholder:text-muted-foreground/40";
 const labelClass = "text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block";
@@ -17,6 +18,7 @@ export default function AdminContentDetail() {
   const params = useParams();
   const router = useRouter();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -107,6 +109,19 @@ export default function AdminContentDetail() {
     };
     fetchContent();
   }, [params.contentId, params.id]);
+
+  useEffect(() => {
+    if (activeTab === 'lectura' && imageRef.current) {
+      const zoomInstance = zoom(imageRef.current, {
+        background: 'rgba(0,0,0,0.9)', // Fondo más oscuro para mejor contraste
+        margin: 40,
+      });
+
+      // Limpieza: es importante para evitar fugas de memoria y conflictos
+      return () =>{ zoomInstance.detach();
+      };
+    }
+  }, [content?.imageUrl, activeTab]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -284,8 +299,16 @@ export default function AdminContentDetail() {
                       <div className="space-y-10">
                         {/* IMAGEN EN LA PARTE SUPERIOR DE LA LECTURA */}
                         {content?.imageUrl && (
-                          <div className="relative group">
-                            <img src={content.imageUrl} className="w-full aspect-21/9 object-cover rounded-[2rem] shadow-lg border border-border/50" alt="Cover" />
+                          <div className="relative group cursor-zoom-in">
+                            <img 
+                            ref={imageRef} 
+                            src={content.imageUrl} 
+                            className="w-full aspect-video object-cover rounded-[2rem] shadow-lg border border-border/50 transition-transform duration-500 hover:scale-[1.01]" 
+                            alt="Cover"
+                            />
+                            <div className="absolute top-4 right-4 bg-black/20 backdrop-blur-md p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                              <i className="bi bi-zoom-in text-white"></i>
+                            </div>
                           </div>
                         )}
                         <div className="prose dark:prose-invert max-w-none">
