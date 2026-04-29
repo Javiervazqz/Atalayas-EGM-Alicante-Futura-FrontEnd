@@ -42,6 +42,16 @@ export default function CompanyRequestsPage() {
 
   const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';
 
+  // --- FUNCIÓN DE UTILIDAD PARA ACTUALIZAR EL SIDEBAR ---
+  const updateSidebarCounter = () => {
+    const current = Number(localStorage.getItem('count_requests')) || 0;
+    const newValue = Math.max(0, current - 1);
+    localStorage.setItem('count_requests', newValue.toString());
+    window.dispatchEvent(new CustomEvent('local-storage-update', { 
+      detail: { requests: newValue } 
+    }));
+  };
+
   const fetchRequests = async () => {
     setRequests([]);
     setLoading(true);
@@ -67,7 +77,12 @@ export default function CompanyRequestsPage() {
         headers: { Authorization: `Bearer ${getToken()}` }
       });
       const data = await res.json();
-      setPendingCount(Array.isArray(data) ? data.filter((r: any) => r.status === 'PENDING').length : 0);
+      const count = Array.isArray(data) ? data.filter((r: any) => r.status === 'PENDING').length : 0;
+      setPendingCount(count);
+      
+      // Sincronizar storage inicial
+      localStorage.setItem('count_requests', count.toString());
+      window.dispatchEvent(new CustomEvent('local-storage-update', { detail: { requests: count } }));
     } catch { }
   };
 
@@ -81,6 +96,8 @@ export default function CompanyRequestsPage() {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (!res.ok) throw new Error('Error al aprobar');
+      
+      updateSidebarCounter(); // Actualización instantánea
       await fetchRequests();
       await fetchPendingCount();
       setSelected(null);
@@ -104,6 +121,8 @@ export default function CompanyRequestsPage() {
         body: JSON.stringify({ rejectReason }),
       });
       if (!res.ok) throw new Error('Error al rechazar');
+      
+      updateSidebarCounter(); // Actualización instantánea
       await fetchRequests();
       await fetchPendingCount();
       setSelected(null);
@@ -113,6 +132,23 @@ export default function CompanyRequestsPage() {
       console.error(err);
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleArchive = async () => {
+    if (!selected) return;
+    try {
+      const res = await fetch(API_ROUTES.COMPANY_REQUESTS.ARCHIVE(selected.id), {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (res.ok && selected.status === 'PENDING') {
+        updateSidebarCounter(); // Solo restamos si archivamos algo que estaba pendiente
+      }
+      await fetchRequests();
+      setSelected(null);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -154,13 +190,20 @@ export default function CompanyRequestsPage() {
               <button
                 key={f}
                 onClick={() => { setFilter(f); setSelected(null); }}
-                className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shrink-0 border ${
+                className={`relative px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300 rounded-xl border ${
                   filter === f 
                     ? 'bg-primary text-white border-primary shadow-md' 
                     : 'bg-card text-muted-foreground border-border/60 hover:border-primary/40 hover:text-primary'
                 }`}
               >
-                {f === 'ALL' ? 'Todas las solicitudes' : statusConfig[f].label}
+                <span className="relative z-10 flex items-center justify-center">
+                  {f === 'ALL' ? 'Todas' : statusConfig[f].label}
+                  {f === 'PENDING' && pendingCount > 0 && (
+                    <span className={`ml-2 px-1.5 py-0.5 rounded-md text-[9px] font-black ${filter === f ? 'bg-primary text-white' : 'bg-primary text-white animate-pulse'}`}>
+                      {pendingCount}
+                    </span>
+                  )}
+                </span>
               </button>
             ))}
           </div>

@@ -158,7 +158,7 @@ export default function CompaniesDirectoryPage() {
                           </span>
                         </td>
                         <td className="px-6 py-5 hidden md:table-cell">
-                          <span className="text-xs font-medium text-foreground/50 truncate block max-w-[160px]">
+                          <span className="text-xs font-medium text-foreground/50 truncate block max-w-40">
                             {company.activity || '—'}
                           </span>
                         </td>
@@ -196,7 +196,7 @@ export default function CompaniesDirectoryPage() {
               </div>
 
               <div className="flex flex-col items-center text-center mb-12">
-                <div className="w-36 h-36 rounded-[48px] overflow-hidden border-[10px] border-background shadow-2xl mb-8 bg-muted/20">
+                <div className="w-36 h-36 rounded-[48px] overflow-hidden border-10 border-background shadow-2xl mb-8 bg-muted/20">
                   {selected.logoUrl ? (
                     <img src={encodeURI(selected.logoUrl)} alt={selected.name} className="w-full h-full object-cover" />
                   ) : (
@@ -230,7 +230,7 @@ export default function CompaniesDirectoryPage() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-muted-foreground/40 text-[9px] font-black uppercase tracking-[0.2em] mb-1.5">{field.label}</p>
-                      <p className="text-foreground text-sm font-bold leading-tight break-words">{field.value}</p>
+                      <p className="text-foreground text-sm font-bold leading-tight wrap-break-words">{field.value}</p>
                     </div>
                   </div>
                 ))}

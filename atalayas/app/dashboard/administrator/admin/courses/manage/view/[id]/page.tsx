@@ -7,6 +7,16 @@ import Sidebar from "@/components/ui/Sidebar";
 import PageHeader from "@/components/ui/pageHeader";
 import { API_ROUTES } from "@/lib/utils";
 
+const cleanMarkdown = (text: string): string => {
+  if (!text) return "";
+  return text
+    .replace(/\*\*?([^*]+)\*\*?/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^- /gm, "")
+    .replace(/#/g, "")
+    .trim();
+};
+
 export default function AdminCourseDetailPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -63,14 +73,8 @@ export default function AdminCourseDetailPage() {
     .filter((c: any) => c.title.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a: any, b: any) => a.order - b.order);
 
-  if (loading) return (
-    <div className="flex min-h-screen bg-background items-center justify-center font-sans">
-      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-
   return (
-    <div className="flex min-h-screen bg-background font-sans text-foreground">
+    <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden transition-colors duration-300">
       <Sidebar role="ADMIN" />
 
       <main className="flex-1 overflow-auto flex flex-col relative">
@@ -216,11 +220,11 @@ export default function AdminCourseDetailPage() {
             <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">
               <i className="bi bi-exclamation-triangle"></i>
             </div>
-            <h3 className="text-xl font-bold text-foreground mb-2 tracking-tight">¿Eliminar unidad?</h3>
+            <h3 className="text-xl font-bold text-foreground mb-2">¿Eliminar unidad?</h3>
             <p className="text-muted-foreground text-sm mb-8 leading-relaxed">Esta acción es irreversible. Se perderá todo el contenido de la lección.</p>
             <div className="flex flex-col gap-3">
               <button onClick={executeDelete} className="w-full py-3 bg-destructive text-white rounded-xl font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-destructive/20">Sí, eliminar</button>
-              <button onClick={() => setShowDeleteModal(false)} className="w-full py-3 bg-muted text-foreground rounded-xl font-bold text-sm hover:bg-border transition-all">Cancelar</button>
+              <button onClick={() => setShowDeleteModal(false)} className="w-full py-3 bg-muted text-muted-foreground rounded-xl font-bold text-sm hover:bg-muted/80 transition-all">Cancelar</button>
             </div>
           </div>
         </div>

@@ -43,7 +43,7 @@ export default function ContactCard({ service }: ContactCardProps) {
               <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
                 {item.label}
               </p>
-              <p className="text-sm font-bold text-foreground leading-tight break-words">
+              <p className="text-sm font-bold text-foreground leading-tight wrap-break-words">
                 {item.value}
               </p>
             </div>
