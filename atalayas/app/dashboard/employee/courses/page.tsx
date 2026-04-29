@@ -16,6 +16,42 @@ export default function EmployeeCoursesPage() {
     const searchParams = useSearchParams();
     const fromTaskId = searchParams.get('fromTask');
 
+
+    const downloadCertificate = async (courseId: string) => {
+        try {
+            const token = localStorage.getItem('token');
+
+            const res = await fetch(
+                `${API_ROUTES.ENROLLMENTS.BASE}/certificate/${courseId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (!res.ok) {
+                console.error('Error descargando certificado');
+                return;
+            }
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'certificado.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
+
+
     useEffect(() => {
         const fetchCourses = async () => {
             try {
@@ -180,7 +216,7 @@ export default function EmployeeCoursesPage() {
                                                     </p>
                                                 </div>
 
-                                                <div className="mt-auto">
+                                                <div className="mt-auto flex flex-col gap-3">
                                                     <Link
                                                         href={`/dashboard/employee/courses/${course.id}`}
                                                         className="flex items-center justify-center gap-3 w-full py-4 bg-foreground text-background dark:bg-muted dark:text-foreground text-sm font-black uppercase tracking-widest rounded-2xl transition-all hover:opacity-90 active:scale-[0.97] shadow-lg shadow-black/5"
@@ -188,6 +224,15 @@ export default function EmployeeCoursesPage() {
                                                         Empezar curso
                                                         <i className="bi bi-arrow-right-short text-xl"></i>
                                                     </Link>
+
+                                                    {course.progress === 100 && (
+                                                        <button
+                                                            onClick={() => downloadCertificate(course.id)}
+                                                            className="flex items-center justify-center gap-3 px-8 py-4 bg-orange-500 text-white text-sm font-black uppercase tracking-widest rounded-2xl transition-all hover:opacity-90 active:scale-[0.97] shadow-lg shadow-black/5">
+                                                            Descargar certificado
+                                                            <i className="bi bi-download text-lg ml-1"></i>
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
