@@ -271,7 +271,7 @@ export default function RegisterCompanyPage() {
             Haz crecer tu negocio en Atalayas.
           </h2>
           <p className="text-lg text-white/80 font-medium leading-relaxed">
-            Forma parte de la red de empresas más avanzada. Gestiona a tus empleados, publica servicios y accede a recursos exclusivos del ecosistema de Alicante Futura.
+            Forma parte de la red de empresas más avanzada. Gestiona a tus empleados, publica servicios y accede a recursos exclusivos del ecosistema de Atalayas EGM.
           </p>
         </div>
       </div>

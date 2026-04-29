@@ -63,7 +63,7 @@ export default function ManageCourses() {
                     title="Gestión de Contenido"
                     description="Administra los cursos de formación de tu empresa y el contenido global."
                     icon={<i className="bi bi-gear-fill"></i>}
-                    backUrl="/dashboard/administrator/admin/courses"
+                    backUrl="/dashboard/administrator/admin/courses/manage"
                     action={
                         <Link href="/dashboard/administrator/admin/courses/manage/new"
                             className="bg-secondary text-secondary-foreground px-6 py-3 rounded-xl font-bold hover:opacity-90 transition-all shadow-sm flex items-center justify-center gap-2 w-full"

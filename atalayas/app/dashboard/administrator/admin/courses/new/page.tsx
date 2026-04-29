@@ -15,13 +15,13 @@ export default function NewCoursePage() {
 
   const user = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user") || "{}") : {};
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) return alert("El título es obligatorio");
     if (useAi && !formData.file) return alert("Sube un PDF para usar la IA.");
 
     setLoading(true);
-    setLoadingStep("Iniciando creación...");
+    setLoadingStep("Creando curso...");
 
     try {
       const token = localStorage.getItem("token");
@@ -33,7 +33,7 @@ export default function NewCoursePage() {
 
       if (resCourse.ok && useAi && formData.file) {
         const newCourse = await resCourse.json();
-        setLoadingStep("🧠 Procesando Podcast con IA...");
+        setLoadingStep("🧠 La IA está generando el podcast...");
         const aiFormData = new FormData();
         aiFormData.append("title", `Módulo 1: ${formData.title}`);
         aiFormData.append("file", formData.file);
@@ -43,7 +43,7 @@ export default function NewCoursePage() {
           body: aiFormData,
         });
       }
-      router.push("/dashboard/administrator/admin/courses/manage");
+      router.push("/dashboard/administrator/admin/courses");
     } catch (err) {
       alert("Error en el proceso.");
     } finally {
@@ -59,10 +59,13 @@ export default function NewCoursePage() {
           title="Nuevo Curso"
           description="Crea contenido formativo apoyado por Inteligencia Artificial."
           icon={<i className="bi bi-plus-circle-fill"></i>}
-          backUrl="/dashboard/administrator/admin/courses/manage"
         />
 
         <div className="p-6 lg:p-10 max-w-3xl mx-auto w-full">
+          <button onClick={() => router.back()} className="flex items-center gap-2 text-muted-foreground hover:text-primary font-bold text-sm mb-6 transition-colors">
+            <i className="bi bi-arrow-left"></i> Volver a la lista
+          </button>
+
           <form onSubmit={handleSubmit} className="bg-card p-8 lg:p-10 rounded-[2.5rem] border border-border shadow-sm space-y-8">
             <div className="space-y-2">
               <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nombre del curso</label>
@@ -77,9 +80,9 @@ export default function NewCoursePage() {
             <div className="space-y-4">
               <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Imagen del curso</label>
               <label className="relative h-32 w-full border-2 border-dashed border-border rounded-3xl flex items-center justify-center bg-muted/30 hover:border-primary transition-all cursor-pointer group">
-                <input type="file" accept=".jpg" onChange={(e) => setFormData({...formData, file: e.target.files?.[0] || null})} className="hidden" />
-                <div className="text-center">
-                   <p className="font-bold text-foreground">{formData.file ? formData.file.name : "Seleccionar imagen"}</p>
+                <input type="file" accept=".pdf" onChange={(e) => setFormData({...formData, file: e.target.files?.[0] || null})} className="hidden" />
+                <div className="text-center group-hover:scale-105 transition-transform">
+                   <p className="font-bold text-foreground">{formData.file ? formData.file.name : "Seleccionar PDF"}</p>
                    <p className="text-xs text-muted-foreground">Click para subir una imagen</p>
                 </div>
               </label>
@@ -89,7 +92,10 @@ export default function NewCoursePage() {
               <div onClick={() => !loading && setUseAi(!useAi)} className={`p-5 cursor-pointer rounded-2xl border-2 transition-all flex items-center justify-between ${useAi ? 'border-indigo-500 bg-indigo-50/50' : 'border-transparent bg-muted/50'}`}>
                 <div className="flex items-center gap-4">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${useAi ? 'bg-indigo-500 text-white' : 'bg-muted text-muted-foreground'}`}>✨</div>
-                  <div className="flex flex-col"><p className={`font-bold ${useAi ? 'text-indigo-900' : 'text-foreground'}`}>Podcast con IA</p><p className="text-[9px] uppercase font-black opacity-50">Resumen auditivo</p></div>
+                  <div>
+                    <p className={`font-bold ${useAi ? 'text-indigo-900' : 'text-foreground'}`}>Generar Podcast IA</p>
+                    <p className="text-[10px] uppercase font-black opacity-60">Resumen auditivo automático</p>
+                  </div>
                 </div>
                 <div className={`w-10 h-5 rounded-full relative transition-colors ${useAi ? 'bg-indigo-500' : 'bg-muted-foreground/30'}`}>
                    <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${useAi ? 'left-6' : 'left-1'}`} />
@@ -97,7 +103,7 @@ export default function NewCoursePage() {
               </div>
             )}
 
-            <button type="submit" disabled={loading} className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-bold text-lg hover:opacity-90 disabled:opacity-50 shadow-lg">
+            <button type="submit" disabled={loading} className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-bold text-lg hover:opacity-90 disabled:opacity-50 shadow-lg shadow-primary/20">
               {loading ? loadingStep : "Crear Curso"}
             </button>
           </form>
