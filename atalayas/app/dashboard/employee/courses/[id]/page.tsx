@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Sidebar from '@/components/ui/Sidebar';
+import SearchInput from '@/components/ui/Searchbar';
 import { API_ROUTES } from '@/lib/utils';
 import { motion } from "framer-motion";
 import ReactMarkdown from 'react-markdown';
@@ -31,12 +32,14 @@ export default function CourseDetailPage() {
       if (!courseId) return;
       try {
         setLoading(true);
+        const token = localStorage.getItem('token');
+
         const res = await fetch(API_ROUTES.COURSES.GET_BY_ID(courseId), {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         if (!res.ok) throw new Error("Error");
         const data = await res.json();
-        setCourse(data.course || data.data || data);
+setCourse(data.course || data.data || data);
       } catch (err) {
         setError(true);
       } finally {
@@ -52,9 +55,27 @@ export default function CourseDetailPage() {
   );
   const sortedContent = [...filteredContent].sort((a, b) => a.order - b.order);
 
+  if (error) return (
+    <div className="flex min-h-screen bg-background font-sans">
+      <Sidebar role="EMPLOYEE" />
+      <main className="flex-1 p-10 flex flex-col items-center justify-center">
+        <div className="bg-destructive/10 p-8 rounded-3xl border border-destructive/20 text-center max-w-md">
+          <i className="bi bi-exclamation-triangle text-4xl text-destructive mb-4 block"></i>
+          <h2 className="text-destructive font-bold text-xl mb-2">Error al cargar el curso</h2>
+          <p className="text-muted-foreground text-sm">No se ha podido conectar con el servidor. Por favor, vuelve a intentarlo más tarde.</p>
+        </div>
+      </main>
+    </div>
+  );
+
   if (loading) return (
     <div className="flex h-screen bg-background items-center justify-center">
       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+      />
     </div>
   );
 

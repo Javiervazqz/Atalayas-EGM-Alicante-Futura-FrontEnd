@@ -8,6 +8,7 @@ import { API_ROUTES } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import mediumZoom from 'medium-zoom';
 
+
 export default function EmployeeContentDetail() {
   const params = useParams();
   const router = useRouter();
@@ -38,7 +39,9 @@ export default function EmployeeContentDetail() {
       try {
         const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+
         });
+
         const data = await res.json();
         const rawData = data?.data || data?.content || data || {};
         setContent(rawData);
@@ -49,6 +52,22 @@ export default function EmployeeContentDetail() {
       }
     };
     fetchContent();
+
+    const markAccess = async () => {
+      const contentId = params.contentId as string;
+      await fetch(`${API_ROUTES.ENROLLMENTS.BASE}/content-access`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ contentId }),
+      });
+    };
+    
+    if (params.contentId) {
+      markAccess();
+    }
   }, [params.contentId, params.id]);
 
   // Autocompletar tarea de onboarding si viene de un link específico
@@ -72,6 +91,54 @@ export default function EmployeeContentDetail() {
     autoConfirmTask();
   }, [fromTaskId]);
 
+  useEffect(() => {
+    if (zoomRef.current && content?.imageUrl) {
+      const zoom = mediumZoom(zoomRef.current, {
+        background: "rgba(250,250,249,0.95)", // Usando un fondo claro como tu app
+        margin: 24,
+      });
+      return () => {
+        zoom.detach();
+      };
+    }
+  }, [content?.imageUrl]);
+
+  const handleQuizSubmit = async () => {
+    const questions = getQuizQuestions(content.quiz);
+    let correctCount = 0;
+    questions.forEach((q: any, index: number) => {
+      if (quizAnswers[index] === q.correctAnswer) correctCount++;
+    });
+    setQuizScore(correctCount);
+    setQuizSubmitted(true);
+
+    try {
+      const token = localStorage.getItem('token');
+
+      await fetch(
+        API_ROUTES.CONTENT.COMPLETE(
+          params.id as string,
+          content.id
+        ),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            score: correctCount,
+            totalQuestions: questions.length,
+          }),
+        });
+
+      console.log("Quiz enviado al backend");
+    } catch (error) {
+      console.error("Error enviando quiz:", error);
+    }
+  };
+
+  // Pantalla de carga (Solo una vez y con estilos corporativos)
   const handleSelectOption = (qIdx: number, option: string) => {
     if (isCorrected) return;
     setUserAnswers(prev => ({ ...prev, [qIdx]: option }));
