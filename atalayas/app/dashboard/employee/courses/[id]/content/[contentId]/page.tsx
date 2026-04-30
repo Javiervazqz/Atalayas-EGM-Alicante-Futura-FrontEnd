@@ -25,6 +25,9 @@ export default function EmployeeContentDetail() {
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [isCorrected, setIsCorrected] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizScore, setQuizScore] = useState(0);
 
   // Helper para normalizar preguntas del quiz
   const getQuizQuestions = (quizSource: any) => {
