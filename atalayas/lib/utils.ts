@@ -87,30 +87,4 @@ export const API_ROUTES = {
 
       DELETE: (id: string) => `${BASE_URL}/suggestions/${id}`,
     },
-
- STATS: {
-    GET_ADMIN: `${BASE_URL}/stats`, // Quitamos el "/admin" porque en el Controller el @Get() está vacío
-  },
 }
-// Añade esto al final de lib/utils.ts
-export const fetchWithApiFallback = async (url: string, options: any = {}) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  
-  const defaultOptions = {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  };
-
-  const response = await fetch(url, defaultOptions);
-  
-  if (!response.ok) {
-    throw new Error(`Error en la petición: ${response.statusText}`);
-  }
-  
-  return response;
-};
->>>>>>> Stashed changes

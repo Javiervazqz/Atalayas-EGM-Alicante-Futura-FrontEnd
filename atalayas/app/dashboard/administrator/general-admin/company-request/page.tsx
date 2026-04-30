@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import { API_ROUTES } from '@/lib/utils';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
 import SearchBar from '@/components/ui/Searchbar';
-
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
 
 interface CompanyRequest {
   id: string;
@@ -17,18 +16,21 @@ interface CompanyRequest {
   address?: string;
   activity?: string;
   documentUrl: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ARCHIVED' ;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ARCHIVED';
   rejectReason?: string;
   created_at: string;
   archivedAt?: string | null;
 }
 
 const statusConfig = {
-  PENDING: { label: 'Pendientes', color: '#ff9500', bg: 'rgba(255,149,0,0.1)' },
-  APPROVED: { label: 'Aprobadas', color: '#34c759', bg: 'rgba(52,199,89,0.1)' },
-  REJECTED: { label: 'Rechazadas', color: '#ff3b30', bg: 'rgba(255,59,48,0.1)' },
-  ARCHIVED: { label: 'Archivadas', color: '#86868b', bg: 'rgba(134,134,139,0.1)' },
+  PENDING: { label: 'Pendiente', textColor: 'text-amber-600 dark:text-amber-400', bgClass: 'bg-amber-100 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20', icon: 'bi-clock-history' },
+  APPROVED: { label: 'Aprobada', textColor: 'text-emerald-700 dark:text-emerald-400', bgClass: 'bg-emerald-100 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20', icon: 'bi-check-circle' },
+  REJECTED: { label: 'Rechazada', textColor: 'text-destructive', bgClass: 'bg-destructive/10 border-destructive/20', icon: 'bi-x-circle' },
+  ARCHIVED: { label: 'Archivada', textColor: 'text-muted-foreground', bgClass: 'bg-muted border-border', icon: 'bi-archive' },
 };
+
+// El degradado sutil que ahora solo usaremos en detalles muy finos
+const PREMIUM_GRADIENT = "bg-gradient-to-r from-teal-400 via-amber-400 to-orange-500";
 
 export default function CompanyRequestsPage() {
   const [requests, setRequests] = useState<CompanyRequest[]>([]);
@@ -43,13 +45,23 @@ export default function CompanyRequestsPage() {
 
   const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';
 
+  // --- FUNCIÓN DE UTILIDAD PARA ACTUALIZAR EL SIDEBAR ---
+  const updateSidebarCounter = () => {
+    const current = Number(localStorage.getItem('count_requests')) || 0;
+    const newValue = Math.max(0, current - 1);
+    localStorage.setItem('count_requests', newValue.toString());
+    window.dispatchEvent(new CustomEvent('local-storage-update', { 
+      detail: { requests: newValue } 
+    }));
+  };
+
   const fetchRequests = async () => {
     setRequests([]);
     setLoading(true);
     try {
       const url = filter === 'ARCHIVED'
         ? API_ROUTES.COMPANY_REQUESTS.GET_ARCHIVED
-        : API_ROUTES.COMPANY_REQUESTS.GET_ALL
+        : API_ROUTES.COMPANY_REQUESTS.GET_ALL;
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
@@ -68,7 +80,12 @@ export default function CompanyRequestsPage() {
         headers: { Authorization: `Bearer ${getToken()}` }
       });
       const data = await res.json();
-      setPendingCount(Array.isArray(data) ? data.filter((r: any) => r.status === 'PENDING').length : 0);
+      const count = Array.isArray(data) ? data.filter((r: any) => r.status === 'PENDING').length : 0;
+      setPendingCount(count);
+      
+      // Sincronizar storage inicial
+      localStorage.setItem('count_requests', count.toString());
+      window.dispatchEvent(new CustomEvent('local-storage-update', { detail: { requests: count } }));
     } catch { }
   };
 
@@ -82,7 +99,10 @@ export default function CompanyRequestsPage() {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (!res.ok) throw new Error('Error al aprobar');
+      
+      updateSidebarCounter(); // Actualización instantánea
       await fetchRequests();
+      await fetchPendingCount();
       setSelected(null);
     } catch (err) {
       console.error(err);
@@ -104,7 +124,10 @@ export default function CompanyRequestsPage() {
         body: JSON.stringify({ rejectReason }),
       });
       if (!res.ok) throw new Error('Error al rechazar');
+      
+      updateSidebarCounter(); // Actualización instantánea
       await fetchRequests();
+      await fetchPendingCount();
       setSelected(null);
       setShowRejectModal(false);
       setRejectReason('');
@@ -115,6 +138,23 @@ export default function CompanyRequestsPage() {
     }
   };
 
+  const handleArchive = async () => {
+    if (!selected) return;
+    try {
+      const res = await fetch(API_ROUTES.COMPANY_REQUESTS.ARCHIVE(selected.id), {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (res.ok && selected.status === 'PENDING') {
+        updateSidebarCounter(); // Solo restamos si archivamos algo que estaba pendiente
+      }
+      await fetchRequests();
+      setSelected(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const filtered = (filter === 'ALL' || filter === 'ARCHIVED' ? requests : requests.filter(r => r.status === filter))
     .filter(r =>
       r.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -122,370 +162,285 @@ export default function CompanyRequestsPage() {
       r.contactName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.contactEmail.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
+    <div className="flex min-h-screen bg-background font-sans text-foreground">
       <Sidebar role="GENERAL_ADMIN" />
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Header */}
-        <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)', padding: '24px 32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <h1 style={{ color: '#1d1d1f', fontSize: '24px', fontWeight: 700, letterSpacing: '-0.03em', margin: '0 0 4px' }}>
-                Solicitudes de empresa
-              </h1>
-              <p style={{ color: '#86868b', fontSize: '14px', margin: 0 }}>
-                Gestiona las solicitudes de alta de nuevas empresas
-              </p>
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        
+        <PageHeader 
+          title="Gestión de Solicitudes"
+          description={pendingCount > 0 
+            ? `Pendiente de revisión: ${pendingCount} nueva${pendingCount > 1 ? 's' : ''} petición${pendingCount > 1 ? 'es' : ''}.` 
+            : "Registro histórico y validación de empresas."
+          }
+          icon={<i className={`bi bi-shield-check text-transparent bg-clip-text ${PREMIUM_GRADIENT}`}></i>}
+          action={
+            <div className="w-full md:w-80">
+              <SearchBar 
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Buscar CIF, empresa o contacto..."
+              />
             </div>
-            {pendingCount > 0 && (
-              <div style={{ background: 'rgba(255,149,0,0.1)', border: '1px solid rgba(255,149,0,0.2)', borderRadius: '20px', padding: '6px 14px' }}>
-                <span style={{ color: '#ff9500', fontSize: '13px', fontWeight: 500 }}>
-                  {pendingCount} pendiente {pendingCount > 1 ? 's' : ''}
-                </span>
-              </div>
-            )}
+          }
+        />
 
-          </div>
-          {/* Filtros */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '20px' }}>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              {(['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'ARCHIVED'] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '20px',
-                    border: 'none',
-                    background: filter === f ? '#1d1d1f' : '#f5f5f7',
-                    color: filter === f ? '#fff' : '#424245',
-                    fontSize: '13px',
-                    fontWeight: filter === f ? 500 : 400,
-                    cursor: 'pointer',
-                    fontFamily: appleFont,
-                    transition: 'all 0.15s',
-                  }}
-                >
+        <div className="flex-1 flex flex-col overflow-hidden max-w-350 mx-auto w-full px-6 lg:px-10 pb-10">
+          
+          {/* FILTROS NORMALES (Limpios y corporativos) */}
+          <div className="flex flex-wrap gap-2 my-8 bg-card border border-border p-1.5 rounded-2xl shadow-sm w-fit">
+            {(['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'ARCHIVED'] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => { setFilter(f); setSelected(null); }}
+                className={`relative px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300 rounded-xl border ${
+                  filter === f 
+                    ? 'bg-primary/10 text-primary border-primary/20 shadow-sm' 
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+              >
+                <span className="relative z-10 flex items-center justify-center">
                   {f === 'ALL' ? 'Todas' : statusConfig[f].label}
-                </button>
-              ))}
-            </div>
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Buscar solicitud..."
-            />
+                  {f === 'PENDING' && pendingCount > 0 && (
+                    <span className={`ml-2 px-1.5 py-0.5 rounded-md text-[9px] font-black ${filter === f ? 'bg-primary text-white' : 'bg-primary text-white animate-pulse'}`}>
+                      {pendingCount}
+                    </span>
+                  )}
+                </span>
+              </button>
+            ))}
           </div>
-        </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 380px' : '1fr', flex: 1, overflow: 'hidden' }}>
-          {/* Lista */}
-          <div style={{ padding: '24px 32px', overflowY: 'auto' }}>
-            {loading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {[1, 2, 3].map(i => (
-                  <div key={i} style={{ height: '90px', background: '#fff', borderRadius: '16px', animation: 'pulse 1.5s infinite' }} />
-                ))}
-              </div>
-            ) : filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                <p style={{ fontSize: '32px', marginBottom: '12px' }}>📋</p>
-                <p style={{ color: '#86868b', fontSize: '14px' }}>No hay solicitudes {filter !== 'ALL' ? statusConfig[filter].label.toLowerCase() : ''}</p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {filtered.map((req) => {
-                  const status = statusConfig[req.status];
-                  const isSelected = selected?.id === req.id;
-                  return (
-                    <div
-                      key={req.id}
-                      onClick={() => setSelected(isSelected ? null : req)}
-                      style={{
-                        background: '#fff',
-                        borderRadius: '16px',
-                        padding: '18px 20px',
-                        cursor: 'pointer',
-                        border: isSelected ? '1px solid #0071e3' : '1px solid transparent',
-                        boxShadow: isSelected
-                          ? '0 0 0 3px rgba(0,113,227,0.1)'
-                          : '0 2px 8px rgba(0,0,0,0.06)',
-                        transition: 'all 0.15s',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '16px',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
-                        <div style={{
-                          width: '42px', height: '42px',
-                          background: '#f5f5f7',
-                          borderRadius: '12px',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          flexShrink: 0, fontSize: '18px',
-                        }}>
-                          🏭
+          {/* LISTADO TIPO TABLA CORPORATIVA (Sin la línea superior) */}
+          <div className="flex-1 flex flex-col bg-card border border-border rounded-[2rem] shadow-sm overflow-hidden">
+            
+            <div className="grid grid-cols-12 gap-4 px-8 py-5 border-b border-border/50 bg-muted/10 text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">
+              <div className="col-span-5 md:col-span-4 text-left">Empresa / CIF</div>
+              <div className="hidden md:block col-span-3">Solicitante</div>
+              <div className="col-span-3 md:col-span-2">Estado</div>
+              <div className="col-span-4 md:col-span-3 text-right pr-4">Acciones</div>
+            </div>
+
+            <div className="overflow-y-auto flex-1 no-scrollbar p-2">
+              {loading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-20 bg-muted/30 rounded-2xl animate-pulse w-full" />
+                  ))}
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-32 opacity-40">
+                  <i className="bi bi-envelope-open text-5xl mb-4"></i>
+                  <p className="text-sm font-bold uppercase tracking-widest">Sin solicitudes pendientes</p>
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  {filtered.map((req) => {
+                    const status = statusConfig[req.status];
+                    const isSelected = selected?.id === req.id;
+
+                    return (
+                      <div 
+                        key={req.id} 
+                        className="relative group/row transition-all duration-300 border-b border-border/40 last:border-b-0"
+                      >
+                        {/* BORDE HOVER EXTRA-FINO (1px y opacidad reducida a 40%) */}
+                        <div className={`absolute inset-px rounded-[24px] ${PREMIUM_GRADIENT} opacity-0 group-hover/row:opacity-40 transition-opacity duration-300 p-px pointer-events-none z-0`}>
+                          <div className="w-full h-full bg-card rounded-[23px]"></div>
                         </div>
-                        <div style={{ minWidth: 0 }}>
-                          <p style={{ color: '#1d1d1f', fontSize: '15px', fontWeight: 600, margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {req.companyName}
-                          </p>
-                          <p style={{ color: '#86868b', fontSize: '12px', margin: '0 0 2px' }}>
-                            CIF: {req.cif} · {req.contactName}
-                          </p>
-                          <p style={{ color: '#b0b0b5', fontSize: '11px', margin: 0 }}>
-                            {req.created_at ? new Date(req.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Sin fecha'}
-                          </p>
+
+                        {/* CONTENIDO DE LA FILA */}
+                        <div className="relative z-10 flex flex-col">
+                          
+                          {/* FILA VISIBLE */}
+                          <div 
+                            onClick={() => setSelected(isSelected ? null : req)}
+                            className="grid grid-cols-12 gap-4 px-6 py-4 items-center cursor-pointer"
+                          >
+                            <div className="col-span-5 md:col-span-4 flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg bg-muted text-muted-foreground group-hover/row:bg-primary/5 group-hover/row:text-primary transition-colors">
+                                <i className="bi bi-building"></i>
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-foreground truncate">{req.companyName}</p>
+                                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-tight">{req.cif}</p>
+                              </div>
+                            </div>
+
+                            <div className="hidden md:block col-span-3">
+                              <p className="text-xs font-bold text-foreground">{req.contactName}</p>
+                              <p className="text-[11px] text-muted-foreground truncate">{req.contactEmail}</p>
+                            </div>
+
+                            <div className="col-span-3 md:col-span-2">
+                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[9px] font-black uppercase tracking-wider ${status.bgClass} ${status.textColor}`}>
+                                <i className={`bi ${status.icon}`}></i> {status.label}
+                              </span>
+                            </div>
+
+                            <div className="col-span-4 md:col-span-3 flex items-center justify-end gap-3 pr-2">
+                              {req.status === 'PENDING' && (
+                                <>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleApprove(req.id); }}
+                                    className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-all shadow-sm"
+                                    title="Aprobar"
+                                  >
+                                    <i className="bi bi-check-lg text-lg"></i>
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setSelected(req); setShowRejectModal(true); }}
+                                    className="w-8 h-8 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-all shadow-sm"
+                                    title="Rechazar"
+                                  >
+                                    <i className="bi bi-x-lg text-lg"></i>
+                                  </button>
+                                </>
+                              )}
+                              <i className={`bi bi-chevron-down text-muted-foreground/30 transition-transform duration-300 ${isSelected ? 'rotate-180 text-foreground' : ''}`}></i>
+                            </div>
+                          </div>
+
+                          {/* DESPLEGABLE */}
+                          <div className={`overflow-hidden transition-all duration-500 ${isSelected ? 'max-h-250' : 'max-h-0'}`}>
+                            <div className="px-10 py-8 bg-muted/5 grid grid-cols-1 lg:grid-cols-12 gap-10 border-t border-border/40 rounded-b-[22.5px]">
+                              
+                              {/* COLUMNA 1: DATOS EMPRESA */}
+                              <div className="lg:col-span-4 space-y-6">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500/80 mb-4 flex items-center gap-2">
+                                  <i className="bi bi-buildings"></i> Datos de la Entidad
+                                </h4>
+                                <div className="space-y-3">
+                                  <div className="bg-card p-4 rounded-2xl border border-border/40">
+                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Actividad</p>
+                                    <p className="text-sm font-bold text-foreground">{req.activity || 'No definida'}</p>
+                                  </div>
+                                  <div className="bg-card p-4 rounded-2xl border border-border/40">
+                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Dirección Sede</p>
+                                    <p className="text-sm font-bold text-foreground leading-snug">{req.address || 'No proporcionada'}</p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* COLUMNA 2: DATOS SOLICITANTE */}
+                              <div className="lg:col-span-4 space-y-6">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500/80 mb-4 flex items-center gap-2">
+                                  <i className="bi bi-person-badge"></i> Representante / Solicitante
+                                </h4>
+                                <div className="space-y-3">
+                                  <div className="bg-card p-4 rounded-2xl border border-border/40 flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-600 font-black text-xs">
+                                      {req.contactName.charAt(0)}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Nombre Completo</p>
+                                      <p className="text-sm font-bold text-foreground truncate">{req.contactName}</p>
+                                    </div>
+                                  </div>
+                                  <div className="bg-card p-4 rounded-2xl border border-border/40">
+                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Email / Teléfono</p>
+                                    <p className="text-sm font-bold text-foreground">{req.contactEmail}</p>
+                                    <p className="text-xs font-medium text-muted-foreground mt-1">{req.phone || 'Sin teléfono'}</p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* COLUMNA 3: DOCUMENTACIÓN Y ACCIÓN */}
+                              <div className="lg:col-span-4 space-y-6">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500/80 mb-4 flex items-center gap-2">
+                                  <i className="bi bi-file-earmark-check"></i> Verificación
+                                </h4>
+                                
+                                <a
+                                  href={req.documentUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="flex items-center gap-4 p-5 bg-background border-2 border-dashed border-border hover:border-teal-500/40 hover:bg-teal-500/2 rounded-3xl transition-all group"
+                                >
+                                  <div className="w-12 h-12 bg-teal-500/10 text-teal-600 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                                    <i className="bi bi-file-earmark-pdf"></i>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-black uppercase tracking-widest text-foreground">Escritura / CIF</p>
+                                    <p className="text-[10px] font-medium text-muted-foreground">Clic para ver documento</p>
+                                  </div>
+                                  <i className="bi bi-box-arrow-up-right text-muted-foreground/40 group-hover:text-teal-500 transition-colors"></i>
+                                </a>
+
+                                {(req.status === 'APPROVED' || req.status === 'REJECTED') && !req.archivedAt && (
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      await fetch(API_ROUTES.COMPANY_REQUESTS.ARCHIVE(req.id), {
+                                        method: 'PATCH',
+                                        headers: { Authorization: `Bearer ${getToken()}` },
+                                      });
+                                      await fetchRequests();
+                                      setSelected(null);
+                                    }}
+                                    className="w-full py-4 rounded-2xl border border-border text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:bg-muted/50 transition-all flex items-center justify-center gap-3"
+                                  >
+                                    <i className="bi bi-archive"></i> Archivar Solicitud
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
                         </div>
                       </div>
-                      <span style={{
-                        padding: '4px 10px',
-                        borderRadius: '20px',
-                        background: status.bg,
-                        color: status.color,
-                        fontSize: '12px',
-                        fontWeight: 500,
-                        flexShrink: 0,
-                      }}>
-                        {status.label.slice(0, -1)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
-
-          {/* Panel detalle */}
-          {selected && (
-            <div style={{ overflowY: 'auto', borderLeft: '1px solid rgba(0,0,0,0.06)', background: '#fff', padding: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                <h2 style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, margin: 0, letterSpacing: '-0.02em' }}>
-                  Detalle solicitud
-                </h2>
-                <button
-                  onClick={() => setSelected(null)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868b', fontSize: '18px' }}
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Info empresa */}
-              <div style={{ marginBottom: '20px' }}>
-                <div style={{ width: '48px', height: '48px', background: '#f5f5f7', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', marginBottom: '14px' }}>
-                  🏭
-                </div>
-                <h3 style={{ color: '#1d1d1f', fontSize: '20px', fontWeight: 700, margin: '0 0 4px', letterSpacing: '-0.03em' }}>
-                  {selected.companyName}
-                </h3>
-                <span style={{
-                  padding: '3px 10px', borderRadius: '20px',
-                  background: statusConfig[selected.status].bg,
-                  color: statusConfig[selected.status].color,
-                  fontSize: '12px', fontWeight: 500,
-                }}>
-                  {statusConfig[selected.status].label.slice(0, -1)}
-                </span>
-              </div>
-
-              {/* Campos */}
-              {[
-                { label: 'CIF', value: selected.cif },
-                { label: 'Actividad', value: selected.activity },
-                { label: 'Dirección', value: selected.address },
-                { label: 'Responsable', value: selected.contactName },
-                { label: 'Email', value: selected.contactEmail },
-                { label: 'Teléfono', value: selected.phone },
-              ].filter(f => f.value).map((field) => (
-                <div key={field.label} style={{ marginBottom: '14px' }}>
-                  <p style={{ color: '#86868b', fontSize: '11px', fontWeight: 500, margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {field.label}
-                  </p>
-                  <p style={{ color: '#1d1d1f', fontSize: '14px', margin: 0 }}>{field.value}</p>
-                </div>
-              ))}
-
-              {/* Documento */}
-              <div style={{ marginBottom: '24px' }}>
-                <p style={{ color: '#86868b', fontSize: '11px', fontWeight: 500, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Documento acreditativo
-                </p>
-                <a
-                  href={selected.documentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '10px',
-                    padding: '12px 14px',
-                    background: '#f5f5f7',
-                    borderRadius: '12px',
-                    textDecoration: 'none',
-                    color: '#0071e3',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                  }}
-                >
-                  <span>📄</span>
-                  Ver documento
-                  <span style={{ marginLeft: 'auto' }}>↗</span>
-                </a>
-              </div>
-
-              {/* Motivo rechazo */}
-              {selected.rejectReason && (
-                <div style={{ background: 'rgba(255,59,48,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '24px' }}>
-                  <p style={{ color: '#ff3b30', fontSize: '12px', fontWeight: 500, margin: '0 0 4px' }}>Motivo de rechazo</p>
-                  <p style={{ color: '#1d1d1f', fontSize: '13px', margin: 0 }}>{selected.rejectReason}</p>
-                </div>
-              )}
-
-              {/* Acciones */}
-              {selected.status === 'PENDING' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <button
-                    onClick={() => handleApprove(selected.id)}
-                    disabled={actionLoading}
-                    style={{
-                      width: '100%', padding: '13px',
-                      background: actionLoading ? '#86868b' : '#34c759',
-                      color: '#fff', border: 'none',
-                      borderRadius: '12px', fontSize: '14px',
-                      fontWeight: 500, cursor: actionLoading ? 'not-allowed' : 'pointer',
-                      fontFamily: appleFont,
-                    }}
-                  >
-                    {actionLoading ? 'Procesando...' : '✓ Aprobar solicitud'}
-                  </button>
-                  <button
-                    onClick={() => setShowRejectModal(true)}
-                    disabled={actionLoading}
-                    style={{
-                      width: '100%', padding: '13px',
-                      background: 'rgba(255,59,48,0.08)',
-                      color: '#ff3b30', border: 'none',
-                      borderRadius: '12px', fontSize: '14px',
-                      fontWeight: 500, cursor: 'pointer',
-                      fontFamily: appleFont,
-                    }}
-                  >
-                    ✕ Rechazar solicitud
-                  </button>
-                </div>
-              )}
-
-              {(selected.status === 'APPROVED' || selected.status === 'REJECTED') && !selected.archivedAt && (
-                <button
-                  onClick={async () => {
-                    await fetch(API_ROUTES.COMPANY_REQUESTS.ARCHIVE(selected.id), {
-                      method: 'PATCH',
-                      headers: { Authorization: `Bearer ${getToken()}` },
-                    });
-                    await fetchRequests();
-                    setSelected(null);
-                  }}
-                  style={{
-                    width: '100%', padding: '13px',
-                    background: '#f5f5f7', color: '#424245',
-                    border: 'none', borderRadius: '12px',
-                    fontSize: '14px', cursor: 'pointer',
-                    fontFamily: appleFont, marginTop: '10px',
-                  }}
-                >
-                  📦 Archivar solicitud
-                </button>
-              )}
-
-              {selected.archivedAt && (
-                <button
-                onClick={async () => {
-                  await fetch(API_ROUTES.COMPANY_REQUESTS.UNARCHIVE(selected.id), {
-                    method: 'PATCH',
-                    headers: {Authorization: `Bearer ${getToken()}`},
-                  });
-                  setFilter(selected.status as any);
-                  await fetchRequests();
-                  setSelected(null);
-                }}
-                style={{
-                width: '100%', padding: '13px',
-                background: '#f5f5f7', color: '#0071e3',
-                border: 'none', borderRadius: '12px',
-                fontSize: '14px', cursor: 'pointer',
-                fontFamily: appleFont, marginTop: '10px',
-              }}
-              >
-                📤 Desarchivar solicitud
-              </button>
-            )}
-          </div>
-          )}
         </div>
 
-        {/* Modal rechazo */}
-        {showRejectModal && (
-          <div style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 100, padding: '24px',
-          }}>
-            <div style={{ background: '#fff', borderRadius: '20px', padding: '28px', maxWidth: '420px', width: '100%' }}>
-              <h3 style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, margin: '0 0 8px' }}>
-                Rechazar solicitud
-              </h3>
-              <p style={{ color: '#86868b', fontSize: '13px', margin: '0 0 16px' }}>
-                Indica el motivo del rechazo. Se enviará un email al solicitante.
-              </p>
-              <textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Motivo del rechazo..."
-                rows={4}
-                style={{
-                  width: '100%', background: '#f5f5f7',
-                  border: '1px solid rgba(0,0,0,0.08)',
-                  borderRadius: '12px', padding: '12px 14px',
-                  fontSize: '14px', color: '#1d1d1f',
-                  outline: 'none', resize: 'none',
-                  fontFamily: appleFont, boxSizing: 'border-box',
-                }}
-              />
-              <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-                <button
-                  onClick={() => { setShowRejectModal(false); setRejectReason(''); }}
-                  style={{
-                    flex: 1, padding: '12px',
-                    background: '#f5f5f7', color: '#424245',
-                    border: 'none', borderRadius: '12px',
-                    fontSize: '14px', cursor: 'pointer',
-                    fontFamily: appleFont,
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleReject}
-                  disabled={!rejectReason.trim() || actionLoading}
-                  style={{
-                    flex: 1, padding: '12px',
-                    background: !rejectReason.trim() ? '#86868b' : '#ff3b30',
-                    color: '#fff', border: 'none',
-                    borderRadius: '12px', fontSize: '14px',
-                    fontWeight: 500,
-                    cursor: !rejectReason.trim() ? 'not-allowed' : 'pointer',
-                    fontFamily: appleFont,
-                  }}
-                >
-                  {actionLoading ? 'Rechazando...' : 'Confirmar rechazo'}
-                </button>
+        {/* MODAL RECHAZO */}
+        {showRejectModal && selected && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-100 p-4 animate-in fade-in duration-200">
+            <div className="bg-card border border-border rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden">
+              
+              <div className={`absolute top-0 left-0 right-0 h-1 z-10 ${PREMIUM_GRADIENT} opacity-80`}></div>
+
+              <div className="flex flex-col items-center text-center mt-2">
+                <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-2xl flex items-center justify-center text-3xl mb-6">
+                  <i className="bi bi-slash-circle"></i>
+                </div>
+                <h3 className="text-xl font-bold tracking-tight mb-2">Rechazar Solicitud</h3>
+                <p className="text-xs font-medium text-muted-foreground mb-8">Indica el motivo por el cual la empresa {selected.companyName} no puede ser admitida.</p>
+                
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Ej: El documento CIF no coincide..."
+                  className="w-full bg-muted/30 border border-border focus:border-destructive outline-none rounded-2xl p-4 text-sm font-medium mb-6 resize-none h-32 transition-all"
+                />
+
+                <div className="grid grid-cols-2 gap-4 w-full">
+                  <button
+                    onClick={() => { setShowRejectModal(false); setRejectReason(''); setSelected(null); }}
+                    className="py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest text-muted-foreground bg-muted hover:bg-muted/80 transition-all"
+                  >
+                    Volver
+                  </button>
+                  <button
+                    onClick={handleReject}
+                    disabled={!rejectReason.trim() || actionLoading}
+                    className="py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest text-white bg-destructive hover:opacity-90 transition-all disabled:opacity-50 shadow-lg shadow-destructive/20"
+                  >
+                    Confirmar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

@@ -4,6 +4,8 @@ import { useEffect, useState, useMemo } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import PageHeader from '@/components/ui/pageHeader';
+import SearchInput from '@/components/ui/Searchbar';
 import { API_ROUTES } from '@/lib/utils';
 
 interface Company {

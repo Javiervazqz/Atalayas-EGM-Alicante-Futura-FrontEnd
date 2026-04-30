@@ -2,52 +2,37 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
 
 export default function NewAIContentPage() {
-  const { id } = useParams(); // ID del curso
+  const { id } = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [sourceType, setSourceType] = useState<'file' | 'link'>('file');
   
-  // Opciones de Generación IA (Estado funcional y visual)
   const [options, setOptions] = useState({
     generateSummary: true,
     generateQuiz: false,
     generatePodcast: false,
   });
 
-  // Datos del formulario (nullable/opcionales excepto título)
   const [formData, setFormData] = useState({
     title: '',
-    url: '', // Link si sourceType es link
-    file: null as File | null, // Archivo PDF nullable
+    url: '',
+    file: null as File | null,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validación visual premium
-    if (!formData.title.trim()) return alert("⚠️ El título de la lección es obligatorio");
+    if (!formData.title.trim()) return;
 
     setLoading(true);
-
-    if (!id) {
-      console.error("No se encontró el ID del curso");
-      setLoading(false);
-      return;
-    }
-
-    // 1. Siempre usamos FormData para envíos que INCLUYEN archivos binarios
     const data = new FormData();
     data.append('title', formData.title);
-    
-    // Enviamos las opciones de IA como un string JSON que el backend parseará
     data.append('options', JSON.stringify(options));
 
-    // 2. Lógica Nullable: Solo añadimos el archivo o la URL si existen
     if (sourceType === 'file' && formData.file) {
       data.append('file', formData.file);
     } else if (sourceType === 'link' && formData.url) {
@@ -56,197 +41,140 @@ export default function NewAIContentPage() {
 
     try {
       const token = localStorage.getItem('token');
-      
-      // Llamada al fetch (Sin Content-Type manual)
       const res = await fetch(API_ROUTES.CONTENT.CREATE(id as string), {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}` 
-        },
-        body: data, // Enviamos FormData directamente
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: data,
       });
 
       if (res.ok) {
-        // Volvemos a la moderación del curso
         router.push(`/dashboard/administrator/general-admin/courses/${id}`);
         router.refresh();
-      } else {
-        const errorData = await res.json();
-        alert(`Error del servidor: ${errorData.message || 'No se pudo generar el contenido'}`);
       }
     } catch (error) {
-      console.error("Error crítico:", error);
-      alert("Fallo de conexión con el servidor.");
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
+    <div className="flex min-h-screen bg-muted/30 font-sans text-foreground transition-colors duration-300">
       <Sidebar role="GENERAL_ADMIN" />
       
-      <main className="flex-1 p-12 overflow-y-auto">
-        <div className="max-w-3xl mx-auto">
-          
-          {/* NAVEGACIÓN Y TÍTULO (ESTILO PREVIO) */}
-          <header className="mb-12">
-            <Link href={`/dashboard/administrator/general-admin/courses/${id}`} className="text-[#0071e3] font-medium mb-4 flex items-center gap-2 hover:underline">
-              ← Volver a Moderación
-            </Link>
-            <div className="flex items-center gap-4 mt-4">
-              <div className="inline-block p-4 bg-[#d9ff00] rounded-3xl shadow-lg shadow-lime-900/10">
-                <i className="bi bi-robot text-[#005596] text-3xl"></i>
-              </div>
-              <div>
-                <h1 className="text-4xl font-black text-[#1d1d1f] tracking-tight">Generador de Contenido IA</h1>
-                <p className="text-[#86868b] text-lg">Sube un documento o enlace y deja que la IA cree la lección mágicamente.</p>
-              </div>
-            </div>
-          </header>
+      <main className="flex-1 overflow-auto flex flex-col relative">
+        <PageHeader 
+          title="Generador IA"
+          description="Transforma documentos técnicos o enlaces en lecciones interactivas completas."
+          icon={<i className="bi bi-robot"></i>}
+          backUrl={`/dashboard/administrator/general-admin/courses/${id}`}
+        />
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="p-6 lg:p-12 flex-1 max-w-4xl mx-auto w-full">
+          <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             
-            {/* 1. DATOS BÁSICOS (TÍTULO) */}
-<div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-  <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] mb-2 ml-1">
-    Nombre de la Unidad / Lección
-  </label>
-  <input 
-    type="text" 
-    required
-    // ESTO ES LO QUE ESTABA FALLANDO:
-    value={formData.title} 
-    onChange={(e) => {
-      console.log("Escribiendo:", e.target.value); // Añade este log para ver si detecta el cambio
-      setFormData({ ...formData, title: e.target.value });
-    }}
-    className="w-full px-6 py-5 rounded-2xl bg-[#f5f5f7] border-2 border-transparent focus:border-blue-300 outline-none font-bold text-black"
-    placeholder="Ej: Manual de Bienvenida v2"
-  />
-</div>
+            {/* NOMBRE DE LA LECCIÓN */}
+            <div className="bg-card p-8 rounded-[32px] border border-border/60 shadow-sm">
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-4 ml-1">Título de la Unidad</label>
+              <input 
+                type="text" 
+                required
+                value={formData.title} 
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full px-6 py-5 rounded-[20px] bg-background border border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none font-bold text-lg text-foreground transition-all placeholder:text-muted-foreground/30"
+                placeholder="Ej: Protocolos de Seguridad y Salud v2"
+              />
+            </div>
 
-            {/* 2. FUENTE DEL CONTENIDO (SELECTOR Y INPUTS) */}
-            <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-              <div className="flex gap-4 mb-8">
+            {/* FUENTE DE DATOS */}
+            <div className="bg-card p-8 rounded-[32px] border border-border/60 shadow-sm">
+              <div className="flex gap-4 mb-8 bg-muted/50 p-1.5 rounded-[22px] border border-border/40">
                 <button 
                   type="button"
                   onClick={() => setSourceType('file')}
-                  className={`flex-1 p-5 rounded-2xl border-2 transition-all font-black text-sm flex items-center justify-center gap-3 cursor-pointer ${sourceType === 'file' ? 'border-[#005596] bg-blue-50 text-[#005596]' : 'border-gray-100 bg-white text-gray-400'}`}
+                  className={`flex-1 py-4 rounded-[18px] transition-all font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 cursor-pointer ${sourceType === 'file' ? 'bg-card text-primary shadow-md border border-border/60' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                  <i className="bi bi-file-earmark-pdf text-xl"></i> Subir PDF
+                  <i className="bi bi-file-earmark-pdf"></i> Archivo PDF
                 </button>
                 <button 
                   type="button"
                   onClick={() => setSourceType('link')}
-                  className={`flex-1 p-5 rounded-2xl border-2 transition-all font-black text-sm flex items-center justify-center gap-3 cursor-pointer ${sourceType === 'link' ? 'border-[#005596] bg-blue-50 text-[#005596]' : 'border-gray-100 bg-white text-gray-400'}`}
+                  className={`flex-1 py-4 rounded-[18px] transition-all font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 cursor-pointer ${sourceType === 'link' ? 'bg-card text-primary shadow-md border border-border/60' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                  <i className="bi bi-link-45deg text-xl"></i> Enlace Web
+                  <i className="bi bi-link-45deg"></i> Enlace Externo
                 </button>
               </div>
 
               {sourceType === 'file' ? (
-                <div className="border-2 border-dashed border-gray-200 rounded-[2rem] p-12 text-center hover:border-blue-400 transition-colors cursor-pointer relative bg-gray-50/50">
+                <div className="border-2 border-dashed border-border/60 rounded-[28px] p-16 text-center hover:border-primary/40 transition-all cursor-pointer relative bg-muted/20 group">
                   <input 
                     type="file" 
                     accept=".pdf"
-                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
                     onChange={(e) => setFormData({...formData, file: e.target.files?.[0] || null})}
                   />
-                  <i className="bi bi-cloud-arrow-up text-5xl text-gray-300 mb-4 block"></i>
-                  <p className="text-base font-bold text-black">
-                    {formData.file ? formData.file.name : "Arrastra tu PDF aquí o haz click"}
+                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl transition-all ${formData.file ? 'bg-green-500 text-white shadow-lg' : 'bg-card text-muted-foreground/40 group-hover:scale-110 group-hover:text-primary'}`}>
+                    <i className={`bi ${formData.file ? 'bi-check-lg' : 'bi-cloud-arrow-up'}`}></i>
+                  </div>
+                  <p className="text-sm font-bold text-foreground">
+                    {formData.file ? formData.file.name : "Suelte el documento aquí o haga clic para explorar"}
                   </p>
-                  <p className="text-xs text-[#86868b] mt-1">{formData.file ? 'Archivo listo para procesar' : 'Máx: 10MB (Formatos: .pdf)'}</p>
+                  <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-2">Máximo 15MB · Formato PDF</p>
                 </div>
               ) : (
-                <div className="relative">
-                    <i className="bi bi-link-45deg absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
+                <div className="relative group">
+                    <i className="bi bi-link-45deg absolute left-6 top-1/2 -translate-y-1/2 text-primary text-2xl opacity-40 group-focus-within:opacity-100 transition-opacity"></i>
                     <input 
                       type="url"
                       value={formData.url}
-                      placeholder="https://ejemplo.com/articulo-interesante"
-                      className="w-full px-14 py-5 bg-[#f5f5f7] rounded-2xl border-2 border-transparent focus:border-blue-300 outline-none font-bold text-black"
+                      placeholder="https://ejemplo.com/articulo-formativo"
+                      className="w-full pl-16 pr-8 py-6 bg-background rounded-[20px] border border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none font-bold text-foreground transition-all"
                       onChange={(e) => setFormData({...formData, url: e.target.value})}
                     />
                 </div>
               )}
             </div>
 
-            {/* 3. OPCIONES DE IA (MODERNAS, CON CURSOR POINTER) */}
-            <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-              <h3 className="text-xl font-black text-[#1d1d1f] mb-6">¿Qué quieres que genere la IA mágicamente?</h3>
+            {/* OPCIONES IA (CHECK CARDS) */}
+            <div className="bg-card p-8 rounded-[32px] border border-border/60 shadow-sm">
+              <h3 className="text-xs font-black text-foreground uppercase tracking-[0.2em] mb-8 text-center sm:text-left ml-1">Servicios de Inteligencia a Generar</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 
-                {/* Checkbox Card: Resumen */}
-                <button
-                  type="button" 
-                  onClick={() => setOptions({...options, generateSummary: !options.generateSummary})}
-                  className={`p-6 rounded-3xl text-left border-2 transition-all duration-300 cursor-pointer group active:scale-[0.98] ${
-                    options.generateSummary 
-                      ? 'border-[#d9ff00] bg-white shadow-lg shadow-lime-900/10' 
-                      : 'border-gray-100 opacity-60 grayscale hover:opacity-100 hover:border-gray-200'
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${options.generateSummary ? 'bg-blue-100' : 'bg-gray-100'}`}>
-                    <i className={`bi bi-text-paragraph text-2xl ${options.generateSummary ? 'text-[#005596]' : 'text-gray-400'}`}></i>
-                  </div>
-                  <p className="font-black text-base text-[#1d1d1f]">Resumen IA</p>
-                  <p className="text-xs text-gray-400 mt-1 leading-tight">Extrae los puntos clave y crea el resumen de la lección.</p>
-                </button>
-
-                {/* Checkbox Card: Quiz */}
-                <button
-                  type="button"
-                  onClick={() => setOptions({...options, generateQuiz: !options.generateQuiz})}
-                  className={`p-6 rounded-3xl text-left border-2 transition-all duration-300 cursor-pointer group active:scale-[0.98] ${
-                    options.generateQuiz 
-                      ? 'border-[#d9ff00] bg-white shadow-lg shadow-lime-900/10' 
-                      : 'border-gray-100 opacity-60 grayscale hover:opacity-100 hover:border-gray-200'
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${options.generateQuiz ? 'bg-orange-100' : 'bg-gray-100'}`}>
-                    <i className={`bi bi-patch-question text-2xl ${options.generateQuiz ? 'text-orange-600' : 'text-gray-400'}`}></i>
-                  </div>
-                  <p className="font-black text-base text-[#1d1d1f]">Test IA</p>
-                  <p className="text-xs text-gray-400 mt-1 leading-tight">Crea 5 preguntas interactivas automáticas.</p>
-                </button>
-
-                {/* Checkbox Card: Podcast */}
-                <button
-                  type="button"
-                  onClick={() => setOptions({...options, generatePodcast: !options.generatePodcast})}
-                  className={`p-6 rounded-3xl text-left border-2 transition-all duration-300 cursor-pointer group active:scale-[0.98] ${
-                    options.generatePodcast 
-                      ? 'border-[#d9ff00] bg-white shadow-lg shadow-lime-900/10' 
-                      : 'border-gray-100 opacity-60 grayscale hover:opacity-100 hover:border-gray-200'
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${options.generatePodcast ? 'bg-purple-100' : 'bg-gray-100'}`}>
-                    <i className={`bi bi-mic text-2xl ${options.generatePodcast ? 'text-purple-600' : 'text-gray-400'}`}></i>
-                  </div>
-                  <p className="font-black text-base text-[#1d1d1f]">Podcast IA</p>
-                  <p className="text-xs text-gray-400 mt-1 leading-tight">Genera un audio con voz sintetizada realista.</p>
-                </button>
-
+                {[
+                  { id: 'generateSummary', label: 'Resumen IA', icon: 'bi-text-paragraph', color: 'text-primary', desc: 'Extrae conceptos clave automáticamente.' },
+                  { id: 'generateQuiz', label: 'Test IA', icon: 'bi-patch-question', color: 'text-orange-500', desc: '5 preguntas de opción múltiple.' },
+                  { id: 'generatePodcast', label: 'Audio IA', icon: 'bi-mic', color: 'text-purple-500', desc: 'Voz sintética para aprendizaje móvil.' },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button" 
+                    onClick={() => setOptions({...options, [opt.id]: !options[opt.id as keyof typeof options]})}
+                    className={`p-6 rounded-[24px] text-left border-2 transition-all duration-300 cursor-pointer group relative overflow-hidden ${
+                      options[opt.id as keyof typeof options] 
+                        ? 'border-primary bg-primary/5 shadow-lg' 
+                        : 'border-border/60 bg-muted/10 opacity-60 grayscale hover:opacity-100 hover:border-primary/30'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-all ${options[opt.id as keyof typeof options] ? 'bg-primary text-white' : 'bg-card text-muted-foreground'}`}>
+                      <i className={`bi ${opt.icon} text-lg`}></i>
+                    </div>
+                    <p className="font-black text-[11px] uppercase tracking-widest text-foreground">{opt.label}</p>
+                    <p className="text-[10px] text-muted-foreground font-medium mt-1 leading-tight">{opt.desc}</p>
+                    {options[opt.id as keyof typeof options] && <i className="bi bi-check-circle-fill absolute top-4 right-4 text-primary"></i>}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* BOTÓN SUBMIT (FUNCIONAL Y VISUAL PREMIUM) */}
             <button 
               type="submit"
-              // Solo deshabilitamos mientras carga (permitimos nullable)
-              disabled={loading}
-              className="w-full py-6 bg-[#005596] text-white rounded-[2rem] font-black uppercase tracking-widest text-lg hover:bg-[#d9ff00] hover:text-[#005596] transition-all shadow-xl shadow-blue-900/20 disabled:bg-gray-400 disabled:opacity-50 disabled:shadow-none cursor-pointer active:scale-[0.99]"
+              disabled={loading || !formData.title.trim()}
+              className="w-full py-6 bg-secondary text-white rounded-[24px] font-black uppercase tracking-[0.3em] text-xs hover:opacity-95 transition-all shadow-xl shadow-secondary/20 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none cursor-pointer active:scale-[0.98] flex items-center justify-center gap-4"
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-3">
-                  <i className="bi bi-arrow-repeat animate-spin text-2xl"></i> Procesando con IA de Atalayas...
-                </span>
+                <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Procesando Algoritmo...</>
               ) : (
-                <span className="flex items-center justify-center gap-3">
-                  <i className="bi bi-magic text-xl"></i> Generar Lección Mágicamente
-                </span>
+                <><i className="bi bi-magic text-lg"></i> Generar Currículo Inteligente</>
               )}
             </button>
           </form>
