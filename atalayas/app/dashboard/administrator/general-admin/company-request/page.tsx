@@ -23,11 +23,14 @@ interface CompanyRequest {
 }
 
 const statusConfig = {
-  PENDING: { label: 'Pendientes', textColor: 'text-amber-500', bgClass: 'bg-amber-500/10 border-amber-500/20', icon: 'bi-clock-history' },
-  APPROVED: { label: 'Aprobadas', textColor: 'text-emerald-600', bgClass: 'bg-emerald-500/10 border-emerald-500/20', icon: 'bi-check-circle' },
-  REJECTED: { label: 'Rechazadas', textColor: 'text-destructive', bgClass: 'bg-destructive/10 border-destructive/20', icon: 'bi-x-circle' },
-  ARCHIVED: { label: 'Archivadas', textColor: 'text-muted-foreground', bgClass: 'bg-muted border-border/50', icon: 'bi-archive' },
+  PENDING: { label: 'Pendiente', textColor: 'text-amber-600 dark:text-amber-400', bgClass: 'bg-amber-100 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20', icon: 'bi-clock-history' },
+  APPROVED: { label: 'Aprobada', textColor: 'text-emerald-700 dark:text-emerald-400', bgClass: 'bg-emerald-100 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20', icon: 'bi-check-circle' },
+  REJECTED: { label: 'Rechazada', textColor: 'text-destructive', bgClass: 'bg-destructive/10 border-destructive/20', icon: 'bi-x-circle' },
+  ARCHIVED: { label: 'Archivada', textColor: 'text-muted-foreground', bgClass: 'bg-muted border-border', icon: 'bi-archive' },
 };
+
+// El degradado sutil que ahora solo usaremos en detalles muy finos
+const PREMIUM_GRADIENT = "bg-gradient-to-r from-teal-400 via-amber-400 to-orange-500";
 
 export default function CompanyRequestsPage() {
   const [requests, setRequests] = useState<CompanyRequest[]>([]);
@@ -58,7 +61,7 @@ export default function CompanyRequestsPage() {
     try {
       const url = filter === 'ARCHIVED'
         ? API_ROUTES.COMPANY_REQUESTS.GET_ARCHIVED
-        : API_ROUTES.COMPANY_REQUESTS.GET_ALL
+        : API_ROUTES.COMPANY_REQUESTS.GET_ALL;
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
@@ -161,39 +164,41 @@ export default function CompanyRequestsPage() {
     );
 
   return (
-    <div className="flex min-h-screen bg-muted/30 font-sans text-foreground transition-colors duration-300">
+    <div className="flex min-h-screen bg-background font-sans text-foreground">
       <Sidebar role="GENERAL_ADMIN" />
 
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* ── BANNER PREMIUM ── */}
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        
         <PageHeader 
-          title="Solicitudes de Registro"
+          title="Gestión de Solicitudes"
           description={pendingCount > 0 
-            ? `Tienes ${pendingCount} nueva${pendingCount > 1 ? 's' : ''} empresa${pendingCount > 1 ? 's' : ''} esperando aprobación.` 
-            : "Gestiona el alta y validación de organizaciones en el sistema."
+            ? `Pendiente de revisión: ${pendingCount} nueva${pendingCount > 1 ? 's' : ''} petición${pendingCount > 1 ? 'es' : ''}.` 
+            : "Registro histórico y validación de empresas."
           }
-          icon={<i className="bi bi-envelope-paper"></i>}
+          icon={<i className={`bi bi-shield-check text-transparent bg-clip-text ${PREMIUM_GRADIENT}`}></i>}
           action={
-            <SearchBar 
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Buscar por CIF, empresa..."
-            />
+            <div className="w-full md:w-80">
+              <SearchBar 
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Buscar CIF, empresa o contacto..."
+              />
+            </div>
           }
         />
 
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden max-w-350 mx-auto w-full px-6 lg:px-10 pb-10">
           
-          {/* ── BARRA DE FILTROS ── */}
-          <div className="px-8 py-4 bg-background/50 border-b border-border/60 flex items-center justify-start gap-2 overflow-x-auto no-scrollbar">
+          {/* FILTROS NORMALES (Limpios y corporativos) */}
+          <div className="flex flex-wrap gap-2 my-8 bg-card border border-border p-1.5 rounded-2xl shadow-sm w-fit">
             {(['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'ARCHIVED'] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => { setFilter(f); setSelected(null); }}
                 className={`relative px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300 rounded-xl border ${
                   filter === f 
-                    ? 'bg-primary text-white border-primary shadow-md' 
-                    : 'bg-card text-muted-foreground border-border/60 hover:border-primary/40 hover:text-primary'
+                    ? 'bg-primary/10 text-primary border-primary/20 shadow-sm' 
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'
                 }`}
               >
                 <span className="relative z-10 flex items-center justify-center">
@@ -208,63 +213,183 @@ export default function CompanyRequestsPage() {
             ))}
           </div>
 
-          <div className={`flex-1 grid overflow-hidden transition-all duration-500 ${selected ? 'lg:grid-cols-[1fr_450px]' : 'grid-cols-1'}`}>
+          {/* LISTADO TIPO TABLA CORPORATIVA (Sin la línea superior) */}
+          <div className="flex-1 flex flex-col bg-card border border-border rounded-[2rem] shadow-sm overflow-hidden">
             
-            {/* ── COLUMNA LISTA ── */}
-            <div className="overflow-y-auto p-6 lg:p-8 space-y-4 no-scrollbar">
+            <div className="grid grid-cols-12 gap-4 px-8 py-5 border-b border-border/50 bg-muted/10 text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">
+              <div className="col-span-5 md:col-span-4 text-left">Empresa / CIF</div>
+              <div className="hidden md:block col-span-3">Solicitante</div>
+              <div className="col-span-3 md:col-span-2">Estado</div>
+              <div className="col-span-4 md:col-span-3 text-right pr-4">Acciones</div>
+            </div>
+
+            <div className="overflow-y-auto flex-1 no-scrollbar p-2">
               {loading ? (
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="h-28 bg-card border border-border/60 rounded-[24px] animate-pulse" />
+                    <div key={i} className="h-20 bg-muted/30 rounded-2xl animate-pulse w-full" />
                   ))}
                 </div>
               ) : filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-32 bg-card rounded-[32px] border border-dashed border-border/60">
-                  <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center text-muted-foreground/30 text-4xl mb-6 shadow-inner">
-                    <i className="bi bi-inbox"></i>
-                  </div>
-                  <h3 className="text-foreground font-black text-xs uppercase tracking-[0.2em]">Bandeja vacía</h3>
-                  <p className="text-muted-foreground text-xs mt-1">No hay solicitudes que coincidan con este filtro.</p>
+                <div className="flex flex-col items-center justify-center py-32 opacity-40">
+                  <i className="bi bi-envelope-open text-5xl mb-4"></i>
+                  <p className="text-sm font-bold uppercase tracking-widest">Sin solicitudes pendientes</p>
                 </div>
               ) : (
-                <div className="grid gap-4">
+                <div className="flex flex-col">
                   {filtered.map((req) => {
                     const status = statusConfig[req.status];
                     const isSelected = selected?.id === req.id;
+
                     return (
-                      <div
-                        key={req.id}
-                        onClick={() => setSelected(isSelected ? null : req)}
-                        className={`group bg-card rounded-[24px] p-6 cursor-pointer border transition-all duration-300 flex items-center justify-between gap-6 ${
-                          isSelected
-                            ? 'border-primary ring-4 ring-primary/5 shadow-xl -translate-y-1'
-                            : 'border-border/60 hover:border-primary/30 hover:shadow-lg'
-                        }`}
+                      <div 
+                        key={req.id} 
+                        className="relative group/row transition-all duration-300 border-b border-border/40 last:border-b-0"
                       >
-                        <div className="flex items-center gap-5 min-w-0">
-                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 text-2xl transition-colors duration-300 ${isSelected ? 'bg-primary text-white' : 'bg-muted/50 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'}`}>
-                            <i className="bi bi-building"></i>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-foreground text-base font-bold mb-1 truncate group-hover:text-primary transition-colors">
-                              {req.companyName}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                              <span className="text-muted-foreground text-xs font-medium">CIF: {req.cif}</span>
-                              <span className="w-1 h-1 rounded-full bg-border" />
-                              <span className="text-muted-foreground text-xs font-medium">{req.contactName}</span>
-                            </div>
-                            <p className="text-muted-foreground/50 text-[10px] uppercase font-black tracking-widest mt-2">
-                              <i className="bi bi-calendar3 mr-1"></i> {new Date(req.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
-                            </p>
-                          </div>
+                        {/* BORDE HOVER EXTRA-FINO (1px y opacidad reducida a 40%) */}
+                        <div className={`absolute inset-px rounded-[24px] ${PREMIUM_GRADIENT} opacity-0 group-hover/row:opacity-40 transition-opacity duration-300 p-px pointer-events-none z-0`}>
+                          <div className="w-full h-full bg-card rounded-[23px]"></div>
                         </div>
-                        <div className="flex items-center gap-4 shrink-0">
-                          <span className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider ${status.bgClass} ${status.textColor}`}>
-                            <i className={`bi ${status.icon}`}></i>
-                            {status.label.slice(0, -1)}
-                          </span>
-                          <i className={`bi bi-chevron-right text-muted-foreground/30 transition-transform duration-300 ${isSelected ? 'rotate-90 text-primary' : 'group-hover:translate-x-1'}`}></i>
+
+                        {/* CONTENIDO DE LA FILA */}
+                        <div className="relative z-10 flex flex-col">
+                          
+                          {/* FILA VISIBLE */}
+                          <div 
+                            onClick={() => setSelected(isSelected ? null : req)}
+                            className="grid grid-cols-12 gap-4 px-6 py-4 items-center cursor-pointer"
+                          >
+                            <div className="col-span-5 md:col-span-4 flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg bg-muted text-muted-foreground group-hover/row:bg-primary/5 group-hover/row:text-primary transition-colors">
+                                <i className="bi bi-building"></i>
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-foreground truncate">{req.companyName}</p>
+                                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-tight">{req.cif}</p>
+                              </div>
+                            </div>
+
+                            <div className="hidden md:block col-span-3">
+                              <p className="text-xs font-bold text-foreground">{req.contactName}</p>
+                              <p className="text-[11px] text-muted-foreground truncate">{req.contactEmail}</p>
+                            </div>
+
+                            <div className="col-span-3 md:col-span-2">
+                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[9px] font-black uppercase tracking-wider ${status.bgClass} ${status.textColor}`}>
+                                <i className={`bi ${status.icon}`}></i> {status.label}
+                              </span>
+                            </div>
+
+                            <div className="col-span-4 md:col-span-3 flex items-center justify-end gap-3 pr-2">
+                              {req.status === 'PENDING' && (
+                                <>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleApprove(req.id); }}
+                                    className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-all shadow-sm"
+                                    title="Aprobar"
+                                  >
+                                    <i className="bi bi-check-lg text-lg"></i>
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setSelected(req); setShowRejectModal(true); }}
+                                    className="w-8 h-8 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white flex items-center justify-center transition-all shadow-sm"
+                                    title="Rechazar"
+                                  >
+                                    <i className="bi bi-x-lg text-lg"></i>
+                                  </button>
+                                </>
+                              )}
+                              <i className={`bi bi-chevron-down text-muted-foreground/30 transition-transform duration-300 ${isSelected ? 'rotate-180 text-foreground' : ''}`}></i>
+                            </div>
+                          </div>
+
+                          {/* DESPLEGABLE */}
+                          <div className={`overflow-hidden transition-all duration-500 ${isSelected ? 'max-h-250' : 'max-h-0'}`}>
+                            <div className="px-10 py-8 bg-muted/5 grid grid-cols-1 lg:grid-cols-12 gap-10 border-t border-border/40 rounded-b-[22.5px]">
+                              
+                              {/* COLUMNA 1: DATOS EMPRESA */}
+                              <div className="lg:col-span-4 space-y-6">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500/80 mb-4 flex items-center gap-2">
+                                  <i className="bi bi-buildings"></i> Datos de la Entidad
+                                </h4>
+                                <div className="space-y-3">
+                                  <div className="bg-card p-4 rounded-2xl border border-border/40">
+                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Actividad</p>
+                                    <p className="text-sm font-bold text-foreground">{req.activity || 'No definida'}</p>
+                                  </div>
+                                  <div className="bg-card p-4 rounded-2xl border border-border/40">
+                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Dirección Sede</p>
+                                    <p className="text-sm font-bold text-foreground leading-snug">{req.address || 'No proporcionada'}</p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* COLUMNA 2: DATOS SOLICITANTE */}
+                              <div className="lg:col-span-4 space-y-6">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500/80 mb-4 flex items-center gap-2">
+                                  <i className="bi bi-person-badge"></i> Representante / Solicitante
+                                </h4>
+                                <div className="space-y-3">
+                                  <div className="bg-card p-4 rounded-2xl border border-border/40 flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-600 font-black text-xs">
+                                      {req.contactName.charAt(0)}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Nombre Completo</p>
+                                      <p className="text-sm font-bold text-foreground truncate">{req.contactName}</p>
+                                    </div>
+                                  </div>
+                                  <div className="bg-card p-4 rounded-2xl border border-border/40">
+                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Email / Teléfono</p>
+                                    <p className="text-sm font-bold text-foreground">{req.contactEmail}</p>
+                                    <p className="text-xs font-medium text-muted-foreground mt-1">{req.phone || 'Sin teléfono'}</p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* COLUMNA 3: DOCUMENTACIÓN Y ACCIÓN */}
+                              <div className="lg:col-span-4 space-y-6">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500/80 mb-4 flex items-center gap-2">
+                                  <i className="bi bi-file-earmark-check"></i> Verificación
+                                </h4>
+                                
+                                <a
+                                  href={req.documentUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="flex items-center gap-4 p-5 bg-background border-2 border-dashed border-border hover:border-teal-500/40 hover:bg-teal-500/2 rounded-3xl transition-all group"
+                                >
+                                  <div className="w-12 h-12 bg-teal-500/10 text-teal-600 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                                    <i className="bi bi-file-earmark-pdf"></i>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-black uppercase tracking-widest text-foreground">Escritura / CIF</p>
+                                    <p className="text-[10px] font-medium text-muted-foreground">Clic para ver documento</p>
+                                  </div>
+                                  <i className="bi bi-box-arrow-up-right text-muted-foreground/40 group-hover:text-teal-500 transition-colors"></i>
+                                </a>
+
+                                {(req.status === 'APPROVED' || req.status === 'REJECTED') && !req.archivedAt && (
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      await fetch(API_ROUTES.COMPANY_REQUESTS.ARCHIVE(req.id), {
+                                        method: 'PATCH',
+                                        headers: { Authorization: `Bearer ${getToken()}` },
+                                      });
+                                      await fetchRequests();
+                                      setSelected(null);
+                                    }}
+                                    className="w-full py-4 rounded-2xl border border-border text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:bg-muted/50 transition-all flex items-center justify-center gap-3"
+                                  >
+                                    <i className="bi bi-archive"></i> Archivar Solicitud
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
                         </div>
                       </div>
                     );
@@ -272,176 +397,45 @@ export default function CompanyRequestsPage() {
                 </div>
               )}
             </div>
-
-            {/* ── PANEL DE DETALLE (Flotante Premium) ── */}
-            {selected && (
-              <div className="overflow-y-auto border-l border-border/60 bg-card p-8 shadow-[-20px_0_40px_rgba(0,0,0,0.03)] animate-in slide-in-from-right-10 duration-500 no-scrollbar">
-                <div className="flex items-center justify-between mb-10">
-                  <span className={`px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest ${statusConfig[selected.status].bgClass} ${statusConfig[selected.status].textColor}`}>
-                    Estado: {statusConfig[selected.status].label.slice(0, -1)}
-                  </span>
-                  <button
-                    onClick={() => setSelected(null)}
-                    className="w-10 h-10 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all hover:rotate-90"
-                  >
-                    <i className="bi bi-x-lg"></i>
-                  </button>
-                </div>
-
-                <div className="mb-10 text-center sm:text-left">
-                  <div className="w-20 h-20 bg-primary/5 text-primary rounded-[28px] flex items-center justify-center text-4xl mb-6 shadow-sm border border-primary/10">
-                    <i className="bi bi-building-check"></i>
-                  </div>
-                  <h3 className="text-foreground text-3xl font-black mb-2 tracking-tight leading-none">
-                    {selected.companyName}
-                  </h3>
-                  <p className="text-muted-foreground font-medium">Solicitud de alta corporativa</p>
-                </div>
-
-                {/* Grid de Información */}
-                <div className="grid gap-3 mb-10">
-                  {[
-                    { label: 'Identificación Fiscal', value: selected.cif, icon: 'bi-hash' },
-                    { label: 'Sector / Actividad', value: selected.activity, icon: 'bi-briefcase' },
-                    { label: 'Ubicación Sede', value: selected.address, icon: 'bi-geo-alt' },
-                    { label: 'Persona de Contacto', value: selected.contactName, icon: 'bi-person' },
-                    { label: 'Correo Electrónico', value: selected.contactEmail, icon: 'bi-envelope' },
-                    { label: 'Teléfono Directo', value: selected.phone, icon: 'bi-telephone' },
-                  ].filter(f => f.value).map((field) => (
-                    <div key={field.label} className="bg-muted/30 p-4 rounded-[20px] border border-border/40 flex items-start gap-4">
-                      <i className={`bi ${field.icon} text-primary mt-1`}></i>
-                      <div>
-                        <p className="text-muted-foreground/60 text-[9px] font-black uppercase tracking-[0.15em] mb-1">{field.label}</p>
-                        <p className="text-foreground text-sm font-bold leading-tight">{field.value}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Documento Adjunto */}
-                <div className="mb-10">
-                  <p className="text-muted-foreground/60 text-[10px] font-black uppercase tracking-[0.2em] mb-4 ml-1 text-center sm:text-left">Verificación Legal</p>
-                  <a
-                    href={selected.documentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-5 bg-card border-2 border-dashed border-border hover:border-primary/40 hover:bg-primary/5 rounded-[24px] transition-all group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                        <i className="bi bi-file-earmark-pdf"></i>
-                      </div>
-                      <div>
-                        <p className="text-foreground font-black text-xs uppercase tracking-widest">Documento acreditativo</p>
-                        <p className="text-muted-foreground text-[10px] font-medium">Validar CIF y titularidad</p>
-                      </div>
-                    </div>
-                    <i className="bi bi-arrow-up-right text-muted-foreground group-hover:text-primary transition-colors"></i>
-                  </a>
-                </div>
-
-                {/* Mensaje de Rechazo */}
-                {selected.rejectReason && (
-                  <div className="bg-destructive/5 border border-destructive/20 rounded-[24px] p-6 mb-10 animate-in zoom-in-95 duration-300">
-                    <p className="text-destructive text-[10px] font-black uppercase tracking-widest mb-2 flex items-center gap-2">
-                      <i className="bi bi-exclamation-octagon"></i> Motivo del rechazo
-                    </p>
-                    <p className="text-foreground text-sm font-medium leading-relaxed italic">"{selected.rejectReason}"</p>
-                  </div>
-                )}
-
-                {/* Acciones de Control */}
-                <div className="sticky bottom-0 bg-card pt-4 pb-2">
-                  {selected.status === 'PENDING' && (
-                    <div className="grid gap-3">
-                      <button
-                        onClick={() => handleApprove(selected.id)}
-                        disabled={actionLoading}
-                        className="w-full py-4 bg-emerald-500 text-white rounded-[18px] font-black text-xs uppercase tracking-[0.2em] hover:bg-emerald-600 hover:shadow-lg hover:shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
-                      >
-                        {actionLoading ? <i className="bi bi-arrow-repeat animate-spin text-lg"></i> : <i className="bi bi-check-lg text-lg"></i>}
-                        Aprobar Empresa
-                      </button>
-                      <button
-                        onClick={() => setShowRejectModal(true)}
-                        disabled={actionLoading}
-                        className="w-full py-4 bg-destructive/10 text-destructive border border-destructive/20 rounded-[18px] font-black text-xs uppercase tracking-[0.2em] hover:bg-destructive hover:text-white transition-all active:scale-95 disabled:opacity-50"
-                      >
-                        Rechazar Solicitud
-                      </button>
-                    </div>
-                  )}
-
-                  {(selected.status === 'APPROVED' || selected.status === 'REJECTED') && !selected.archivedAt && (
-                    <button
-                      onClick={async () => {
-                        await fetch(API_ROUTES.COMPANY_REQUESTS.ARCHIVE(selected.id), {
-                          method: 'PATCH',
-                          headers: { Authorization: `Bearer ${getToken()}` },
-                        });
-                        await fetchRequests();
-                        setSelected(null);
-                      }}
-                      className="w-full py-4 bg-muted text-muted-foreground border border-border/60 rounded-[18px] font-black text-xs uppercase tracking-[0.2em] hover:bg-background hover:text-foreground transition-all flex items-center justify-center gap-3"
-                    >
-                      <i className="bi bi-archive"></i> Archivar para histórico
-                    </button>
-                  )}
-
-                  {selected.archivedAt && (
-                    <button
-                      onClick={async () => {
-                        await fetch(API_ROUTES.COMPANY_REQUESTS.UNARCHIVE(selected.id), {
-                          method: 'PATCH',
-                          headers: {Authorization: `Bearer ${getToken()}`},
-                        });
-                        setFilter(selected.status as any);
-                        await fetchRequests();
-                        setSelected(null);
-                      }}
-                      className="w-full py-4 bg-primary/10 text-primary border border-primary/20 rounded-[18px] font-black text-xs uppercase tracking-[0.2em] hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-3"
-                    >
-                      <i className="bi bi-arrow-up-circle"></i> Restaurar Solicitud
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* ── MODAL RECHAZO (REDISEÑADO) ── */}
-        {showRejectModal && (
-          <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
-            <div className="bg-card border border-border rounded-[40px] p-10 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-300">
-              <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-[20px] flex items-center justify-center mb-6 text-3xl">
-                <i className="bi bi-slash-circle"></i>
-              </div>
-              <h3 className="text-foreground text-2xl font-black mb-2 tracking-tight uppercase">Rechazar Alta</h3>
-              <p className="text-muted-foreground text-sm font-medium mb-8 leading-relaxed">
-                Por favor, detalla el motivo del rechazo. El solicitante recibirá esta explicación para poder corregir su solicitud.
-              </p>
-              <textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Ej: El CIF no coincide con el documento adjunto..."
-                rows={4}
-                className="w-full bg-muted/30 border border-border/60 focus:border-destructive/40 focus:ring-4 focus:ring-destructive/5 rounded-[20px] p-5 text-sm text-foreground outline-none resize-none mb-8 transition-all font-medium placeholder:text-muted-foreground/40"
-              />
-              <div className="flex gap-4">
-                <button
-                  onClick={() => { setShowRejectModal(false); setRejectReason(''); }}
-                  className="flex-1 py-4 bg-muted text-muted-foreground rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-border/60 transition-all active:scale-95"
-                >
-                  Volver
-                </button>
-                <button
-                  onClick={handleReject}
-                  disabled={!rejectReason.trim() || actionLoading}
-                  className="flex-1 py-4 bg-destructive text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:opacity-95 shadow-lg shadow-destructive/20 transition-all active:scale-95 disabled:opacity-50"
-                >
-                  {actionLoading ? 'Enviando...' : 'Confirmar Rechazo'}
-                </button>
+        {/* MODAL RECHAZO */}
+        {showRejectModal && selected && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-100 p-4 animate-in fade-in duration-200">
+            <div className="bg-card border border-border rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden">
+              
+              <div className={`absolute top-0 left-0 right-0 h-1 z-10 ${PREMIUM_GRADIENT} opacity-80`}></div>
+
+              <div className="flex flex-col items-center text-center mt-2">
+                <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-2xl flex items-center justify-center text-3xl mb-6">
+                  <i className="bi bi-slash-circle"></i>
+                </div>
+                <h3 className="text-xl font-bold tracking-tight mb-2">Rechazar Solicitud</h3>
+                <p className="text-xs font-medium text-muted-foreground mb-8">Indica el motivo por el cual la empresa {selected.companyName} no puede ser admitida.</p>
+                
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Ej: El documento CIF no coincide..."
+                  className="w-full bg-muted/30 border border-border focus:border-destructive outline-none rounded-2xl p-4 text-sm font-medium mb-6 resize-none h-32 transition-all"
+                />
+
+                <div className="grid grid-cols-2 gap-4 w-full">
+                  <button
+                    onClick={() => { setShowRejectModal(false); setRejectReason(''); setSelected(null); }}
+                    className="py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest text-muted-foreground bg-muted hover:bg-muted/80 transition-all"
+                  >
+                    Volver
+                  </button>
+                  <button
+                    onClick={handleReject}
+                    disabled={!rejectReason.trim() || actionLoading}
+                    className="py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest text-white bg-destructive hover:opacity-90 transition-all disabled:opacity-50 shadow-lg shadow-destructive/20"
+                  >
+                    Confirmar
+                  </button>
+                </div>
               </div>
             </div>
           </div>

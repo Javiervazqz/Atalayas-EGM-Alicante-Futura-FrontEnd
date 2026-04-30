@@ -59,7 +59,7 @@ export default function AdminDashboard() {
 
   const quickActions = [
     { label: 'Alta de empleado', icon: 'bi-person-plus', href: '/dashboard/administrator/employees/new' },
-    { label: 'Diseñar curso', icon: 'bi-journal-plus', href: '/dashboard/administrator/general-admin/courses/new' },
+    { label: 'Diseñar curso', icon: 'bi-journal-plus', href: '/dashboard/administrator/general-admin/courses/manage/new' },
     { label: 'Añadir servicio', icon: 'bi-briefcase', href: '/dashboard/administrator/general-admin/services/new' },
     { label: 'Generar informes', icon: 'bi-bar-chart-line', href: '/dashboard/administrator/general-admin/reports' },
   ];
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
             <div className="bg-card rounded-[20px] border border-border shadow-sm flex flex-col overflow-hidden h-full transition-colors duration-300">
               <div className="px-7 py-5 border-b border-border flex justify-between items-center">
                 <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-foreground">Cursos recientes</h2>
-                <Link href="/dashboard/administrator/general-admin/courses" className="text-xs font-bold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                <Link href="/dashboard/administrator/general-admin/courses/manage" className="text-xs font-bold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
                   Ver todos <i className="bi bi-arrow-right"></i>
                 </Link>
               </div>

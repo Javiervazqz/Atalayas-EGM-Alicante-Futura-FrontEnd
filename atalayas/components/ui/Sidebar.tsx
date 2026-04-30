@@ -14,8 +14,8 @@ const navItems = {
     { label: 'Perfil Empresa', href: '/dashboard/company', icon: <i className="bi bi-building-gear"></i> },
     { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: <i className="bi bi-buildings-fill"></i> },
     { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
-    { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder2-open"></i> },
+    { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses/manage', icon: <i className="bi bi-journal-bookmark-fill"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder-fill"></i> },
     { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: <i className="bi bi-briefcase-fill"></i> },
     { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
     { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-globe-americas"></i>},
@@ -27,8 +27,8 @@ const navItems = {
     { label: 'Mi Empresa', href: '/dashboard/administrator/admin/company', icon: <i className="bi bi-building-fill"></i> },
     { label: 'Empleados', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
     { label: 'Onboarding', href: '/dashboard/administrator/employees/onboarding', icon: <i className="bi bi-person-walking"></i>},
-    { label: 'Cursos', href: '/dashboard/administrator/admin/courses/manage', icon: <i className="bi bi-mortarboard-fill"></i>  },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill"></i>  },
+    { label: 'Cursos', href: '/dashboard/administrator/admin/courses/manage', icon: <i className="bi bi-mortarboard-fill"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill"></i> },
     { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill"></i> },
     { label: 'Anuncios', href: '/dashboard/administrator/admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
     { label: 'Ecosistema', href: '/dashboard/administrator/admin/community', icon: <i className="bi bi-globe-americas"></i>},
@@ -36,8 +36,9 @@ const navItems = {
   ],
   EMPLOYEE: [
     { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-grid-fill"></i> },
+    { label: 'Onboarding', href: '/dashboard/employee/onboarding', icon: <i className="bi bi-rocket-takeoff-fill"></i> },
     { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder2-open"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder-fill"></i> },
     { label: 'Servicios', href: '/dashboard/employee/services', icon: <i className="bi bi-briefcase-fill"></i> },
     { label: 'Anuncios', href: '/dashboard/employee/announcements', icon: <i className="bi bi-megaphone-fill "></i> },
     { label: 'Ecosistema', href: '/dashboard/employee/community', icon: <i className="bi bi-globe-americas"></i>},
@@ -45,7 +46,7 @@ const navItems = {
   ],
   PUBLIC: [
     { label: 'Panel', href: '/dashboard/public', icon: <i className="bi bi-grid-fill"></i> },
-    { label: 'Cursos', href: '/dashboard/public/courses', icon: <i className="bi bi-journal-bookmark-fill"></i>  },
+    { label: 'Cursos', href: '/dashboard/public/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
     { label: 'Servicios', href: '/dashboard/public/services', icon: <i className="bi bi-briefcase-fill"></i> },
   ],
 };
@@ -80,6 +81,19 @@ export default function Sidebar({ role }: SidebarProps) {
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) setUser(JSON.parse(savedUser));
+    
+    const savedTheme = document.cookie.split('; ').find(row => row.startsWith('theme='))?.split('=')[1];
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    const initialTheme = savedTheme === 'dark' || (!savedTheme && prefersDark);
+    setIsDark(initialTheme);
+    
+    if (initialTheme) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
     setMounted(true);
 
     const checkResizing = () => {
@@ -90,22 +104,12 @@ export default function Sidebar({ role }: SidebarProps) {
   }, []);
 
   useEffect(() => {
-    if (!mounted || role !== 'GENERAL_ADMIN') return;
-
-    const fetchPending = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:3000/company-request', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        const pending = Array.isArray(data) ? data.filter((r: any) => r.status === 'PENDING').length : 0;
-        setPendingCount(pending);
-      } catch (error) {
-        console.error("Error fetching pending requests", error);
-      }
+    if (!mounted) return;
+    const updateCounts = () => {
+      setPendingSuggestionsCount(Number(localStorage.getItem('count_suggestions')) || 0);
+      setPendingRequestsCount(Number(localStorage.getItem('count_requests')) || 0);
     };
-    fetchPending();
+    updateCounts(); // Corregido: Llamamos a updateCounts en lugar de fetchPending
   }, [role, mounted]);
 
   const handleLogout = () => {
@@ -128,71 +132,72 @@ export default function Sidebar({ role }: SidebarProps) {
     setIsDark(newTheme);
   };
 
+  const checkActive = (href: string) => {
+    if (pathname === href) return true;
+
+    const isBasePanel = href.endsWith('/admin') || 
+                        href.endsWith('/general-admin') || 
+                        href.endsWith('/employee') || 
+                        href.endsWith('/public');
+    
+    if (isBasePanel) return pathname === href;
+
+    if (href === '/dashboard/administrator/employees' && pathname.includes('/onboarding')) {
+      return false;
+    }
+
+    return href !== '/dashboard' && pathname.startsWith(href + '/');
+  };
+
+  if (!mounted) return null;
+
   const currentMenu = navItems[role] || [];
-  
-  const matchingItems = currentMenu.filter(item => 
-    pathname === item.href || pathname.startsWith(`${item.href}/`)
-  );
-
-  const activeItem = matchingItems.reduce((prev, curr) => 
-    (curr.href.length > prev.href.length ? curr : prev), 
-    { href: '' }
-  );
-
-  // ── LÓGICA DE LOGO DE EMPRESA Y FALLBACK ──
   const companyData = user?.Company || user?.company;
-  const displayLogo = user.company?.logoUrl || "/images/logo-atalayas.png";
+  const displayLogo = user?.company?.logoUrl || "/images/logo-atalayas.png";
+  const companyName = companyData?.name || 'Empresa';
 
   return (
     <>
       {!mobileOpen && (
         <button 
           onClick={() => setMobileOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-9999 w-12 h-12 bg-white dark:bg-card border border-border shadow-xl rounded-2xl flex items-center justify-center text-primary transition-all active:scale-90"
+          className="lg:hidden fixed top-4 left-4 z-[9999] w-12 h-12 bg-white dark:bg-card border border-border shadow-xl rounded-2xl flex items-center justify-center text-primary transition-all active:scale-90"
         >
           <i className="bi bi-list text-2xl"></i>
         </button>
       )}
 
       <div 
-        className={`fixed inset-0 bg-background/60 backdrop-blur-sm z-10000 lg:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-background/60 backdrop-blur-sm z-[10000] lg:hidden transition-opacity duration-300 ${
           mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setMobileOpen(false)}
       />
 
+      {/* Estructura del Aside Corregida */}
       <aside className={`
-        fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300 z-10001
+        fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300 z-[10001] shrink-0 font-sans
         ${mobileOpen ? 'translate-x-0 w-70' : '-translate-x-full lg:translate-x-0'}
-        ${collapsed ? 'lg:w-20' : 'lg:w-64'}
+        ${collapsed ? 'w-16 lg:w-16' : 'w-60'}
       `}>
         
-        <div className={`flex items-center justify-between border-b border-border transition-all duration-300 ${collapsed ? 'h-20 px-0 justify-center' : 'h-24 px-4 gap-3'}`}>
-          <div className={`
-            bg-white rounded-[18px] shadow-sm border border-gray-200/60 dark:border-white/10 flex items-center justify-center overflow-hidden transition-all
-            ${collapsed ? 'w-12 h-12 p-1.5' : 'flex-1 h-14 p-2.5'}
-          `}>
-            <img src={displayLogo} alt="Logo" className="max-w-full max-h-full object-contain" />
-    <aside className={`${collapsed ? 'w-16 lg:w-16' : 'w-60'} transition-all duration-300 bg-card border-r border-border flex flex-col h-screen sticky top-0 left-0 z-20 shrink-0 font-sans`}>
-      
-      {/* ── RECUADRO BLANCO CON BORDES REDONDEADOS Y LÍNEA FINA ── */}
-      <div className={`flex items-center justify-between border-b border-border transition-all duration-300 ${collapsed ? 'h-16 px-0 justify-center' : 'h-24 px-4 gap-3'}`}>
-        {!collapsed ? (
-          /* Aquí está el recuadro blanco que solicitaste */
-          <div className="flex-1 w-full h-14 bg-white rounded-[20px] shadow-sm border border-gray-200/60 dark:border-white/10 flex items-center justify-center overflow-hidden p-2.5">
-            <img
-              src={displayLogo}
-              alt={companyName}
-              className="w-full h-full object-contain"
-            />
-          </div>
-        ) : (
-          /* Versión mínima para cuando se colapsa */
-          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-200/60 dark:border-white/10 overflow-hidden p-1.5">
-              <span className="text-primary font-black text-lg tracking-tighter">
-                {companyName.charAt(0).toUpperCase()}
-              </span>
-          </div>
+        {/* RECUADRO BLANCO CON BORDES REDONDEADOS Y LÍNEA FINA */}
+        <div className={`flex items-center justify-between border-b border-border transition-all duration-300 ${collapsed ? 'h-16 px-0 justify-center' : 'h-24 px-4 gap-3'}`}>
+          {!collapsed ? (
+            <div className="flex-1 w-full h-14 bg-white rounded-[20px] shadow-sm border border-gray-200/60 dark:border-white/10 flex items-center justify-center overflow-hidden p-2.5">
+              <img
+                src={displayLogo}
+                alt={companyName}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-200/60 dark:border-white/10 overflow-hidden p-1.5">
+                <span className="text-primary font-black text-lg tracking-tighter">
+                  {companyName.charAt(0).toUpperCase()}
+                </span>
+            </div>
+          )}
           
           {!collapsed && (
             <button onClick={() => setCollapsed(true)} className="hidden lg:flex text-muted-foreground p-2 rounded-lg hover:bg-muted transition-colors">
@@ -236,15 +241,15 @@ export default function Sidebar({ role }: SidebarProps) {
                 {item.label === 'Sugerencias' && pendingSuggestionsCount > 0 && !collapsed && (
                    <span className="bg-destructive text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{pendingSuggestionsCount}</span>
                 )}
-               {/* Badge para Solicitudes (Colapsado) */}
-{collapsed && item.label === 'Solicitudes' && pendingRequestsCount > 0 && (
-  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
-)}
+                {/* Badge para Solicitudes (Colapsado) */}
+                {collapsed && item.label === 'Solicitudes' && pendingRequestsCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
+                )}
 
-{/* Badge para Sugerencias (Colapsado) */}
-{collapsed && item.label === 'Sugerencias' && pendingSuggestionsCount > 0 && (
-  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
-)}
+                {/* Badge para Sugerencias (Colapsado) */}
+                {collapsed && item.label === 'Sugerencias' && pendingSuggestionsCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
+                )}
               </Link>
             );
           })}
@@ -258,13 +263,13 @@ export default function Sidebar({ role }: SidebarProps) {
                     <img src={user.avatarUrl} alt="Perfil" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-primary text-xs font-black">{user?.name?.charAt(0)}</span>
+                      <span className="text-primary text-xs font-black">{user?.name?.charAt(0) || 'U'}</span>
                     </div>
                   )}
                </div>
                {!collapsed && (
                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-bold truncate text-foreground">{user?.name}</p>
+                    <p className="text-[13px] font-bold truncate text-foreground">{user?.name || 'Usuario'}</p>
                     <span className={`text-[8px] uppercase font-black px-1.5 py-0.5 rounded border ${roleColors[role]}`}>{roleLabels[role]}</span>
                  </div>
                )}
