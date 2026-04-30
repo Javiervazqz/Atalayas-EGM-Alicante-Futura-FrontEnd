@@ -10,6 +10,7 @@ interface SidebarProps {
 
 const navItems = {
   GENERAL_ADMIN: [
+<<<<<<< Updated upstream
     { label: 'Panel', href: '/dashboard/general-admin', icon: '⊞' },
     { label: 'Empresas', href: '/dashboard/general-admin/companies', icon: '🏭' },
     { label: 'Usuarios', href: '/dashboard/general-admin/users', icon: '👥' },
@@ -22,6 +23,35 @@ const navItems = {
     { label: 'Empleados', href: '/dashboard/admin/users', icon: '👥' },
     { label: 'Cursos', href: '/dashboard/admin/courses', icon: '📚' },
     { label: 'Documentos', href: '/dashboard/admin/documents', icon: '📄' },
+=======
+    { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: <i className="bi bi-grid-fill"></i> },
+    { label: 'Estadísticas Globales', href: '/dashboard/administrator/general-admin/stats', icon: <i className="bi bi-graph-up-arrow"></i> },
+    { label: 'Perfil Empresa', href: '/dashboard/company', icon: <i className="bi bi-building-gear"></i> },
+    { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: <i className="bi bi-buildings-fill"></i> },
+    { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
+    { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses/manage', icon: <i className="bi bi-journal-bookmark-fill"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder-fill"></i> },
+    { label: 'Matriculación masiva', href: '/dashboard/administrator/bulk-enroll', icon: <i className="bi bi-person-lines-fill"></i> },
+    { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: <i className="bi bi-briefcase-fill"></i> },
+    { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
+    { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-globe-americas"></i>},
+    { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: <i className="bi bi-envelope-open-fill "></i> },
+    { label: 'Sugerencias', href: '/dashboard/administrator/general-admin/suggestions', icon: <i className="bi bi-mailbox2"></i>},
+
+  ],
+  ADMIN: [
+    { label: 'Panel', href: '/dashboard/administrator/admin', icon: <i className="bi bi-house-fill"></i> },
+    { label: 'Mi Empresa', href: '/dashboard/administrator/admin/company', icon: <i className="bi bi-building-fill"></i> },
+    { label: 'Empleados', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
+    { label: 'Onboarding', href: '/dashboard/administrator/employees/onboarding', icon: <i className="bi bi-person-walking"></i>},
+    { label: 'Cursos', href: '/dashboard/administrator/admin/courses/manage', icon: <i className="bi bi-mortarboard-fill"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill"></i> },
+    { label: 'Matriculación masiva', href: '/dashboard/administrator/bulk-enroll', icon: <i className="bi bi-person-lines-fill"></i> },
+    { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill"></i> },
+    { label: 'Anuncios', href: '/dashboard/administrator/admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
+    { label: 'Ecosistema', href: '/dashboard/administrator/admin/community', icon: <i className="bi bi-globe-americas"></i>},
+    { label: 'Sugerencias', href: '/dashboard/administrator/admin/suggestions', icon: <i className="bi bi-mailbox"></i>},
+>>>>>>> Stashed changes
   ],
   EMPLOYEE: [
     { label: 'Panel', href: '/dashboard/employee', icon: '⊞' },
