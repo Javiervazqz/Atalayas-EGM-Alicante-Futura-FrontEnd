@@ -74,9 +74,9 @@ export default function NewAIContentPage() {
       <Sidebar role="ADMIN" />
 
       <main className="flex-1 overflow-auto flex flex-col relative">
-        <PageHeader
-          title="Generador IA"
-          description="Crea lecciones automáticamente a partir de documentos o enlaces."
+        <PageHeader 
+          title="Generar Contenido"
+          description="Crea lecciones automáticamente con IA a partir de documentos o enlaces."
           icon={<i className="bi bi-robot"></i>}
           backUrl={`/dashboard/administrator/admin/courses/manage/view/${id}`}
         />

@@ -7,7 +7,7 @@ import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import mediumZoom from 'medium-zoom';
-
+import Link from 'next/link';
 
 export default function EmployeeContentDetail() {
   const params = useParams();
@@ -42,7 +42,6 @@ export default function EmployeeContentDetail() {
       try {
         const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-
         });
 
         const data = await res.json();
@@ -107,14 +106,10 @@ export default function EmployeeContentDetail() {
   }, [content?.imageUrl]);
 
   const handleQuizSubmit = async () => {
-    const questions = getQuizQuestions(content.quiz);
-    let correctCount = 0;
-    questions.forEach((q: any, index: number) => {
-      if (quizAnswers[index] === q.correctAnswer) correctCount++;
-    });
-    setQuizScore(correctCount);
-    setQuizSubmitted(true);
+    // 1. Mostrar resultados visualmente activando la corrección
+    setIsCorrected(true);
 
+    // 2. Enviar la puntuación al backend
     try {
       const token = localStorage.getItem('token');
 
@@ -130,8 +125,8 @@ export default function EmployeeContentDetail() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            score: correctCount,
-            totalQuestions: questions.length,
+            score: score, // Usamos la constante 'score' que ya calculas abajo
+            totalQuestions: totalQuestions, // Usamos la constante 'totalQuestions'
           }),
         });
 

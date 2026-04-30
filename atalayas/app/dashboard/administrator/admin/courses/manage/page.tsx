@@ -63,7 +63,6 @@ export default function ManageCourses() {
                     title="Gestión de Contenido"
                     description="Administra los cursos de formación de tu empresa y el contenido global."
                     icon={<i className="bi bi-gear-fill"></i>}
-                    backUrl="/dashboard/administrator/admin/courses/manage"
                     action={
                         <Link href="/dashboard/administrator/admin/courses/manage/new"
                             className="bg-secondary text-secondary-foreground px-6 py-3 rounded-xl font-bold hover:opacity-90 transition-all shadow-sm flex items-center justify-center gap-2 w-full"
@@ -122,8 +121,8 @@ export default function ManageCourses() {
                                                         className="flex items-center gap-4 cursor-pointer group/link"
                                                     >
                                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${course.isPublic
-                                                                ? 'bg-green-500/10 text-green-600 border-green-500/20 group-hover/link:bg-green-600 group-hover/link:text-white'
-                                                                : 'bg-primary/5 text-primary border border-primary/10 group-hover/link:bg-primary group-hover/link:text-white'
+                                                            ? 'bg-green-500/10 text-green-600 border-green-500/20 group-hover/link:bg-green-600 group-hover/link:text-white'
+                                                            : 'bg-primary/5 text-primary border border-primary/10 group-hover/link:bg-primary group-hover/link:text-white'
                                                             }`}>
                                                             <i className={`bi ${course.isPublic ? 'bi-globe' : 'bi-journal-text'} text-lg`}></i>
                                                         </div>
@@ -163,7 +162,7 @@ export default function ManageCourses() {
                                                                     <i className="bi bi-pencil-square"></i>
                                                                 </Link>
                                                                 <button onClick={(e) => {
-                                                                    e.stopPropagation(); // Evita conflictos si pusieras el link en toda la fila
+                                                                    e.stopPropagation();
                                                                     setCourseToDelete(course.id);
                                                                 }}
                                                                     className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all border border-transparent hover:border-destructive/20 cursor-pointer bg-transparent"
@@ -191,7 +190,7 @@ export default function ManageCourses() {
                 </div>
             </main>
 
-            {/* Modal de eliminación (Sin cambios) */}
+            {/* Modal de eliminación */}
             {courseToDelete && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="bg-card w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl text-center border border-border">
