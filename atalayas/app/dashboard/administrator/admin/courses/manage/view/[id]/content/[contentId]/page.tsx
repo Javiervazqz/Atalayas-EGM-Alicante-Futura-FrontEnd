@@ -193,17 +193,6 @@ export default function AdminContentDetail() {
                                     </a>
                                 </div>
                             )}
-
-                            {/* Botón de editar (solo para ADMIN) */}
-                            <div className="pt-4">
-                                <button
-                                    onClick={() => router.push(`/dashboard/administrator/admin/courses/manage/view/${courseId}/content/${contentId}/edit`)}
-                                    className="w-full bg-primary text-white py-3 rounded-xl font-black text-[11px] uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2"
-                                >
-                                    <i className="bi bi-pencil-square"></i>
-                                    Editar Contenido
-                                </button>
-                            </div>
                         </aside>
                     </div>
                 </div>
