@@ -114,10 +114,10 @@ export default function EmployeeDashboard() {
                 </h2>
               </div>
 
-              <div className={`relative p-[1.5px] rounded-[3.5rem] transition-all duration-500 bg-transparent hover:bg-gradient-to-r ${PREMIUM_GRADIENT_COLS} shadow-2xl group`}>
+              <div className={`relative p-[1.5px] rounded-[3.5rem] transition-all duration-500 bg-transparent hover:bg-linear-to-r ${PREMIUM_GRADIENT_COLS} shadow-2xl group`}>
                 <Link 
                   href={actualAnuncio.link}
-                  className="relative block w-full aspect-[16/9] md:aspect-[21/9] lg:aspect-[25/8] rounded-[calc(3.5rem-1.5px)] overflow-hidden bg-card cursor-pointer"
+                  className="relative block w-full aspect-video md:aspect-21/9 lg:aspect-25/8 rounded-[calc(3.5rem-1.5px)] overflow-hidden bg-card cursor-pointer"
                 >
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -132,7 +132,7 @@ export default function EmployeeDashboard() {
                         className="absolute inset-0 bg-cover bg-center transition-transform duration-[2s] ease-out group-hover:scale-105"
                         style={{ backgroundImage: `url(${actualAnuncio.img})` }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/30 to-transparent z-10" />
+                      <div className="absolute inset-0 bg-linear-to-r from-black/90 via-black/30 to-transparent z-10" />
                       
                       <div className="absolute inset-0 z-20 flex flex-col justify-center p-10 md:p-20">
                         <div className="max-w-3xl space-y-4">
@@ -196,7 +196,7 @@ export default function EmployeeDashboard() {
                   { title: 'Nuevo Documento', time: '24 Mar', desc: 'Calendario laboral.' },
                 ].map((note, i) => (
                   <div key={i} className="relative pl-6 border-l-2 border-muted hover:border-primary transition-colors">
-                    <div className="absolute -left-[7px] top-0 w-3 h-3 rounded-full bg-background border-2 border-primary"></div>
+                    <div className="absolute -left-1.75 top-0 w-3 h-3 rounded-full bg-background border-2 border-primary"></div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">{note.time}</p>
                     <h5 className="text-sm font-bold text-foreground leading-none mb-2">{note.title}</h5>
                     <p className="text-xs text-muted-foreground leading-snug">{note.desc}</p>

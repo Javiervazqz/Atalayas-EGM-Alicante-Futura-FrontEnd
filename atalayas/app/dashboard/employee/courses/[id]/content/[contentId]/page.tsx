@@ -6,6 +6,7 @@ import Sidebar from '@/components/ui/Sidebar';
 import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
+import zoom from 'medium-zoom'
 
 // Mantenemos tus constantes de estilo para que la UI sea idéntica
 const labelClass = "text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block";
@@ -18,6 +19,7 @@ export default function EmployeeContentDetail() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
   const fromTaskId = searchParams.get('fromTask');
 
   const [content, setContent] = useState<any>(null);
@@ -68,6 +70,16 @@ export default function EmployeeContentDetail() {
       autoConfirmTask();
     }
   }, [fromTaskId, loading]);
+
+   useEffect(() => {
+    if (activeTab === 'lectura' && imageRef.current) {
+      const zoomInstance = zoom(imageRef.current, {
+        background: 'rgba(0,0,0,0.9)',
+        margin: 40,
+      });
+      return () => { zoomInstance.detach(); };
+    }
+  }, [content?.imageUrl, activeTab]);
 
   const questions = content?.quiz?.questions || (Array.isArray(content?.quiz) ? content.quiz : []);
   
@@ -135,9 +147,12 @@ export default function EmployeeContentDetail() {
                   {activeTab === 'lectura' && (
                     <div className="space-y-10">
                       {content?.imageUrl && (
-                        <div className="relative group">
-                          <img src={content.imageUrl} className="w-full aspect-21/9 object-cover rounded-[2rem] shadow-lg border border-border/50" alt="Cover" />
-                        </div>
+                        <div className="relative group cursor-zoom-in">
+                            <img ref={imageRef} src={content.imageUrl} className="w-full aspect-video object-cover rounded-[2rem] shadow-lg border border-border/50 transition-transform duration-500 hover:scale-[1.01]" alt="Cover" />
+                            <div className="absolute top-4 right-4 bg-black/20 backdrop-blur-md p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                              <i className="bi bi-zoom-in text-white"></i>
+                            </div>
+                          </div>
                       )}
                       <div className="prose dark:prose-invert max-w-none">
                         <ReactMarkdown
@@ -197,7 +212,7 @@ export default function EmployeeContentDetail() {
                 <audio ref={audioRef} src={content.podcast.url} controls className="w-full h-8 accent-emerald-500" />
               </div>
             )}
-            
+
             <h4 className={labelClass}>Material Descargable</h4>
 
             {content?.url?.toLowerCase().includes('.pdf') && (

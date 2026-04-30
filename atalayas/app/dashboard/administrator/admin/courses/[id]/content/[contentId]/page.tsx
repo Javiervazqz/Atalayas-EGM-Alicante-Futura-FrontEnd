@@ -2,11 +2,26 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic'; // Necesario para Konva
 import Sidebar from '@/components/ui/Sidebar';
 import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
-import zoom from 'medium-zoom'
+import zoom from 'medium-zoom';
+
+// Definimos qué props acepta el laboratorio
+interface LabProps {
+  data: any;
+}
+
+// Tipamos el componente dinámico
+const InteractiveLab = dynamic<LabProps>(
+  () => import('@/components/interactiveLab').then((mod) => mod.default),
+  { 
+    ssr: false,
+    loading: () => <div className="text-white font-black animate-pulse">CARGANDO MOTOR GRÁFICO...</div>
+  }
+);;
 
 const inputClass = "w-full px-4 py-2.5 bg-background border border-border focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl outline-none transition-all text-foreground text-sm font-medium shadow-sm placeholder:text-muted-foreground/40";
 const labelClass = "text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block";
@@ -23,11 +38,16 @@ export default function AdminContentDetail() {
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>('lectura'); // Empezamos en lectura por UX
+  const [activeTab, setActiveTab] = useState<TabType>('lectura'); 
   
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showQuizModal, setShowQuizModal] = useState(false);
+  
+  // ESTADOS DEL LABORATORIO
+  const [showLabModal, setShowLabModal] = useState(false); 
+  const [isLabStarted, setIsLabStarted] = useState(false);
+
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [isCorrected, setIsCorrected] = useState(false);
   
@@ -37,6 +57,7 @@ export default function AdminContentDetail() {
     imageUrl: "",
     url: "",
     quiz: { questions: [] },
+    practiceLab: null 
   });
 
   const sanitizeData = (data: any) => {
@@ -57,11 +78,11 @@ export default function AdminContentDetail() {
       url: raw.url || "",
       imageUrl: raw.imageUrl || "",
       videoUrl: raw.videoUrl || "",
-      quiz: { questions: cleanQuestions }
+      quiz: { questions: cleanQuestions },
+      practiceLab: raw.practiceLab || null 
     };
   };
 
-  // --- HANDLERS PARA EDICIÓN DE QUIZ ---
   const updateQuestionText = (qIdx: number, val: string) => {
     const newQuestions = [...formData.quiz.questions];
     newQuestions[qIdx].question = val;
@@ -113,13 +134,10 @@ export default function AdminContentDetail() {
   useEffect(() => {
     if (activeTab === 'lectura' && imageRef.current) {
       const zoomInstance = zoom(imageRef.current, {
-        background: 'rgba(0,0,0,0.9)', // Fondo más oscuro para mejor contraste
+        background: 'rgba(0,0,0,0.9)',
         margin: 40,
       });
-
-      // Limpieza: es importante para evitar fugas de memoria y conflictos
-      return () =>{ zoomInstance.detach();
-      };
+      return () => { zoomInstance.detach(); };
     }
   }, [content?.imageUrl, activeTab]);
 
@@ -160,11 +178,6 @@ export default function AdminContentDetail() {
     }
   };
 
-  const score = content?.quiz?.questions.reduce((acc: number, q: any, idx: number) => {
-    return userAnswers[idx] === q.correctAnswer ? acc + 1 : acc;
-  }, 0);
-  const totalQuestions = content?.quiz?.questions.length || 0;
-
   return (
     <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
       <Sidebar role="ADMIN" />
@@ -196,10 +209,12 @@ export default function AdminContentDetail() {
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto bg-muted/30 p-8 no-scrollbar">
             <div className="max-w-4xl mx-auto bg-card shadow-xl border border-border/50 rounded-[2.5rem] overflow-hidden mb-10">
-              
-              {!isEditing && (
+               {!isEditing && (
                 <div className="flex px-12 pt-8 border-b border-border gap-8">
-                  {(['lectura', 'multimedia', 'evaluacion'] as TabType[]).map((tab) => (
+                  {(['lectura', 'multimedia', 'evaluacion'] as TabType[]).map((tab) => {
+      if (tab === 'multimedia' && !content?.videoUrl) return null;
+      if (tab === 'evaluacion' && (!content?.quiz?.questions || content.quiz.questions.length === 0)) return null;                    
+                    return(
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
@@ -208,13 +223,12 @@ export default function AdminContentDetail() {
                       {tab}
                       {activeTab === tab && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
                     </button>
-                  ))}
+                )})}
                 </div>
               )}
 
               <div className="p-8 md:p-16">
                 {isEditing ? (
-                  /* EDITOR */
                   <div className="space-y-10">
                     <section className="space-y-6">
                       <h3 className="text-lg font-black border-l-4 border-primary pl-4 uppercase tracking-tighter">Configuración</h3>
@@ -223,11 +237,19 @@ export default function AdminContentDetail() {
                           <label className={labelClass}>Título</label>
                           <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className={inputClass} />
                         </div>
-                        <input value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className={inputClass} placeholder="URL Imagen" />
-                        <input value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} className={inputClass} placeholder="URL Video" />
+                        <div className="space-y-2">
+                            <label className={labelClass}>URL Imagen</label>
+                            <input value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className={inputClass} placeholder="https://..." />
+                        </div>
+                        <div className="space-y-2">
+                            <label className={labelClass}>URL Video</label>
+                            <input value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} className={inputClass} placeholder="https://..." />
+                        </div>
                       </div>
+                      <label className={labelClass}>Cuerpo de la Unidad (Markdown)</label>
                       <textarea rows={12} value={formData.summary} onChange={e => setFormData({...formData, summary: e.target.value})} className={`${inputClass} font-mono text-xs`} />
                     </section>
+                    
                     <section className="space-y-8 pt-10 border-t border-border">
                       <div className="flex justify-between items-end">
                         <h3 className="text-lg font-black border-l-4 border-orange-500 pl-4 uppercase tracking-tighter text-orange-600">Editor de Evaluación</h3>
@@ -242,12 +264,10 @@ export default function AdminContentDetail() {
                             <button onClick={() => removeQuestion(qIdx)} className="absolute top-6 right-6 text-muted-foreground hover:text-destructive transition-colors">
                               <i className="bi bi-trash3 text-lg"></i>
                             </button>
-
                             <div className="space-y-2">
                               <label className={labelClass}>Pregunta {qIdx + 1}</label>
                               <input value={q.question} onChange={e => updateQuestionText(qIdx, e.target.value)} className={inputClass} placeholder="Escribe el enunciado..." />
                             </div>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               {q.options.map((opt: string, oIdx: number) => (
                                 <div key={oIdx} className="space-y-1">
@@ -256,7 +276,6 @@ export default function AdminContentDetail() {
                                 </div>
                               ))}
                             </div>
-
                             <div className="pt-2">
                               <label className={labelClass}>Respuesta Correcta</label>
                               <select 
@@ -276,9 +295,7 @@ export default function AdminContentDetail() {
                     </section>
                   </div>
                 ) : (
-                  /* VISTA CONTENIDO */
                   <div className="animate-in fade-in duration-500">
-                    
                     {activeTab === 'multimedia' && (
                       <div className="space-y-6">
                         {content?.videoUrl ? (
@@ -297,15 +314,9 @@ export default function AdminContentDetail() {
 
                     {activeTab === 'lectura' && (
                       <div className="space-y-10">
-                        {/* IMAGEN EN LA PARTE SUPERIOR DE LA LECTURA */}
                         {content?.imageUrl && (
                           <div className="relative group cursor-zoom-in">
-                            <img 
-                            ref={imageRef} 
-                            src={content.imageUrl} 
-                            className="w-full aspect-video object-cover rounded-[2rem] shadow-lg border border-border/50 transition-transform duration-500 hover:scale-[1.01]" 
-                            alt="Cover"
-                            />
+                            <img ref={imageRef} src={content.imageUrl} className="w-full aspect-video object-cover rounded-[2rem] shadow-lg border border-border/50 transition-transform duration-500 hover:scale-[1.01]" alt="Cover" />
                             <div className="absolute top-4 right-4 bg-black/20 backdrop-blur-md p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                               <i className="bi bi-zoom-in text-white"></i>
                             </div>
@@ -313,49 +324,41 @@ export default function AdminContentDetail() {
                         )}
                         <div className="prose dark:prose-invert max-w-none">
                           <ReactMarkdown
-                          components={{
-                            h2: ({ ...props }) => <h2 className="text-2xl font-black text-foreground mt-10 mb-6" {...props} />,
-                            p: ({ ...props }) => <p className="text-[17px] leading-[1.8] text-muted-foreground mb-6" {...props} />,
-                            li: ({ ...props }) => (
-                              <li className="flex items-start gap-3 text-[16px] text-muted-foreground mb-4">
-                                <span className="mt-2.5 w-2 h-2 rounded-full bg-primary/40 shrink-0" />
-                                <span {...props} />
-                              </li>
-                            ),
-                            blockquote: ({ ...props }) => <blockquote className="border-l-4 border-primary bg-muted/40 p-6 rounded-r-2xl my-8 italic shadow-inner" {...props} />
-                          }}
-                        >
-                          {content?.summary}
-                        </ReactMarkdown>
+                            components={{
+                              h2: ({ ...props }) => <h2 className="text-2xl font-black text-foreground mt-10 mb-6" {...props} />,
+                              p: ({ ...props }) => <p className="text-[17px] leading-[1.8] text-muted-foreground mb-6" {...props} />,
+                              li: ({ ...props }) => (
+                                <li className="flex items-start gap-3 text-[16px] text-muted-foreground mb-4">
+                                  <span className="mt-2.5 w-2 h-2 rounded-full bg-primary/40 shrink-0" />
+                                  <span {...props} />
+                                </li>
+                              ),
+                              blockquote: ({ ...props }) => <blockquote className="border-l-4 border-primary bg-muted/40 p-6 rounded-r-2xl my-8 italic shadow-inner" {...props} />
+                            }}
+                          >
+                            {content?.summary}
+                          </ReactMarkdown>
                         </div>
                       </div>
                     )}
-
                     {activeTab === 'evaluacion' && (
-                    <div className="bg-orange-500/5 border border-orange-500/10 rounded-[2rem] p-12 text-center space-y-6">
-                      <div className="w-20 h-20 bg-orange-500 text-white rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-orange-500/20">
-                        <i className="bi bi-patch-question text-4xl"></i>
+                      <div className="bg-orange-500/5 border border-orange-500/10 rounded-[2rem] p-12 text-center space-y-6">
+                        <div className="w-20 h-20 bg-orange-500 text-white rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-orange-500/20">
+                          <i className="bi bi-patch-question text-4xl"></i>
+                        </div>
+                        <h4 className="text-2xl font-black italic">Pon a prueba tu conocimiento</h4>
+                        <button onClick={() => setShowQuizModal(true)} className="bg-orange-500 text-white px-10 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all">
+                          Iniciar Autoevaluación
+                        </button>
                       </div>
-                      <h4 className="text-2xl font-black italic">Pon a prueba tu conocimiento</h4>
-                      <p className="text-muted-foreground max-w-xs mx-auto text-sm">Completa el cuestionario para validar lo aprendido en esta unidad.</p>
-                      <button 
-                        onClick={() => setShowQuizModal(true)} 
-                        className="bg-orange-500 text-white px-10 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all"
-                      >
-                        Iniciar Autoevaluación
-                      </button>
-                    </div>
-                  )}
+                    )}
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* ASIDE DERECHO REESTRUCTURADO */}
-          <aside className="w-80 border-l border-border bg-card p-6 flex flex-col gap-6 overflow-y-auto">
-            
-            {/* PODCAST EN EL ASIDE (SUPERIOR) */}
+          <aside className="w-80 border-l border-border bg-card p-6 flex flex-col gap-6 overflow-y-auto no-scrollbar">
             {content?.podcast?.url && (
               <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-[2rem] p-5 space-y-4">
                 <div className="flex items-center gap-3">
@@ -373,7 +376,6 @@ export default function AdminContentDetail() {
 
             <h4 className={labelClass}>Materiales</h4>
 
-            {/* DOCUMENTO PDF ABAJO DEL PODCAST */}
             {content?.url?.toLowerCase().includes('.pdf') && (
               <a href={content.url} target="_blank" rel="noopener noreferrer"
                 className="group w-full p-4 bg-muted/50 border border-border rounded-2xl flex items-center gap-4 hover:border-primary transition-all">
@@ -387,6 +389,21 @@ export default function AdminContentDetail() {
               </a>
             )}
 
+            {content?.practiceLab && (
+              <button 
+                onClick={() => setShowLabModal(true)}
+                className="group w-full p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-center gap-4 hover:border-blue-500 transition-all text-left"
+              >
+                <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
+                  <i className="bi bi-controller text-xl"></i>
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-[8px] font-black uppercase text-blue-600">Simulador IA</p>
+                  <p className="text-xs font-bold text-foreground truncate">Práctica Interactiva</p>
+                </div>
+              </button>
+            )}
+
             <div className="mt-auto pt-6 border-t border-border">
                <button onClick={() => setShowDeleteModal(true)} className="w-full py-3 text-[9px] font-black uppercase text-destructive hover:bg-destructive/5 rounded-xl tracking-widest transition-all">
                 Eliminar Unidad
@@ -396,7 +413,53 @@ export default function AdminContentDetail() {
         </div>
       </main>
 
-      {/* MODALES (IGUAL QUE ANTES) */}
+      {/* MODAL DEL MINIJUEGO ACTUALIZADO */}
+{showLabModal && (
+  <div className="fixed inset-0 z-120 flex items-center justify-center bg-black/95 backdrop-blur-xl md:p-4">
+    {/* Eliminamos aspect-video y usamos h-[90vh] para asegurar espacio */}
+    <div className="bg-card border border-border md:rounded-[40px] w-full max-w-6xl h-full md:h-[90vh] relative overflow-hidden shadow-2xl flex flex-col">
+      
+      <div className="absolute top-4 right-4 z-130">
+        <button 
+          onClick={() => {
+              setShowLabModal(false);
+              setIsLabStarted(false);
+          }} 
+          className="w-10 h-10 bg-white/10 hover:bg-destructive hover:text-white backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all shadow-lg"
+        >
+          <i className="bi bi-x-lg"></i>
+        </button>
+      </div>
+      
+      <div className="flex-1 flex flex-col bg-slate-950 overflow-hidden">
+          {!isLabStarted ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in zoom-in duration-300">
+                  <div className="w-20 h-20 bg-blue-500/20 text-blue-500 rounded-3xl flex items-center justify-center mx-auto shadow-2xl">
+                      <i className="bi bi-controller text-4xl"></i>
+                  </div>
+                  <div>
+                      <h3 className="text-2xl font-black text-white mb-2">{content?.practiceLab?.scenarioTitle || 'Simulador'}</h3>
+                      <p className="text-slate-400 max-w-md mx-auto text-sm px-6">Ordena los elementos en sus categorías correspondientes para completar la práctica.</p>
+                  </div>
+                  <button 
+                      onClick={() => setIsLabStarted(true)}
+                      className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-lg transition-all active:scale-95"
+                  >
+                      Empezar Práctica
+                  </button>
+              </div>
+          ) : (
+              /* IMPORTANTE: El contenedor del Lab debe ser h-full y min-h-0 */
+              <div className="w-full h-full min-h-0 overflow-hidden">
+                  <InteractiveLab data={content.practiceLab} />
+              </div>
+          )}
+      </div>
+    </div>
+  </div>
+)}
+
+      {/* MODALES DE QUIZ Y DELETE */}
       {showQuizModal && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
           <div className="bg-card border border-border rounded-[32px] p-8 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
@@ -435,8 +498,7 @@ export default function AdminContentDetail() {
           <div className="bg-card border border-border rounded-[32px] p-10 max-w-sm w-full text-center shadow-2xl">
             <i className="bi bi-exclamation-triangle text-4xl text-destructive mb-4 block"></i>
             <h3 className="text-xl font-black mb-2">¿Seguro que deseas borrar?</h3>
-            <p className="text-sm text-muted-foreground mb-8">Esta acción eliminará todos los archivos generados por IA.</p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-8">
               <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-3 rounded-xl bg-muted font-black uppercase text-[10px]">Cancelar</button>
               <button onClick={handleDelete} className="flex-1 py-3 rounded-xl bg-destructive text-white font-black uppercase text-[10px]">Eliminar</button>
             </div>

@@ -102,7 +102,7 @@ export default function EmployeeDashboard() {
             {/* COLUMNA IZQUIERDA: ONBOARDING */}
             <div className="lg:col-span-2 space-y-8">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-black text-foreground tracking-tight uppercase tracking-widest text-[13px]">
+                <h2 className="text-xl font-black text-foreground uppercase tracking-widest text-[13px]">
                   Ruta de Onboarding
                 </h2>
               </div>

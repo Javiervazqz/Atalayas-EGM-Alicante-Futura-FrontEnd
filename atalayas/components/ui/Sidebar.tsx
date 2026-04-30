@@ -69,7 +69,7 @@ export default function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(false);
@@ -108,7 +108,6 @@ export default function Sidebar({ role }: SidebarProps) {
   }, []);
 
   useEffect(() => {
-    if (!mounted) return;
     const updateCounts = () => {
       setPendingSuggestionsCount(Number(localStorage.getItem('count_suggestions')) || 0);
       setPendingRequestsCount(Number(localStorage.getItem('count_requests')) || 0);
@@ -116,7 +115,7 @@ export default function Sidebar({ role }: SidebarProps) {
     window.addEventListener('local-storage-update', updateCounts);
     updateCounts();
     return () => window.removeEventListener('local-storage-update', updateCounts);
-  }, [mounted]);
+  }, []);
 
   const toggleTheme = () => {
     const root = document.documentElement;

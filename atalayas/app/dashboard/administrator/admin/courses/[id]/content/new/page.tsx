@@ -17,7 +17,8 @@ export default function NewAIContentPage() {
     generateQuiz: false,
     generatePodcast: false,
     generateImage: true,
-    generateVideo: false, // Nueva opción para Runway Gen-2
+    generateVideo: false,
+    generateLab: false,
   });
 
   const [formData, setFormData] = useState({
@@ -71,7 +72,7 @@ export default function NewAIContentPage() {
       <main className="flex-1 overflow-auto flex flex-col relative">
         <PageHeader 
           title="Generar Contenido con IA"
-          description="Crea contenidos completos con resúmenes, tests, audio, imágenes y clips de vídeo."
+          description="Crea contenidos completos con resúmenes, tests, audio, imágenes y laboratorios prácticos."
           icon={<i className="bi bi-robot"></i>}
           backUrl={`/dashboard/administrator/admin/courses/${id}`}
         />
@@ -79,8 +80,8 @@ export default function NewAIContentPage() {
         <div className="p-6 lg:p-10 max-w-4xl mx-auto w-full">
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            {/* COLUMNA IZQUIERDA: CONFIGURACIÓN */}
             <div className="lg:col-span-12 space-y-8">
+              {/* NOMBRE DE LA UNIDAD */}
               <div className="bg-card p-6 lg:p-8 rounded-3xl border border-border shadow-sm">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 ml-1">Nombre de la unidad</label>
                 <input 
@@ -91,6 +92,7 @@ export default function NewAIContentPage() {
                 />
               </div>
 
+              {/* FUENTE (PDF/URL) */}
               <div className="bg-card p-6 lg:p-8 rounded-3xl border border-border shadow-sm">
                 <div className="flex gap-3 mb-6">
                   <button type="button" onClick={() => setSourceType('file')} className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border ${sourceType === 'file' ? 'bg-primary text-white border-primary shadow-md' : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'}`}>PDF</button>
@@ -111,15 +113,17 @@ export default function NewAIContentPage() {
                 )}
               </div>
 
+              {/* GENERADORES IA */}
               <div className="bg-card p-6 lg:p-8 rounded-3xl border border-border shadow-sm">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6 ml-1">¿Qué quieres generar?</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3"> {/* Cambiado a grid-cols-6 para mejor ajuste */}
                   {[
                     { id: 'generateSummary', label: 'Resumen', icon: 'bi-text-left', color: 'bg-emerald-500' },
                     { id: 'generateImage', label: 'Imagen', icon: 'bi-image', color: 'bg-pink-500' },
                     { id: 'generateVideo', label: 'Vídeo', icon: 'bi-play-btn', color: 'bg-purple-600' },
                     { id: 'generateQuiz', label: 'Test', icon: 'bi-patch-question', color: 'bg-amber-500' },
-                    { id: 'generatePodcast', label: 'Audio', icon: 'bi-mic', color: 'bg-indigo-500' }
+                    { id: 'generatePodcast', label: 'Audio', icon: 'bi-mic', color: 'bg-indigo-500' },
+                    { id: 'generateLab', label: 'Práctica', icon: 'bi-controller', color: 'bg-blue-500' } // NUEVO BOTÓN
                   ].map((opt) => (
                     <button
                       key={opt.id} type="button"
@@ -134,12 +138,14 @@ export default function NewAIContentPage() {
                   ))}
                 </div>
               </div>
+
+              {/* BOTÓN SUBMIT */}
               <button 
-                    type="submit" disabled={loading || !isReady} 
-                    className="w-full py-4 bg-secondary text-secondary-foreground rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:opacity-90 shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                  >
-                    {loading ? <><i className="bi bi-arrow-repeat animate-spin"></i> Generando...</> : <><i className="bi bi-lightning-charge-fill"></i> Crear Unidad</>}
-                  </button>
+                type="submit" disabled={loading || !isReady} 
+                className="w-full py-4 bg-secondary text-secondary-foreground rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:opacity-90 shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+              >
+                {loading ? <><i className="bi bi-arrow-repeat animate-spin"></i> Generando...</> : <><i className="bi bi-lightning-charge-fill"></i> Crear Unidad</>}
+              </button>
             </div>
           </form>
         </div>

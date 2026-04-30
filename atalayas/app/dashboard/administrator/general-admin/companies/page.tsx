@@ -122,7 +122,7 @@ export default function CompaniesDirectoryPage() {
                       <th className="px-8 py-6 text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em]">Empresa</th>
                       <th className="px-6 py-6 text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em]">Identificación</th>
                       <th className="px-6 py-6 text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em] hidden md:table-cell">Actividad</th>
-                      <th className="px-6 py-6 text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em] text-right">Acción</th>
+                      <th className="px-8 py-6 text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em] text-right w-25">Acción</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/40">
@@ -162,8 +162,8 @@ export default function CompaniesDirectoryPage() {
                             {company.activity || '—'}
                           </span>
                         </td>
-                        <td className="px-6 py-5 text-right">
-                          <button className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${selected?.id === company.id ? 'bg-primary text-white shadow-lg' : 'bg-muted/60 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'}`}>
+                        <td className="px-6 py-5 text-right w-25">
+                          <button className={`w-15 h-9 rounded-xl transition-all ${selected?.id === company.id ? 'bg-primary text-white shadow-lg' : 'bg-muted/60 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'}`}>
                             <i className={`bi ${selected?.id === company.id ? 'bi-info-circle-fill' : 'bi-info-circle'}`}></i>
                           </button>
                         </td>
