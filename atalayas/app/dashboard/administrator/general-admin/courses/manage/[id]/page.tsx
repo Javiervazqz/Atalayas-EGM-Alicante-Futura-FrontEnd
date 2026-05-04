@@ -164,14 +164,6 @@ export default function EditCoursePage() {
                 console.log("Curso actualizado correctamente");
                 router.push('/dashboard/administrator/general-admin/courses/manage');
             } else {
-<<<<<<< enrollment
-                const errorData = await res.json().catch(() => ({}));
-                alert("Error al guardar: " + (errorData.message || "Error del servidor"));
-                setLoading(false);
-            }
-        } catch (err) {
-            alert("Error de conexión.");
-=======
                 const errorText = await res.text();
                 console.error("Error al actualizar:", res.status, errorText);
 
@@ -189,7 +181,6 @@ export default function EditCoursePage() {
         } catch (err) {
             console.error("Error en la petición:", err);
             alert("Error al conectar con el servidor");
->>>>>>> dev
             setLoading(false);
         }
     };
@@ -239,7 +230,7 @@ export default function EditCoursePage() {
                         </div>
 
                         {/* SELECTOR DE EMPRESA - Solo para cursos privados */}
-                        {!formData.isPublic && (
+                        {!formData.isPublic ? (
                             <div className="animate-in fade-in slide-in-from-top-4 duration-500" ref={companyRef}>
                                 <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1 text-center sm:text-left">
                                     Empresa Propietaria
@@ -305,13 +296,9 @@ export default function EditCoursePage() {
 
                         {/* 2. TÍTULO DEL CURSO (CON VALIDACIÓN) */}
                         <div>
-<<<<<<< enrollment
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] mb-2 ml-1">Nombre del Curso</label>
-=======
                             <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1 text-center sm:text-left">
                                 Nombre del Curso
                             </label>
->>>>>>> dev
                             <input
                                 type="text"
                                 value={formData.title}
