@@ -4,8 +4,6 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
-<<<<<<< Updated upstream
-=======
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
@@ -87,4 +85,25 @@ export const API_ROUTES = {
 
       DELETE: (id: string) => `${BASE_URL}/suggestions/${id}`,
     },
+
+STATS: {
+GET_ADMIN: `${BASE_URL}/stats`,
+GET_GENERAL: `${BASE_URL}/admin/stats`,
+},
+}
+
+// Agrega esto al final de tu archivo @/lib/utils.ts
+
+export async function fetchWithApiFallback(url: string, options?: RequestInit) {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch error:", error);
+    // Aquí puedes retornar un valor por defecto o lanzar el error
+    throw error; 
+  }
 }

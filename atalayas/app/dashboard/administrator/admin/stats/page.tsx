@@ -263,33 +263,38 @@ export default function StatsPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'users' | 'companies'>('users');
 
+// --- DENTRO DE TU COMPONENTE StatsPage ---
+
 useEffect(() => {
-  // 1. Cargar usuario del localStorage
+  // 1. Cargar usuario del localStorage para el estado local
   const saved = localStorage.getItem('user');
   if (saved) setCurrentUser(JSON.parse(saved));
 
-  // 2. Cargar las estadísticas con el TOKEN
-  const token = getToken(); // Asegúrate de que esta función esté definida arriba
-  setLoading(true);
+  // 2. Cargar las estadísticas USANDO EL TOKEN
+  const token = getToken(); // Tu función de la línea 32
 
+  setLoading(true);
+  
+  // Usamos API_ROUTES.STATS.GET_ADMIN que definimos en utils.ts
   fetchWithApiFallback(API_ROUTES.STATS.GET_ADMIN, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
   })
-    .then((data) => {
-       console.log("Datos de stats recibidos correctamente:", data);
-       setStats(data);
-    })
-    .catch((err) => {
-       console.error("Error en stats:", err);
-       setError(true);
-    })
-    .finally(() => setLoading(false));
+  .then((data) => {
+    console.log("Datos recibidos correctamente:", data);
+    setStats(data);
+  })
+  .catch((err) => {
+    console.error("Error al obtener estadísticas (403 probable):", err);
+    setError(true);
+  })
+  .finally(() => setLoading(false));
 
 }, []);
- // El array vacío asegura que solo se ejecute UNA VEZ al cargar la página
+
+
 
 
   const usersByMonth = useMemo(

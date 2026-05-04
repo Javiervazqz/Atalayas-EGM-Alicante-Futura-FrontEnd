@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 interface SidebarProps {
   role: 'GENERAL_ADMIN' | 'ADMIN' | 'EMPLOYEE' | 'PUBLIC';
 }
+
+type NavItem = { label: string; href: string; icon: string; badge?: number };
+type NavGroup = { group: string; items: NavItem[] };
 
 const navItems = {
   GENERAL_ADMIN: [
@@ -21,6 +24,8 @@ const navItems = {
     { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-globe-americas"></i>},
     { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: <i className="bi bi-envelope-open-fill "></i> },
     { label: 'Sugerencias', href: '/dashboard/administrator/general-admin/suggestions', icon: <i className="bi bi-mailbox2"></i>},
+    { label: 'Matriculación masiva', href: '/dashboard/administrator/bulk-enroll', icon: <i className="bi bi-bar-chart-fill"></i> },
+    { label: 'Estadísticas', href: '/dashboard/administrator/general-admin/stats', icon: <i className="bi bi-bar-chart-fill"></i> },
   ],
   ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/admin', icon: <i className="bi bi-house-fill"></i> },
@@ -33,6 +38,8 @@ const navItems = {
     { label: 'Anuncios', href: '/dashboard/administrator/admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
     { label: 'Ecosistema', href: '/dashboard/administrator/admin/community', icon: <i className="bi bi-globe-americas"></i>},
     { label: 'Sugerencias', href: '/dashboard/administrator/admin/suggestions', icon: <i className="bi bi-mailbox"></i>},
+    { label: 'Estadísticas', href: '/dashboard/administrator/admin/stats', icon: <i className="bi bi-bar-chart-fill"></i> },
+
   ],
   EMPLOYEE: [
     { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-grid-fill"></i> },
