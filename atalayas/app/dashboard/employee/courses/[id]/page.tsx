@@ -1,9 +1,10 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Sidebar from '@/components/ui/Sidebar';
-import SearchInput from '@/components/ui/Searchbar';
+import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
 import { motion } from "framer-motion";
 import ReactMarkdown from 'react-markdown';
@@ -68,15 +69,10 @@ export default function CourseDetailPage() {
     </div>
   );
 
+  // Pantalla de carga limpia y sin el recuadro blanco
   if (loading) return (
-    <div className="flex h-screen bg-background items-center justify-center">
-      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
-        />
-      </div>
+    <div className="flex min-h-screen bg-background items-center justify-center font-sans">
+      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin shadow-md" />
     </div>
   );
 
@@ -84,44 +80,29 @@ export default function CourseDetailPage() {
     <div className="flex min-h-screen bg-background font-sans text-foreground">
       <Sidebar role="EMPLOYEE" />
 
-      <main className="flex-1 h-screen overflow-y-auto no-scrollbar">
-        {/* Header Compacto */}
-        <div className="bg-card/40 border-b border-border py-6 lg:py-8 backdrop-blur-md sticky top-0 z-30">
-          <div className="max-w-6xl mx-auto px-6 lg:px-8">
-            <Link href="/dashboard/employee/courses" className="text-muted-foreground text-[11px] font-black uppercase tracking-widest hover:text-primary transition-colors mb-4 inline-flex items-center gap-1.5">
-              <i className="bi bi-chevron-left"></i> Mis cursos
-            </Link>
+      <main className="flex-1 h-screen overflow-y-auto no-scrollbar relative">
+        
+        {/* BANNER UNIFICADO - Va SIEMPRE a la ruta de cursos, sin usar el historial */}
+        <PageHeader 
+          title={course?.title || "Cargando curso..."}
+          description={cleanMarkdown(course?.description) || "Detalles del curso"}
+          icon={<i className="bi bi-journal-bookmark-fill"></i>}
+          backUrl="/dashboard/employee/courses" 
+        />
 
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-foreground truncate">
-                  {course?.title}
-                </h1>
-                <div className="mt-1 hidden md:block">
-                  <ReactMarkdown
-                    components={{
-                      p: ({ ...props }) => <p className="text-muted-foreground text-sm line-clamp-1 opacity-70" {...props} />
-                    }}
-                  >
-                    {course?.description}
-                  </ReactMarkdown>
-                </div>
-              </div>
-
-              <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-background/50 rounded-2xl border border-border">
-                <i className="bi bi-stack text-primary text-sm"></i>
-                <span className="text-sm font-bold">{contentList.length}</span>
-                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-tighter">Lecciones</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Grid de Contenidos */}
         <div className="max-w-6xl mx-auto px-6 lg:px-8 py-10">
-          <div className="mb-8 flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-primary rounded-full" />
-            <h2 className="text-lg font-black uppercase tracking-wider">Contenido del curso</h2>
+          
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-6 bg-primary rounded-full" />
+              <h2 className="text-lg font-black uppercase tracking-wider">Contenido del curso</h2>
+            </div>
+            
+            <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-card rounded-2xl border border-border shadow-sm w-fit">
+              <i className="bi bi-stack text-primary text-sm"></i>
+              <span className="text-sm font-bold">{contentList.length}</span>
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-tighter">Lecciones</span>
+            </div>
           </div>
 
           {sortedContent.length > 0 ? (
@@ -162,8 +143,8 @@ export default function CourseDetailPage() {
                       </div>
                     </div>
                     {content.isCompleted && (
-                      <div className="absolute top-3 right-3 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
-                        🏆
+                      <div className="absolute top-3 right-3 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-md">
+                        <i className="bi bi-check-lg"></i>
                       </div>
                     )}
                   </motion.div>
