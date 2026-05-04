@@ -13,7 +13,16 @@ export default function BulkCreatePage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [currentUser, setCurrentUser] = useState<any>(null);
-    const [showPasswords, setShowPasswords] = useState(false);
+
+    // Función para generar contraseña aleatoria
+    const generateRandomPassword = () => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let password = '';
+        for (let i = 0; i < 10; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+    };
 
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
@@ -37,11 +46,11 @@ export default function BulkCreatePage() {
                     return {
                         name: row.nombre || row.name || "",
                         email: row.email || row.correo || "",
-                        password: row.password || row.contraseña || "123456",
                         role: finalRole,
                         jobRole: row.puesto || row.trabajo || row.jobRole || "",
-                        status: "pendiente", // Solo para uso en el Frontend
-                        errorMsg: "",        // Solo para uso en el Frontend
+                        password: generateRandomPassword(), // Generamos contraseña temporal
+                        status: "pendiente",
+                        errorMsg: "",
                     };
                 });
                 setEmployees(parsedData);
@@ -76,11 +85,10 @@ export default function BulkCreatePage() {
             if (emp.status === "completado") continue;
 
             try {
-                // LIMPIEZA DE DATOS: Solo enviamos lo que el Backend acepta
                 const payload = {
                     name: emp.name,
                     email: emp.email,
-                    password: emp.password,
+                    password: emp.password, // Enviamos la contraseña generada
                     role: emp.role,
                     jobRole: emp.jobRole,
                     companyId: currentUser.companyId,
@@ -114,7 +122,6 @@ export default function BulkCreatePage() {
                 updatedEmployees[i].status = "error";
                 updatedEmployees[i].errorMsg = "Error de conexión";
             }
-            // Actualizamos el estado fila por fila para dar feedback visual
             setEmployees([...updatedEmployees]);
         }
 
@@ -142,15 +149,17 @@ export default function BulkCreatePage() {
 
                 <div className="p-6 lg:p-10 w-full max-w-[1400px] mx-auto transition-all animate-in fade-in duration-500">
 
-                    {/* ZONA DE CARGA INICIAL */}
                     {employees.length === 0 ? (
                         <div className="bg-card rounded-[2rem] border-2 border-dashed border-border p-16 text-center flex flex-col items-center justify-center shadow-sm">
                             <div className="w-20 h-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mb-6 border border-primary/20">
                                 <i className="bi bi-cloud-arrow-up-fill text-4xl"></i>
                             </div>
                             <h2 className="text-2xl font-bold mb-2">Sube tu archivo .csv</h2>
-                            <p className="text-muted-foreground max-w-sm mb-10 text-sm font-medium">
-                                El archivo debe contener las columnas: <span className="text-foreground font-bold">nombre, email, contraseña, rol y puesto.</span>
+                            <p className="text-muted-foreground max-w-sm mb-4 text-sm font-medium">
+                                El archivo debe contener las columnas: <span className="text-foreground font-bold">nombre, email, rol, puesto</span>
+                            </p>
+                            <p className="text-muted-foreground text-xs mb-10">
+                                <i className="bi bi-info-circle"></i> Se generará una contraseña temporal automáticamente.
                             </p>
 
                             <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" id="csv-upload" />
@@ -163,7 +172,6 @@ export default function BulkCreatePage() {
                         </div>
                     ) : (
                         <div className="space-y-6">
-                            {/* TABLA DE PREVISUALIZACIÓN */}
                             <div className="bg-card rounded-[2rem] border border-border shadow-sm overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left border-collapse">
@@ -171,17 +179,6 @@ export default function BulkCreatePage() {
                                             <tr className="bg-muted/50 border-b border-border">
                                                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nombre</th>
                                                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Email</th>
-                                                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        Contraseña
-                                                        <button
-                                                            onClick={() => setShowPasswords(!showPasswords)}
-                                                            className="bg-primary/10 text-primary w-6 h-6 rounded-md hover:bg-primary hover:text-white transition-colors border-none"
-                                                        >
-                                                            <i className={`bi ${showPasswords ? 'bi-eye-slash' : 'bi-eye'}`}></i>
-                                                        </button>
-                                                    </div>
-                                                </th>
                                                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Puesto</th>
                                                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Rol</th>
                                                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estado</th>
@@ -196,14 +193,6 @@ export default function BulkCreatePage() {
                                                     </td>
                                                     <td className="px-4 py-2">
                                                         <input className="w-full bg-transparent p-2 text-sm font-bold outline-none focus:text-primary" value={emp.email} onChange={(e) => updateEmployee(i, 'email', e.target.value)} />
-                                                    </td>
-                                                    <td className="px-4 py-2">
-                                                        <input
-                                                            type={showPasswords ? "text" : "password"}
-                                                            className="w-full bg-transparent p-2 text-sm font-bold outline-none text-center tracking-widest"
-                                                            value={emp.password}
-                                                            onChange={(e) => updateEmployee(i, 'password', e.target.value)}
-                                                        />
                                                     </td>
                                                     <td className="px-4 py-2">
                                                         <input className="w-full bg-transparent p-2 text-sm font-bold outline-none focus:text-primary" value={emp.jobRole} onChange={(e) => updateEmployee(i, 'jobRole', e.target.value)} />
@@ -244,7 +233,6 @@ export default function BulkCreatePage() {
                                 </div>
                             </div>
 
-                            {/* ALERTAS Y ACCIONES */}
                             {error && (
                                 <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-2xl text-xs font-bold flex items-center gap-3 animate-in slide-in-from-top-2">
                                     <i className="bi bi-exclamation-triangle-fill text-lg"></i> {error}
