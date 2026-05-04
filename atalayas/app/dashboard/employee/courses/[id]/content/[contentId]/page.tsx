@@ -7,6 +7,7 @@ import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import mediumZoom from 'medium-zoom';
+import Link from 'next/link';
 
 export default function EmployeeContentDetail() {
   const params = useParams();
@@ -14,16 +15,19 @@ export default function EmployeeContentDetail() {
   const searchParams = useSearchParams();
   const audioRef = useRef<HTMLAudioElement>(null);
   const zoomRef = useRef<HTMLImageElement>(null);
-  
+
   const fromTaskId = searchParams.get('fromTask');
 
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Estados para el Quiz
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [isCorrected, setIsCorrected] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizScore, setQuizScore] = useState(0);
 
   // Helper para normalizar preguntas del quiz
   const getQuizQuestions = (quizSource: any) => {
@@ -39,16 +43,33 @@ export default function EmployeeContentDetail() {
         const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
+
         const data = await res.json();
         const rawData = data?.data || data?.content || data || {};
         setContent(rawData);
-      } catch (error) { 
-        console.error("Error cargando unidad:", error); 
-      } finally { 
-        setLoading(false); 
+      } catch (error) {
+        console.error("Error cargando unidad:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchContent();
+
+    const markAccess = async () => {
+      const contentId = params.contentId as string;
+      await fetch(`${API_ROUTES.ENROLLMENTS.BASE}/content-access`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ contentId }),
+      });
+    };
+
+    if (params.contentId) {
+      markAccess();
+    }
   }, [params.contentId, params.id]);
 
   // Autocompletar tarea de onboarding si viene de un link específico
@@ -72,6 +93,50 @@ export default function EmployeeContentDetail() {
     autoConfirmTask();
   }, [fromTaskId]);
 
+  useEffect(() => {
+    if (zoomRef.current && content?.imageUrl) {
+      const zoom = mediumZoom(zoomRef.current, {
+        background: "rgba(250,250,249,0.95)", // Usando un fondo claro como tu app
+        margin: 24,
+      });
+      return () => {
+        zoom.detach();
+      };
+    }
+  }, [content?.imageUrl]);
+
+  const handleQuizSubmit = async () => {
+    // 1. Mostrar resultados visualmente activando la corrección
+    setIsCorrected(true);
+
+    // 2. Enviar la puntuación al backend
+    try {
+      const token = localStorage.getItem('token');
+
+      await fetch(
+        API_ROUTES.CONTENT.COMPLETE(
+          params.id as string,
+          content.id
+        ),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            score: score, // Usamos la constante 'score' que ya calculas abajo
+            totalQuestions: totalQuestions, // Usamos la constante 'totalQuestions'
+          }),
+        });
+
+      console.log("Quiz enviado al backend");
+    } catch (error) {
+      console.error("Error enviando quiz:", error);
+    }
+  };
+
+  // Pantalla de carga (Solo una vez y con estilos corporativos)
   const handleSelectOption = (qIdx: number, option: string) => {
     if (isCorrected) return;
     setUserAnswers(prev => ({ ...prev, [qIdx]: option }));
@@ -100,7 +165,7 @@ export default function EmployeeContentDetail() {
       <Sidebar role="EMPLOYEE" />
 
       <main className="flex-1 flex flex-col min-w-0 relative">
-        <PageHeader 
+        <PageHeader
           title={content?.title || "Unidad Didáctica"}
           description={`Lección ${content?.order || ''}`}
           icon={<i className="bi bi-book"></i>}
@@ -110,10 +175,10 @@ export default function EmployeeContentDetail() {
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 overflow-y-auto bg-muted/30 p-8 no-scrollbar">
             <div className="max-w-4xl mx-auto bg-card shadow-xl border border-border/50 rounded-xl p-8 md:p-16 mb-10">
-              
+
               <div className="prose dark:prose-invert max-w-none">
                 <h1 className="text-4xl font-black mb-8 border-b-4 border-primary/10 pb-4">{content?.title}</h1>
-                
+
                 <ReactMarkdown
                   components={{
                     h2: ({ ...props }) => <h2 className="text-2xl font-black text-foreground mt-14 mb-6 flex items-center gap-3" {...props} />,
@@ -136,10 +201,10 @@ export default function EmployeeContentDetail() {
 
                 {content?.imageUrl && (
                   <div className="mt-12 rounded-3xl overflow-hidden border border-border shadow-2xl">
-                    <img 
+                    <img
                       ref={zoomRef}
-                      src={content.imageUrl} 
-                      alt="Ilustración de la unidad" 
+                      src={content.imageUrl}
+                      alt="Ilustración de la unidad"
                       className="w-full h-auto cursor-zoom-in"
                     />
                   </div>
@@ -150,7 +215,7 @@ export default function EmployeeContentDetail() {
 
           <aside className="w-80 border-l border-border bg-card p-6 flex flex-col gap-6">
             <h4 className="text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block">Recursos</h4>
-            
+
             {content?.podcast?.url && (
               <div className="relative group overflow-hidden bg-linear-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 rounded-[2rem] p-5">
                 <div className="flex items-center gap-3 mb-4">
@@ -167,8 +232,8 @@ export default function EmployeeContentDetail() {
             )}
 
             {questions.length > 0 && (
-              <button 
-                onClick={() => setShowQuizModal(true)} 
+              <button
+                onClick={() => setShowQuizModal(true)}
                 className="w-full p-4 bg-orange-400 text-white rounded-2xl flex items-center gap-4 hover:bg-orange-500 transition-all shadow-lg active:scale-95"
               >
                 <i className="bi bi-patch-question text-2xl"></i>
@@ -220,10 +285,10 @@ export default function EmployeeContentDetail() {
                     {q.options.map((opt: string, oIdx: number) => {
                       const isSelected = userAnswers[qIdx] === opt;
                       const isCorrect = opt === q.correctAnswer;
-                      
+
                       let variantClasses = "border-border hover:border-primary/50 bg-muted/30";
                       if (isSelected) variantClasses = "border-primary bg-primary/5 ring-2 ring-primary/20";
-                      
+
                       if (isCorrected) {
                         if (isCorrect) variantClasses = "border-emerald-500 bg-emerald-500/10 text-emerald-700 ring-2 ring-emerald-500/20 font-bold";
                         else if (isSelected && !isCorrect) variantClasses = "border-destructive bg-destructive/10 text-destructive ring-2 ring-destructive/20";
@@ -267,7 +332,39 @@ export default function EmployeeContentDetail() {
               <div className="flex gap-4">
                 {!isCorrected ? (
                   <button
-                    onClick={() => setIsCorrected(true)}
+                    onClick={async () => {
+                      setIsCorrected(true);
+
+                      const correctAnswers = questions.reduce((acc: number, q: any, idx: number) => {
+                        return userAnswers[idx] === q.correctAnswer ? acc + 1 : acc;
+                      }, 0);
+
+                      try {
+                        const token = localStorage.getItem("token");
+
+                        await fetch(
+                          API_ROUTES.CONTENT.COMPLETE(
+                            params.id as string,
+                            content.id
+                          ),
+                          {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                              score: correctAnswers,
+                              totalQuestions: questions.length,
+                            }),
+                          }
+                        );
+
+                        console.log("✅ Quiz enviado correctamente");
+                      } catch (error) {
+                        console.error("❌ Error enviando quiz:", error);
+                      }
+                    }}
                     disabled={Object.keys(userAnswers).length < totalQuestions}
                     className="flex-1 bg-primary text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20 disabled:opacity-50 transition-all active:scale-95"
                   >

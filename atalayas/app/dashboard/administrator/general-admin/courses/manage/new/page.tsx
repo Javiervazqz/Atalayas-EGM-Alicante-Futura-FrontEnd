@@ -79,13 +79,30 @@ export default function NewCoursePage() {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
+<<<<<<< enrollment
             const payload = {
                 title: formData.title.trim(),
                 isPublic: formData.isPublic,
                 category: formData.category,
                 companyId: formData.isPublic ? null : formData.selectedCompanyId,
                 fileUrl: formData.file ? formData.file.name : null,
+=======
+
+            if (!token) {
+                throw new Error("No hay sesión iniciada");
+            }
+
+            // Payload simplificado según requerimiento: Siempre público y Onboarding
+            const payload = {
+                title: formData.title.trim(),
+                isPublic: true,
+                category: 'BASICO',
+                companyId: null, // General admin no tiene companyId o se envía null
+>>>>>>> dev
             };
+
+            console.log("Enviando payload:", payload);
+            console.log("URL:", API_ROUTES.COURSES.CREATE);
 
             const resCourse = await fetch(API_ROUTES.COURSES.CREATE, {
                 method: 'POST',
@@ -96,12 +113,50 @@ export default function NewCoursePage() {
                 body: JSON.stringify(payload),
             });
 
-            if (!resCourse.ok) throw new Error("Error al crear el curso");
+            // Manejar la respuesta para ver el error específico
+            if (!resCourse.ok) {
+                const errorText = await resCourse.text();
+                console.error("Error respuesta:", resCourse.status, errorText);
+
+                let errorMessage = "Error al crear el curso.";
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMessage = errorJson.message || errorJson.error || errorMessage;
+                } catch {
+                    errorMessage = errorText || errorMessage;
+                }
+
+                throw new Error(errorMessage);
+            }
+
+            const newCourse = await resCourse.json();
+            console.log("Curso creado:", newCourse);
+
+            // Si hay archivo PDF, procesarlo después de crear el curso
+            if (formData.file && newCourse.id) {
+                console.log("Subiendo archivo PDF...");
+                const formDataFile = new FormData();
+                formDataFile.append("file", formData.file);
+
+                const fileResponse = await fetch(`${API_ROUTES.COURSES.GET_ALL}/${newCourse.id}/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formDataFile,
+                });
+
+                if (!fileResponse.ok) {
+                    console.warn("Curso creado pero error al subir el archivo");
+                } else {
+                    console.log("Archivo subido correctamente");
+                }
+            }
 
             router.push('/dashboard/administrator/general-admin/courses/manage');
         } catch (err) {
-            console.error(err);
-            alert("Error al crear el curso.");
+            console.error("Error detallado:", err);
+            alert(err instanceof Error ? err.message : "Error al crear el curso.");
         } finally {
             setLoading(false);
         }
@@ -160,7 +215,7 @@ export default function NewCoursePage() {
                         {/* SUBIDA DE PDF */}
                         <div className="space-y-3">
                             <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
-                                Material de Estudio (PDF)
+                                Material de Estudio (PDF) - Opcional
                             </label>
                             <div className="relative h-28 w-full border-2 border-dashed border-border/60 rounded-[24px] flex items-center justify-center bg-muted/20 hover:bg-muted/40 transition-all cursor-pointer group overflow-hidden">
                                 <input
@@ -174,7 +229,7 @@ export default function NewCoursePage() {
                                         <i className={`bi ${formData.file ? 'bi-file-earmark-check' : 'bi-cloud-arrow-up'}`}></i>
                                     </div>
                                     <p className="font-bold text-xs text-foreground truncate max-w-[250px] text-center">
-                                        {formData.file ? formData.file.name : 'Seleccionar o arrastrar PDF'}
+                                        {formData.file ? formData.file.name : 'Seleccionar o arrastrar PDF (opcional)'}
                                     </p>
                                 </div>
                             </div>

@@ -69,7 +69,7 @@ export const API_ROUTES = {
     },
     
     ENROLLMENTS: {
-      BASE: `${BASE_URL}/enrollment`
+      BASE: `${BASE_URL}/enrollment`,
     },
 
     SUGGESTIONS: {
