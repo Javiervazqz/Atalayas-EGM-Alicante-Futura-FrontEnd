@@ -29,6 +29,9 @@ export default function EmployeeContentDetail() {
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [isCorrected, setIsCorrected] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizScore, setQuizScore] = useState(0);
 
   // 1. Carga de datos
   useEffect(() => {
@@ -38,6 +41,7 @@ export default function EmployeeContentDetail() {
         const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
+
         const data = await res.json();
         const rawData = data?.data || data?.content || data || {};
         setContent(rawData);
@@ -48,6 +52,22 @@ export default function EmployeeContentDetail() {
       }
     };
     fetchContent();
+
+    const markAccess = async () => {
+      const contentId = params.contentId as string;
+      await fetch(`${API_ROUTES.ENROLLMENTS.BASE}/content-access`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ contentId }),
+      });
+    };
+
+    if (params.contentId) {
+      markAccess();
+    }
   }, [params.contentId, params.id]);
 
   // 2. Lógica de Onboarding (Autocompletar tarea)

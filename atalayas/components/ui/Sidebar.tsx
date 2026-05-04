@@ -14,8 +14,8 @@ const navItems = {
     { label: 'Perfil Empresa', href: '/dashboard/company', icon: <i className="bi bi-building-gear"></i> },
     { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: <i className="bi bi-buildings-fill"></i> },
     { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
-    { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder2-open"></i> },
+    { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses/manage', icon: <i className="bi bi-journal-bookmark-fill"></i> },
+    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder-fill"></i> },
     { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: <i className="bi bi-briefcase-fill"></i> },
     { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
     { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-globe-americas"></i>},
@@ -27,7 +27,7 @@ const navItems = {
     { label: 'Mi Empresa', href: '/dashboard/administrator/admin/company', icon: <i className="bi bi-building-fill"></i> },
     { label: 'Empleados', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
     { label: 'Onboarding', href: '/dashboard/administrator/employees/onboarding', icon: <i className="bi bi-person-walking"></i>},
-    { label: 'Cursos', href: '/dashboard/administrator/admin/courses', icon: <i className="bi bi-mortarboard-fill"></i> },
+    { label: 'Cursos', href: '/dashboard/administrator/admin/courses/manage', icon: <i className="bi bi-mortarboard-fill"></i> },
     { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill"></i> },
     { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill"></i> },
     { label: 'Anuncios', href: '/dashboard/administrator/admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
@@ -101,7 +101,7 @@ export default function Sidebar({ role }: SidebarProps) {
     setMounted(true);
 
     const checkResizing = () => {
-      if (window.innerWidth >= 1024) setMobileOpen(false);
+      if (window.innerWidth < 1024) setCollapsed(true);
     };
     window.addEventListener('resize', checkResizing);
     return () => window.removeEventListener('resize', checkResizing);
@@ -167,16 +167,17 @@ export default function Sidebar({ role }: SidebarProps) {
       )}
 
       <div 
-        className={`fixed inset-0 bg-background/60 backdrop-blur-sm z-10000 lg:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-background/60 backdrop-blur-sm z-[10000] lg:hidden transition-opacity duration-300 ${
           mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setMobileOpen(false)}
       />
 
+      {/* Estructura del Aside Corregida */}
       <aside className={`
-        fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300 z-10001
+        fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300 z-[10001] shrink-0 font-sans
         ${mobileOpen ? 'translate-x-0 w-70' : '-translate-x-full lg:translate-x-0'}
-        ${collapsed ? 'lg:w-20' : 'lg:w-64'}
+        ${collapsed ? 'w-16 lg:w-16' : 'w-60'}
       `}>
         
         <div className={`flex items-center justify-between border-b border-border transition-all duration-300 ${!showText ? 'h-20 px-0 justify-center' : 'h-24 px-4 gap-3'}`}>
@@ -250,13 +251,13 @@ export default function Sidebar({ role }: SidebarProps) {
                     <img src={user.avatarUrl} alt="Perfil" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-primary text-xs font-black">{user?.name?.charAt(0)}</span>
+                      <span className="text-primary text-xs font-black">{user?.name?.charAt(0) || 'U'}</span>
                     </div>
                   )}
                </div>
                {showText && (
                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-bold truncate text-foreground">{user?.name}</p>
+                    <p className="text-[13px] font-bold truncate text-foreground">{user?.name || 'Usuario'}</p>
                     <span className={`text-[8px] uppercase font-black px-1.5 py-0.5 rounded border ${roleColors[role]}`}>{roleLabels[role]}</span>
                  </div>
                )}

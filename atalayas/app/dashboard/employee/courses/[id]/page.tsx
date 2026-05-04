@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Sidebar from '@/components/ui/Sidebar';
+import SearchInput from '@/components/ui/Searchbar';
 import { API_ROUTES } from '@/lib/utils';
 import { motion } from "framer-motion";
 import ReactMarkdown from 'react-markdown';
@@ -31,6 +32,8 @@ export default function CourseDetailPage() {
       if (!courseId) return;
       try {
         setLoading(true);
+        const token = localStorage.getItem('token');
+
         const res = await fetch(API_ROUTES.COURSES.GET_BY_ID(courseId), {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
@@ -52,9 +55,28 @@ export default function CourseDetailPage() {
   );
   const sortedContent = [...filteredContent].sort((a, b) => a.order - b.order);
 
+  if (error) return (
+    <div className="flex min-h-screen bg-background font-sans">
+      <Sidebar role="EMPLOYEE" />
+      <main className="flex-1 p-10 flex flex-col items-center justify-center">
+        <div className="bg-destructive/10 p-8 rounded-3xl border border-destructive/20 text-center max-w-md">
+          <i className="bi bi-exclamation-triangle text-4xl text-destructive mb-4 block"></i>
+          <h2 className="text-destructive font-bold text-xl mb-2">Error al cargar el curso</h2>
+          <p className="text-muted-foreground text-sm">No se ha podido conectar con el servidor. Por favor, vuelve a intentarlo más tarde.</p>
+        </div>
+      </main>
+    </div>
+  );
+
   if (loading) return (
     <div className="flex h-screen bg-background items-center justify-center">
       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+        />
+      </div>
     </div>
   );
 
@@ -76,7 +98,7 @@ export default function CourseDetailPage() {
                   {course?.title}
                 </h1>
                 <div className="mt-1 hidden md:block">
-                  <ReactMarkdown 
+                  <ReactMarkdown
                     components={{
                       p: ({ ...props }) => <p className="text-muted-foreground text-sm line-clamp-1 opacity-70" {...props} />
                     }}
@@ -85,7 +107,7 @@ export default function CourseDetailPage() {
                   </ReactMarkdown>
                 </div>
               </div>
-              
+
               <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-background/50 rounded-2xl border border-border">
                 <i className="bi bi-stack text-primary text-sm"></i>
                 <span className="text-sm font-bold">{contentList.length}</span>
@@ -98,15 +120,15 @@ export default function CourseDetailPage() {
         {/* Grid de Contenidos */}
         <div className="max-w-6xl mx-auto px-6 lg:px-8 py-10">
           <div className="mb-8 flex items-center gap-3">
-             <div className="w-1.5 h-6 bg-primary rounded-full" />
-             <h2 className="text-lg font-black uppercase tracking-wider">Contenido del curso</h2>
+            <div className="w-1.5 h-6 bg-primary rounded-full" />
+            <h2 className="text-lg font-black uppercase tracking-wider">Contenido del curso</h2>
           </div>
 
           {sortedContent.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {sortedContent.map((content: any) => (
                 <Link key={content.id} href={`/dashboard/employee/courses/${courseId}/content/${content.id}`}>
-                  <motion.div 
+                  <motion.div
                     whileHover={{ y: -4 }}
                     className="group relative h-full bg-card rounded-[1.5rem] border border-border overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/40 transition-all duration-300 flex flex-col"
                   >
@@ -125,7 +147,7 @@ export default function CourseDetailPage() {
                       <h3 className="text-base font-bold text-foreground mb-1 group-hover:text-primary transition-colors line-clamp-2 leading-snug">
                         {content.title}
                       </h3>
-                      
+
                       {content.summary && (
                         <p className="text-[12px] text-muted-foreground line-clamp-2 mb-4 leading-relaxed font-medium">
                           {cleanMarkdown(content.summary)}
@@ -139,6 +161,11 @@ export default function CourseDetailPage() {
                         </div>
                       </div>
                     </div>
+                    {content.isCompleted && (
+                      <div className="absolute top-3 right-3 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                        🏆
+                      </div>
+                    )}
                   </motion.div>
                 </Link>
               ))}
