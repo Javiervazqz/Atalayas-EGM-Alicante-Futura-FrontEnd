@@ -123,14 +123,14 @@ export default function EcosystemPage() {
           }
         />
 
-        <div className="p-6 lg:p-10 flex-1 max-w-[1600px] mx-auto w-full relative z-0">
+        <div className="p-6 lg:p-10 flex-1 max-w-400 mx-auto w-full relative z-0">
           
           <div className="flex flex-wrap gap-2 mb-10 bg-card border border-border p-2 rounded-2xl shadow-sm w-fit">
             {['TODOS', 'UNIVERSIDADES Y CENTROS DE INVESTIGACIÓN', 'PARQUES CIENTÍFICOS', 'INSTITUTOS Y CENTROS TECNOLÓGICOS'].map((cat) => (
               <button
                 key={cat}
                 onClick={() => setFilter(cat)}
-                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] transition-all duration-300 ${
+                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
                   filter === cat 
                   ? 'bg-primary/10 text-primary shadow-sm' 
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'

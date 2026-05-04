@@ -79,14 +79,6 @@ export default function NewCoursePage() {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-<<<<<<< enrollment
-            const payload = {
-                title: formData.title.trim(),
-                isPublic: formData.isPublic,
-                category: formData.category,
-                companyId: formData.isPublic ? null : formData.selectedCompanyId,
-                fileUrl: formData.file ? formData.file.name : null,
-=======
 
             if (!token) {
                 throw new Error("No hay sesión iniciada");
@@ -99,7 +91,6 @@ export default function NewCoursePage() {
                 isPublic: true,
                 category: 'BASICO',
                 companyId: null, // General admin no tiene companyId o se envía null
->>>>>>> dev
             };
 
             console.log("Enviando payload:", payload);
@@ -189,7 +180,7 @@ export default function NewCoursePage() {
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl transition-all ${formData.file ? 'bg-green-500 text-white' : 'bg-card text-primary shadow-sm'}`}>
                                         <i className={`bi ${formData.file ? 'bi-image-fill' : 'bi-camera-fill'}`}></i>
                                     </div>
-                                    <p className="font-bold text-xs text-foreground truncate max-w-[250px]">
+                                    <p className="font-bold text-xs text-foreground truncate max-w-62.5">
                                         {formData.file ? formData.file.name : 'Subir imagen de portada'}
                                     </p>
                                 </div>

@@ -37,6 +37,8 @@ export const API_ROUTES = {
   COMPANIES: {
     GET_ALL: `${BASE_URL}/company`,
     GET_BY_ID: (id: string) => `${BASE_URL}/company/${id}`,
+    DELETE: (id: string) => `${BASE_URL}/company/${id}`,
+
   },
   CONTENT: {
     GET_ALL: (courseId: string) => `${BASE_URL}/courses/${courseId}/content`,
