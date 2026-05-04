@@ -1,12 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 interface SidebarProps {
   role: 'GENERAL_ADMIN' | 'ADMIN' | 'EMPLOYEE' | 'PUBLIC';
 }
+
+type NavItem = { label: string; href: string; icon: string; badge?: number };
+type NavGroup = { group: string; items: NavItem[] };
 
 const navItems = {
   GENERAL_ADMIN: [
@@ -21,6 +24,8 @@ const navItems = {
     { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-globe-americas"></i>},
     { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: <i className="bi bi-envelope-open-fill "></i> },
     { label: 'Sugerencias', href: '/dashboard/administrator/general-admin/suggestions', icon: <i className="bi bi-mailbox2"></i>},
+    { label: 'Matriculación masiva', href: '/dashboard/administrator/bulk-enroll', icon: <i className="bi bi-bar-chart-fill"></i> },
+    { label: 'Estadísticas', href: '/dashboard/administrator/general-admin/stats', icon: <i className="bi bi-bar-chart-fill"></i> },
   ],
   ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/admin', icon: <i className="bi bi-house-fill"></i> },
@@ -33,6 +38,8 @@ const navItems = {
     { label: 'Anuncios', href: '/dashboard/administrator/admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
     { label: 'Ecosistema', href: '/dashboard/administrator/admin/community', icon: <i className="bi bi-globe-americas"></i>},
     { label: 'Sugerencias', href: '/dashboard/administrator/admin/suggestions', icon: <i className="bi bi-mailbox"></i>},
+    { label: 'Estadísticas', href: '/dashboard/administrator/admin/stats', icon: <i className="bi bi-bar-chart-fill"></i> },
+
   ],
   EMPLOYEE: [
     { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-grid-fill"></i> },
@@ -96,9 +103,8 @@ export default function Sidebar({ role }: SidebarProps) {
 
     setMounted(true);
 
-    // 2. EVITAMOS QUE SE ABRA SOLA EN PANTALLAS GRANDES
     const checkResizing = () => {
-      if (window.innerWidth >= 1024) setMobileOpen(false);
+      if (window.innerWidth < 1024) setCollapsed(true);
     };
     window.addEventListener('resize', checkResizing);
     return () => window.removeEventListener('resize', checkResizing);
@@ -110,10 +116,14 @@ export default function Sidebar({ role }: SidebarProps) {
       setPendingSuggestionsCount(Number(localStorage.getItem('count_suggestions')) || 0);
       setPendingRequestsCount(Number(localStorage.getItem('count_requests')) || 0);
     };
-    window.addEventListener('local-storage-update', updateCounts);
-    updateCounts();
-    return () => window.removeEventListener('local-storage-update', updateCounts);
-  }, [mounted]);
+    updateCounts(); // Corregido: Llamamos a updateCounts en lugar de fetchPending
+  }, [role, mounted]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    router.push('/login');
+  };
 
   const toggleTheme = () => {
     const root = document.documentElement;
@@ -129,18 +139,9 @@ export default function Sidebar({ role }: SidebarProps) {
     setIsDark(newTheme);
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    router.push('/login');
-  };
-
-  // FUNCIÓN DE ACTIVACIÓN MEJORADA
   const checkActive = (href: string) => {
-    // 1. Coincidencia exacta (Prioridad máxima)
     if (pathname === href) return true;
 
-    // 2. Excepción para los Paneles de cada rol
-    // Evitamos que /admin/company active el botón de /admin
     const isBasePanel = href.endsWith('/admin') || 
                         href.endsWith('/general-admin') || 
                         href.endsWith('/employee') || 
@@ -148,12 +149,10 @@ export default function Sidebar({ role }: SidebarProps) {
     
     if (isBasePanel) return pathname === href;
 
-    // 3. Excepción para Onboarding (evita activar Empleados)
     if (href === '/dashboard/administrator/employees' && pathname.includes('/onboarding')) {
       return false;
     }
 
-    // 4. Coincidencia de sub-rutas para el resto de items (Cursos, Servicios, etc.)
     return href !== '/dashboard' && pathname.startsWith(href + '/');
   };
 
@@ -161,39 +160,51 @@ export default function Sidebar({ role }: SidebarProps) {
 
   const currentMenu = navItems[role] || [];
   const companyData = user?.Company || user?.company;
-  const displayLogo = user.company?.logoUrl || "/images/logo-atalayas.png";
+  const displayLogo = user?.company?.logoUrl || "/images/logo-atalayas.png";
+  const companyName = companyData?.name || 'Empresa';
 
   return (
     <>
       {!mobileOpen && (
         <button 
           onClick={() => setMobileOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-9999 w-12 h-12 bg-white dark:bg-card border border-border shadow-xl rounded-2xl flex items-center justify-center text-primary transition-all active:scale-90"
+          className="lg:hidden fixed top-4 left-4 z-[9999] w-12 h-12 bg-white dark:bg-card border border-border shadow-xl rounded-2xl flex items-center justify-center text-primary transition-all active:scale-90"
         >
           <i className="bi bi-list text-2xl"></i>
         </button>
       )}
 
       <div 
-        className={`fixed inset-0 bg-background/60 backdrop-blur-sm z-10000 lg:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-background/60 backdrop-blur-sm z-[10000] lg:hidden transition-opacity duration-300 ${
           mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setMobileOpen(false)}
       />
 
+      {/* Estructura del Aside Corregida */}
       <aside className={`
-        fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300 z-10001
+        fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300 z-[10001] shrink-0 font-sans
         ${mobileOpen ? 'translate-x-0 w-70' : '-translate-x-full lg:translate-x-0'}
-        ${collapsed ? 'lg:w-20' : 'lg:w-64'}
+        ${collapsed ? 'w-16 lg:w-16' : 'w-60'}
       `}>
         
-        <div className={`flex items-center justify-between border-b border-border transition-all duration-300 ${collapsed ? 'h-20 px-0 justify-center' : 'h-24 px-4 gap-3'}`}>
-          <div className={`
-            bg-white rounded-[18px] shadow-sm border border-gray-200/60 dark:border-white/10 flex items-center justify-center overflow-hidden transition-all
-            ${collapsed ? 'w-12 h-12 p-1.5' : 'flex-1 h-14 p-2.5'}
-          `}>
-            <img src={displayLogo} alt="Logo" className="max-w-full max-h-full object-contain" />
-          </div>
+        {/* RECUADRO BLANCO CON BORDES REDONDEADOS Y LÍNEA FINA */}
+        <div className={`flex items-center justify-between border-b border-border transition-all duration-300 ${collapsed ? 'h-16 px-0 justify-center' : 'h-24 px-4 gap-3'}`}>
+          {!collapsed ? (
+            <div className="flex-1 w-full h-14 bg-white rounded-[20px] shadow-sm border border-gray-200/60 dark:border-white/10 flex items-center justify-center overflow-hidden p-2.5">
+              <img
+                src={displayLogo}
+                alt={companyName}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-200/60 dark:border-white/10 overflow-hidden p-1.5">
+                <span className="text-primary font-black text-lg tracking-tighter">
+                  {companyName.charAt(0).toUpperCase()}
+                </span>
+            </div>
+          )}
           
           {!collapsed && (
             <button onClick={() => setCollapsed(true)} className="hidden lg:flex text-muted-foreground p-2 rounded-lg hover:bg-muted transition-colors">
@@ -237,15 +248,15 @@ export default function Sidebar({ role }: SidebarProps) {
                 {item.label === 'Sugerencias' && pendingSuggestionsCount > 0 && !collapsed && (
                    <span className="bg-destructive text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{pendingSuggestionsCount}</span>
                 )}
-               {/* Badge para Solicitudes (Colapsado) */}
-{collapsed && item.label === 'Solicitudes' && pendingRequestsCount > 0 && (
-  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
-)}
+                {/* Badge para Solicitudes (Colapsado) */}
+                {collapsed && item.label === 'Solicitudes' && pendingRequestsCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
+                )}
 
-{/* Badge para Sugerencias (Colapsado) */}
-{collapsed && item.label === 'Sugerencias' && pendingSuggestionsCount > 0 && (
-  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
-)}
+                {/* Badge para Sugerencias (Colapsado) */}
+                {collapsed && item.label === 'Sugerencias' && pendingSuggestionsCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
+                )}
               </Link>
             );
           })}
@@ -259,13 +270,13 @@ export default function Sidebar({ role }: SidebarProps) {
                     <img src={user.avatarUrl} alt="Perfil" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-primary text-xs font-black">{user?.name?.charAt(0)}</span>
+                      <span className="text-primary text-xs font-black">{user?.name?.charAt(0) || 'U'}</span>
                     </div>
                   )}
                </div>
                {!collapsed && (
                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-bold truncate text-foreground">{user?.name}</p>
+                    <p className="text-[13px] font-bold truncate text-foreground">{user?.name || 'Usuario'}</p>
                     <span className={`text-[8px] uppercase font-black px-1.5 py-0.5 rounded border ${roleColors[role]}`}>{roleLabels[role]}</span>
                  </div>
                )}

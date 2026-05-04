@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/ui/pageHeader';
 import SearchInput from '@/components/ui/Searchbar';
 import { API_ROUTES } from '@/lib/utils';
@@ -9,269 +11,235 @@ import { API_ROUTES } from '@/lib/utils';
 interface Company {
   id: string;
   name: string;
-  cif: string;
-  address?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  logoUrl?: string;
-  activity?: string;
-  description?: string;
-  website?: string;
-  created_at: string;
+  activity: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  address: string | null;
+  logoUrl: string | null;
+  cif: string | null;
+  createdAt: string;
+  website: string | null;
+  User?: { id: string }[];
 }
 
-export default function CompaniesDirectoryPage() {
+const getToken = () =>
+  typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+
+function Toast({ msg, type }: { msg: string; type: 'ok' | 'err' }) {
+  return (
+    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl text-sm font-medium shadow-xl text-white ${type === 'ok' ? 'bg-green-600' : 'bg-red-600'}`}>
+      <i className={`bi ${type === 'ok' ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}`} />
+      {msg}
+    </div>
+  );
+}
+
+export default function CompaniesPage() {
+  const router = useRouter();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
-  const [initializing, setInitializing] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selected, setSelected] = useState<Company | null>(null);
-  const [fetchingDetail, setFetchingDetail] = useState(false);
+  const [search, setSearch] = useState('');
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const showToast = (msg: string, type: 'ok' | 'err') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
-    const init = async () => {
-      await fetchCompanies();
-      setInitializing(false);
-    };
-    init();
+    const saved = localStorage.getItem('user');
+    if (!saved) { router.push('/login'); return; }
+    const user = JSON.parse(saved);
+    if (user.role !== 'GENERAL_ADMIN') { router.push('/dashboard'); return; }
+    setCurrentUser(user);
+
+    fetch(API_ROUTES.COMPANIES.GET_ALL, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+      .then(r => r.json())
+      .then(d => setCompanies(Array.isArray(d) ? d : []))
+      .catch(() => showToast('Error cargando empresas', 'err'))
+      .finally(() => setLoading(false));
   }, []);
 
-  const fetchCompanies = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(API_ROUTES.COMPANIES.GET_ALL, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setCompanies(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Error al cargar empresas:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return companies.filter(c =>
+      !q ||
+      c.name.toLowerCase().includes(q) ||
+      c.activity?.toLowerCase().includes(q) ||
+      c.cif?.toLowerCase().includes(q)
+    );
+  }, [companies, search]);
 
-  const handleOpenDetail = async (company: Company) => {
-    if (selected?.id === company.id) {
-      setSelected(null);
-      return;
-    }
-    setSelected(company);
-    setFetchingDetail(true);
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`¿Eliminar la empresa "${name}"? Esta acción no se puede deshacer.`)) return;
+    setDeleting(id);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(API_ROUTES.COMPANIES.GET_BY_ID(company.id), {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch(API_ROUTES.COMPANIES.DELETE(id), {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (res.ok) {
-        const fullData = await res.json();
-        setSelected(fullData);
+        setCompanies(prev => prev.filter(c => c.id !== id));
+        showToast('Empresa eliminada', 'ok');
+      } else {
+        showToast('No se pudo eliminar', 'err');
       }
-    } catch (err) {
-      console.error("Error detalle:", err);
+    } catch {
+      showToast('Error de conexión', 'err');
     } finally {
-      setFetchingDetail(false);
+      setDeleting(null);
     }
   };
 
-  const filtered = companies.filter(c => {
-    const name = c.name?.toLowerCase() || '';
-    const cif = c.cif?.toLowerCase() || '';
-    const query = searchQuery.toLowerCase();
-    return name.includes(query) || cif.includes(query);
-  });
-
-  if (initializing) {
-    return (
-      <div className="flex min-h-screen bg-background items-center justify-center font-sans">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary animate-pulse">Cargando Directorio...</p>
-        </div>
-      </div>
-    );
-  }
+  if (!currentUser) return null;
 
   return (
-    <div className="flex min-h-screen bg-muted/30 font-sans text-foreground transition-colors duration-300">
+    <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-[#111113]">
       <Sidebar role="GENERAL_ADMIN" />
+      {toast && <Toast msg={toast.msg} type={toast.type} />}
 
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <PageHeader 
-          title="Directorio de Empresas"
-          description={`Consulta de las ${companies.length} entidades del ecosistema.`}
-          icon={<i className="bi bi-buildings"></i>}
-          action={
-            <SearchInput 
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Filtrar base de datos..."
-            />
-          }
-        />
-
-        <div className={`flex-1 grid overflow-hidden transition-all duration-500 ${selected ? 'lg:grid-cols-[1fr_450px]' : 'grid-cols-1'}`}>
-          
-          {/* ── TABLA DE DATOS ── */}
-          <div className="overflow-y-auto p-6 lg:p-10 no-scrollbar">
-            <div className="bg-card rounded-[32px] border border-border/60 shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-muted/40 border-b border-border/60">
-                      <th className="px-8 py-6 text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em]">Empresa</th>
-                      <th className="px-6 py-6 text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em]">Identificación</th>
-                      <th className="px-6 py-6 text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em] hidden md:table-cell">Actividad</th>
-                      <th className="px-6 py-6 text-[10px] font-black text-muted-foreground/60 uppercase tracking-[0.2em] text-right">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/40">
-                    {loading ? (
-                      [1, 2, 3, 4, 5].map(i => (
-                        <tr key={i} className="animate-pulse">
-                          <td colSpan={4} className="px-8 py-7"><div className="h-5 bg-muted rounded-xl w-full"></div></td>
-                        </tr>
-                      ))
-                    ) : (
-                      filtered.map((company) => (
-                      <tr 
-                        key={company.id} 
-                        onClick={() => handleOpenDetail(company)}
-                        className={`group cursor-pointer transition-all ${selected?.id === company.id ? 'bg-primary/5' : 'hover:bg-muted/50'}`}
-                      >
-                        <td className="px-8 py-5">
-                          <div className="flex items-center gap-4">
-                            <div className="w-11 h-11 rounded-2xl bg-muted/60 border border-border/40 flex items-center justify-center overflow-hidden shrink-0">
-                              {company.logoUrl ? (
-                                <img src={encodeURI(company.logoUrl)} className="w-full h-full object-cover" alt="" />
-                              ) : (
-                                <span className="text-xs font-black text-muted-foreground/40">{company.name?.charAt(0) || '?'}</span>
-                              )}
-                            </div>
-                            {/* CAMBIO: Sin negrita y sin uppercase forzado */}
-                            <span className="font-medium text-sm text-foreground group-hover:text-primary transition-colors tracking-tight">{company.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-5">
-                          <span className="font-mono text-[11px] font-bold text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg border border-border/60">
-                            {company.cif || 'N/A'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-5 hidden md:table-cell">
-                          <span className="text-xs font-medium text-foreground/50 truncate block max-w-40">
-                            {company.activity || '—'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-5 text-right">
-                          <button className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${selected?.id === company.id ? 'bg-primary text-white shadow-lg' : 'bg-muted/60 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'}`}>
-                            <i className={`bi ${selected?.id === company.id ? 'bi-info-circle-fill' : 'bi-info-circle'}`}></i>
-                          </button>
-                        </td>
-                      </tr>
-                    )))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+      <main className="flex-1 p-6 lg:p-10 overflow-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-[#1d1d1f] dark:text-white tracking-tight">
+              Empresas
+            </h1>
+            <p className="text-[#86868b] text-sm mt-1">
+              {filtered.length} empresa{filtered.length !== 1 ? 's' : ''} registrada{filtered.length !== 1 ? 's' : ''}
+            </p>
           </div>
+          <Link
+            href="/dashboard/company"
+            className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl bg-[#0071e3] text-white hover:bg-[#0077ed] transition-colors"
+          >
+            <i className="bi bi-building-fill-gear" />
+            Gestionar perfiles
+          </Link>
+        </div>
 
-          {/* ── PANEL DE DETALLE LATERAL (EL DESPLEGABLE) ── */}
-          {selected && (
-            <div className="overflow-y-auto border-l border-border/60 bg-card p-10 shadow-[-25px_0_50px_rgba(0,0,0,0.04)] animate-in slide-in-from-right-12 duration-700 no-scrollbar relative">
-              
-              {fetchingDetail && (
-                <div className="absolute top-0 left-0 w-full h-1 bg-muted overflow-hidden">
-                  <div className="h-full bg-primary animate-[loading_2s_infinite_linear] w-[30%] origin-left"></div>
+        {/* Buscador */}
+        <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 border border-gray-100 dark:border-white/5 mb-5">
+          <div className="relative">
+            <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b] text-sm" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre, sector o CIF..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 bg-[#f5f5f7] dark:bg-white/5 dark:text-white rounded-xl text-sm outline-none border border-transparent focus:border-[#0071e3] focus:bg-white dark:focus:bg-white/10 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Grid de empresas */}
+        {loading ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-48 bg-white dark:bg-[#1c1c1e] rounded-2xl animate-pulse border border-gray-100 dark:border-white/5" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-gray-100 dark:border-white/5 p-16 text-center">
+            <i className="bi bi-buildings text-4xl text-[#86868b] block mb-3" />
+            <p className="text-[#86868b] text-sm">
+              {search ? 'No se encontraron empresas con esa búsqueda' : 'No hay empresas registradas todavía'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map(company => (
+              <div
+                key={company.id}
+                className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-gray-100 dark:border-white/5 p-5 hover:shadow-sm transition-all group flex flex-col"
+              >
+                {/* Cabecera */}
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-gray-100 dark:border-white/10 bg-[#f5f5f7] dark:bg-white/5 flex items-center justify-center">
+                    {company.logoUrl ? (
+                      <img src={company.logoUrl} alt={company.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <i className="bi bi-building-fill text-[#86868b] text-xl" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-[#1d1d1f] dark:text-white text-sm truncate">
+                      {company.name}
+                    </h3>
+                    {company.activity && (
+                      <p className="text-xs text-[#86868b] truncate mt-0.5">{company.activity}</p>
+                    )}
+                    {company.cif && (
+                      <p className="text-[10px] text-[#86868b] font-mono mt-0.5">{company.cif}</p>
+                    )}
+                  </div>
                 </div>
-              )}
 
-              <div className="flex items-center justify-between mb-12">
-                <button
-                  onClick={() => setSelected(null)}
-                  className="w-11 h-11 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all hover:rotate-90 shadow-sm"
-                >
-                  <i className="bi bi-x-lg"></i>
-                </button>
-                <span className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.4em]">Expediente Corporativo</span>
-              </div>
-
-              <div className="flex flex-col items-center text-center mb-12">
-                <div className="w-36 h-36 rounded-[48px] overflow-hidden border-10 border-background shadow-2xl mb-8 bg-muted/20">
-                  {selected.logoUrl ? (
-                    <img src={encodeURI(selected.logoUrl)} alt={selected.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-5xl text-muted-foreground/20 font-black bg-muted/50 uppercase">
-                      {selected.name?.charAt(0) || '?'}
+                {/* Datos */}
+                <div className="space-y-2 flex-1 mb-4">
+                  {company.contactEmail && (
+                    <div className="flex items-center gap-2 text-xs text-[#424245] dark:text-[#ebebf5]">
+                      <i className="bi bi-envelope text-[#86868b] shrink-0" />
+                      <span className="truncate">{company.contactEmail}</span>
+                    </div>
+                  )}
+                  {company.contactPhone && (
+                    <div className="flex items-center gap-2 text-xs text-[#424245] dark:text-[#ebebf5]">
+                      <i className="bi bi-telephone text-[#86868b] shrink-0" />
+                      <span>{company.contactPhone}</span>
+                    </div>
+                  )}
+                  {company.address && (
+                    <div className="flex items-center gap-2 text-xs text-[#424245] dark:text-[#ebebf5]">
+                      <i className="bi bi-geo-alt text-[#86868b] shrink-0" />
+                      <span className="truncate">{company.address}</span>
+                    </div>
+                  )}
+                  {company.website && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <i className="bi bi-globe text-[#86868b] shrink-0" />
+                      <a
+                        href={company.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#0071e3] hover:underline truncate"
+                      >
+                        {company.website.replace(/^https?:\/\//, '')}
+                      </a>
+                    </div>
+                  )}
+                  {company.User && (
+                    <div className="flex items-center gap-2 text-xs text-[#424245] dark:text-[#ebebf5]">
+                      <i className="bi bi-people text-[#86868b] shrink-0" />
+                      <span>{company.User.length} usuario{company.User.length !== 1 ? 's' : ''}</span>
                     </div>
                   )}
                 </div>
-                
-                {/* CAMBIO: Nombre sin negrita extrema y sin mayúsculas forzadas */}
-                <h3 className="text-foreground text-3xl font-medium mb-1 tracking-tight leading-none px-4">
-                  {selected.name}
-                </h3>
-                
-                {/* CAMBIO: Actividad abajo con tracking normal (menos espaciado) */}
-                <p className="text-primary text-[11px] font-bold tracking-normal opacity-80 uppercase italic">
-                   {selected.activity || 'Sector Global'}
-                </p>
-              </div>
 
-              <div className="grid gap-4 mb-10">
-                {[
-                  { label: 'Identificador Fiscal', value: selected.cif, icon: 'bi-hash' },
-                  { label: 'Sede Central', value: selected.address, icon: 'bi-geo-alt' },
-                  { label: 'Correo Corporativo', value: selected.contactEmail, icon: 'bi-envelope' },
-                  { label: 'Teléfono', value: selected.contactPhone, icon: 'bi-telephone' },
-                ].filter(f => f.value).map((field) => (
-                  <div key={field.label} className="bg-muted/20 p-5 rounded-[24px] border border-border/40 flex items-start gap-5 group hover:border-primary/20 transition-all">
-                    <div className="w-10 h-10 rounded-2xl bg-card flex items-center justify-center text-primary shadow-sm shrink-0 mt-0.5 transition-transform group-hover:scale-110">
-                        <i className={`bi ${field.icon}`}></i>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-muted-foreground/40 text-[9px] font-black uppercase tracking-[0.2em] mb-1.5">{field.label}</p>
-                      <p className="text-foreground text-sm font-bold leading-tight wrap-break-words">{field.value}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {selected.description && (
-                <div className="bg-card border border-border/60 rounded-[28px] p-8 mb-10 shadow-sm">
-                   <p className="text-muted-foreground/30 text-[9px] font-black uppercase tracking-[0.3em] mb-4 text-center">Reseña Institucional</p>
-                   <p className="text-foreground/80 text-sm leading-relaxed font-medium italic text-center">
-                     "{selected.description}"
-                   </p>
+                {/* Fecha y acciones */}
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
+                  <span className="text-[10px] text-[#86868b]">
+                    {new Date(company.createdAt).toLocaleDateString('es-ES', {
+                      day: 'numeric', month: 'short', year: 'numeric'
+                    })}
+                  </span>
+                  <button
+                    onClick={() => handleDelete(company.id, company.name)}
+                    disabled={deleting === company.id}
+                    className="opacity-0 group-hover:opacity-100 text-xs font-medium px-3 py-1.5 rounded-lg border border-red-200 text-red-600 bg-white dark:bg-transparent hover:bg-red-50 transition-all disabled:opacity-30"
+                  >
+                    {deleting === company.id ? '...' : 'Eliminar'}
+                  </button>
                 </div>
-              )}
-
-              {selected.website && (
-                <a
-                  href={selected.website.startsWith('http') ? selected.website : `https://${selected.website}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-4 w-full py-5 bg-secondary text-white rounded-[22px] font-black text-[11px] uppercase tracking-[0.25em] hover:opacity-95 shadow-xl shadow-secondary/20 transition-all active:scale-95 mb-8"
-                >
-                  <i className="bi bi-globe-americas text-lg"></i> Acceder al Portal
-                </a>
-              )}
-
-              <div className="pt-8 border-t border-border/40 text-center">
-                 <p className="text-[9px] font-black text-muted-foreground/20 uppercase tracking-[0.3em]">
-                   Fecha de Registro: {selected.created_at ? new Date(selected.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
-                 </p>
               </div>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </main>
-
-      <style>{`
-        @keyframes loading {
-          0% { left: -40%; }
-          100% { left: 100%; }
-        }
-      `}</style>
     </div>
   );
 }

@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const searchParams = useSearchParams();
-    const fromTaskId = searchParams.get('fromTask');
+  const fromTaskId = searchParams.get('fromTask');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -42,27 +42,27 @@ export default function ProfilePage() {
   }, [router]);
 
   useEffect(() => {
-  const autoConfirmTask = async () => {
-    if (fromTaskId) {
-      try {
-        const token = localStorage.getItem("token");
-        await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ taskId: fromTaskId, done: true }),
-        });
-        console.log("Tarea de onboarding completada automáticamente");
-      } catch (err) {
-        console.error("Error al autocompletar:", err);
+    const autoConfirmTask = async () => {
+      if (fromTaskId) {
+        try {
+          const token = localStorage.getItem("token");
+          await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ taskId: fromTaskId, done: true }),
+          });
+          console.log("Tarea de onboarding completada automáticamente");
+        } catch (err) {
+          console.error("Error al autocompletar:", err);
+        }
       }
-    }
-  };
+    };
 
-  autoConfirmTask();
-}, [fromTaskId]);
+    autoConfirmTask();
+  }, [fromTaskId]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -82,7 +82,6 @@ export default function ProfilePage() {
     setError('');
     setSuccess('');
 
-    // --- VALIDACIONES DE CONTRASEÑA ---
     if (password) {
       if (password.length < 6) {
         setError('La nueva contraseña debe tener al menos 6 caracteres.');
@@ -117,12 +116,8 @@ export default function ProfilePage() {
         throw new Error(errorMsg || 'Error actualizando el perfil');
       }
 
-      // Mezclar datos antiguos con nuevos para no perder el objeto Company
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const updatedUser = {
-        ...storedUser,
-        ...data
-      };
+      const updatedUser = { ...storedUser, ...data };
 
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
@@ -135,9 +130,8 @@ export default function ProfilePage() {
       setConfirmPassword('');
       setSuccess('Perfil actualizado correctamente.');
 
-      // Opcional: Solo recargar si cambió la foto para refrescar el Sidebar
       if (newFile) {
-          window.location.reload();
+        window.location.reload();
       }
 
     } catch (err: any) {
@@ -150,76 +144,131 @@ export default function ProfilePage() {
   if (!currentUser) return null;
 
   return (
-    <div className="flex min-h-screen bg-background font-sans">
+    <div className="flex h-screen overflow-hidden bg-background font-sans">
       <Sidebar role={currentUser.role} />
       
-      <main className="flex-1 p-6 lg:p-10 overflow-auto flex justify-center">
-        <div className="w-full max-w-2xl">
-          
-          <div className="mb-8 text-center sm:text-left">
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">Mi Perfil</h1>
-            <p className="text-muted-foreground">Gestiona tus datos personales y seguridad.</p>
-          </div>
+      <main className="flex-1 overflow-y-auto flex flex-col relative no-scrollbar">
+        
+        <PageHeader 
+          title="Mi Perfil"
+          description="Gestiona tus datos personales y seguridad corporativa."
+          icon={<i className="bi bi-person-badge"></i>}
+          onBack={() => router.back()}
+        />
 
-          <form onSubmit={handleSubmit} className="bg-card rounded-2xl shadow-sm border border-border p-8 space-y-8">
+        <div className="p-6 lg:p-10 flex-1 flex justify-center pb-24">
+          <div className="w-full max-w-3xl space-y-6">
             
-            {error && <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm font-medium">{error}</div>}
-            {success && <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl text-primary text-sm font-medium">{success}</div>}
-
-            {/* AVATAR */}
-            <div className="flex flex-col items-center gap-4 border-b border-border pb-8">
-              <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                <img 
-                  src={avatarPreview || (currentAvatarUrl ? encodeURI(currentAvatarUrl) : 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y')} 
-                  alt="Avatar" 
-                  className="w-32 h-32 rounded-full object-cover border-4 border-background shadow-inner transition-opacity group-hover:opacity-80"
-                />
-                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white text-xs font-bold">Cambiar foto</span>
-                </div>
-              </div>
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-            </div>
-
-            {/* DATOS PERSONALES */}
-            <div className="space-y-5">
-              <h2 className="text-lg font-bold text-foreground border-l-4 border-primary pl-3">Datos Personales</h2>
+            <form onSubmit={handleSubmit} className="bg-card border border-border rounded-[2.5rem] p-8 md:p-12 shadow-sm space-y-10">
               
-              <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Correo Electrónico (No editable)</label>
-                <input type="email" value={email} disabled className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm outline-none text-muted-foreground cursor-not-allowed" />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Nombre Completo *</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-sm outline-none transition-all text-foreground" />
-              </div>
-            </div>
-
-            {/* SEGURIDAD */}
-            <div className="space-y-5 pt-4">
-              <h2 className="text-lg font-bold text-foreground border-l-4 border-primary pl-3">Seguridad</h2>
-              <p className="text-sm text-muted-foreground">Rellena estos campos solo si quieres cambiar tu contraseña actual.</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Nueva Contraseña</label>
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Opcional (Mín. 6 chars)" className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-sm outline-none transition-all text-foreground placeholder:text-muted-foreground" />
+              {error && (
+                <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-2xl text-destructive text-sm font-bold flex items-center gap-3 animate-in fade-in">
+                  <i className="bi bi-exclamation-triangle-fill text-lg"></i>
+                  {error}
                 </div>
+              )}
+              {success && (
+                <div className="p-4 bg-teal-500/10 border border-teal-500/20 rounded-2xl text-teal-600 dark:text-teal-400 text-sm font-bold flex items-center gap-3 animate-in fade-in">
+                  <i className="bi bi-check-circle-fill text-lg"></i>
+                  {success}
+                </div>
+              )}
+
+              <div className="flex flex-col items-center gap-4 pb-4">
+                <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                  <div className="absolute -inset-1.5 bg-gradient-to-r from-teal-400 via-amber-400 to-orange-500 rounded-full blur-md opacity-0 group-hover:opacity-30 transition-opacity duration-500" />
+                  
+                  <img 
+                    src={avatarPreview || (currentAvatarUrl ? encodeURI(currentAvatarUrl) : 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y')} 
+                    alt="Avatar" 
+                    className="relative w-32 h-32 rounded-full object-cover border-4 border-card shadow-xl transition-all duration-300 group-hover:scale-[1.02]"
+                  />
+                  
+                  <div className="absolute inset-0 bg-black/40 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-[2px]">
+                    <i className="bi bi-camera text-white text-2xl mb-1"></i>
+                    <span className="text-white text-[9px] uppercase tracking-widest font-bold">Cambiar</span>
+                  </div>
+                </div>
+                <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+              </div>
+
+              <div className="space-y-6">
+                <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-500 border-b border-border/50 pb-3">
+                  Datos Personales
+                </h2>
+                
                 <div>
-                  <label className="block text-xs font-bold text-foreground uppercase tracking-wider mb-2">Confirmar Contraseña</label>
-                  <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full bg-background border border-input focus:border-primary focus:ring-2 focus:ring-ring rounded-xl px-4 py-3 text-sm outline-none transition-all text-foreground" />
+                  <label className="block text-[10px] font-black text-foreground uppercase tracking-widest mb-2 ml-1">
+                    Correo Electrónico <span className="text-muted-foreground/50 lowercase tracking-normal">(No editable)</span>
+                  </label>
+                  <input 
+                    type="email" 
+                    value={email} 
+                    disabled 
+                    className="w-full bg-muted/50 border border-border/50 rounded-2xl px-5 py-4 text-sm font-medium outline-none text-muted-foreground cursor-not-allowed opacity-70" 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-foreground uppercase tracking-widest mb-2 ml-1">
+                    Nombre Completo <span className="text-orange-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)} 
+                    required 
+                    className="w-full bg-background border border-input focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 rounded-2xl px-5 py-4 text-sm font-medium outline-none transition-all text-foreground" 
+                  />
                 </div>
               </div>
-            </div>
 
-            <div className="pt-8 mt-8 border-t border-border flex justify-end">
-              <button type="submit" disabled={loading} className="px-8 py-3 rounded-xl font-bold text-sm text-secondary-foreground bg-secondary hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                {loading ? 'Guardando...' : 'Guardar Perfil'}
-              </button>
-            </div>
+              <div className="space-y-6 pt-4">
+                <div className="border-b border-border/50 pb-3">
+                  <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-500 mb-1">Seguridad</h2>
+                  <p className="text-[11px] text-muted-foreground font-medium">Rellena estos campos solo si deseas actualizar tu contraseña de acceso.</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-[10px] font-black text-foreground uppercase tracking-widest mb-2 ml-1">
+                      Nueva Contraseña
+                    </label>
+                    <input 
+                      type="password" 
+                      value={password} 
+                      onChange={(e) => setPassword(e.target.value)} 
+                      placeholder="Mín. 6 caracteres" 
+                      className="w-full bg-background border border-input focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 rounded-2xl px-5 py-4 text-sm font-medium outline-none transition-all text-foreground placeholder:text-muted-foreground/50" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-foreground uppercase tracking-widest mb-2 ml-1">
+                      Confirmar Contraseña
+                    </label>
+                    <input 
+                      type="password" 
+                      value={confirmPassword} 
+                      onChange={(e) => setConfirmPassword(e.target.value)} 
+                      placeholder="Repite la contraseña"
+                      className="w-full bg-background border border-input focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 rounded-2xl px-5 py-4 text-sm font-medium outline-none transition-all text-foreground placeholder:text-muted-foreground/50" 
+                    />
+                  </div>
+                </div>
+              </div>
 
-          </form>
+              <div className="pt-6 mt-6 border-t border-border flex justify-end">
+                <button 
+                  type="submit" 
+                  disabled={loading} 
+                  className="w-full md:w-auto px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-white bg-orange-500 hover:brightness-110 hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Guardando...' : 'Guardar Perfil'}
+                </button>
+              </div>
+
+            </form>
+          </div>
         </div>
       </main>
     </div>

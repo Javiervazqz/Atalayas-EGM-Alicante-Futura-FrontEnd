@@ -9,41 +9,47 @@ interface PageHeaderProps {
   icon?: React.ReactNode;
   action?: React.ReactNode;
   backUrl?: string;
+  onBack?: () => void;
 }
 
-export default function PageHeader({ title, description, icon, action, backUrl }: PageHeaderProps) {
+export default function PageHeader({ title, description, icon, action, backUrl, onBack }: PageHeaderProps) {
+  
+  const hasBack = backUrl || onBack;
+
+  const backButton = backUrl ? (
+    <Link 
+      href={backUrl} 
+      className="w-10 h-10 rounded-xl flex items-center justify-center text-white/90 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20 active:scale-95 transition-all duration-300 group shrink-0 shadow-lg backdrop-blur-md"
+      title="Volver"
+    >
+      <i className="bi bi-arrow-left text-xl transition-transform group-hover:-translate-x-1"></i>
+    </Link>
+  ) : onBack ? (
+    <button
+      onClick={onBack}
+      className="w-10 h-10 rounded-xl flex items-center justify-center text-white/90 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20 active:scale-95 transition-all duration-300 group shrink-0 shadow-lg backdrop-blur-md"
+      title="Volver"
+    >
+      <i className="bi bi-arrow-left text-xl transition-transform group-hover:-translate-x-1"></i>
+    </button>
+  ) : null;
+
   return (
     <div className="bg-[oklch(0.48_0.11_190)] px-6 py-3 lg:px-10 flex flex-row items-center justify-between gap-4 relative overflow-hidden border-b border-white/6 shrink-0 min-h-21.25 z-30">
       
-      {/* ── MESH GRADIENT: NUBES VIAJERAS LIMPIAS Y LUMINOSAS ── */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {/* Nube 1: Verde Aurora Brillante. Empieza a la izquierda y viaja. */}
         <div className="absolute -top-40 -left-20 w-150 h-150 bg-[#00FFD5] opacity-30 blur-[90px] animate-travel-blob-1 mix-blend-screen"></div>
-        
-        {/* Nube 2: Luz Blanca. Reemplaza al naranja para evitar la "mancha oscura". Da un brillo limpio. */}
         <div className="absolute -bottom-40 -right-20 w-150 h-150 bg-[#E600FF] opacity-[0.15] blur-[100px] animate-travel-blob-2 mix-blend-screen"></div>
       </div>
 
-      {/* BLOQUE IZQUIERDO: Navegación + Contenido */}
       <div className="flex items-center gap-6 z-10 min-w-0">
         
-        {/* Botón Volver */}
-        {backUrl && (
-          <Link 
-            href={backUrl} 
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-white/90 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20 active:scale-95 transition-all duration-300 group shrink-0 shadow-lg backdrop-blur-md"
-            title="Volver"
-          >
-            <i className="bi bi-arrow-left text-xl transition-transform group-hover:-translate-x-1"></i>
-          </Link>
-        )}
+        {hasBack && backButton}
 
-        {/* Línea Divisoria */}
-        {backUrl && (
+        {hasBack && (
           <div className="w-px h-10 bg-linear-to-b from-transparent via-white/20 to-transparent shrink-0 hidden sm:block"></div>
         )}
 
-        {/* Icono de Página e Información */}
         <div className="flex items-center gap-5 min-w-0">
           {icon && (
             <div className="text-lg text-white bg-white/10 w-11 h-11 rounded-xl border border-white/20 shrink-0 flex items-center justify-center shadow-lg backdrop-blur-md">
@@ -61,7 +67,6 @@ export default function PageHeader({ title, description, icon, action, backUrl }
         </div>
       </div>
 
-      {/* BLOQUE DERECHO: Acciones */}
       {action && (
         <div className="relative z-10 shrink-0 md:pl-4">
           {action}

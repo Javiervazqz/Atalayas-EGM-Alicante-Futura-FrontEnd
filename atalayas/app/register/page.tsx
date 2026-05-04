@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { API_ROUTES } from '@/lib/utils';
 
 export default function RegisterPage() { 
   const router = useRouter();
@@ -29,7 +28,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(API_ROUTES.AUTH.REGISTER, {
+      const res = await fetch('http://localhost:3000/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
