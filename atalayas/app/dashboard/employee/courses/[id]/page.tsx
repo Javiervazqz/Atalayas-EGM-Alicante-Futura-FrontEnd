@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Sidebar from '@/components/ui/Sidebar';
 import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
@@ -49,9 +50,10 @@ export default function CourseDetailPage() {
     return [...contentList].sort((a, b) => a.order - b.order);
   }, [course]);
 
+  // Pantalla de carga limpia y sin el recuadro blanco
   if (loading) return (
-    <div className="flex h-screen bg-background items-center justify-center">
-      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    <div className="flex min-h-screen bg-background items-center justify-center font-sans">
+      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin shadow-md" />
     </div>
   );
 

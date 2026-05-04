@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
+import Link from 'next/link';
 import PageHeader from '@/components/ui/pageHeader';
 
 export default function NewCollaboratorPage() {
