@@ -111,6 +111,40 @@ export default function EmployeesPage() {
     }
   };
 
+  const handleDownloadCSV = () => {
+    // Filtrar solo empleados
+    const employeesToExport = users.filter(user => user.role === 'EMPLOYEE');
+
+    // Definir las columnas del CSV sin contraseña
+    const csvRows = [
+      ['nombre', 'email', 'rol', 'puesto'] // Cabeceras sin password
+    ];
+
+    // Agregar los datos de cada empleado
+    employeesToExport.forEach(employee => {
+      csvRows.push([
+        employee.name || '',
+        employee.email || '',
+        'EMPLOYEE',
+        employee.jobRole || ''
+      ]);
+    });
+
+    // Convertir a string CSV
+    const csvContent = csvRows.map(row => row.join(',')).join('\n');
+
+    // Crear y descargar el archivo
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'empleados.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const displayedUsers = users
     .filter(user => {
       const matchCompany = selectedCompany === 'ALL' || String(user.companyId) === String(selectedCompany);
@@ -138,12 +172,20 @@ export default function EmployeesPage() {
           action={
             <div className="flex gap-2">
               {currentUser.role !== 'GENERAL_ADMIN' && (
-                <Link
-                  href="/dashboard/administrator/employees/moreNew"
-                  className="bg-background border border-input hover:bg-muted text-foreground font-bold px-4 py-2.5 rounded-xl transition-all text-xs flex items-center gap-2"
-                >
-                  <i className="bi bi-file-earmark-arrow-up"></i> Carga Masiva
-                </Link>
+                <>
+                  <button
+                    onClick={handleDownloadCSV}
+                    className="bg-background border border-input hover:bg-muted text-foreground font-bold px-4 py-2.5 rounded-xl transition-all text-xs flex items-center gap-2"
+                  >
+                    <i className="bi bi-download"></i> Descargar CSV
+                  </button>
+                  <Link
+                    href="/dashboard/administrator/employees/moreNew"
+                    className="bg-background border border-input hover:bg-muted text-foreground font-bold px-4 py-2.5 rounded-xl transition-all text-xs flex items-center gap-2"
+                  >
+                    <i className="bi bi-file-earmark-arrow-up"></i> Carga Masiva
+                  </Link>
+                </>
               )}
               <Link
                 href="/dashboard/administrator/employees/new"
@@ -215,65 +257,73 @@ export default function EmployeesPage() {
                         </td>
                       </tr>
                     ))
-                  ) : displayedUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-muted/30 transition-colors group">
-                      {/* 1. Usuario */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-sm font-bold text-primary border border-primary/20 shrink-0">
-                            {user.name?.charAt(0).toUpperCase() || 'U'}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold text-foreground truncate">{user.name}</p>
-                            <p className="text-xs font-medium text-muted-foreground truncate">{user.email}</p>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* 2. Empresa (Solo GENERAL_ADMIN) */}
-                      {currentUser.role === 'GENERAL_ADMIN' && (
+                  ) : displayedUsers.length > 0 ? (
+                    displayedUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-muted/30 transition-colors group">
+                        {/* 1. Usuario */}
                         <td className="px-6 py-4">
-                          <span className="text-[11px] font-bold text-foreground bg-muted px-2.5 py-1 rounded-md border border-border">
-                            {user.Company?.name || 'Independiente'}
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-sm font-bold text-primary border border-primary/20 shrink-0">
+                              {user.name?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-foreground truncate">{user.name}</p>
+                              <p className="text-xs font-medium text-muted-foreground truncate">{user.email}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* 2. Empresa (Solo GENERAL_ADMIN) */}
+                        {currentUser.role === 'GENERAL_ADMIN' && (
+                          <td className="px-6 py-4">
+                            <span className="text-[11px] font-bold text-foreground bg-muted px-2.5 py-1 rounded-md border border-border">
+                              {user.Company?.name || 'Independiente'}
+                            </span>
+                          </td>
+                        )}
+
+                        {/* 3. Rol */}
+                        <td className="px-6 py-4">
+                          <div className="flex justify-center">
+                            <span className={`px-3 py-1 rounded-lg text-[9px] uppercase font-black tracking-widest ${ROLE_COLORS[user.role]}`}>
+                              {ROLE_LABELS[user.role] || user.role}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* 4. Puesto */}
+                        <td className="px-6 py-4">
+                          <span className="text-[11px] font-bold text-foreground/80 uppercase tracking-tight">
+                            {user.jobRole || <span className="text-muted-foreground/30 italic font-normal">Sin asignar</span>}
                           </span>
                         </td>
-                      )}
 
-                      {/* 3. Rol */}
-                      <td className="px-6 py-4">
-                        <div className="flex justify-center">
-                          <span className={`px-3 py-1 rounded-lg text-[9px] uppercase font-black tracking-widest ${ROLE_COLORS[user.role]}`}>
-                            {ROLE_LABELS[user.role] || user.role}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* 4. Puesto */}
-                      <td className="px-6 py-4">
-                        <span className="text-[11px] font-bold text-foreground/80 uppercase tracking-tight">
-                          {user.jobRole || <span className="text-muted-foreground/30 italic font-normal">Sin asignar</span>}
-                        </span>
-                      </td>
-
-                      {/* 5. Acciones */}
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Link
-                            href={`/dashboard/administrator/employees/${user.id}`}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all border border-transparent hover:border-primary/10"
-                          >
-                            <i className="bi bi-pencil-square"></i>
-                          </Link>
-                          <button
-                            onClick={() => setUserToDelete(user)}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-all border border-transparent"
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
-                        </div>
+                        {/* 5. Acciones */}
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-1">
+                            <Link
+                              href={`/dashboard/administrator/employees/${user.id}`}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all border border-transparent hover:border-primary/10"
+                            >
+                              <i className="bi bi-pencil-square"></i>
+                            </Link>
+                            <button
+                              onClick={() => setUserToDelete(user)}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-all border border-transparent"
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={currentUser.role === 'GENERAL_ADMIN' ? 5 : 4} className="px-6 py-20 text-center text-muted-foreground font-medium">
+                        No hay empleados registrados
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
