@@ -16,21 +16,17 @@ export default function NewCoursePage() {
     const [isCompanyListOpen, setIsCompanyListOpen] = useState(false);
     const [companyError, setCompanyError] = useState(false);
 
-    // NUEVO: Estado para el error del título
+    // Estado para el error del título
     const [titleError, setTitleError] = useState(false);
 
     const companyRef = useRef<HTMLDivElement>(null);
 
     const [formData, setFormData] = useState({
         title: '',
-        isPublic: false,
-        category: 'BASICO' as 'BASICO' | 'ESPECIALIZADO',
-        selectedCompanyId: null as string | null,
         file: null as File | null,
     });
 
     useEffect(() => {
-        fetchCompanies();
         const handleClickOutside = (event: MouseEvent) => {
             if (companyRef.current && !companyRef.current.contains(event.target as Node)) {
                 setIsCompanyListOpen(false);
@@ -40,65 +36,29 @@ export default function NewCoursePage() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const fetchCompanies = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(API_ROUTES.COMPANIES.GET_ALL, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setCompanies(Array.isArray(data) ? data : []);
-        } catch (err) {
-            console.error("Error cargando empresas:", err);
-        }
-    };
-
-    const filteredCompanies = companies.filter(comp =>
-        comp.name.toLowerCase().includes(companySearch.toLowerCase())
-    );
-
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
-        let hasError = false;
 
         // VALIDACIÓN DE TÍTULO
         if (!formData.title.trim()) {
             setTitleError(true);
-            hasError = true;
+            return;
         }
-
-        // VALIDACIÓN DE EMPRESA (Si es privado)
-        if (!formData.isPublic && !formData.selectedCompanyId) {
-            setCompanyError(true);
-            hasError = true;
-        }
-
-        if (hasError) return;
 
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-<<<<<<< enrollment
-            const payload = {
-                title: formData.title.trim(),
-                isPublic: formData.isPublic,
-                category: formData.category,
-                companyId: formData.isPublic ? null : formData.selectedCompanyId,
-                fileUrl: formData.file ? formData.file.name : null,
-=======
 
             if (!token) {
                 throw new Error("No hay sesión iniciada");
             }
 
-            // Payload simplificado según requerimiento: Siempre público y Onboarding
+            // Payload para curso público
             const payload = {
                 title: formData.title.trim(),
                 isPublic: true,
                 category: 'BASICO',
-                companyId: null, // General admin no tiene companyId o se envía null
->>>>>>> dev
+                companyId: null,
             };
 
             console.log("Enviando payload:", payload);
