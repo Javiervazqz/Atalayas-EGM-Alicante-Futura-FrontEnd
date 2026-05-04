@@ -1,21 +1,18 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
+import { useEffect, useState, useMemo } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
-import SearchInput from '@/components/ui/Searchbar';
+import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
-import { motion } from "framer-motion";
-import ReactMarkdown from 'react-markdown';
 
 export default function CourseDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const courseId = params.id as string;
 
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
 
   const cleanMarkdown = (text: string): string => {
     if (!text) return "";
@@ -32,8 +29,6 @@ export default function CourseDetailPage() {
       if (!courseId) return;
       try {
         setLoading(true);
-        const token = localStorage.getItem('token');
-
         const res = await fetch(API_ROUTES.COURSES.GET_BY_ID(courseId), {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
@@ -49,132 +44,104 @@ export default function CourseDetailPage() {
     fetchCourseData();
   }, [courseId]);
 
-  const contentList = course?.Content || course?.content || [];
-  const filteredContent = contentList.filter((c: any) =>
-    c.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const sortedContent = [...filteredContent].sort((a, b) => a.order - b.order);
-
-  if (error) return (
-    <div className="flex min-h-screen bg-background font-sans">
-      <Sidebar role="EMPLOYEE" />
-      <main className="flex-1 p-10 flex flex-col items-center justify-center">
-        <div className="bg-destructive/10 p-8 rounded-3xl border border-destructive/20 text-center max-w-md">
-          <i className="bi bi-exclamation-triangle text-4xl text-destructive mb-4 block"></i>
-          <h2 className="text-destructive font-bold text-xl mb-2">Error al cargar el curso</h2>
-          <p className="text-muted-foreground text-sm">No se ha podido conectar con el servidor. Por favor, vuelve a intentarlo más tarde.</p>
-        </div>
-      </main>
-    </div>
-  );
+  const sortedContent = useMemo(() => {
+    const contentList = course?.Content || course?.content || [];
+    return [...contentList].sort((a, b) => a.order - b.order);
+  }, [course]);
 
   if (loading) return (
     <div className="flex h-screen bg-background items-center justify-center">
       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
-        />
-      </div>
     </div>
   );
 
   return (
-    <div className="flex min-h-screen bg-background font-sans text-foreground">
+    <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
       <Sidebar role="EMPLOYEE" />
 
-      <main className="flex-1 h-screen overflow-y-auto no-scrollbar">
-        {/* Header Compacto */}
-        <div className="bg-card/40 border-b border-border py-6 lg:py-8 backdrop-blur-md sticky top-0 z-30">
-          <div className="max-w-6xl mx-auto px-6 lg:px-8">
-            <Link href="/dashboard/employee/courses" className="text-muted-foreground text-[11px] font-black uppercase tracking-widest hover:text-primary transition-colors mb-4 inline-flex items-center gap-1.5">
-              <i className="bi bi-chevron-left"></i> Mis cursos
-            </Link>
+      <main className="flex-1 flex flex-col min-w-0 relative">
+        <PageHeader 
+          title={course?.title || "Cargando curso..."}
+          description="Plan de formación y contenidos"
+          icon={<i className="bi bi-mortarboard-fill"></i>}
+          backUrl="/dashboard/employee/courses"
+        />
 
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-foreground truncate">
-                  {course?.title}
-                </h1>
-                <div className="mt-1 hidden md:block">
-                  <ReactMarkdown
-                    components={{
-                      p: ({ ...props }) => <p className="text-muted-foreground text-sm line-clamp-1 opacity-70" {...props} />
-                    }}
-                  >
-                    {course?.description}
-                  </ReactMarkdown>
+        <div className="flex-1 overflow-y-auto bg-muted/30 p-8 no-scrollbar">
+          <div className="max-w-6xl mx-auto space-y-10">
+            <section className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-black italic tracking-tight">Estructura del Programa</h2>
+                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">
+                  {sortedContent.length} Unidades
+                </span>
+              </div>
+
+              {sortedContent.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {sortedContent.map((content: any, index: number) => (
+                    <div
+                      key={content.id}
+                      onClick={() => router.push(`/dashboard/employee/courses/${courseId}/content/${content.id}`)}
+                      className="group cursor-pointer bg-card rounded-[2rem] border border-border/50 overflow-hidden shadow-sm hover:shadow-2xl hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 flex flex-col h-full"
+                    >
+                      {/* Imagen con Overlay de Orden */}
+                      <div className="relative aspect-16/10 overflow-hidden bg-muted">
+                        {content.imageUrl ? (
+                          <img 
+                            src={content.imageUrl} 
+                            alt={content.title} 
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-primary/5">
+                            <i className="bi bi-journal-text text-4xl text-primary/20"></i>
+                          </div>
+                        )}
+                        <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full border border-white/10 uppercase">
+                          Unidad {index + 1}
+                        </div>
+                        
+                        {content.isCompleted && (
+                          <div className="absolute top-4 right-4 bg-emerald-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-white">
+                            <i className="bi bi-check-lg text-lg"></i>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="p-6 flex flex-col flex-1">
+                        <h3 className="text-lg font-black leading-tight group-hover:text-primary transition-colors line-clamp-2 mb-3">
+                          {content.title}
+                        </h3>
+
+                        {content.summary && (
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-6 font-medium opacity-80">
+                            {cleanMarkdown(content.summary)}
+                          </p>
+                        )}
+
+                        <div className="mt-auto pt-5 border-t border-border/40 flex items-center justify-between">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-primary/60 group-hover:text-primary transition-colors">
+                            Acceder al contenido
+                          </span>
+                          <div className="w-8 h-8 rounded-xl bg-muted group-hover:bg-primary group-hover:text-white transition-all flex items-center justify-center">
+                            <i className="bi bi-arrow-right text-sm"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-
-              <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-background/50 rounded-2xl border border-border">
-                <i className="bi bi-stack text-primary text-sm"></i>
-                <span className="text-sm font-bold">{contentList.length}</span>
-                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-tighter">Lecciones</span>
-              </div>
-            </div>
+              ) : (
+                <div className="py-20 text-center bg-card rounded-[3rem] border border-dashed border-border/50">
+                  <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4 text-muted-foreground/30">
+                     <i className="bi bi-inbox text-3xl"></i>
+                  </div>
+                  <p className="text-muted-foreground font-bold italic">No se han publicado unidades todavía.</p>
+                </div>
+              )}
+            </section>
           </div>
-        </div>
-
-        {/* Grid de Contenidos */}
-        <div className="max-w-6xl mx-auto px-6 lg:px-8 py-10">
-          <div className="mb-8 flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-primary rounded-full" />
-            <h2 className="text-lg font-black uppercase tracking-wider">Contenido del curso</h2>
-          </div>
-
-          {sortedContent.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedContent.map((content: any) => (
-                <Link key={content.id} href={`/dashboard/employee/courses/${courseId}/content/${content.id}`}>
-                  <motion.div
-                    whileHover={{ y: -4 }}
-                    className="group relative h-full bg-card rounded-[1.5rem] border border-border overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/40 transition-all duration-300 flex flex-col"
-                  >
-
-                    <div className="relative aspect-video overflow-hidden bg-muted">
-                      {content.imageUrl ? (
-                        <img src={content.imageUrl} alt={content.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-muted/30">
-                          <i className="bi bi-play-circle text-3xl text-primary/20"></i>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-5 flex flex-col flex-1">
-                      <h3 className="text-base font-bold text-foreground mb-1 group-hover:text-primary transition-colors line-clamp-2 leading-snug">
-                        {content.title}
-                      </h3>
-
-                      {content.summary && (
-                        <p className="text-[12px] text-muted-foreground line-clamp-2 mb-4 leading-relaxed font-medium">
-                          {cleanMarkdown(content.summary)}
-                        </p>
-                      )}
-
-                      <div className="mt-auto pt-4 border-t border-border/50 flex items-center justify-between">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Contenido disponible</span>
-                        <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
-                          <i className="bi bi-arrow-right text-xs"></i>
-                        </div>
-                      </div>
-                    </div>
-                    {content.isCompleted && (
-                      <div className="absolute top-3 right-3 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
-                        🏆
-                      </div>
-                    )}
-                  </motion.div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="py-20 text-center bg-muted/10 rounded-[2rem] border border-dashed border-border">
-              <p className="text-muted-foreground font-bold">No hay contenido aún.</p>
-            </div>
-          )}
         </div>
       </main>
     </div>

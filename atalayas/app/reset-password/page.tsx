@@ -82,7 +82,7 @@ export default function ResetPasswordPage() {
 
         {/* Contenedor Central */}
         <main className="flex-1 flex items-center justify-center px-6 lg:px-12 py-10">
-          <div className="w-full max-w-[400px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="w-full max-w-400px animate-in fade-in slide-in-from-bottom-4 duration-700">
             
             <div className="mb-10">
               <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight mb-3">
@@ -179,7 +179,7 @@ export default function ResetPasswordPage() {
         />
         
         {/* Capa de gradiente */}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-primary/30"></div>
+        <div className="absolute inset-0 bg-linear-to-t from-primary/80 via-transparent to-primary/30"></div>
 
         {/* Contenido sobre la imagen */}
         <div className="relative z-10 max-w-lg p-12 animate-in fade-in zoom-in-95 duration-1000">

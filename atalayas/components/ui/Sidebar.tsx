@@ -69,7 +69,7 @@ export default function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(false);
@@ -167,7 +167,7 @@ export default function Sidebar({ role }: SidebarProps) {
       )}
 
       <div 
-        className={`fixed inset-0 bg-background/60 backdrop-blur-sm z-[10000] lg:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-background/60 backdrop-blur-sm z-10000 lg:hidden transition-opacity duration-300 ${
           mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setMobileOpen(false)}
@@ -175,7 +175,7 @@ export default function Sidebar({ role }: SidebarProps) {
 
       {/* Estructura del Aside Corregida */}
       <aside className={`
-        fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300 z-[10001] shrink-0 font-sans
+        fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300 z-10001 shrink-0 font-sans
         ${mobileOpen ? 'translate-x-0 w-70' : '-translate-x-full lg:translate-x-0'}
         ${collapsed ? 'w-16 lg:w-16' : 'w-60'}
       `}>

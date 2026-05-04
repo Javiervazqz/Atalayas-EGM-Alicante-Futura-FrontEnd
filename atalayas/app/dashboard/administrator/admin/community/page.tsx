@@ -29,7 +29,7 @@ export default function EcosystemPage() {
   useEffect(() => {
     const fetchEcosystem = async () => {
       try {
-        // Simulación de carga de datos
+        // Simulación de carga de datos (Se mantiene igual)
         const mockData: Colaborador[] = [
           {
             id: 'eco-1',
@@ -103,11 +103,11 @@ export default function EcosystemPage() {
     : colaboradores.filter(c => c.type === filter);
 
   return (
-    <div className="flex min-h-screen bg-[#fcfcfd] font-sans text-foreground">
+    // CAMBIO: bg-background y text-foreground
+    <div className="flex min-h-screen bg-background font-sans text-foreground">
       <Sidebar role="ADMIN" />
 
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* HEADER UNIFICADO */}
         <PageHeader 
           title="Ecosistema"
           description="Alianzas estratégicas y centros tecnológicos de proximidad"
@@ -116,7 +116,7 @@ export default function EcosystemPage() {
 
         <div className="flex-1 p-6 md:p-10 overflow-y-auto no-scrollbar">
           
-          {/* FILTROS RÁPIDOS (CHIPS) */}
+          {/* FILTROS RÁPIDOS - CAMBIO: Colores dinámicos en los botones */}
           <div className="flex flex-wrap gap-2 mb-10 max-w-6xl">
             {CATEGORIES.map((cat) => (
               <button
@@ -124,8 +124,8 @@ export default function EcosystemPage() {
                 onClick={() => setFilter(cat)}
                 className={`px-5 py-2.5 rounded-xl text-[9px] font-black tracking-[0.15em] uppercase transition-all border ${
                   filter === cat 
-                  ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' 
-                  : 'bg-white text-muted-foreground border-border hover:border-primary/40 hover:text-primary'
+                  ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20' 
+                  : 'bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-primary'
                 }`}
               >
                 {cat}
@@ -137,11 +137,12 @@ export default function EcosystemPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 max-w-400">
             {loading ? (
               Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="aspect-square bg-white rounded-[32px] border border-border/60 animate-pulse" />
+                // CAMBIO: Skeleton en bg-card
+                <div key={i} className="aspect-square bg-card rounded-[32px] border border-border animate-pulse" />
               ))
             ) : filteredList.length === 0 ? (
-              <div className="col-span-full py-20 text-center border-2 border-dashed border-border/40 rounded-[40px] opacity-40">
-                <p className="text-sm italic font-bold">No se han encontrado entidades en esta categoría.</p>
+              <div className="col-span-full py-20 text-center border-2 border-dashed border-border rounded-[40px] opacity-40">
+                <p className="text-sm italic font-bold text-muted-foreground">No se han encontrado entidades en esta categoría.</p>
               </div>
             ) : (
               filteredList.map((entidad) => (
@@ -150,15 +151,17 @@ export default function EcosystemPage() {
                   href={entidad.website} 
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex flex-col bg-white border border-border/60 rounded-[35px] p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                  // CAMBIO: bg-card y border-border
+                  className="group flex flex-col bg-card border border-border rounded-[35px] p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
-                  {/* CONTENEDOR LOGO */}
-                  <div className="aspect-square w-full bg-muted/10 rounded-[25px] flex items-center justify-center p-6 mb-5 overflow-hidden group-hover:bg-white transition-colors border border-transparent group-hover:border-primary/10">
+                  {/* CONTENEDOR LOGO - CAMBIO: bg-muted/30 y hover:bg-card */}
+                  <div className="aspect-square w-full bg-muted/30 rounded-[25px] flex items-center justify-center p-6 mb-5 overflow-hidden group-hover:bg-card transition-colors border border-transparent group-hover:border-primary/20">
                     {entidad.logoUrl ? (
                       <img 
                         src={entidad.logoUrl} 
                         alt={entidad.name} 
-                        className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                        // Filtro de brillo opcional para logos oscuros en Dark Mode
+                        className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-110 dark:brightness-110 dark:contrast-125"
                       />
                     ) : (
                       <div className="text-4xl font-black text-muted/20 uppercase">{entidad.name.charAt(0)}</div>

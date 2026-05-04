@@ -26,21 +26,62 @@ export default function EcosystemPage() {
       try {
         const mockData = [
           // UNIVERSIDADES
-          { id: 'eco-1', name: 'UNIVERSIDAD DE ALICANTE', type: 'UNIVERSIDADES Y CENTROS DE INVESTIGACIÓN', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/6e/Logo_Universidad_de_Alicante.svg', website: 'https://www.ua.es' },
-          { id: 'eco-2', name: 'UNIVERSIDAD MIGUEL HERNÁNDEZ', type: 'UNIVERSIDADES Y CENTROS DE INVESTIGACIÓN', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/3b/Logo_UMH.svg', website: 'https://www.umh.es' },
-          { id: 'eco-3', name: 'UNIVERSITAT POLITÈCNICA DE VALÈNCIA', type: 'UNIVERSIDADES Y CENTROS DE INVESTIGACIÓN', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/9/9e/Logo_UPV.svg', website: 'https://www.upv.es' },
-          
-          // PARQUES CIENTÍFICOS
-          { id: 'eco-4', name: 'PARQUE CIENTÍFICO DE ALICANTE', type: 'PARQUES CIENTÍFICOS', logoUrl: 'https://pca.ua.es/wp-content/uploads/2021/05/logo-pca.png', website: 'https://pca.ua.es' },
-          { id: 'eco-5', name: 'PARQUE CIENTÍFICO UMH', type: 'PARQUES CIENTÍFICOS', logoUrl: 'https://parquecientificoumh.es/wp-content/uploads/2020/05/logo-pcumh.png', website: 'https://parquecientificoumh.es' },
-          { id: 'eco-6', name: 'DISTRITO DIGITAL CV', type: 'PARQUES CIENTÍFICOS', logoUrl: 'https://distritodigitalcv.es/wp-content/uploads/2019/03/logo-distrito-digital.png', website: 'https://distritodigitalcv.es' },
-          
-          // INSTITUTOS TECNOLÓGICOS
-          { id: 'eco-7', name: 'AIJU INSTITUTO TECNOLÓGICO', type: 'INSTITUTOS Y CENTROS TECNOLÓGICOS', logoUrl: 'https://www.aiju.es/wp-content/uploads/2019/03/logo-aiju.png', website: 'https://www.aiju.es' },
-          { id: 'eco-8', name: 'INESCOP', type: 'INSTITUTOS Y CENTROS TECNOLÓGICOS', logoUrl: 'https://www.inescop.es/wp-content/uploads/2021/06/logo-inescop.png', website: 'https://www.inescop.es' },
-          { id: 'eco-9', name: 'AITEX', type: 'INSTITUTOS Y CENTROS TECNOLÓGICOS', logoUrl: 'https://www.aitex.es/wp-content/uploads/2020/05/logo-aitex.png', website: 'https://www.aitex.es' },
-          { id: 'eco-10', name: 'ITI INSTITUTO TECNOLÓGICO', type: 'INSTITUTOS Y CENTROS TECNOLÓGICOS', logoUrl: 'https://www.iti.es/wp-content/uploads/2021/02/logo-iti.png', website: 'https://www.iti.es' },
-          { id: 'eco-11', name: 'IBV BIOMECÁNICA', type: 'INSTITUTOS Y CENTROS TECNOLÓGICOS', logoUrl: 'https://www.ibv.org/wp-content/uploads/2020/06/logo-ibv.png', website: 'https://www.ibv.org' },
+           {
+            id: 'eco-1',
+            name: 'UNIVERSIDAD DE ALICANTE',
+            type: 'UNIVERSIDADES Y CENTROS DE INVESTIGACIÓN',
+            description: 'Universidad pública con una fuerte vocación de I+D+i y proyectos de transferencia tecnológica.',
+            logoUrl: 'https://atalayas.com/wp-content/uploads/2026/02/logo-ua.png',
+            website: 'https://www.ua.es'
+          },
+          {
+            id: 'eco-2',
+            name: 'UNIVERSIDAD MIGUEL HERNÁNDEZ DE ELCHE',
+            type: 'UNIVERSIDADES Y CENTROS DE INVESTIGACIÓN',
+            description: 'Programas de innovación y colaboración directa con empresas e instituciones.',
+            logoUrl: 'https://atalayas.com/wp-content/uploads/2026/02/logo-umh.png',
+            website: 'https://www.umh.es'
+          },
+          {
+            id: 'eco-3',
+            name: 'PARQUE CIENTÍFICO DE ALICANTE',
+            type: 'PARQUES CIENTÍFICOS',
+            description: 'Ecosistema impulsado por la UA que conecta investigación, empresas y talento.',
+            logoUrl: 'https://atalayas.com/wp-content/uploads/2026/02/logo-pca.png',
+            website: 'https://parquecientificoalicante.es'
+          },
+          {
+            id: 'eco-4',
+            name: 'PARQUE CIENTÍFICO DE LA UMH',
+            type: 'PARQUES CIENTÍFICOS',
+            description: 'Plataforma enfocada en la creación y consolidación de empresas innovadoras.',
+            logoUrl: 'https://atalayas.com/wp-content/uploads/2026/02/logo-umhparc.png',
+            website: 'https://parquecientificoumh.es'
+          },
+          {
+            id: 'eco-5',
+            name: 'AIJU INSTITUTO TECNOLÓGICO',
+            type: 'INSTITUTOS Y CENTROS TECNOLÓGICOS',
+            description: 'Centro tecnológico especializado en productos infantiles y ocio industrial.',
+            logoUrl: 'https://atalayas.com/wp-content/uploads/2026/02/logo-aiju.png',
+            website: 'https://www.aiju.es'
+          },
+          {
+            id: 'eco-6',
+            name: 'INESCOP INSTITUTO TECNOLÓGICO',
+            type: 'INSTITUTOS Y CENTROS TECNOLÓGICOS',
+            description: 'Centro de innovación y tecnología experto en el sector del calzado.',
+            logoUrl: 'https://atalayas.com/wp-content/uploads/2026/02/logo-inescop.png',
+            website: 'https://www.inescop.es'
+          },
+          {
+            id: 'eco-7',
+            name: 'AITEX CENTRO DE INVESTIGACIÓN',
+            type: 'INSTITUTOS Y CENTROS TECNOLÓGICOS',
+            description: 'Instituto tecnológico de referencia en investigación aplicada al sector textil.',
+            logoUrl: 'https://atalayas.com/wp-content/uploads/2026/02/logo-aitex.png',
+            website: 'https://www.aitex.es'
+          }
         ];
         setColaboradores(mockData);
       } catch (err) {
