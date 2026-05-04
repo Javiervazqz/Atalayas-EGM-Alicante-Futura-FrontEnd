@@ -85,6 +85,10 @@ export default function Sidebar({ role }: SidebarProps) {
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [pendingSuggestionsCount, setPendingSuggestionsCount] = useState(0);
 
+  // Variable de utilidad para saber si debemos mostrar el texto
+  // En mobile (mobileOpen) siempre mostramos texto. En desktop, depende de collapsed.
+  const showText = mobileOpen || !collapsed;
+
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) setUser(JSON.parse(savedUser));
@@ -111,19 +115,14 @@ export default function Sidebar({ role }: SidebarProps) {
   }, []);
 
   useEffect(() => {
-    if (!mounted) return;
     const updateCounts = () => {
       setPendingSuggestionsCount(Number(localStorage.getItem('count_suggestions')) || 0);
       setPendingRequestsCount(Number(localStorage.getItem('count_requests')) || 0);
     };
-    updateCounts(); // Corregido: Llamamos a updateCounts en lugar de fetchPending
-  }, [role, mounted]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    router.push('/login');
-  };
+    window.addEventListener('local-storage-update', updateCounts);
+    updateCounts();
+    return () => window.removeEventListener('local-storage-update', updateCounts);
+  }, []);
 
   const toggleTheme = () => {
     const root = document.documentElement;
@@ -139,43 +138,43 @@ export default function Sidebar({ role }: SidebarProps) {
     setIsDark(newTheme);
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    router.push('/login');
+  };
+
   const checkActive = (href: string) => {
     if (pathname === href) return true;
-
     const isBasePanel = href.endsWith('/admin') || 
                         href.endsWith('/general-admin') || 
                         href.endsWith('/employee') || 
                         href.endsWith('/public');
     
     if (isBasePanel) return pathname === href;
-
     if (href === '/dashboard/administrator/employees' && pathname.includes('/onboarding')) {
       return false;
     }
-
     return href !== '/dashboard' && pathname.startsWith(href + '/');
   };
 
   if (!mounted) return null;
 
   const currentMenu = navItems[role] || [];
-  const companyData = user?.Company || user?.company;
   const displayLogo = user?.company?.logoUrl || "/images/logo-atalayas.png";
-  const companyName = companyData?.name || 'Empresa';
 
   return (
     <>
       {!mobileOpen && (
         <button 
           onClick={() => setMobileOpen(true)}
-          className="lg:hidden fixed top-4 left-4 z-[9999] w-12 h-12 bg-white dark:bg-card border border-border shadow-xl rounded-2xl flex items-center justify-center text-primary transition-all active:scale-90"
+          className="lg:hidden fixed top-15 left-4 z-9999 w-12 h-12 bg-white dark:bg-card border border-border shadow-xl rounded-2xl flex items-center justify-center text-primary transition-all active:scale-90"
         >
           <i className="bi bi-list text-2xl"></i>
         </button>
       )}
 
       <div 
-        className={`fixed inset-0 bg-background/60 backdrop-blur-sm z-[10000] lg:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-background/60 backdrop-blur-sm z-10000 lg:hidden transition-opacity duration-300 ${
           mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setMobileOpen(false)}
@@ -183,30 +182,20 @@ export default function Sidebar({ role }: SidebarProps) {
 
       {/* Estructura del Aside Corregida */}
       <aside className={`
-        fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300 z-[10001] shrink-0 font-sans
+        fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300 z-10001 shrink-0 font-sans
         ${mobileOpen ? 'translate-x-0 w-70' : '-translate-x-full lg:translate-x-0'}
         ${collapsed ? 'w-16 lg:w-16' : 'w-60'}
       `}>
         
-        {/* RECUADRO BLANCO CON BORDES REDONDEADOS Y LÍNEA FINA */}
-        <div className={`flex items-center justify-between border-b border-border transition-all duration-300 ${collapsed ? 'h-16 px-0 justify-center' : 'h-24 px-4 gap-3'}`}>
-          {!collapsed ? (
-            <div className="flex-1 w-full h-14 bg-white rounded-[20px] shadow-sm border border-gray-200/60 dark:border-white/10 flex items-center justify-center overflow-hidden p-2.5">
-              <img
-                src={displayLogo}
-                alt={companyName}
-                className="w-full h-full object-contain"
-              />
-            </div>
-          ) : (
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-200/60 dark:border-white/10 overflow-hidden p-1.5">
-                <span className="text-primary font-black text-lg tracking-tighter">
-                  {companyName.charAt(0).toUpperCase()}
-                </span>
-            </div>
-          )}
+        <div className={`flex items-center justify-between border-b border-border transition-all duration-300 ${!showText ? 'h-20 px-0 justify-center' : 'h-24 px-4 gap-3'}`}>
+          <div className={`
+            bg-white rounded-[18px] shadow-sm border border-gray-200/60 dark:border-white/10 flex items-center justify-center overflow-hidden transition-all
+            ${!showText ? 'w-12 h-12 p-1.5' : 'flex-1 h-14 p-2.5'}
+          `}>
+            <img src={displayLogo} alt="Logo" className="max-w-full max-h-full object-contain" />
+          </div>
           
-          {!collapsed && (
+          {showText && !mobileOpen && (
             <button onClick={() => setCollapsed(true)} className="hidden lg:flex text-muted-foreground p-2 rounded-lg hover:bg-muted transition-colors">
               <i className="bi bi-text-indent-right text-lg"></i>
             </button>
@@ -218,7 +207,7 @@ export default function Sidebar({ role }: SidebarProps) {
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto no-scrollbar">
-          {collapsed && (
+          {!showText && (
               <button onClick={() => setCollapsed(false)} className="hidden lg:flex w-12 h-12 mx-auto text-muted-foreground rounded-xl hover:bg-muted items-center justify-center mb-4">
                 <i className="bi bi-text-indent-left text-xl"></i>
               </button>
@@ -234,27 +223,26 @@ export default function Sidebar({ role }: SidebarProps) {
                 className={`
                   flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-[13px] relative group
                   ${isActive ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-muted/80'}
-                  ${collapsed ? 'justify-center w-12 h-12 mx-auto px-0' : ''}
+                  ${!showText ? 'justify-center w-12 h-12 mx-auto px-0' : ''}
                 `}
               >
                 <span className={`text-xl transition-transform group-hover:scale-110 ${isActive ? 'text-primary' : ''}`}>
                   {item.icon}
                 </span>
-                {!collapsed && <span className="flex-1 truncate tracking-tight">{item.label}</span>}
+                {showText && <span className="flex-1 truncate tracking-tight">{item.label}</span>}
 
-                {item.label === 'Solicitudes' && pendingRequestsCount > 0 && !collapsed && (
+                {item.label === 'Solicitudes' && pendingRequestsCount > 0 && showText && (
                    <span className="bg-destructive text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{pendingRequestsCount}</span>
                 )}
-                {item.label === 'Sugerencias' && pendingSuggestionsCount > 0 && !collapsed && (
+                {item.label === 'Sugerencias' && pendingSuggestionsCount > 0 && showText && (
                    <span className="bg-destructive text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{pendingSuggestionsCount}</span>
                 )}
-                {/* Badge para Solicitudes (Colapsado) */}
-                {collapsed && item.label === 'Solicitudes' && pendingRequestsCount > 0 && (
+
+                {!showText && item.label === 'Solicitudes' && pendingRequestsCount > 0 && (
                   <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
                 )}
 
-                {/* Badge para Sugerencias (Colapsado) */}
-                {collapsed && item.label === 'Sugerencias' && pendingSuggestionsCount > 0 && (
+                {!showText && item.label === 'Sugerencias' && pendingSuggestionsCount > 0 && (
                   <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
                 )}
               </Link>
@@ -264,8 +252,8 @@ export default function Sidebar({ role }: SidebarProps) {
 
         <div className="p-4 border-t border-border bg-card space-y-2">
           <Link href="/dashboard/profile" onClick={() => setMobileOpen(false)} className="block w-full mb-2">
-            <div className={`flex items-center gap-3 p-2 rounded-2xl hover:bg-muted/70 transition-all ${collapsed ? 'justify-center p-0' : ''}`}>
-               <div className={`rounded-full overflow-hidden shrink-0 border-2 border-border ${collapsed ? 'w-10 h-10' : 'w-9 h-9'}`}>
+            <div className={`flex items-center gap-3 p-2 rounded-2xl hover:bg-muted/70 transition-all ${!showText ? 'justify-center p-0' : ''}`}>
+               <div className={`rounded-full overflow-hidden shrink-0 border-2 border-border ${!showText ? 'w-10 h-10' : 'w-9 h-9'}`}>
                   {user?.avatarUrl ? (
                     <img src={user.avatarUrl} alt="Perfil" className="w-full h-full object-cover" />
                   ) : (
@@ -274,7 +262,7 @@ export default function Sidebar({ role }: SidebarProps) {
                     </div>
                   )}
                </div>
-               {!collapsed && (
+               {showText && (
                  <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-bold truncate text-foreground">{user?.name || 'Usuario'}</p>
                     <span className={`text-[8px] uppercase font-black px-1.5 py-0.5 rounded border ${roleColors[role]}`}>{roleLabels[role]}</span>
@@ -286,22 +274,22 @@ export default function Sidebar({ role }: SidebarProps) {
           <div className="space-y-1">
             <button 
               onClick={toggleTheme} 
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground hover:bg-muted font-bold text-[13px] transition-all ${collapsed ? 'justify-center' : ''}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground hover:bg-muted font-bold text-[13px] transition-all ${!showText ? 'justify-center' : ''}`}
             >
               <span className="text-lg w-6 flex justify-center">
                 <i className={`bi ${isDark ? 'bi-sun-fill text-amber-400' : 'bi-moon-stars-fill text-indigo-400'}`}></i>
               </span>
-              {!collapsed && <span>{isDark ? 'Modo Claro' : 'Modo Oscuro'}</span>}
+              {showText && <span>{isDark ? 'Modo Claro' : 'Modo Oscuro'}</span>}
             </button>
 
             <button 
               onClick={handleLogout} 
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 font-bold text-[13px] transition-all ${collapsed ? 'justify-center' : ''}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 font-bold text-[13px] transition-all ${!showText ? 'justify-center' : ''}`}
             >
               <span className="text-lg w-6 flex justify-center">
                 <i className="bi bi-box-arrow-right"></i>
               </span>
-              {!collapsed && <span>Cerrar sesión</span>}
+              {showText && <span>Cerrar sesión</span>}
             </button>
           </div>
         </div>

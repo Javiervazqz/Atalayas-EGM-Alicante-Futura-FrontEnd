@@ -17,10 +17,21 @@ export default function EmployeeDashboard() {
     if (typeof window !== "undefined") {
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
       setUser(storedUser);
-      if (storedUser.createdAt) {
-        const referenceDate = new Date(storedUser.createdAt);
+
+      // Lógica de cálculo basada en firstLoginAt o createdAt
+      const dateToCompare = storedUser.firstLoginAt || storedUser.createdAt;
+
+      if (dateToCompare) {
+        const referenceDate = new Date(dateToCompare);
         const today = new Date();
-        const diffDays = Math.floor((today.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        
+        // Ponemos ambas fechas a las 00:00:00 para comparar días naturales exactos
+        const start = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+        const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        
+        const diffTime = now.getTime() - start.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        
         setCurrentDay(diffDays > 0 ? diffDays : 1);
       }
     }
@@ -91,49 +102,55 @@ export default function EmployeeDashboard() {
             {/* COLUMNA IZQUIERDA: ONBOARDING */}
             <div className="lg:col-span-2 space-y-8">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-black text-foreground tracking-tight uppercase tracking-widest text-[13px]">
+                <h2 className="text-xl font-black text-foreground uppercase tracking-widest text-[13px]">
                   Ruta de Onboarding
                 </h2>
               </div>
 
-              {visibleSteps.map((step) => {
-                const isDone = step.onboardingTasks?.every((t: any) => t.userProgress?.[0]?.done);
-                return (
-                  <div key={step.id} className="bg-card border border-border rounded-[2rem] p-8 shadow-sm transition-all hover:shadow-md">
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${isDone ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'}`}>
-                        <i className={`bi ${isDone ? 'bi-check-circle-fill' : 'bi-map-fill'}`}></i>
+              {visibleSteps.length > 0 ? (
+                visibleSteps.map((step) => {
+                  const isDone = step.onboardingTasks?.every((t: any) => t.userProgress?.[0]?.done);
+                  return (
+                    <div key={step.id} className="bg-card border border-border rounded-[2rem] p-8 shadow-sm transition-all hover:shadow-md">
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${isDone ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'}`}>
+                          <i className={`bi ${isDone ? 'bi-check-circle-fill' : 'bi-map-fill'}`}></i>
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-black text-primary uppercase tracking-widest">{step.badge || `Día ${step.day}`}</div>
+                          <h3 className="text-xl font-bold text-foreground">{step.title}</h3>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-[10px] font-black text-primary uppercase tracking-widest">{step.badge || `Día ${step.day}`}</div>
-                        <h3 className="text-xl font-bold text-foreground">{step.title}</h3>
-                      </div>
-                    </div>
 
-                    <p className="text-muted-foreground text-sm mb-8 leading-relaxed">{step.description}</p>
+                      <p className="text-muted-foreground text-sm mb-8 leading-relaxed">{step.description}</p>
 
-                    <div className="grid gap-3">
-                      {step.onboardingTasks?.map((task: any) => {
-                        const done = task.userProgress?.[0]?.done;
-                        return (
-                          <div 
-                            key={task.id}
-                            onClick={() => handleToggleTask(task.id, done)}
-                            className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer group ${done ? 'bg-muted/30 border-transparent opacity-60' : 'bg-background border-border hover:border-secondary shadow-sm'}`}
-                          >
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${done ? 'bg-secondary border-secondary text-black' : 'border-border group-hover:border-secondary'}`}>
-                              {done && <i className="bi bi-check-lg text-xs font-bold"></i>}
+                      <div className="grid gap-3">
+                        {step.onboardingTasks?.map((task: any) => {
+                          const done = task.userProgress?.[0]?.done;
+                          return (
+                            <div 
+                              key={task.id}
+                              onClick={() => handleToggleTask(task.id, done)}
+                              className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer group ${done ? 'bg-muted/30 border-transparent opacity-60' : 'bg-background border-border hover:border-secondary shadow-sm'}`}
+                            >
+                              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${done ? 'bg-secondary border-secondary text-black' : 'border-border group-hover:border-secondary'}`}>
+                                {done && <i className="bi bi-check-lg text-xs font-bold"></i>}
+                              </div>
+                              <span className={`text-sm font-bold ${done ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                                {task.label}
+                              </span>
                             </div>
-                            <span className={`text-sm font-bold ${done ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-                              {task.label}
-                            </span>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="text-center py-20 bg-muted/20 rounded-[2rem] border border-dashed border-border">
+                  <p className="text-muted-foreground font-medium">No hay pasos disponibles para tu día actual.</p>
+                </div>
+              )}
             </div>
 
             {/* COLUMNA DERECHA */}
@@ -142,7 +159,7 @@ export default function EmployeeDashboard() {
               <div className="bg-card border border-border rounded-[2rem] p-8 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <h4 className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Progreso Total</h4>
-                  <div className="text-xl text-secondary"><i className="bi bi-trophy-fill"></i></div>
+                  <div className="text-xl text-secondary"><i className="bi bi-trophy-fill text-yellow-400"></i></div>
                 </div>
                 <div className="text-5xl font-black text-foreground tracking-tighter mb-4">{progressPercent}%</div>
                 <div className="h-2.5 bg-muted rounded-full overflow-hidden mb-4">
@@ -176,7 +193,6 @@ export default function EmployeeDashboard() {
                 </div>
               </div>
 
-              {/* 👇 WIDGET DE SOPORTE REACTIVO 👇 */}
               <div className="bg-card dark:bg-[#1E293B] rounded-[2rem] p-8 border border-border dark:border-none shadow-sm transition-all duration-300">
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground dark:text-white/50 mb-2">Soporte</p>
                 <h5 className="font-bold text-sm mb-6 leading-snug text-foreground dark:text-white">¿Dudas con tu proceso de entrada?</h5>

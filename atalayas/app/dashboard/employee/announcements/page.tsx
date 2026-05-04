@@ -20,7 +20,6 @@ export default function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -40,26 +39,6 @@ export default function AnnouncementsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    // Uso de un confirm más estilizado o simple nativo por ahora
-    if (!window.confirm('¿Deseas eliminar este comunicado permanentemente?')) return;
-    
-    setDeleting(id);
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API_ROUTES.ANNOUNCEMENTS.GET_ALL}/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      if (res.ok) {
-        setAnnouncements((prev) => prev.filter((a) => a.id !== id));
-      }
-    } catch {
-    } finally {
-      setDeleting(null);
-    }
-  };
 
   const filteredAnnouncements = useMemo(() => {
     return announcements.filter(ann => 
@@ -70,12 +49,12 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="flex h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f] font-sans text-foreground overflow-hidden">
-      <Sidebar role="GENERAL_ADMIN" />
+      <Sidebar role="EMPLOYEE" />
 
       <main className="flex-1 flex flex-col min-w-0 bg-white/40 dark:bg-transparent backdrop-blur-3xl">
         <PageHeader 
           title="Comunicados y Anuncios"
-          description="Difunde información relevante a todas las empresas o a entidades específicas."
+          description="Consulta información relevante de tu empresa o de Atalayas EGM."
           icon={<i className="bi bi-megaphone-fill"></i>}
           action={
             <div className="flex items-center gap-4">
@@ -84,12 +63,6 @@ export default function AnnouncementsPage() {
                 onChange={setSearchQuery}
                 placeholder="Buscar por título o empresa..."
               />
-              <Link
-                href="/dashboard/administrator/general-admin/announcements/new"
-                className="bg-primary text-primary-foreground px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-primary/20 whitespace-nowrap"
-              >
-                + Nuevo Anuncio
-              </Link>
             </div>
           }
         />
@@ -105,7 +78,6 @@ export default function AnnouncementsPage() {
                     <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Contenido del Anuncio</th>
                     <th className="px-6 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Alcance</th>
                     <th className="px-6 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Publicado</th>
-                    <th className="px-8 py-5 text-right text-[10px] font-black text-muted-foreground uppercase tracking-widest">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-white/2">
@@ -154,22 +126,6 @@ export default function AnnouncementsPage() {
                               year: 'numeric' 
                             })}
                           </span>
-                        </td>
-                        <td className="px-8 py-5 text-right">
-                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => handleDelete(ann.id)}
-                              disabled={deleting === ann.id}
-                              className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all disabled:opacity-30"
-                              title="Eliminar comunicado"
-                            >
-                              {deleting === ann.id ? (
-                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                              ) : (
-                                <i className="bi bi-trash3-fill text-sm"></i>
-                              )}
-                            </button>
-                          </div>
                         </td>
                       </tr>
                     ))

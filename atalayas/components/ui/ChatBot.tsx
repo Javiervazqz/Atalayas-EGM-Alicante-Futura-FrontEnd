@@ -114,7 +114,7 @@ export default function ChatWidget() {
             {/* BOTÓN FLOTANTE (FAB) */}
             <button
                 onClick={() => setIsOpen(v => !v)}
-                className="fixed bottom-6 right-6 z-[100] w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95 bg-primary"
+                className="fixed bottom-6 right-6 z-100 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95 bg-primary"
                 style={{ boxShadow: '0 8px 24px rgba(0,113,227,0.3)' }}
             >
                 <AnimatePresence mode="wait">
@@ -143,7 +143,7 @@ export default function ChatWidget() {
                         initial={{ opacity: 0, y: 20, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                        className="fixed bottom-24 right-6 z-[99] flex flex-col w-[380px] max-w-[calc(100vw-32px)] h-[560px] max-h-[calc(100vh-120px)] overflow-hidden rounded-[24px] bg-white dark:bg-[#1c1c1e] border border-black/5 dark:border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] backdrop-blur-xl"
+                        className="fixed bottom-24 right-6 z-99 flex flex-col w-95 max-w-[calc(100vw-32px)] h-140 max-h-[calc(100vh-120px)] overflow-hidden rounded-[24px] bg-white dark:bg-[#1c1c1e] border border-black/5 dark:border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] backdrop-blur-xl"
                     >
                         {/* CABECERA */}
                         <div className="p-4 flex items-center justify-between bg-primary text-white">

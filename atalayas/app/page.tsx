@@ -94,7 +94,7 @@ export default function LandingPage() {
     <div className="bg-background text-foreground transition-colors duration-500 overflow-x-hidden selection:bg-orange-500/30">
       
       {/* ── BANNER (NAV) ── */}
-      <nav className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 p-2 rounded-full border border-black/5 dark:border-white/10 bg-white/40 dark:bg-white/[0.03] backdrop-blur-3xl shadow-xl transition-all duration-500">
+      <nav className="fixed top-8 left-1/2 -translate-x-1/2 z-100 flex items-center gap-2 p-2 rounded-full border border-black/5 dark:border-white/10 bg-white/40 dark:bg-white/3 backdrop-blur-3xl shadow-xl transition-all duration-500">
         <button onClick={toggleTheme} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
           <div ref={iconRef} className="w-5 h-5 flex items-center justify-center">
             {isDark ? (
@@ -109,7 +109,7 @@ export default function LandingPage() {
             )}
           </div>
         </button>
-        <div className="h-4 w-[1px] bg-black/10 dark:bg-white/10 mx-2"></div>
+        <div className="h-4 w-px bg-black/10 dark:bg-white/10 mx-2"></div>
         <Link href="/login" className="px-8 py-2.5 text-[10px] font-black uppercase tracking-widest bg-foreground text-background rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg">
           Acceso Portal
         </Link>
@@ -121,8 +121,8 @@ export default function LandingPage() {
             <Aurora colorStops={isDark ? ["#2DD4BF", "#FBBF24", "#6366F1"] : ["#00897b", "#f97316", "#4338ca"]} amplitude={1.2} blend={0.6} />
         </div>
 
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-end px-24 hidden lg:flex z-10">
-          <div className="w-[480px] h-[600px] rounded-[3rem] backdrop-blur-3xl bg-white/40 dark:bg-white/[0.03] border border-black/5 dark:border-white/10 shadow-2xl relative group overflow-hidden pointer-events-auto transition-all duration-500 p-12 flex flex-col gap-10">
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-end px-24 lg:flex z-10">
+          <div className="w-120 h-150 rounded-[3rem] backdrop-blur-3xl bg-white/40 dark:bg-white/3 border border-black/5 dark:border-white/10 shadow-2xl relative group overflow-hidden pointer-events-auto transition-all duration-500 p-12 flex flex-col gap-10">
              <div className="relative z-10 flex flex-col gap-10">
                 <div className="space-y-4">
                     <span className="text-[9px] font-black uppercase tracking-[0.3em] text-orange-500">Ecosistema Activo</span>
@@ -186,7 +186,7 @@ export default function LandingPage() {
                   }}
                 />
                 
-                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/[0.02] transition-colors duration-500" />
+                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/2 transition-colors duration-500" />
                 
                 <div className="relative z-10 flex flex-col justify-end h-full w-full p-8 md:p-10 pointer-events-none">
                   <span className={`block text-[10px] font-black uppercase tracking-[0.5em] mb-4 ${item.color}`}>
@@ -253,7 +253,6 @@ export default function LandingPage() {
               <i className="bi bi-instagram"></i>
             </Link>
           </div>
-
         </div>
       </footer>
 

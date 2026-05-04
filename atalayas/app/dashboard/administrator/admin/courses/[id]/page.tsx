@@ -1,14 +1,15 @@
 'use client';
-import { useEffect, useState, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
 import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
+import { motion } from "framer-motion";
 
-export default function CourseDetailPage() {
+const labelClass = "text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block";
+
+export default function AdminCourseDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const courseId = params.id as string;
 
   const [course, setCourse] = useState<any>(null);
@@ -45,49 +46,64 @@ export default function CourseDetailPage() {
     fetchCourseData();
   }, [courseId]);
 
-  const sortedContent = useMemo(() => {
-    const contentList = course?.Content || course?.content || [];
-    return [...contentList].sort((a, b) => a.order - b.order);
-  }, [course]);
+  const contentList = course?.Content || course?.content || [];
+  const sortedContent = [...contentList].sort((a, b) => a.order - b.order);
 
-  // Pantalla de carga limpia y sin el recuadro blanco
   if (loading) return (
-    <div className="flex min-h-screen bg-background items-center justify-center font-sans">
-      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin shadow-md" />
+    <div className="flex h-screen bg-background items-center justify-center">
+      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
   return (
     <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
-      <Sidebar role="EMPLOYEE" />
+      <Sidebar role="ADMIN" />
 
       <main className="flex-1 flex flex-col min-w-0 relative">
         <PageHeader 
           title={course?.title || "Cargando curso..."}
-          description="Plan de formación y contenidos"
-          icon={<i className="bi bi-mortarboard-fill"></i>}
-          backUrl="/dashboard/employee/courses"
+          description="Gestión de unidades y lecciones"
+          icon={<i className="bi bi-shield-lock-fill"></i>}
+          backUrl="/dashboard/administrator/admin/courses"
+          action={
+            <button 
+              onClick={() => window.location.href = `/dashboard/administrator/admin/courses/${courseId}/manage`}
+              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap"
+            >
+              <i className="bi bi-eye-fill"></i>               
+              Vista de Administrador
+            </button>
+          }
         />
 
         <div className="flex-1 overflow-y-auto bg-muted/30 p-8 no-scrollbar">
-          <div className="max-w-6xl mx-auto space-y-10">
+          <div className="max-w-6xl mx-auto">
+            
+            {/* Listado de Contenidos */}
             <section className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-black italic tracking-tight">Estructura del Programa</h2>
-                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">
-                  {sortedContent.length} Unidades
-                </span>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-xl font-black italic tracking-tight uppercase">Estructura del Programa</h2>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">Lista de unidades publicadas para los empleados</p>
+                </div>
+                <div className="bg-card border border-border/50 px-4 py-2 rounded-2xl flex items-center gap-3 shadow-sm">
+                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total:</span>
+                  <span className="text-sm font-black text-primary">{sortedContent.length}</span>
+                </div>
               </div>
 
               {sortedContent.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {sortedContent.map((content: any, index: number) => (
-                    <div
+                    <motion.div
                       key={content.id}
-                      onClick={() => router.push(`/dashboard/employee/courses/${courseId}/content/${content.id}`)}
-                      className="group cursor-pointer bg-card rounded-[2rem] border border-border/50 overflow-hidden shadow-sm hover:shadow-2xl hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 flex flex-col h-full"
+                      whileHover={{ y: -6 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      onClick={() => window.location.href = `/dashboard/administrator/admin/courses/${courseId}/content/${content.id}`}
+                      className="group cursor-pointer bg-card rounded-[2rem] border border-border/50 overflow-hidden shadow-sm hover:shadow-2xl hover:border-primary/30 transition-all duration-500 flex flex-col h-full"
                     >
-                      {/* Imagen con Overlay de Orden */}
                       <div className="relative aspect-16/10 overflow-hidden bg-muted">
                         {content.imageUrl ? (
                           <img 
@@ -97,16 +113,7 @@ export default function CourseDetailPage() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-primary/5">
-                            <i className="bi bi-journal-text text-4xl text-primary/20"></i>
-                          </div>
-                        )}
-                        <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full border border-white/10 uppercase">
-                          Unidad {index + 1}
-                        </div>
-                        
-                        {content.isCompleted && (
-                          <div className="absolute top-4 right-4 bg-emerald-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-white">
-                            <i className="bi bi-check-lg text-lg"></i>
+                            <i className="bi bi-folder-fill text-4xl text-primary/20"></i>
                           </div>
                         )}
                       </div>
@@ -117,29 +124,29 @@ export default function CourseDetailPage() {
                         </h3>
 
                         {content.summary && (
-                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-6 font-medium opacity-80">
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-6 font-medium">
                             {cleanMarkdown(content.summary)}
                           </p>
                         )}
 
                         <div className="mt-auto pt-5 border-t border-border/40 flex items-center justify-between">
-                          <span className="text-[9px] font-black uppercase tracking-widest text-primary/60 group-hover:text-primary transition-colors">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">
                             Acceder al contenido
                           </span>
                           <div className="w-8 h-8 rounded-xl bg-muted group-hover:bg-primary group-hover:text-white transition-all flex items-center justify-center">
-                            <i className="bi bi-arrow-right text-sm"></i>
+                            <i className="bi bi-eye-fill text-xs"></i>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               ) : (
                 <div className="py-20 text-center bg-card rounded-[3rem] border border-dashed border-border/50">
                   <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4 text-muted-foreground/30">
-                     <i className="bi bi-inbox text-3xl"></i>
+                     <i className="bi bi-plus-circle text-3xl"></i>
                   </div>
-                  <p className="text-muted-foreground font-bold italic">No se han publicado unidades todavía.</p>
+                  <p className="text-muted-foreground font-bold italic">No hay unidades en este programa.</p>
                 </div>
               )}
             </section>
