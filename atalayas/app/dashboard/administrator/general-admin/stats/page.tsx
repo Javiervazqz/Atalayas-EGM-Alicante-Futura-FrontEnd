@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
 import Link from 'next/link';
-import { API_ROUTES, fetchWithApiFallback } from '@/lib/utils';
+import { API_ROUTES } from '@/lib/utils';
+import { fetchWithApiFallback } from '@/lib/utils';
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 interface Overview {
@@ -201,9 +203,9 @@ function DonutChart({
         {paths.map((p, i) => (
           <div key={i} className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: p.color }} />
-            <span className="text-[12px] text-[#424245] dark:text-[#ebebf5] truncate flex-1">{p.label}</span>
-            <span className="text-[12px] font-semibold text-[#1d1d1f] dark:text-white tabular-nums">{p.value}</span>
-            <span className="text-[10px] text-[#86868b] w-7 text-right tabular-nums">{p.pct}%</span>
+            <span className="text-[12px] text-[var(--foreground)] truncate flex-1">{p.label}</span>
+            <span className="text-[12px] font-semibold text-[var(--foreground)] tabular-nums">{p.value}</span>
+            <span className="text-[10px] text-[var(--muted-foreground)] w-7 text-right tabular-nums">{p.pct}%</span>
           </div>
         ))}
       </div>
@@ -219,7 +221,7 @@ function KpiCard({
   color: string; bg: string; trend?: { value: number; up: boolean };
 }) {
   return (
-    <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl p-5 border border-gray-100 dark:border-white/[0.06] hover:shadow-md transition-all duration-200 group">
+    <div className="bg-[var(--card)] rounded-2xl p-5 border border-gray-100 dark:border-white/[0.06] hover:shadow-md transition-all duration-200 group">
       <div className="flex items-start justify-between mb-3">
         <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${bg} transition-transform group-hover:scale-110 duration-200`}>
           <i className={`bi ${icon} text-sm ${color}`} />
@@ -232,8 +234,8 @@ function KpiCard({
           </span>
         )}
       </div>
-      <p className="text-2xl font-bold text-[#1d1d1f] dark:text-white tracking-tight tabular-nums">{value}</p>
-      <p className="text-[11px] text-[#86868b] mt-0.5">{label}</p>
+      <p className="text-2xl font-bold text-[var(--foreground)] tracking-tight tabular-nums">{value}</p>
+      <p className="text-[11px] text-[var(--muted-foreground)] mt-0.5">{label}</p>
     </div>
   );
 }
@@ -246,7 +248,7 @@ function Skeleton({ className = '' }: { className?: string }) {
 // ── Progress bar ─────────────────────────────────────────────────────────
 function ProgressBar({ value, color = '#0071e3' }: { value: number; color?: string }) {
   return (
-    <div className="w-full h-1.5 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+    <div className="w-full h-1.5 bg-[var(--muted)] rounded-full overflow-hidden">
       <div
         className="h-full rounded-full transition-all duration-700"
         style={{ width: `${Math.min(value, 100)}%`, background: color }}
@@ -347,32 +349,17 @@ useEffect(() => {
   ] : [];
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f]">
+    <div className="flex min-h-screen bg-[var(--background)]">
       <Sidebar role={role} />
 
-      <main className="flex-1 overflow-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-[#f5f5f7]/80 dark:bg-[#0d0d0f]/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-white/[0.06] px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <nav className="flex items-center gap-1.5 text-[11px] text-[#86868b] mb-1">
-                <Link href={basePath} className="hover:text-[#0071e3] transition-colors">Panel</Link>
-                <i className="bi bi-chevron-right text-[9px]" />
-                <span className="text-[#1d1d1f] dark:text-white font-medium">Estadísticas</span>
-              </nav>
-              <h1 className="text-xl font-bold text-[#1d1d1f] dark:text-white tracking-tight">
-                Estadísticas de la plataforma
-              </h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] text-[#86868b] bg-white dark:bg-white/10 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10">
-                <i className="bi bi-calendar3 mr-1.5" />
-                Últimos 6 meses
-              </span>
-            </div>
-          </div>
-        </div>
-
+<div className="flex-1 flex flex-col min-h-screen overflow-auto">
+        <PageHeader
+          title="Estadísticas"
+          description="Visión global de actividad · últimos 6 meses"
+          icon={<i className="bi bi-bar-chart-fill" />}
+          backUrl={basePath}
+        />
+        <main className="flex-1 overflow-auto">
         <div className="p-6 lg:p-8 space-y-6">
           {/* Error */}
           {error && (
@@ -395,22 +382,22 @@ useEffect(() => {
           </div>
 
           {/* Fila 2: Tendencias con tabs */}
-          <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-gray-100 dark:border-white/[0.06] overflow-hidden">
+          <div className="bg-[var(--card)] rounded-2xl border border-gray-100 dark:border-white/[0.06] overflow-hidden">
             <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-50 dark:border-white/[0.04]">
               <div>
-                <h2 className="text-sm font-semibold text-[#1d1d1f] dark:text-white">Tendencia de crecimiento</h2>
-                <p className="text-[11px] text-[#86868b] mt-0.5">Nuevos registros por mes</p>
+                <h2 className="text-sm font-semibold text-[var(--foreground)]">Tendencia de crecimiento</h2>
+                <p className="text-[11px] text-[var(--muted-foreground)] mt-0.5">Nuevos registros por mes</p>
               </div>
               <div className="flex bg-[#f5f5f7] dark:bg-white/[0.06] rounded-xl p-0.5">
                 <button
                   onClick={() => setActiveTab('users')}
-                  className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${activeTab === 'users' ? 'bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-sm' : 'text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white'}`}
+                  className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${activeTab === 'users' ? 'bg-white dark:bg-[#2c2c2e] text-[var(--foreground)] shadow-sm' : 'text-[var(--muted-foreground)] hover:text-[#1d1d1f] dark:hover:text-white'}`}
                 >
                   Usuarios
                 </button>
                 <button
                   onClick={() => setActiveTab('companies')}
-                  className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${activeTab === 'companies' ? 'bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-sm' : 'text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white'}`}
+                  className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${activeTab === 'companies' ? 'bg-white dark:bg-[#2c2c2e] text-[var(--foreground)] shadow-sm' : 'text-[var(--muted-foreground)] hover:text-[#1d1d1f] dark:hover:text-white'}`}
                 >
                   Empresas
                 </button>
@@ -418,12 +405,12 @@ useEffect(() => {
             </div>
             <div className="p-6">
               <div className="flex items-center gap-4 mb-4">
-                <span className="text-3xl font-bold text-[#1d1d1f] dark:text-white tabular-nums">
+                <span className="text-3xl font-bold text-[var(--foreground)] tabular-nums">
                   {loading ? '—' : activeTab === 'users'
                     ? usersByMonth.reduce((s, d) => s + d.count, 0)
                     : companiesByMonth.reduce((s, d) => s + d.count, 0)}
                 </span>
-                <span className="text-[12px] text-[#86868b]">
+                <span className="text-[12px] text-[var(--muted-foreground)]">
                   {activeTab === 'users' ? 'nuevos usuarios' : 'nuevas empresas'} en los últimos 6 meses
                 </span>
               </div>
@@ -441,11 +428,11 @@ useEffect(() => {
 
           {/* Fila 3: Barras lado a lado */}
           <div className="grid md:grid-cols-2 gap-5">
-            <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
+            <div className="bg-[var(--card)] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h2 className="text-sm font-semibold text-[#1d1d1f] dark:text-white">Nuevos usuarios</h2>
-                  <p className="text-[11px] text-[#86868b] mt-0.5">Mensual · últimos 6 meses</p>
+                  <h2 className="text-sm font-semibold text-[var(--foreground)]">Nuevos usuarios</h2>
+                  <p className="text-[11px] text-[var(--muted-foreground)] mt-0.5">Mensual · últimos 6 meses</p>
                 </div>
                 <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
                   <i className="bi bi-people-fill text-blue-600 text-sm" />
@@ -454,11 +441,11 @@ useEffect(() => {
               {loading ? <Skeleton className="h-32" /> : <BarChart data={usersByMonth} color="#0071e3" />}
             </div>
 
-            <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
+            <div className="bg-[var(--card)] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h2 className="text-sm font-semibold text-[#1d1d1f] dark:text-white">Nuevas empresas</h2>
-                  <p className="text-[11px] text-[#86868b] mt-0.5">Mensual · últimos 6 meses</p>
+                  <h2 className="text-sm font-semibold text-[var(--foreground)]">Nuevas empresas</h2>
+                  <p className="text-[11px] text-[var(--muted-foreground)] mt-0.5">Mensual · últimos 6 meses</p>
                 </div>
                 <div className="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center">
                   <i className="bi bi-buildings-fill text-violet-600 text-sm" />
@@ -470,35 +457,35 @@ useEffect(() => {
 
           {/* Fila 4: Donuts + top cursos */}
           <div className="grid md:grid-cols-3 gap-5">
-            <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
-              <h2 className="text-sm font-semibold text-[#1d1d1f] dark:text-white mb-1">Usuarios por rol</h2>
-              <p className="text-[11px] text-[#86868b] mb-4">Distribución actual</p>
+            <div className="bg-[var(--card)] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
+              <h2 className="text-sm font-semibold text-[var(--foreground)] mb-1">Usuarios por rol</h2>
+              <p className="text-[11px] text-[var(--muted-foreground)] mb-4">Distribución actual</p>
               {loading ? <Skeleton className="h-24" /> : roleSegments.length === 0 ? (
-                <p className="text-sm text-[#86868b] text-center py-6">Sin datos</p>
+                <p className="text-sm text-[var(--muted-foreground)] text-center py-6">Sin datos</p>
               ) : (
                 <DonutChart segments={roleSegments} centerLabel="usuarios" />
               )}
             </div>
 
-            <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
-              <h2 className="text-sm font-semibold text-[#1d1d1f] dark:text-white mb-1">Estado de matrículas</h2>
-              <p className="text-[11px] text-[#86868b] mb-4">Progreso y completitud</p>
+            <div className="bg-[var(--card)] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
+              <h2 className="text-sm font-semibold text-[var(--foreground)] mb-1">Estado de matrículas</h2>
+              <p className="text-[11px] text-[var(--muted-foreground)] mb-4">Progreso y completitud</p>
               {loading ? <Skeleton className="h-24" /> : enrollSegments.length === 0 ? (
-                <p className="text-sm text-[#86868b] text-center py-6">Sin matrículas</p>
+                <p className="text-sm text-[var(--muted-foreground)] text-center py-6">Sin matrículas</p>
               ) : (
                 <DonutChart segments={enrollSegments} centerLabel="matrículas" />
               )}
             </div>
 
-            <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
-              <h2 className="text-sm font-semibold text-[#1d1d1f] dark:text-white mb-1">Cursos más populares</h2>
-              <p className="text-[11px] text-[#86868b] mb-4">Por número de matrículas</p>
+            <div className="bg-[var(--card)] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
+              <h2 className="text-sm font-semibold text-[var(--foreground)] mb-1">Cursos más populares</h2>
+              <p className="text-[11px] text-[var(--muted-foreground)] mb-4">Por número de matrículas</p>
               {loading ? (
                 <div className="space-y-3">
                   {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8" />)}
                 </div>
               ) : !stats?.top.courses.length ? (
-                <p className="text-sm text-[#86868b] text-center py-6">Sin datos</p>
+                <p className="text-sm text-[var(--muted-foreground)] text-center py-6">Sin datos</p>
               ) : (
                 <div className="space-y-3">
                   {stats.top.courses.map((c, i) => {
@@ -508,10 +495,10 @@ useEffect(() => {
                     return (
                       <div key={c.id}>
                         <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[12px] text-[#1d1d1f] dark:text-white font-medium truncate max-w-[140px]">
-                            <span className="text-[#86868b] mr-1">{i + 1}.</span>{c.title}
+                          <span className="text-[12px] text-[var(--foreground)] font-medium truncate max-w-[140px]">
+                            <span className="text-[var(--muted-foreground)] mr-1">{i + 1}.</span>{c.title}
                           </span>
-                          <span className="text-[11px] text-[#86868b] ml-1 shrink-0 tabular-nums">
+                          <span className="text-[11px] text-[var(--muted-foreground)] ml-1 shrink-0 tabular-nums">
                             {c._count.Enrollment}
                           </span>
                         </div>
@@ -526,9 +513,9 @@ useEffect(() => {
 
           {/* Fila 5: Métricas de rendimiento + resumen */}
           <div className="grid md:grid-cols-2 gap-5">
-            <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
-              <h2 className="text-sm font-semibold text-[#1d1d1f] dark:text-white mb-1">Métricas de formación</h2>
-              <p className="text-[11px] text-[#86868b] mb-5">Rendimiento y completitud de cursos</p>
+            <div className="bg-[var(--card)] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
+              <h2 className="text-sm font-semibold text-[var(--foreground)] mb-1">Métricas de formación</h2>
+              <p className="text-[11px] text-[var(--muted-foreground)] mb-5">Rendimiento y completitud de cursos</p>
               {loading ? (
                 <div className="space-y-4">
                   {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10" />)}
@@ -560,9 +547,9 @@ useEffect(() => {
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <i className={`bi ${m.icon} text-[13px]`} style={{ color: m.color }} />
-                          <span className="text-[12px] text-[#424245] dark:text-[#ebebf5]">{m.label}</span>
+                          <span className="text-[12px] text-[var(--foreground)]">{m.label}</span>
                         </div>
-                        <span className="text-[13px] font-bold text-[#1d1d1f] dark:text-white tabular-nums">
+                        <span className="text-[13px] font-bold text-[var(--foreground)] tabular-nums">
                           {m.custom || `${m.value}%`}
                         </span>
                       </div>
@@ -573,9 +560,9 @@ useEffect(() => {
               )}
             </div>
 
-            <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
-              <h2 className="text-sm font-semibold text-[#1d1d1f] dark:text-white mb-1">Resumen del sistema</h2>
-              <p className="text-[11px] text-[#86868b] mb-5">Estado general de la plataforma</p>
+            <div className="bg-[var(--card)] rounded-2xl p-6 border border-gray-100 dark:border-white/[0.06]">
+              <h2 className="text-sm font-semibold text-[var(--foreground)] mb-1">Resumen del sistema</h2>
+              <p className="text-[11px] text-[var(--muted-foreground)] mb-5">Estado general de la plataforma</p>
               {loading ? (
                 <div className="space-y-3">
                   {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8" />)}
@@ -591,12 +578,12 @@ useEffect(() => {
                     { label: 'Documentos subidos', value: String(ov?.totalDocuments ?? 0), ok: true, icon: 'bi-file-earmark-text-fill' },
                   ].map((row) => (
                     <div key={row.label} className="flex items-center gap-3 py-1.5 px-3 rounded-xl hover:bg-[#f5f5f7] dark:hover:bg-white/[0.04] transition-colors">
-                      <i className={`bi ${row.icon} text-[12px] ${row.ok ? 'text-[#86868b]' : 'text-red-400'}`} />
-                      <span className="text-[12px] text-[#424245] dark:text-[#ebebf5] flex-1">{row.label}</span>
+                      <i className={`bi ${row.icon} text-[12px] ${row.ok ? 'text-[var(--muted-foreground)]' : 'text-red-400'}`} />
+                      <span className="text-[12px] text-[var(--foreground)] flex-1">{row.label}</span>
                       <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-lg tabular-nums
                         ${row.ok
-                          ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                          : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'}`}>
+                          ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                          : 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400'}`}>
                         {row.value}
                       </span>
                     </div>
@@ -614,6 +601,7 @@ useEffect(() => {
           </div>
         </div>
       </main>
+      </div>
     </div>
   );
 }

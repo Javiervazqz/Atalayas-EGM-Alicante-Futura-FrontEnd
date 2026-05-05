@@ -98,18 +98,33 @@ export default function CompaniesPage() {
   if (!currentUser) return null;
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-[#111113]">
+    <div className="flex min-h-screen bg-[var(--background)]">
       <Sidebar role="GENERAL_ADMIN" />
       {toast && <Toast msg={toast.msg} type={toast.type} />}
 
-      <main className="flex-1 p-6 lg:p-10 overflow-auto">
+      <div className="flex-1 flex flex-col min-h-screen overflow-auto">
+        <PageHeader
+          title="Empresas"
+          description={`${filtered.length} empresa${filtered.length !== 1 ? 's' : ''} registrada${filtered.length !== 1 ? 's' : ''}`}
+          icon={<i className="bi bi-buildings-fill" />}
+          action={
+            <Link
+              href="/dashboard/company"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-semibold transition-all"
+            >
+              <i className="bi bi-building-fill-gear" />
+              Gestionar perfiles
+            </Link>
+          }
+        />
+        <main className="flex-1 p-6 lg:p-10 overflow-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-[#1d1d1f] dark:text-white tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-bold text-[var(--foreground)] tracking-tight">
               Empresas
             </h1>
-            <p className="text-[#86868b] text-sm mt-1">
+            <p className="text-[var(--muted-foreground)] text-sm mt-1">
               {filtered.length} empresa{filtered.length !== 1 ? 's' : ''} registrada{filtered.length !== 1 ? 's' : ''}
             </p>
           </div>
@@ -123,15 +138,15 @@ export default function CompaniesPage() {
         </div>
 
         {/* Buscador */}
-        <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 border border-gray-100 dark:border-white/5 mb-5">
+        <div className="bg-[var(--card)] rounded-2xl p-4 border border-[var(--border)] mb-5">
           <div className="relative">
-            <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b] text-sm" />
+            <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] text-sm" />
             <input
               type="text"
               placeholder="Buscar por nombre, sector o CIF..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-[#f5f5f7] dark:bg-white/5 dark:text-white rounded-xl text-sm outline-none border border-transparent focus:border-[#0071e3] focus:bg-white dark:focus:bg-white/10 transition-all"
+              className="w-full pl-9 pr-4 py-2.5 bg-[var(--muted)] dark:text-white rounded-xl text-sm outline-none border border-transparent focus:border-[#0071e3] focus:bg-white dark:focus:bg-white/10 transition-all"
             />
           </div>
         </div>
@@ -140,13 +155,13 @@ export default function CompaniesPage() {
         {loading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-48 bg-white dark:bg-[#1c1c1e] rounded-2xl animate-pulse border border-gray-100 dark:border-white/5" />
+              <div key={i} className="h-48 bg-[var(--card)] rounded-2xl animate-pulse border border-[var(--border)]" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-gray-100 dark:border-white/5 p-16 text-center">
-            <i className="bi bi-buildings text-4xl text-[#86868b] block mb-3" />
-            <p className="text-[#86868b] text-sm">
+          <div className="bg-[var(--card)] rounded-2xl border border-[var(--border)] p-16 text-center">
+            <i className="bi bi-buildings text-4xl text-[var(--muted-foreground)] block mb-3" />
+            <p className="text-[var(--muted-foreground)] text-sm">
               {search ? 'No se encontraron empresas con esa búsqueda' : 'No hay empresas registradas todavía'}
             </p>
           </div>
@@ -155,26 +170,26 @@ export default function CompaniesPage() {
             {filtered.map(company => (
               <div
                 key={company.id}
-                className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-gray-100 dark:border-white/5 p-5 hover:shadow-sm transition-all group flex flex-col"
+                className="bg-[var(--card)] rounded-2xl border border-[var(--border)] p-5 hover:shadow-sm transition-all group flex flex-col"
               >
                 {/* Cabecera */}
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-gray-100 dark:border-white/10 bg-[#f5f5f7] dark:bg-white/5 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-gray-100 dark:border-white/10 bg-[var(--muted)] flex items-center justify-center">
                     {company.logoUrl ? (
                       <img src={company.logoUrl} alt={company.name} className="w-full h-full object-cover" />
                     ) : (
-                      <i className="bi bi-building-fill text-[#86868b] text-xl" />
+                      <i className="bi bi-building-fill text-[var(--muted-foreground)] text-xl" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-[#1d1d1f] dark:text-white text-sm truncate">
+                    <h3 className="font-bold text-[var(--foreground)] text-sm truncate">
                       {company.name}
                     </h3>
                     {company.activity && (
-                      <p className="text-xs text-[#86868b] truncate mt-0.5">{company.activity}</p>
+                      <p className="text-xs text-[var(--muted-foreground)] truncate mt-0.5">{company.activity}</p>
                     )}
                     {company.cif && (
-                      <p className="text-[10px] text-[#86868b] font-mono mt-0.5">{company.cif}</p>
+                      <p className="text-[10px] text-[var(--muted-foreground)] font-mono mt-0.5">{company.cif}</p>
                     )}
                   </div>
                 </div>
@@ -182,26 +197,26 @@ export default function CompaniesPage() {
                 {/* Datos */}
                 <div className="space-y-2 flex-1 mb-4">
                   {company.contactEmail && (
-                    <div className="flex items-center gap-2 text-xs text-[#424245] dark:text-[#ebebf5]">
-                      <i className="bi bi-envelope text-[#86868b] shrink-0" />
+                    <div className="flex items-center gap-2 text-xs text-[var(--foreground)]">
+                      <i className="bi bi-envelope text-[var(--muted-foreground)] shrink-0" />
                       <span className="truncate">{company.contactEmail}</span>
                     </div>
                   )}
                   {company.contactPhone && (
-                    <div className="flex items-center gap-2 text-xs text-[#424245] dark:text-[#ebebf5]">
-                      <i className="bi bi-telephone text-[#86868b] shrink-0" />
+                    <div className="flex items-center gap-2 text-xs text-[var(--foreground)]">
+                      <i className="bi bi-telephone text-[var(--muted-foreground)] shrink-0" />
                       <span>{company.contactPhone}</span>
                     </div>
                   )}
                   {company.address && (
-                    <div className="flex items-center gap-2 text-xs text-[#424245] dark:text-[#ebebf5]">
-                      <i className="bi bi-geo-alt text-[#86868b] shrink-0" />
+                    <div className="flex items-center gap-2 text-xs text-[var(--foreground)]">
+                      <i className="bi bi-geo-alt text-[var(--muted-foreground)] shrink-0" />
                       <span className="truncate">{company.address}</span>
                     </div>
                   )}
                   {company.website && (
                     <div className="flex items-center gap-2 text-xs">
-                      <i className="bi bi-globe text-[#86868b] shrink-0" />
+                      <i className="bi bi-globe text-[var(--muted-foreground)] shrink-0" />
                       <a
                         href={company.website}
                         target="_blank"
@@ -213,16 +228,16 @@ export default function CompaniesPage() {
                     </div>
                   )}
                   {company.User && (
-                    <div className="flex items-center gap-2 text-xs text-[#424245] dark:text-[#ebebf5]">
-                      <i className="bi bi-people text-[#86868b] shrink-0" />
+                    <div className="flex items-center gap-2 text-xs text-[var(--foreground)]">
+                      <i className="bi bi-people text-[var(--muted-foreground)] shrink-0" />
                       <span>{company.User.length} usuario{company.User.length !== 1 ? 's' : ''}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Fecha y acciones */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
-                  <span className="text-[10px] text-[#86868b]">
+                <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
+                  <span className="text-[10px] text-[var(--muted-foreground)]">
                     {new Date(company.createdAt).toLocaleDateString('es-ES', {
                       day: 'numeric', month: 'short', year: 'numeric'
                     })}
@@ -240,6 +255,7 @@ export default function CompaniesPage() {
           </div>
         )}
       </main>
+      </div>
     </div>
   );
 }
