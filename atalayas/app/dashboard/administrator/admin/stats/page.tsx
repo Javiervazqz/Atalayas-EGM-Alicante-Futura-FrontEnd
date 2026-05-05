@@ -209,7 +209,7 @@ export default function StatsPage() {
                 {loading ? (
                    Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-4 bg-muted rounded-full animate-pulse" />)
                 ) : (
-                  stats?.roles.map((r, i) => (
+                  (stats?.roles || []).map((r, i) => (
                     <div key={i} className="flex flex-col gap-1">
                       <div className="flex justify-between text-[11px] font-black uppercase tracking-tighter">
                         <span>{r.jobRole || 'Sin asignar'}</span>
