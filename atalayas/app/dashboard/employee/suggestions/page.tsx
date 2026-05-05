@@ -115,7 +115,8 @@ export default function EmployeeSuggestionsPage() {
   );
 
   return (
-    <div className="flex min-h-screen bg-[#fcfcfd] font-sans text-foreground">
+    // CAMBIO: bg-background en lugar de color fijo hexadecimal
+    <div className="flex min-h-screen bg-background font-sans text-foreground">
       <Sidebar role="EMPLOYEE" />
 
       <main className="flex-1 flex flex-col overflow-hidden">
@@ -127,9 +128,9 @@ export default function EmployeeSuggestionsPage() {
 
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           
-          {/* FORMULARIO DE ENVÍO */}
-          <div className="w-full lg:w-112.5 p-8 border-r border-border/40 bg-white overflow-y-auto no-scrollbar">
-            <h3 className="text-xl font-black mb-2">Tu voz cuenta</h3>
+          {/* FORMULARIO DE ENVÍO - CAMBIO: bg-card y border-border */}
+          <div className="w-full lg:w-112.5 p-8 border-r border-border bg-card overflow-y-auto no-scrollbar">
+            <h3 className="text-xl font-black mb-2 text-foreground">Tu voz cuenta</h3>
             <p className="text-sm text-muted-foreground mb-8">Participa en la mejora de tu entorno.</p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -137,18 +138,19 @@ export default function EmployeeSuggestionsPage() {
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 block">
                   Destinatario
                 </label>
-                <div className="flex bg-muted/50 p-1.5 rounded-2xl border border-border/40">
+                <div className="flex bg-muted p-1.5 rounded-2xl border border-border">
                   <button 
                     type="button" 
                     onClick={() => setTargetRole("ADMIN")} 
-                    className={`flex-1 py-2.5 rounded-xl text-[11px] font-bold transition-all ${targetRole === "ADMIN" ? "bg-white shadow-sm text-primary" : "text-muted-foreground"}`}
+                    // CAMBIO: bg-card en el botón activo
+                    className={`flex-1 py-2.5 rounded-xl text-[11px] font-bold transition-all ${targetRole === "ADMIN" ? "bg-card shadow-sm text-primary" : "text-muted-foreground"}`}
                   >
                     Mi empresa
                   </button>
                   <button 
                     type="button" 
                     onClick={() => setTargetRole("GENERAL_ADMIN")} 
-                    className={`flex-1 py-2.5 rounded-xl text-[11px] font-bold transition-all ${targetRole === "GENERAL_ADMIN" ? "bg-white shadow-sm text-primary" : "text-muted-foreground"}`}
+                    className={`flex-1 py-2.5 rounded-xl text-[11px] font-bold transition-all ${targetRole === "GENERAL_ADMIN" ? "bg-card shadow-sm text-primary" : "text-muted-foreground"}`}
                   >
                     Atalayas EGM
                   </button>
@@ -160,7 +162,8 @@ export default function EmployeeSuggestionsPage() {
                   value={title} 
                   onChange={(e) => setTitle(e.target.value)} 
                   placeholder="Título breve..." 
-                  className="w-full p-4 bg-muted/20 border border-border/60 rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary/30 outline-none transition-all" 
+                  // CAMBIO: bg-background y focus
+                  className="w-full p-4 bg-background border border-border rounded-2xl text-sm font-bold focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-muted-foreground/50" 
                   required 
                 />
                 <textarea 
@@ -168,7 +171,7 @@ export default function EmployeeSuggestionsPage() {
                   onChange={(e) => setContent(e.target.value)} 
                   placeholder="Explica tu sugerencia en detalle..." 
                   rows={8} 
-                  className="w-full p-4 bg-muted/20 border border-border/60 rounded-2xl text-sm focus:ring-1 focus:ring-primary/30 outline-none resize-none transition-all" 
+                  className="w-full p-4 bg-background border border-border rounded-2xl text-sm focus:ring-1 focus:ring-primary outline-none resize-none transition-all placeholder:text-muted-foreground/50" 
                   required 
                 />
               </div>
@@ -176,25 +179,26 @@ export default function EmployeeSuggestionsPage() {
               <button 
                 disabled={isSubmitting} 
                 type="submit" 
-                className="w-full py-4 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50"
+                className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50"
               >
                 {isSubmitting ? "Enviando..." : "Enviar sugerencia"}
               </button>
             </form>
           </div>
 
-          {/* LISTADO / HISTORIAL */}
-          <div className="flex-1 p-8 bg-[#f8f9fb] overflow-y-auto no-scrollbar">
+          {/* LISTADO / HISTORIAL - CAMBIO: bg-background (más ligero que la sidebar) */}
+          <div className="flex-1 p-8 bg-background/50 overflow-y-auto no-scrollbar">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
               <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Mi Historial</h3>
               
-              <div className="flex gap-1.5 bg-white p-1 rounded-xl border border-border/40 shadow-sm">
+              {/* Filtros - CAMBIO: bg-card */}
+              <div className="flex gap-1.5 bg-card p-1 rounded-xl border border-border shadow-sm">
                 {(['ALL', 'PENDING', 'ACCEPTED', 'REJECTED'] as const).map((f) => (
                   <button
                     key={f}
                     onClick={() => setFilter(f)}
                     className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${
-                      filter === f ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'
+                      filter === f ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
                     }`}
                   >
                     {f === 'ALL' ? 'Todo' : statusConfig[f as Exclude<SuggestionStatus, 'ALL'>].label}
@@ -206,17 +210,18 @@ export default function EmployeeSuggestionsPage() {
             <div className="space-y-6 max-w-4xl mx-auto">
               {loading ? (
                 <div className="space-y-4 animate-pulse">
-                  {[1, 2, 3].map(i => <div key={i} className="h-32 bg-white rounded-[28px]" />)}
+                  {[1, 2, 3].map(i => <div key={i} className="h-32 bg-card rounded-[28px] border border-border" />)}
                 </div>
               ) : filteredSuggestions.length === 0 ? (
-                <div className="py-20 text-center border-2 border-dashed border-border/40 rounded-[40px] opacity-40">
-                  <p className="text-sm italic">No hay sugerencias en esta categoría.</p>
+                <div className="py-20 text-center border-2 border-dashed border-border rounded-[40px] opacity-40">
+                  <p className="text-sm italic text-muted-foreground">No hay sugerencias en esta categoría.</p>
                 </div>
               ) : (
                 filteredSuggestions.map((s) => {
                   const config = statusConfig[s.status];
                   return (
-                    <div key={s.id} className="group bg-white border border-border/40 rounded-[32px] p-8 shadow-sm hover:shadow-md transition-all relative">
+                    // CAMBIO: bg-card y border-border
+                    <div key={s.id} className="group bg-card border border-border rounded-[32px] p-8 shadow-sm hover:shadow-md transition-all relative">
                       
                       <div className="flex justify-between items-start mb-6">
                         <div className="flex items-center gap-3">
@@ -233,7 +238,7 @@ export default function EmployeeSuggestionsPage() {
                           {s.status === "PENDING" && (
                             <button 
                               onClick={() => handleDelete(s.id)} 
-                              className="w-8 h-8 rounded-xl bg-destructive/5 text-destructive opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive hover:text-white flex items-center justify-center"
+                              className="w-8 h-8 rounded-xl bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive hover:text-white flex items-center justify-center"
                             >
                               <i className="bi bi-trash3 text-xs"></i>
                             </button>
@@ -245,8 +250,9 @@ export default function EmployeeSuggestionsPage() {
                       <p className="text-sm text-muted-foreground leading-relaxed mb-6 whitespace-pre-wrap">{s.content}</p>
 
                       {s.response && (
-                        <div className="bg-muted/40 p-5 rounded-2xl border border-border/40 relative mt-4">
-                          <div className="absolute -top-2 left-4 px-2 bg-background border border-border/40 rounded text-[8px] font-black uppercase text-primary">
+                        // CAMBIO: bg-muted y border-border
+                        <div className="bg-muted/50 p-5 rounded-2xl border border-border relative mt-4">
+                          <div className="absolute -top-2 left-4 px-2 bg-card border border-border rounded text-[8px] font-black uppercase text-primary">
                             Respuesta Oficial
                           </div>
                           <p className="text-xs font-bold italic text-foreground/80 mt-1 leading-relaxed">

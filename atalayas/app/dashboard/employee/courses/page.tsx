@@ -1,248 +1,251 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import Sidebar from '@/components/ui/Sidebar';
-import PageHeader from '@/components/ui/pageHeader'; // Banner unificado
-import { API_ROUTES } from '@/lib/utils';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from "react";
+import Sidebar from "@/components/ui/Sidebar";
+import PageHeader from "@/components/ui/pageHeader";
+import { API_ROUTES } from "@/lib/utils";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 
 export default function EmployeeCoursesPage() {
-    const [courses, setCourses] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'TODOS' | 'BASICO' | 'ESPECIALIZADO'>('TODOS');
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Estados de filtrado
+  const [visibilityTab, setVisibilityTab] = useState<"TODOS" | "PÚBLICO" | "PRIVADO">("TODOS");
+  const [categoryTab, setCategoryTab] = useState<"TODOS" | "BASICO" | "ESPECIALIZADO">("TODOS");
 
-    const searchParams = useSearchParams();
-    const fromTaskId = searchParams.get('fromTask');
+  const searchParams = useSearchParams();
+  const fromTaskId = searchParams.get("fromTask");
 
+  // ... (Función downloadCertificate se mantiene igual)
+  const downloadCertificate = async (courseId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_ROUTES.ENROLLMENTS.BASE}/certificate/${courseId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "certificado.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
 
-    const downloadCertificate = async (courseId: string) => {
-        try {
-            const token = localStorage.getItem('token');
-
-            const res = await fetch(
-                `${API_ROUTES.ENROLLMENTS.BASE}/certificate/${courseId}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-
-            if (!res.ok) {
-                console.error('Error descargando certificado');
-                return;
-            }
-
-            const blob = await res.blob();
-            const url = window.URL.createObjectURL(blob);
-
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'certificado.pdf';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error('Error:', error);
-        }
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const res = await fetch(API_ROUTES.ENROLLMENTS.BASE, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        const data = await res.json();
+        const rawCourses = Array.isArray(data) ? data : data.courses || [];
+        const sortedDataCourses = [...rawCourses].sort((a: any, b: any) => 
+          (a.title || "").trim().localeCompare((b.title || "").trim(), undefined, { numeric: true })
+        );
+        setCourses(sortedDataCourses);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
+    fetchCourses();
+  }, []);
 
+  // Lógica de filtrado combinada
+  const filtered = courses.filter((c) => {
+    // 1. Filtro de Visibilidad
+    if (visibilityTab === "PÚBLICO" && !c.isPublic) return false;
+    if (visibilityTab === "PRIVADO" && c.isPublic) return false;
 
-    useEffect(() => {
-        const fetchCourses = async () => {
-            try {
-                const res = await fetch(API_ROUTES.ENROLLMENTS.BASE, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                });
-                const data = await res.json();
-                const rawCourses = Array.isArray(data) ? data : (data.courses || []);
+    // 2. Filtro de Categoría (solo aplica si estamos en Privados o Todos)
+    if (visibilityTab !== "PÚBLICO") {
+      if (categoryTab === "BASICO") return c.category?.toUpperCase() !== "ESPECIALIZADO";
+      if (categoryTab === "ESPECIALIZADO") return c.category?.toUpperCase() === "ESPECIALIZADO";
+    }
 
-                const sortedDataCourses = [...rawCourses].sort((a: any, b: any) => {
-                    const titleA = (a.title || '').trim().toLowerCase();
-                    const titleB = (b.title || '').trim().toLowerCase();
-                    return titleA.localeCompare(titleB, undefined, { numeric: true, sensitivity: "base" });
-                });
+    return true;
+  });
 
-                setCourses(sortedDataCourses);
-            } catch (err) { console.error(err); }
-            finally { setLoading(false); }
-        };
-        fetchCourses();
-    }, []);
+  return (
+    <div className="flex min-h-screen bg-background font-sans text-foreground">
+      <Sidebar role="EMPLOYEE" />
 
-    // Lógica de autoconfirmación de tareas (Onboarding)
-    useEffect(() => {
-        const autoConfirmTask = async () => {
-            if (fromTaskId) {
-                try {
-                    const token = localStorage.getItem("token");
-                    await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`,
-                        },
-                        body: JSON.stringify({ taskId: fromTaskId, done: true }),
-                    });
-                } catch (err) { console.error("Error al autocompletar:", err); }
-            }
-        };
-        autoConfirmTask();
-    }, [fromTaskId]);
+      <main className="flex-1 overflow-auto flex flex-col relative">
+        <PageHeader
+          title="Mi Formación"
+          description="Explora los programas de capacitación y material especializado para tu crecimiento."
+          icon={<i className="bi bi-journal-bookmark-fill"></i>}
+        />
 
-    const filtered = courses.filter(c => {
-        if (activeTab === 'TODOS') return true;
-        const cat = c.category?.toUpperCase();
-        if (activeTab === 'BASICO') return cat !== 'ESPECIALIZADO';
-        return cat === 'ESPECIALIZADO';
-    });
+        <div className="p-6 lg:p-10 flex-1 space-y-6">
+          
+          {/* --- SELECTORES DE FILTRADO --- */}
+          <div className="space-y-4">
+            {/* Nivel 1: Visibilidad */}
+            <div className="flex items-center gap-4">
+              <div className="flex gap-1 bg-card border border-border p-1 rounded-xl shadow-sm">
+                {["TODOS", "PRIVADO", "PÚBLICO"].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                        setVisibilityTab(tab as any);
+                        if (tab !== "PRIVADO") setCategoryTab("TODOS"); // Reset categoría si no es privado
+                    }}
+                    className={`relative px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${
+                      visibilityTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span className="relative z-10">{tab}</span>
+                    {visibilityTab === tab && (
+                      <motion.div layoutId="visPill" className="absolute inset-0 bg-primary/10 rounded-lg" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-    return (
-        <div className="flex min-h-screen bg-background font-sans text-foreground">
-            <Sidebar role="EMPLOYEE" />
+            {/* Nivel 2: Categorías (Solo si PRIVADO está activo) */}
+            <AnimatePresence>
+              {visibilityTab === "PRIVADO" && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex items-center gap-4 overflow-hidden"
+                >
+                  <div className="flex gap-1 bg-card/50 border border-border/50 p-1 rounded-xl">
+                    {["TODOS", "BASICO", "ESPECIALIZADO"].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setCategoryTab(tab as any)}
+                        className={`relative px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${
+                          categoryTab === tab ? "text-secondary" : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <span className="relative z-10">
+                            {tab === "TODOS" ? "Todos" : tab === "BASICO" ? "Onboarding" : "Especialización"}
+                        </span>
+                        {categoryTab === tab && (
+                          <motion.div layoutId="catPill" className="absolute inset-0 bg-secondary/10 rounded-lg" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-            <main className="flex-1 overflow-auto flex flex-col relative">
+          <hr className="border-border/50" />
 
-                {/* BANNER UNIFICADO (Idéntico al Admin) */}
-                <PageHeader
-                    title="Mi Formación"
-                    description="Explora los programas de capacitación, cursos de onboarding y material especializado diseñado para tu crecimiento."
-                    icon={<i className="bi bi-journal-bookmark-fill"></i>}
-                />
-
-                {/* CONTENIDO CON PADDING (Siguiendo estructura Admin) */}
-                <div className="p-6 lg:p-10 flex-1 space-y-8">
-
-                    {/* SELECTOR DE CATEGORÍAS (Apple Style Pill) */}
-                    <div className="flex justify-between items-center flex-wrap gap-4">
-                        <div className="flex gap-1 bg-card border border-border p-1.5 rounded-2xl shadow-sm">
-                            {['TODOS', 'BASICO', 'ESPECIALIZADO'].map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab as any)}
-                                    className={`relative px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                                        }`}
-                                >
-                                    <span className="relative z-10">
-                                        {tab === 'TODOS' ? 'Todos' : tab === 'BASICO' ? 'Onboarding' : 'Especialización'}
-                                    </span>
-                                    {activeTab === tab && (
-                                        <motion.div
-                                            layoutId="activeTabPill"
-                                            className="absolute inset-0 bg-primary/5 border border-primary/10 rounded-xl"
-                                            transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                                        />
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Indicador de progreso rápido o total */}
-                        <div className="hidden md:flex items-center gap-3 px-5 py-2.5 bg-card border border-border rounded-2xl shadow-sm">
-                            <i className="bi bi-lightning-charge-fill text-secondary"></i>
-                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                                {courses.length} Cursos disponibles
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* GRID DE CURSOS (Estilo moderno y profesional) */}
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={activeTab}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8"
-                        >
-                            {loading ? (
-                                Array.from({ length: 4 }).map((_, i) => (
-                                    <div key={i} className="h-80 bg-card rounded-[2rem] border border-border animate-pulse shadow-sm" />
-                                ))
-                            ) : filtered.length === 0 ? (
-                                <div className="col-span-full py-24 text-center bg-card border-2 border-dashed border-border rounded-[2rem]">
-                                    <div className="text-5xl text-muted-foreground/20 mb-6"><i className="bi bi-search"></i></div>
-                                    <p className="text-muted-foreground font-bold text-lg">No hay cursos en esta categoría actualmente</p>
-                                </div>
-                            ) : (
-                                filtered.map((course) => {
-                                    const isBasico = course.category?.toUpperCase() !== 'ESPECIALIZADO';
-                                    return (
-                                        <div key={course.id} className="group bg-card rounded-[2rem] border border-border shadow-sm hover:shadow-xl hover:border-secondary/40 transition-all duration-500 flex flex-col overflow-hidden relative">
-
-                                            {course.isCompleted && (
-                                                <div className="absolute top-17 right-8 z-10 bg-green-500 text-white w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg">
-                                                    <i className="bi bi-trophy-fill text-lg"></i>
-                                                </div>
-                                            )}
-                                            {/* Decoración sutil de fondo */}
-                                            <div className={`absolute top-0 right-0 w-32 h-32 blur-[80px] opacity-10 transition-opacity group-hover:opacity-20 ${isBasico ? 'bg-primary' : 'bg-secondary'}`} />
-
-                                            <div className="p-8 flex-1 flex flex-col">
-                                                <div className="flex justify-between items-start mb-8">
-                                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all duration-500 group-hover:scale-110 shadow-sm ${isBasico ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'
-                                                        }`}>
-                                                        <i className={`bi ${isBasico ? 'bi-compass' : 'bi-rocket-takeoff'}`}></i>
-                                                    </div>
-                                                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${isBasico ? 'bg-primary/5 text-primary border-primary/20' : 'bg-secondary/5 text-secondary border-secondary/20'
-                                                        }`}>
-                                                        {isBasico ? 'Básico' : 'Especializado'}
-                                                    </span>
-                                                </div>
-
-                                                <h3 className="text-xl font-bold text-foreground leading-tight mb-4 group-hover:text-primary transition-colors">
-                                                    {course.title}
-                                                </h3>
-
-                                                <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 mb-8 opacity-80">
-                                                    Explora los fundamentos de este programa y adquiere las habilidades necesarias para destacar en Atalayas EGM.
-                                                </p>
-
-                                                <div className="mt-4 mb-3">
-                                                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                                                        <div
-                                                            className={`h-full transition-all ${course.progress === 100 ? 'bg-green-500' : 'bg-yellow-400'
-                                                                }`}
-                                                            style={{ width: `${course.progress || 0}%` }}
-                                                        />
-                                                    </div>
-                                                    <p className="text-[10px] mt-1 text-muted-foreground font-bold">
-                                                        {course.progress || 0}% completado
-                                                    </p>
-                                                </div>
-
-                                                <div className="mt-auto flex flex-col gap-3">
-                                                    <Link
-                                                        href={`/dashboard/employee/courses/${course.id}`}
-                                                        className="flex items-center justify-center gap-3 w-full py-4 bg-foreground text-background dark:bg-muted dark:text-foreground text-sm font-black uppercase tracking-widest rounded-2xl transition-all hover:opacity-90 active:scale-[0.97] shadow-lg shadow-black/5"
-                                                    >
-                                                        Empezar curso
-                                                        <i className="bi bi-arrow-right-short text-xl"></i>
-                                                    </Link>
-
-                                                    {course.progress === 100 && (
-                                                        <button
-                                                            onClick={() => downloadCertificate(course.id)}
-                                                            className="flex items-center justify-center gap-3 px-8 py-4 bg-orange-500 text-white text-sm font-black uppercase tracking-widest rounded-2xl transition-all hover:opacity-90 active:scale-[0.97] shadow-lg shadow-black/5">
-                                                            Descargar certificado
-                                                            <i className="bi bi-download text-lg ml-1"></i>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            )}
-                        </motion.div>
-                    </AnimatePresence>
+          {/* Grid de Cursos */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${visibilityTab}-${categoryTab}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8"
+            >
+              {loading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-100 bg-card rounded-[2.5rem] border border-border animate-pulse shadow-sm" />
+                ))
+              ) : filtered.length === 0 ? (
+                <div className="col-span-full py-20 text-center bg-card border-2 border-dashed border-border rounded-[2.5rem]">
+                  <i className="bi bi-search text-3xl text-muted-foreground mb-4 block"></i>
+                  <p className="text-muted-foreground font-bold">No se encontraron cursos con estos filtros</p>
                 </div>
-            </main>
+              ) : (
+                filtered.map((course) => {
+                  const isBasico = course.category?.toUpperCase() !== "ESPECIALIZADO";
+                  
+                  return (
+                    <div
+                      key={course.id}
+                      className="group bg-card rounded-[2.5rem] border border-border shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 flex flex-col overflow-hidden relative"
+                    >
+                      {/* Portada */}
+                      <div className="relative aspect-16/10 overflow-hidden bg-muted">
+                        {course.fileUrl ? (
+                          <img 
+                            src={course.fileUrl} 
+                            alt={course.title} 
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                          />
+                        ) : (
+                          <div className={`w-full h-full flex items-center justify-center text-4xl ${isBasico ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"}`}>
+                            <i className={`bi ${isBasico ? "bi-compass" : "bi-rocket-takeoff"}`}></i>
+                          </div>
+                        )}
+                        
+                        {/* Tags de estado */}
+                        <div className="absolute top-4 left-4 flex gap-2">
+                          <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-md border backdrop-blur-md ${
+                            course.isPublic ? "bg-green-500/20 text-green-600 border-green-500/20" : "bg-blue-500/20 text-blue-600 border-blue-500/20"
+                          }`}>
+                            {course.isPublic ? "Público" : "Privado"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-7 flex-1 flex flex-col">
+                        <h3 className="text-base font-black text-foreground leading-tight mb-2 line-clamp-2">
+                          {course.title}
+                        </h3>
+
+                        {/* Barra de progreso */}
+                        <div className="mb-6">
+                           <div className="flex justify-between text-[9px] font-black uppercase mb-1">
+                             <span className="text-muted-foreground">Progreso</span>
+                             <span>{course.progress || 0}%</span>
+                           </div>
+                           <div className="h-1 bg-muted rounded-full overflow-hidden">
+                             <motion.div 
+                               initial={{ width: 0 }}
+                               animate={{ width: `${course.progress || 0}%` }}
+                               className={`h-full ${course.progress === 100 ? "bg-green-500" : "bg-primary"}`}
+                             />
+                           </div>
+                        </div>
+
+                        <div className="mt-auto space-y-2">
+                          <Link
+                            href={`/dashboard/employee/courses/${course.id}`}
+                            className="flex items-center justify-center gap-2 w-full py-3 bg-foreground text-background dark:bg-muted dark:text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
+                          >
+                            Entrar
+                            <i className="bi bi-arrow-right"></i>
+                          </Link>
+                          {course.progress === 100 && (
+                            <button
+                              onClick={() => downloadCertificate(course.id)}
+                              className="w-full py-3 bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all hover:bg-orange-600"
+                            >
+                              Descargar Diploma
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
-    );
+      </main>
+    </div>
+  );
 }

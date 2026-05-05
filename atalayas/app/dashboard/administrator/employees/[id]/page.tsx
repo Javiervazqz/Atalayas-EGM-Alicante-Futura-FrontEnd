@@ -15,7 +15,6 @@ export default function EditEmployeePage() {
     const [formData, setFormData] = useState({
         name: "",
         email: "",
-        password: "",
         jobRole: "",
         role: "EMPLOYEE",
         companyId: ""
@@ -25,7 +24,6 @@ export default function EditEmployeePage() {
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [error, setError] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(null);
 
     // Carga inicial: Usuario actual y datos del empleado a editar
@@ -48,7 +46,6 @@ export default function EditEmployeePage() {
                     setFormData({
                         name: data.name || "",
                         email: data.email || "",
-                        password: "", // Siempre vacío por seguridad al cargar
                         jobRole: data.jobRole || "",
                         role: data.role || "EMPLOYEE",
                         companyId: data.companyId || ""
@@ -83,14 +80,6 @@ export default function EditEmployeePage() {
                 role: formData.role,
                 companyId: formData.companyId
             };
-
-            // Solo incluimos la contraseña si el usuario escribió algo
-            if (formData.password.trim() !== "") {
-                if (formData.password.length < 6) {
-                    throw new Error("La nueva contraseña debe tener al menos 6 caracteres");
-                }
-                payload.password = formData.password;
-            }
 
             const res = await fetch(`${baseUrl}/${id}`, {
                 method: "PATCH",
@@ -175,8 +164,8 @@ export default function EditEmployeePage() {
                                     />
                                 </div>
 
-                                {/* Email */}
-                                <div className="space-y-2">
+                                {/* Email - ahora ocupa las 2 columnas (donde estaba la contraseña) */}
+                                <div className="md:col-span-2 space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 ml-1">
                                         Email Corporativo
                                     </label>
@@ -187,29 +176,6 @@ export default function EditEmployeePage() {
                                         onChange={e => setFormData({ ...formData, email: e.target.value })}
                                         className="w-full bg-background border border-input rounded-xl px-5 py-3 text-sm font-semibold focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all shadow-sm"
                                     />
-                                </div>
-
-                                {/* Contraseña (Opcional) */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 ml-1">
-                                        Nueva Contraseña
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type={showPassword ? "text" : "password"}
-                                            value={formData.password}
-                                            onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                            className="w-full bg-background border border-input rounded-xl px-5 py-3 pr-12 text-sm font-semibold focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all shadow-sm"
-                                            placeholder="Dejar vacío para no cambiar"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors bg-transparent border-none p-0 cursor-pointer"
-                                        >
-                                            <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'} text-base`}></i>
-                                        </button>
-                                    </div>
                                 </div>
 
                                 {/* Puesto/JobRole */}

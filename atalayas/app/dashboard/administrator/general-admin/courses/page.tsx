@@ -119,7 +119,7 @@ export default function GeneralAdminCourses() {
                       )}
                     </div>
 
-                    <h3 className="text-foreground font-bold text-base leading-tight mb-6 line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
+                    <h3 className="text-foreground font-bold text-base leading-tight mb-6 line-clamp-2 min-h-10 group-hover:text-primary transition-colors">
                       {course.title}
                     </h3>
                   </div>

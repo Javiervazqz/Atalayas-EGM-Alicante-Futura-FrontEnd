@@ -12,18 +12,26 @@ export default function NewEmployeePage() {
   // Estados de UI
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // Estado del formulario unificado
+  // Estado del formulario unificado (sin password)
   const [form, setForm] = useState({
     name: "",
     email: "",
-    password: "",
     jobRole: "",
     role: "EMPLOYEE",
     companyId: "",
   });
+
+  // Función para generar contraseña aleatoria
+  const generateRandomPassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
 
   // Inicialización de usuario
   useEffect(() => {
@@ -43,13 +51,21 @@ export default function NewEmployeePage() {
     try {
       const token = localStorage.getItem("token");
 
+      // Generar contraseña aleatoria
+      const randomPassword = generateRandomPassword();
+
+      const payload = {
+        ...form,
+        password: randomPassword,
+      };
+
       const res = await fetch(API_ROUTES.USERS.CREATE || API_ROUTES.USERS.GET_ALL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -72,7 +88,7 @@ export default function NewEmployeePage() {
       <main className="flex-1 overflow-auto flex flex-col relative">
         <PageHeader
           title="Nuevo Empleado"
-          description="Añade un nuevo miembro a tu organización con sus credenciales de acceso."
+          description="Añade un nuevo miembro a tu organización. Se generará una contraseña temporal automáticamente."
           icon={<i className="bi bi-person-plus-fill"></i>}
           backUrl="/dashboard/administrator/employees"
         />
@@ -80,12 +96,18 @@ export default function NewEmployeePage() {
         <div className="p-6 lg:p-10 max-w-3xl mx-auto w-full">
           <div className="bg-card rounded-[2rem] shadow-sm border border-border p-8 lg:p-10 transition-all">
 
-            {/* Mensaje de Error (Estilo nuevo) */}
+            {/* Mensaje de Error */}
             {error && (
               <div className="p-4 mb-8 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive font-bold text-xs flex items-center gap-2 animate-in fade-in">
                 <i className="bi bi-exclamation-octagon-fill text-sm"></i> {error}
               </div>
             )}
+
+            {/* Mensaje informativo sobre la contraseña */}
+            <div className="p-4 mb-8 bg-primary/5 border border-primary/20 rounded-xl text-primary text-xs flex items-center gap-2">
+              <i className="bi bi-info-circle-fill text-sm"></i>
+              <span>Se generará una contraseña temporal automáticamente y se enviará al correo del usuario.</span>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-10">
 
@@ -95,7 +117,7 @@ export default function NewEmployeePage() {
                   <i className="bi bi-person-vcard"></i>
                 </div>
                 <h3 className="font-bold text-foreground text-base tracking-tight">
-                  Información de acceso y cargo
+                  Información del empleado
                 </h3>
               </div>
 
@@ -118,7 +140,7 @@ export default function NewEmployeePage() {
                 </div>
 
                 {/* Email */}
-                <div className="space-y-2">
+                <div className="md:col-span-2 space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 ml-1">
                     Email Corporativo
                   </label>
@@ -130,30 +152,6 @@ export default function NewEmployeePage() {
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     className="w-full bg-background border border-input rounded-xl px-5 py-3 text-sm font-semibold focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all shadow-sm"
                   />
-                </div>
-
-                {/* Contraseña con Toggle */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 ml-1">
-                    Contraseña Inicial
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      placeholder="••••••••"
-                      value={form.password}
-                      onChange={(e) => setForm({ ...form, password: e.target.value })}
-                      className="w-full bg-background border border-input rounded-xl px-5 py-3 text-sm font-semibold focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all shadow-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors bg-transparent border-none p-0 cursor-pointer"
-                    >
-                      <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"} text-base`}></i>
-                    </button>
-                  </div>
                 </div>
 
                 {/* Puesto */}

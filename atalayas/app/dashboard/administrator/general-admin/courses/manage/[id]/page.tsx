@@ -230,7 +230,7 @@ export default function EditCoursePage() {
                         </div>
 
                         {/* SELECTOR DE EMPRESA - Solo para cursos privados */}
-                        {!formData.isPublic && (
+                        {!formData.isPublic ? (
                             <div className="animate-in fade-in slide-in-from-top-4 duration-500" ref={companyRef}>
                                 <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1 text-center sm:text-left">
                                     Empresa Propietaria
