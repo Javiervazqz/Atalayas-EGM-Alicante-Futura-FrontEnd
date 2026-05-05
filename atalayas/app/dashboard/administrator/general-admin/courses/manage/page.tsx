@@ -229,7 +229,7 @@ export default function GlobalManageCourses() {
                   {categoryFilter !== 'ESPECIALIZADO' && (
                     <button
                       onClick={() => setShowOnlyPublic(!showOnlyPublic)}
-                      className={`w-full py-2 rounded-xl text-[9px] font-black uppercase tracking-wider border transition-all animate-in fade-in slide-in-from-top-1 ${showOnlyPublic ? 'bg-primary border-primary text-white shadow-sm' : 'bg-background border-border text-muted-foreground hover:bg-muted'}`}
+                      className={`w-full py-2 rounded-xl text-[9px] font-black uppercase tracking-wider border transition-all animate-in fade-in slide-in-from-top-1 cursor-pointer ${showOnlyPublic ? 'bg-primary border-primary text-white shadow-sm' : 'bg-background border-border text-muted-foreground hover:bg-muted'}`}
                     >
                       {showOnlyPublic ? '✓ Viendo solo Públicos' : 'Filtrar por Públicos'}
                     </button>

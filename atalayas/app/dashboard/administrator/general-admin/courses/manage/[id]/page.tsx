@@ -282,7 +282,7 @@ export default function EditCoursePage() {
                                     </p>
                                 )}
                             </div>
-                        ) : (
+                        )}: (
                             <div className="p-6 bg-blue-50 border border-blue-100 rounded-[2rem] flex items-center gap-4 animate-in zoom-in-95 duration-500">
                                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-[#0071e3] text-xl">
                                     <i className="bi bi-globe"></i>
@@ -292,7 +292,7 @@ export default function EditCoursePage() {
                                     <p className="text-blue-600/70 text-xs font-medium">Contenido universal accesible para todas las organizaciones.</p>
                                 </div>
                             </div>
-                        )}
+                        )
 
                         {/* 2. TÍTULO DEL CURSO (CON VALIDACIÓN) */}
                         <div>

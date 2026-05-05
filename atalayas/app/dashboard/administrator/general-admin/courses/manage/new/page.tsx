@@ -52,70 +52,49 @@ export default function NewCoursePage() {
             if (!token) {
                 throw new Error("No hay sesión iniciada");
             }
+            if (!token) throw new Error("No hay sesión iniciada");
 
             // Payload para curso público
             const payload = {
                 title: formData.title.trim(),
                 isPublic: true,
                 category: 'BASICO',
-                companyId: null,
+                companyId: null, // General admin no tiene companyId o se envía null
             };
 
             console.log("Enviando payload:", payload);
             console.log("URL:", API_ROUTES.COURSES.CREATE);
 
+            // 1. Usamos FormData para poder enviar el archivo y los campos de texto juntos
+            const data = new FormData();
+            data.append('title', formData.title.trim());
+            data.append('isPublic', 'true'); // FormData envía strings
+            data.append('category', 'BASICO');
+            
+            // Si hay un archivo, lo adjuntamos. 
+            // IMPORTANTE: El nombre 'file' debe coincidir con lo que espera @UploadedFile() en NestJS
+            if (formData.file) {
+                data.append('file', formData.file);
+            }
+
+            // 2. Realizamos una única petición POST
+            // NOTA: No pongas 'Content-Type': 'application/json', el navegador lo pondrá como multipart/form-data automáticamente
             const resCourse = await fetch(API_ROUTES.COURSES.CREATE, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(payload),
+                body: data,
             });
 
-            // Manejar la respuesta para ver el error específico
             if (!resCourse.ok) {
                 const errorText = await resCourse.text();
-                console.error("Error respuesta:", resCourse.status, errorText);
-
-                let errorMessage = "Error al crear el curso.";
-                try {
-                    const errorJson = JSON.parse(errorText);
-                    errorMessage = errorJson.message || errorJson.error || errorMessage;
-                } catch {
-                    errorMessage = errorText || errorMessage;
-                }
-
-                throw new Error(errorMessage);
-            }
-
-            const newCourse = await resCourse.json();
-            console.log("Curso creado:", newCourse);
-
-            // Si hay archivo PDF, procesarlo después de crear el curso
-            if (formData.file && newCourse.id) {
-                console.log("Subiendo archivo PDF...");
-                const formDataFile = new FormData();
-                formDataFile.append("file", formData.file);
-
-                const fileResponse = await fetch(`${API_ROUTES.COURSES.GET_ALL}/${newCourse.id}/upload`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formDataFile,
-                });
-
-                if (!fileResponse.ok) {
-                    console.warn("Curso creado pero error al subir el archivo");
-                } else {
-                    console.log("Archivo subido correctamente");
-                }
+                throw new Error(errorText || "Error al crear el curso.");
             }
 
             router.push('/dashboard/administrator/general-admin/courses/manage');
         } catch (err) {
-            console.error("Error detallado:", err);
+            console.error("Error:", err);
             alert(err instanceof Error ? err.message : "Error al crear el curso.");
         } finally {
             setLoading(false);
@@ -123,34 +102,21 @@ export default function NewCoursePage() {
     };
 
     return (
-        <div className="flex min-h-screen bg-muted/30 font-sans text-foreground transition-colors duration-300">
+        <div className="flex min-h-screen bg-muted/30 font-sans text-foreground">
             <Sidebar role="GENERAL_ADMIN" />
 
             <main className="flex-1 overflow-auto flex flex-col relative">
                 <PageHeader
                     title="Nuevo Curso Público"
-                    description="Los cursos creados aquí serán visibles para todas las empresas del sistema."
+                    description="Crea cursos visibles para todas las empresas."
                     icon={<i className="bi bi-globe-americas"></i>}
                     backUrl="/dashboard/administrator/general-admin/courses/manage"
                 />
 
                 <div className="p-6 lg:p-12 flex-1 max-w-2xl mx-auto w-full">
-                    <form onSubmit={handleSubmit} className="bg-card p-6 lg:p-10 rounded-[32px] border border-border/60 shadow-sm space-y-8 transition-colors duration-300">
+                    <form onSubmit={handleSubmit} className="bg-card p-6 lg:p-10 rounded-[32px] border border-border/60 shadow-sm space-y-8">
 
-                        {/* INFO BOX: CONFIGURACIÓN AUTOMÁTICA */}
-                        <div className="p-5 bg-primary/5 border border-primary/20 rounded-[24px] flex items-center gap-4">
-                            <div className="w-12 h-12 bg-card rounded-[18px] flex items-center justify-center text-primary shadow-sm text-xl">
-                                <i className="bi bi-info-circle-fill"></i>
-                            </div>
-                            <div>
-                                <h3 className="font-black text-[11px] uppercase tracking-widest text-primary">Configuración de Administrador</h3>
-                                <p className="text-muted-foreground/70 text-[10px] font-bold uppercase tracking-wider mt-0.5">
-                                    Visibilidad: Pública • Tipo: Onboarding (Básico)
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* NOMBRE DEL CURSO */}
+                        {/* TÍTULO */}
                         <div className="space-y-3">
                             <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
                                 Título del Curso
@@ -162,34 +128,29 @@ export default function NewCoursePage() {
                                     setFormData({ ...formData, title: e.target.value });
                                     if (titleError) setTitleError(false);
                                 }}
-                                className={`w-full px-5 py-4 rounded-2xl bg-background border outline-none font-bold text-foreground transition-all text-sm placeholder:text-muted-foreground/40 ${titleError ? 'border-destructive bg-destructive/5' : 'border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5'}`}
+                                className={`w-full px-5 py-4 rounded-2xl bg-background border outline-none font-bold text-sm ${titleError ? 'border-destructive' : 'border-border focus:border-primary/40'}`}
                                 placeholder="Ej: Manual de Bienvenida Global..."
                             />
-                            {titleError && (
-                                <p className="text-destructive text-[10px] font-bold mt-2 ml-2 flex items-center gap-1 animate-in fade-in slide-in-from-left-1">
-                                    <i className="bi bi-exclamation-circle-fill"></i> El título es obligatorio.
-                                </p>
-                            )}
                         </div>
 
-                        {/* SUBIDA DE PDF */}
+                        {/* SUBIDA DE IMAGEN (FILE) */}
                         <div className="space-y-3">
                             <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
-                                Material de Estudio (PDF) - Opcional
+                                Imagen de Portada
                             </label>
-                            <div className="relative h-28 w-full border-2 border-dashed border-border/60 rounded-[24px] flex items-center justify-center bg-muted/20 hover:bg-muted/40 transition-all cursor-pointer group overflow-hidden">
+                            <div className="relative h-32 w-full border-2 border-dashed border-border/60 rounded-[24px] flex items-center justify-center bg-muted/20 hover:bg-muted/40 transition-all cursor-pointer group">
                                 <input
                                     type="file"
-                                    accept=".pdf"
+                                    accept="image/*"
                                     onChange={e => setFormData({ ...formData, file: e.target.files?.[0] || null })}
                                     className="absolute inset-0 opacity-0 cursor-pointer z-10"
                                 />
                                 <div className="flex flex-col items-center gap-2 px-6">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all ${formData.file ? 'bg-green-500 text-white' : 'bg-card text-primary shadow-sm group-hover:scale-110'}`}>
-                                        <i className={`bi ${formData.file ? 'bi-file-earmark-check' : 'bi-cloud-arrow-up'}`}></i>
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl transition-all ${formData.file ? 'bg-green-500 text-white' : 'bg-card text-primary shadow-sm'}`}>
+                                        <i className={`bi ${formData.file ? 'bi-image-fill' : 'bi-camera-fill'}`}></i>
                                     </div>
-                                    <p className="font-bold text-xs text-foreground truncate max-w-[250px] text-center">
-                                        {formData.file ? formData.file.name : 'Seleccionar o arrastrar PDF (opcional)'}
+                                    <p className="font-bold text-xs text-foreground truncate max-w-62.5">
+                                        {formData.file ? formData.file.name : 'Subir imagen de portada'}
                                     </p>
                                 </div>
                             </div>
@@ -200,19 +161,10 @@ export default function NewCoursePage() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full py-4.5 bg-secondary text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all active:scale-[0.98] shadow-md hover:shadow-secondary/20 disabled:opacity-50"
+                                className="w-full py-4 bg-secondary text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-50"
                             >
-                                {loading ? (
-                                    <span className="flex items-center justify-center gap-3">
-                                        <i className="bi bi-arrow-repeat animate-spin text-lg"></i> Procesando...
-                                    </span>
-                                ) : (
-                                    'Publicar Curso Global'
-                                )}
+                                {loading ? 'Subiendo...' : 'Publicar Curso Global'}
                             </button>
-                            <p className="text-center text-[10px] text-muted-foreground/60 mt-4 font-bold uppercase tracking-tighter">
-                                Al publicar, el curso estará disponible inmediatamente en el catálogo público.
-                            </p>
                         </div>
                     </form>
                 </div>

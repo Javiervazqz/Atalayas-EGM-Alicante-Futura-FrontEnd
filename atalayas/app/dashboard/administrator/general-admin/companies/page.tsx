@@ -2,244 +2,284 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/ui/pageHeader';
 import SearchInput from '@/components/ui/Searchbar';
-import { API_ROUTES } from '@/lib/utils';
+import { API_ROUTES, fetchWithApiFallback } from '@/lib/utils';
 
 interface Company {
   id: string;
   name: string;
-  activity: string | null;
-  contactEmail: string | null;
-  contactPhone: string | null;
-  address: string | null;
-  logoUrl: string | null;
-  cif: string | null;
-  createdAt: string;
-  website: string | null;
-  User?: { id: string }[];
+  cif: string;
+  address?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  logoUrl?: string;
+  activity?: string;
+  description?: string;
+  website?: string;
+  created_at: string;
 }
 
-const getToken = () =>
-  typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+export default function CompaniesDirectoryPage() {
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selected, setSelected] = useState<Company | null>(null);
+  const [fetchingDetail, setFetchingDetail] = useState(false);
 
-function Toast({ msg, type }: { msg: string; type: 'ok' | 'err' }) {
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const fetchCompanies = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const data = await fetchWithApiFallback(API_ROUTES.COMPANIES.GET_ALL, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCompanies(Array.isArray(data) ? data : []);
+    } catch (err) {
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenDetail = async (company: Company) => {
+    if (selected?.id === company.id) {
+      setSelected(null);
+      return;
+    }
+    
+    setSelected(company);
+    setFetchingDetail(true);
+    try {
+      const token = localStorage.getItem('token');
+      const fullData = await fetchWithApiFallback(API_ROUTES.COMPANIES.GET_BY_ID(company.id), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (fullData) setSelected(fullData);
+    } catch (err) {
+      console.error("Error al obtener detalles");
+    } finally {
+      setFetchingDetail(false);
+    }
+  };
+
+  // Filtrado optimizado con useMemo
+  const filtered = useMemo(() => {
+    return companies.filter(c => {
+      const query = searchQuery.toLowerCase();
+      return (
+        c.name?.toLowerCase().includes(query) || 
+        c.cif?.toLowerCase().includes(query) ||
+        c.activity?.toLowerCase().includes(query)
+      );
+    });
+  }, [companies, searchQuery]);
+
   return (
-    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl text-sm font-medium shadow-xl text-white ${type === 'ok' ? 'bg-green-600' : 'bg-red-600'}`}>
-      <i className={`bi ${type === 'ok' ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}`} />
-      {msg}
+    <div className="flex h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f] font-sans text-foreground overflow-hidden">
+      <Sidebar role="GENERAL_ADMIN" />
+
+      <main className="flex-1 flex flex-col min-w-0 bg-white/40 dark:bg-transparent backdrop-blur-3xl">
+        <PageHeader 
+          title="Directorio de Empresas"
+          description={`Gestiona las entidades activas del área empresarial.`}
+          icon={<i className="bi bi-buildings-fill"></i>}
+          action={
+            <div className="flex items-center gap-4">
+              <SearchInput 
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Buscar por nombre, CIF o sector..."
+              />
+            </div>
+          }
+        />
+
+        <div className="flex-1 flex overflow-hidden">
+          
+          {/* ── SECCIÓN IZQUIERDA: TABLA Y CONTENIDO ── */}
+          <div className="flex-1 overflow-y-auto p-6 lg:p-8 no-scrollbar">
+            <div className="max-w-6xl mx-auto">
+              <div className="bg-white dark:bg-[#1c1c1e] rounded-[2.5rem] border border-gray-200/50 dark:border-white/6 shadow-[0_20px_50px_rgba(0,0,0,0.02)] overflow-hidden transition-all">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50/50 dark:bg-white/2 border-b border-gray-100 dark:border-white/4">
+                      <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Empresa</th>
+                      <th className="px-6 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Identificación</th>
+                      <th className="px-6 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-widest hidden md:table-cell">Actividad</th>
+                      <th className="px-8 py-5 text-right text-[10px] font-black text-muted-foreground uppercase tracking-widest">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-white/2">
+                    {loading ? (
+                      <LoadingSkeleton />
+                    ) : filtered.length > 0 ? (
+                      filtered.map((company) => (
+                        <tr 
+                          key={company.id} 
+                          onClick={() => handleOpenDetail(company)}
+                          className={`group cursor-pointer transition-all duration-300 ${selected?.id === company.id ? 'bg-primary/3 dark:bg-primary/5' : 'hover:bg-gray-50/80 dark:hover:bg-white/1'}`}
+                        >
+                          <td className="px-8 py-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-gray-100 to-gray-50 dark:from-white/5 dark:to-transparent border border-gray-200/50 dark:border-white/8 flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
+                                {company.logoUrl ? (
+                                  <img src={encodeURI(company.logoUrl)} className="w-full h-full object-cover" alt="" />
+                                ) : (
+                                  <span className="text-sm font-black text-primary/40">{company.name?.charAt(0)}</span>
+                                )}
+                              </div>
+                              <span className="font-semibold text-[15px] tracking-tight text-foreground/90">{company.name}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <code className="text-[11px] font-bold text-muted-foreground bg-gray-100 dark:bg-white/5 px-2.5 py-1 rounded-md border border-gray-200/50 dark:border-white/10 uppercase tracking-tight">
+                              {company.cif}
+                            </code>
+                          </td>
+                          <td className="px-6 py-4 hidden md:table-cell">
+                            <span className="text-[13px] font-medium text-muted-foreground line-clamp-1 italic">
+                              {company.activity || 'No especificada'}
+                            </span>
+                          </td>
+                          <td className="px-8 py-4 text-right">
+                            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${selected?.id === company.id ? 'bg-primary text-white' : 'bg-green-500/10 text-green-500'}`}>
+                              {selected?.id === company.id ? 'En foco' : 'Activa'}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="py-20 text-center">
+                          <p className="text-sm font-medium text-muted-foreground">No se encontraron empresas con ese criterio.</p>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* ── PANEL DERECHO: DETALLE (Estilo Side-Sheet) ── */}
+          <aside className={`w-112.5 border-l border-gray-200/50 dark:border-white/6 bg-white/80 dark:bg-[#1c1c1e]/80 backdrop-blur-2xl transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-y-auto no-scrollbar ${selected ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 absolute right-0'}`}>
+            {selected && (
+              <div className="p-10 space-y-10 relative">
+                
+                {fetchingDetail && (
+                  <div className="absolute top-0 left-0 w-full h-0.5 bg-primary animate-pulse" />
+                )}
+
+                {/* Header del Detalle */}
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => setSelected(null)}
+                    className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/5 text-muted-foreground hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                  >
+                    <i className="bi bi-x-lg text-xs"></i>
+                  </button>
+                  <span className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-[0.4em]">Ficha Técnica</span>
+                </div>
+
+                {/* Perfil */}
+                <div className="text-center space-y-4">
+                  <div className="inline-block relative">
+                    <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden border-4 border-white dark:border-white/10 shadow-2xl mx-auto bg-gray-50 dark:bg-white/5">
+                      {selected.logoUrl ? (
+                        <img src={encodeURI(selected.logoUrl)} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-4xl font-black text-muted-foreground/20 uppercase">
+                          {selected.name?.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold tracking-tight text-foreground">{selected.name}</h3>
+                    <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1 opacity-80 italic">{selected.activity}</p>
+                  </div>
+                </div>
+
+                {/* Datos de Contacto */}
+                <div className="space-y-3">
+                  <DetailItem icon="bi-hash" label="CIF" value={selected.cif} />
+                  <DetailItem icon="bi-geo-alt" label="Dirección" value={selected.address} />
+                  <DetailItem icon="bi-envelope" label="Email" value={selected.contactEmail} />
+                  <DetailItem icon="bi-telephone" label="Teléfono" value={selected.contactPhone} />
+                </div>
+
+                {/* Descripción */}
+                {selected.description && (
+                  <div className="p-6 rounded-[2rem] bg-gray-50 dark:bg-white/2 border border-gray-100 dark:border-white/4">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-3">Sobre la empresa</h4>
+                    <p className="text-[13px] leading-relaxed text-foreground/80 italic">"{selected.description}"</p>
+                  </div>
+                )}
+
+                {/* CTA y Footer */}
+                <div className="space-y-4 pt-4">
+                  {selected.website && (
+                    <a
+                      href={selected.website.startsWith('http') ? selected.website : `https://${selected.website}`}
+                      target="_blank"
+                      className="flex items-center justify-center gap-3 w-full py-4 bg-foreground text-background dark:bg-white dark:text-black rounded-2xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-xl shadow-black/5 dark:shadow-white/5"
+                    >
+                      <i className="bi bi-globe"></i> Visitar Web
+                    </a>
+                  )}
+                  
+                  <div className="text-center pt-6 border-t border-gray-100 dark:border-white/5">
+                    <p className="text-[9px] font-bold text-muted-foreground/30 uppercase tracking-[0.2em]">
+                      Incorporación: {new Date(selected.created_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </aside>
+        </div>
+      </main>
     </div>
   );
 }
 
-export default function CompaniesPage() {
-  const router = useRouter();
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [deleting, setDeleting] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+// ── COMPONENTES AUXILIARES ──
 
-  const showToast = (msg: string, type: 'ok' | 'err') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  useEffect(() => {
-    const saved = localStorage.getItem('user');
-    if (!saved) { router.push('/login'); return; }
-    const user = JSON.parse(saved);
-    if (user.role !== 'GENERAL_ADMIN') { router.push('/dashboard'); return; }
-    setCurrentUser(user);
-
-    fetch(API_ROUTES.COMPANIES.GET_ALL, {
-      headers: { Authorization: `Bearer ${getToken()}` },
-    })
-      .then(r => r.json())
-      .then(d => setCompanies(Array.isArray(d) ? d : []))
-      .catch(() => showToast('Error cargando empresas', 'err'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return companies.filter(c =>
-      !q ||
-      c.name.toLowerCase().includes(q) ||
-      c.activity?.toLowerCase().includes(q) ||
-      c.cif?.toLowerCase().includes(q)
-    );
-  }, [companies, search]);
-
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`¿Eliminar la empresa "${name}"? Esta acción no se puede deshacer.`)) return;
-    setDeleting(id);
-    try {
-      const res = await fetch(API_ROUTES.COMPANIES.DELETE(id), {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
-      if (res.ok) {
-        setCompanies(prev => prev.filter(c => c.id !== id));
-        showToast('Empresa eliminada', 'ok');
-      } else {
-        showToast('No se pudo eliminar', 'err');
-      }
-    } catch {
-      showToast('Error de conexión', 'err');
-    } finally {
-      setDeleting(null);
-    }
-  };
-
-  if (!currentUser) return null;
-
+function DetailItem({ icon, label, value }: { icon: string, label: string, value?: string }) {
+  if (!value) return null;
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-[#111113]">
-      <Sidebar role="GENERAL_ADMIN" />
-      {toast && <Toast msg={toast.msg} type={toast.type} />}
-
-      <main className="flex-1 p-6 lg:p-10 overflow-auto">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-[#1d1d1f] dark:text-white tracking-tight">
-              Empresas
-            </h1>
-            <p className="text-[#86868b] text-sm mt-1">
-              {filtered.length} empresa{filtered.length !== 1 ? 's' : ''} registrada{filtered.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-          <Link
-            href="/dashboard/company"
-            className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl bg-[#0071e3] text-white hover:bg-[#0077ed] transition-colors"
-          >
-            <i className="bi bi-building-fill-gear" />
-            Gestionar perfiles
-          </Link>
-        </div>
-
-        {/* Buscador */}
-        <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl p-4 border border-gray-100 dark:border-white/5 mb-5">
-          <div className="relative">
-            <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b] text-sm" />
-            <input
-              type="text"
-              placeholder="Buscar por nombre, sector o CIF..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-[#f5f5f7] dark:bg-white/5 dark:text-white rounded-xl text-sm outline-none border border-transparent focus:border-[#0071e3] focus:bg-white dark:focus:bg-white/10 transition-all"
-            />
-          </div>
-        </div>
-
-        {/* Grid de empresas */}
-        {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-48 bg-white dark:bg-[#1c1c1e] rounded-2xl animate-pulse border border-gray-100 dark:border-white/5" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-gray-100 dark:border-white/5 p-16 text-center">
-            <i className="bi bi-buildings text-4xl text-[#86868b] block mb-3" />
-            <p className="text-[#86868b] text-sm">
-              {search ? 'No se encontraron empresas con esa búsqueda' : 'No hay empresas registradas todavía'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map(company => (
-              <div
-                key={company.id}
-                className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-gray-100 dark:border-white/5 p-5 hover:shadow-sm transition-all group flex flex-col"
-              >
-                {/* Cabecera */}
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-gray-100 dark:border-white/10 bg-[#f5f5f7] dark:bg-white/5 flex items-center justify-center">
-                    {company.logoUrl ? (
-                      <img src={company.logoUrl} alt={company.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <i className="bi bi-building-fill text-[#86868b] text-xl" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-[#1d1d1f] dark:text-white text-sm truncate">
-                      {company.name}
-                    </h3>
-                    {company.activity && (
-                      <p className="text-xs text-[#86868b] truncate mt-0.5">{company.activity}</p>
-                    )}
-                    {company.cif && (
-                      <p className="text-[10px] text-[#86868b] font-mono mt-0.5">{company.cif}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Datos */}
-                <div className="space-y-2 flex-1 mb-4">
-                  {company.contactEmail && (
-                    <div className="flex items-center gap-2 text-xs text-[#424245] dark:text-[#ebebf5]">
-                      <i className="bi bi-envelope text-[#86868b] shrink-0" />
-                      <span className="truncate">{company.contactEmail}</span>
-                    </div>
-                  )}
-                  {company.contactPhone && (
-                    <div className="flex items-center gap-2 text-xs text-[#424245] dark:text-[#ebebf5]">
-                      <i className="bi bi-telephone text-[#86868b] shrink-0" />
-                      <span>{company.contactPhone}</span>
-                    </div>
-                  )}
-                  {company.address && (
-                    <div className="flex items-center gap-2 text-xs text-[#424245] dark:text-[#ebebf5]">
-                      <i className="bi bi-geo-alt text-[#86868b] shrink-0" />
-                      <span className="truncate">{company.address}</span>
-                    </div>
-                  )}
-                  {company.website && (
-                    <div className="flex items-center gap-2 text-xs">
-                      <i className="bi bi-globe text-[#86868b] shrink-0" />
-                      <a
-                        href={company.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#0071e3] hover:underline truncate"
-                      >
-                        {company.website.replace(/^https?:\/\//, '')}
-                      </a>
-                    </div>
-                  )}
-                  {company.User && (
-                    <div className="flex items-center gap-2 text-xs text-[#424245] dark:text-[#ebebf5]">
-                      <i className="bi bi-people text-[#86868b] shrink-0" />
-                      <span>{company.User.length} usuario{company.User.length !== 1 ? 's' : ''}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Fecha y acciones */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
-                  <span className="text-[10px] text-[#86868b]">
-                    {new Date(company.createdAt).toLocaleDateString('es-ES', {
-                      day: 'numeric', month: 'short', year: 'numeric'
-                    })}
-                  </span>
-                  <button
-                    onClick={() => handleDelete(company.id, company.name)}
-                    disabled={deleting === company.id}
-                    className="opacity-0 group-hover:opacity-100 text-xs font-medium px-3 py-1.5 rounded-lg border border-red-200 text-red-600 bg-white dark:bg-transparent hover:bg-red-50 transition-all disabled:opacity-30"
-                  >
-                    {deleting === company.id ? '...' : 'Eliminar'}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
+    <div className="flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
+      <div className="w-10 h-10 rounded-xl bg-white dark:bg-white/10 flex items-center justify-center text-primary shadow-sm border border-gray-100 dark:border-white/10 group-hover:scale-110 transition-transform">
+        <i className={`bi ${icon}`}></i>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">{label}</p>
+        <p className="text-[13px] font-bold text-foreground/90 truncate">{value}</p>
+      </div>
     </div>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <>
+      {[1, 2, 3, 4, 5, 6].map(i => (
+        <tr key={i} className="animate-pulse">
+          <td className="px-8 py-5">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gray-200 dark:bg-white/5 rounded-2xl"></div>
+              <div className="h-4 bg-gray-200 dark:bg-white/5 rounded w-32"></div>
+            </div>
+          </td>
+          <td className="px-6 py-5"><div className="h-4 bg-gray-200 dark:bg-white/5 rounded w-20"></div></td>
+          <td className="px-6 py-5"><div className="h-4 bg-gray-200 dark:bg-white/5 rounded w-40"></div></td>
+          <td className="px-8 py-5 text-right"><div className="h-6 bg-gray-200 dark:bg-white/5 rounded-full w-16 ml-auto"></div></td>
+        </tr>
+      ))}
+    </>
   );
 }

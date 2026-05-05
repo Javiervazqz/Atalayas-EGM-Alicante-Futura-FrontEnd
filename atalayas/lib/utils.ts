@@ -23,7 +23,8 @@ export const API_ROUTES = {
   COURSES: {
     GET_ALL: `${BASE_URL}/courses`,
     CREATE: `${BASE_URL}/courses`,
-    GET_BY_ID: (id:string) => `${BASE_URL}/courses/${id}`
+    GET_BY_ID: (id:string) => `${BASE_URL}/courses/${id}`,
+    UPDATE: (id: string) => `${BASE_URL}/courses/${id}`,
   },
   DOCUMENTS: {
     GET_ALL: `${BASE_URL}/document`,
@@ -36,6 +37,8 @@ export const API_ROUTES = {
   COMPANIES: {
     GET_ALL: `${BASE_URL}/company`,
     GET_BY_ID: (id: string) => `${BASE_URL}/company/${id}`,
+    DELETE: (id: string) => `${BASE_URL}/company/${id}`,
+
   },
   CONTENT: {
     GET_ALL: (courseId: string) => `${BASE_URL}/courses/${courseId}/content`,

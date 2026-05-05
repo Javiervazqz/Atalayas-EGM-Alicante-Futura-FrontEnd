@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Sidebar from '@/components/ui/Sidebar';
-import { API_ROUTES } from '@/lib/utils';
+import PageHeader from '@/components/ui/pageHeader';
+import SearchInput from '@/components/ui/Searchbar';
+import { API_ROUTES, fetchWithApiFallback } from '@/lib/utils';
 
 interface Announcement {
   id: string;
@@ -16,149 +17,159 @@ interface Announcement {
 }
 
 export default function AnnouncementsPage() {
-  const router = useRouter();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  const getToken = () =>
-    typeof window !== 'undefined' ? localStorage.getItem('token') : '';
-
   useEffect(() => {
-    const fetchAnnouncements = async () => {
-      try {
-        const res = await fetch(API_ROUTES.ANNOUNCEMENTS.GET_ALL, {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        });
-        const data = await res.json();
-        setAnnouncements(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error('Error fetching announcements:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchAnnouncements();
   }, []);
 
+  const fetchAnnouncements = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const data = await fetchWithApiFallback(API_ROUTES.ANNOUNCEMENTS.GET_ALL, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAnnouncements(Array.isArray(data) ? data : []);
+    } catch (err) {
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
-    if (!window.confirm('¿Seguro que quieres eliminar este anuncio? Esta acción no se puede deshacer.')) return;
+    // Uso de un confirm más estilizado o simple nativo por ahora
+    if (!window.confirm('¿Deseas eliminar este comunicado permanentemente?')) return;
+    
     setDeleting(id);
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch(`${API_ROUTES.ANNOUNCEMENTS.GET_ALL}/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${getToken()}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
+      
       if (res.ok) {
         setAnnouncements((prev) => prev.filter((a) => a.id !== id));
-      } else {
-        alert('No se pudo eliminar el anuncio.');
       }
     } catch {
-      alert('Error de conexión.');
     } finally {
       setDeleting(null);
     }
   };
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
+  const filteredAnnouncements = useMemo(() => {
+    return announcements.filter(ann => 
+      ann.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ann.Company?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [announcements, searchQuery]);
 
   return (
-    <div
-      className="flex min-h-screen bg-[#f5f5f7]"
-      style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}
-    >
-      <Sidebar role="GENERAL_ADMIN" />
+    <div className="flex h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f] font-sans text-foreground overflow-hidden">
+      <Sidebar role="ADMIN" />
 
-      <main className="flex-1 h-screen overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-8 py-12">
-
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
-            <div>
-              <nav className="flex items-center gap-2 text-sm text-[#86868b] mb-4">
-                <Link href="/dashboard/administrator/general-admin" className="hover:text-[#0071e3] transition-colors">
-                  Dashboard
-                </Link>
-                <span className="opacity-50">/</span>
-                <span className="text-[#1d1d1f] font-medium">Anuncios</span>
-              </nav>
-              <h1 className="text-4xl font-bold text-[#1d1d1f] tracking-tight">Anuncios</h1>
-              <p className="text-[#86868b] mt-1 text-base">Gestiona los comunicados de la plataforma</p>
+      <main className="flex-1 flex flex-col min-w-0 bg-white/40 dark:bg-transparent backdrop-blur-3xl">
+        <PageHeader 
+          title="Comunicados y Anuncios"
+          description="Difunde información relevante a todas las empresas o a entidades específicas."
+          icon={<i className="bi bi-megaphone-fill"></i>}
+          action={
+            <div className="flex items-center gap-4">
+              <SearchInput 
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Buscar por título o empresa..."
+              />
+              <Link
+                href="/dashboard/administrator/admin/announcements/new"
+                className="bg-primary text-primary-foreground px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-primary/20 whitespace-nowrap"
+              >
+                + Nuevo Anuncio
+              </Link>
             </div>
-            <Link
-              href="/dashboard/administrator/general-admin/announcements/new"
-              className="bg-[#0071e3] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-[#0077ed] transition-all shadow-sm whitespace-nowrap"
-            >
-              + Nuevo anuncio
-            </Link>
-          </div>
+          }
+        />
 
-          {/* Tabla */}
-          <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
+        <div className="flex-1 overflow-y-auto p-6 lg:p-10 no-scrollbar">
+          <div className="max-w-6xl mx-auto space-y-6">
+            
+            {/* Contenedor de Tabla con Estética Apple */}
+            <div className="bg-white dark:bg-[#1c1c1e] rounded-[2.5rem] border border-gray-200/50 dark:border-white/6 shadow-[0_20px_50px_rgba(0,0,0,0.02)] overflow-hidden">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#fbfbfd] border-b border-gray-100">
-                    <th className="px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">
-                      Anuncio
-                    </th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">
-                      Visibilidad
-                    </th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-[#86868b] uppercase tracking-widest">
-                      Fecha
-                    </th>
-                    <th className="px-6 py-4" />
+                  <tr className="bg-gray-50/50 dark:bg-white/2 border-b border-gray-100 dark:border-white/4">
+                    <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Contenido del Anuncio</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Alcance</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Publicado</th>
+                    <th className="px-8 py-5 text-right text-[10px] font-black text-muted-foreground uppercase tracking-widest">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-50 dark:divide-white/2">
                   {loading ? (
-                    [1, 2, 3].map((i) => (
-                      <tr key={i} className="animate-pulse">
-                        <td colSpan={4} className="px-6 py-6 bg-gray-50/40" />
-                      </tr>
-                    ))
-                  ) : announcements.length === 0 ? (
+                    <LoadingSkeleton />
+                  ) : filteredAnnouncements.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-16 text-center text-[#86868b] text-sm">
-                        No hay anuncios publicados todavía.
+                      <td colSpan={4} className="py-24 text-center">
+                        <div className="flex flex-col items-center opacity-40">
+                          <i className="bi bi-chat-square-dots text-4xl mb-4"></i>
+                          <p className="text-sm font-medium">No se han encontrado comunicados.</p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
-                    announcements.map((ann) => (
-                      <tr key={ann.id} className="hover:bg-gray-50 transition-colors group">
-                        <td className="px-6 py-4 max-w-sm">
-                          <p className="font-semibold text-[#1d1d1f] text-sm mb-0.5">{ann.title}</p>
-                          <p className="text-[#86868b] text-xs line-clamp-1">{ann.content}</p>
+                    filteredAnnouncements.map((ann) => (
+                      <tr key={ann.id} className="group hover:bg-gray-50/80 dark:hover:bg-white/1 transition-all duration-300">
+                        <td className="px-8 py-5">
+                          <div className="max-w-md">
+                            <h4 className="font-bold text-[15px] text-foreground/90 tracking-tight group-hover:text-primary transition-colors">
+                              {ann.title}
+                            </h4>
+                            <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5 font-medium">
+                              {ann.content}
+                            </p>
+                          </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-5">
                           {ann.isPublic ? (
-                            <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-green-50 text-green-700">
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-tighter">
+                              <span className="w-1 h-1 rounded-full bg-current animate-pulse"></span>
                               Global
-                            </span>
+                            </div>
                           ) : (
-                            <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700">
-                              {ann.Company?.name ?? 'Empresa'}
-                            </span>
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-black uppercase tracking-tighter">
+                              <i className="bi bi-building text-[8px]"></i>
+                              {ann.Company?.name || 'Privado'}
+                            </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-[#86868b] text-xs whitespace-nowrap">
-                          {formatDate(ann.createdAt)}
+                        <td className="px-6 py-5">
+                          <span className="text-[11px] font-bold text-muted-foreground/60">
+                            {new Date(ann.createdAt).toLocaleDateString('es-ES', { 
+                              day: '2-digit', 
+                              month: 'short', 
+                              year: 'numeric' 
+                            })}
+                          </span>
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => handleDelete(ann.id)}
-                            disabled={deleting === ann.id}
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-red-200 text-red-600 bg-white hover:bg-red-50 transition-colors disabled:opacity-40"
-                          >
-                            {deleting === ann.id ? 'Eliminando...' : 'Eliminar'}
-                          </button>
+                        <td className="px-8 py-5 text-right">
+                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => handleDelete(ann.id)}
+                              disabled={deleting === ann.id}
+                              className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all disabled:opacity-30"
+                              title="Eliminar comunicado"
+                            >
+                              {deleting === ann.id ? (
+                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <i className="bi bi-trash3-fill text-sm"></i>
+                              )}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -166,10 +177,34 @@ export default function AnnouncementsPage() {
                 </tbody>
               </table>
             </div>
-          </div>
 
+            {/* Contador de Estado */}
+            {!loading && (
+              <p className="px-4 text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">
+                Mostrando {filteredAnnouncements.length} de {announcements.length} comunicados registrados
+              </p>
+            )}
+          </div>
         </div>
       </main>
     </div>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <>
+      {[1, 2, 3, 4].map(i => (
+        <tr key={i} className="animate-pulse">
+          <td className="px-8 py-6">
+            <div className="h-4 bg-gray-200 dark:bg-white/5 rounded w-48 mb-2"></div>
+            <div className="h-3 bg-gray-200 dark:bg-white/5 rounded w-64 opacity-50"></div>
+          </td>
+          <td className="px-6 py-6"><div className="h-6 bg-gray-200 dark:bg-white/5 rounded-full w-16"></div></td>
+          <td className="px-6 py-6"><div className="h-3 bg-gray-200 dark:bg-white/5 rounded w-20"></div></td>
+          <td className="px-8 py-6 text-right"><div className="h-9 bg-gray-200 dark:bg-white/5 rounded-xl w-9 ml-auto"></div></td>
+        </tr>
+      ))}
+    </>
   );
 }
