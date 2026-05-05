@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/ui/Sidebar";
 import PageHeader from "@/components/ui/pageHeader";
@@ -11,10 +11,14 @@ export default function NewCoursePage() {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState("");
   const [useAi, setUseAi] = useState(false);
+  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+
   const [formData, setFormData] = useState({
     title: "",
     isPublic: false,
     category: "BASICO",
+    requiredRole: "", // Nuevo campo para el rol requerido
     file: null as File | null
   });
 
@@ -22,12 +26,50 @@ export default function NewCoursePage() {
     ? JSON.parse(localStorage.getItem("user") || '{"companyId": null}')
     : { companyId: null };
 
+  // Cargar roles disponibles desde los empleados existentes
+  useEffect(() => {
+    const fetchAvailableRoles = async () => {
+      setLoadingRoles(true);
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await fetch(`${API_ROUTES.USERS.GET_ALL}/roles`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableRoles(Array.isArray(data) ? data : []);
+        } else {
+          console.error("Error cargando roles:", res.status);
+          // Si el endpoint no existe, usar roles por defecto
+          setAvailableRoles(["Técnico", "Ventas", "Administrativo", "Gerente", "Operaciones"]);
+        }
+      } catch (err) {
+        console.error("Error cargando roles:", err);
+        // Roles de ejemplo en caso de error
+        setAvailableRoles(["Técnico", "Ventas", "Administrativo", "Gerente", "Operaciones"]);
+      } finally {
+        setLoadingRoles(false);
+      }
+    };
+
+    fetchAvailableRoles();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validaciones
     if (!formData.title.trim()) {
       alert("El título es obligatorio");
+      return;
+    }
+
+    // Validar que si es especialización, tenga un rol seleccionado
+    if (formData.category === "ESPECIALIZADO" && !formData.requiredRole) {
+      alert("Para cursos de especialización, debes seleccionar un rol requerido");
       return;
     }
 
@@ -46,13 +88,18 @@ export default function NewCoursePage() {
         throw new Error("No hay sesión iniciada");
       }
 
-      // Preparar datos para enviar
-      const courseData = {
+      // 🔥 CORREGIDO: Usar 'jobRole' en lugar de 'requiredRole'
+      const courseData: any = {
         title: formData.title,
         isPublic: formData.isPublic,
         category: formData.category,
         companyId: user.companyId
       };
+
+      // Solo incluir jobRole si es especialización
+      if (formData.category === "ESPECIALIZADO") {
+        courseData.jobRole = formData.requiredRole; // Cambiado de requiredRole a jobRole
+      }
 
       console.log("Enviando datos:", courseData);
       console.log("URL:", API_ROUTES.COURSES.CREATE);
@@ -147,7 +194,9 @@ export default function NewCoursePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, category: 'BASICO' })}
+                onClick={() => {
+                  setFormData({ ...formData, category: 'BASICO', requiredRole: '' });
+                }}
                 className={`p-4 rounded-2xl border-2 font-bold transition-all flex items-center justify-center gap-2 ${formData.category === 'BASICO' ? 'border-primary bg-primary/5 text-primary' : 'border-transparent bg-muted/50 text-muted-foreground'}`}
                 disabled={loading}
               >
@@ -164,6 +213,32 @@ export default function NewCoursePage() {
                 Especialización
               </button>
             </div>
+
+            {/* Campo de Rol Requerido - Solo para especialización */}
+            {formData.category === "ESPECIALIZADO" && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                  Rol Requerido
+                </label>
+                <select
+                  value={formData.requiredRole}
+                  onChange={(e) => setFormData({ ...formData, requiredRole: e.target.value })}
+                  className="w-full px-6 py-4 rounded-2xl bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold transition-all appearance-none cursor-pointer"
+                  disabled={loading || loadingRoles}
+                  required
+                >
+                  <option value="">Seleccionar rol...</option>
+                  {availableRoles.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-muted-foreground ml-1">
+                  Solo los empleados con este rol podrán ver y acceder al curso
+                </p>
+              </div>
+            )}
 
             <div className="space-y-4">
               <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">

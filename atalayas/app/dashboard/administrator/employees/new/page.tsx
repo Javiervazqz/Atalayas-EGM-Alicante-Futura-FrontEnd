@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/ui/Sidebar";
 import PageHeader from "@/components/ui/pageHeader";
@@ -14,6 +14,14 @@ export default function NewEmployeePage() {
   const [error, setError] = useState("");
   const [currentUser, setCurrentUser] = useState<any>(null);
 
+  // Estados para autocompletado de puestos
+  const [availableJobRoles, setAvailableJobRoles] = useState<string[]>([]);
+  const [filteredJobRoles, setFilteredJobRoles] = useState<string[]>([]);
+  const [showJobRoleSuggestions, setShowJobRoleSuggestions] = useState(false);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+  const jobRoleInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
   // Estado del formulario unificado (sin password)
   const [form, setForm] = useState({
     name: "",
@@ -22,6 +30,62 @@ export default function NewEmployeePage() {
     role: "EMPLOYEE",
     companyId: "",
   });
+
+  // Cargar roles existentes
+  useEffect(() => {
+    const fetchJobRoles = async () => {
+      setLoadingRoles(true);
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await fetch(`${API_ROUTES.USERS.GET_ALL}/roles`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableJobRoles(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error("Error cargando puestos:", err);
+      } finally {
+        setLoadingRoles(false);
+      }
+    };
+
+    fetchJobRoles();
+  }, []);
+
+  // Filtrar sugerencias basadas en el texto ingresado
+  useEffect(() => {
+    if (form.jobRole.trim() === "") {
+      setFilteredJobRoles([]);
+      return;
+    }
+
+    const filtered = availableJobRoles.filter(role =>
+      role.toLowerCase().includes(form.jobRole.toLowerCase())
+    );
+    setFilteredJobRoles(filtered);
+  }, [form.jobRole, availableJobRoles]);
+
+  // Cerrar sugerencias al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        jobRoleInputRef.current &&
+        !jobRoleInputRef.current.contains(event.target as Node)
+      ) {
+        setShowJobRoleSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Función para generar contraseña aleatoria
   const generateRandomPassword = () => {
@@ -154,19 +218,50 @@ export default function NewEmployeePage() {
                   />
                 </div>
 
-                {/* Puesto */}
-                <div className="space-y-2">
+                {/* Puesto de Trabajo con autocompletado */}
+                <div className="relative space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 ml-1">
                     Puesto de Trabajo
                   </label>
                   <input
+                    ref={jobRoleInputRef}
                     type="text"
                     required
                     placeholder="Ej. Técnico de Mantenimiento"
                     value={form.jobRole}
-                    onChange={(e) => setForm({ ...form, jobRole: e.target.value })}
+                    onChange={(e) => {
+                      setForm({ ...form, jobRole: e.target.value });
+                      setShowJobRoleSuggestions(true);
+                    }}
+                    onFocus={() => setShowJobRoleSuggestions(true)}
                     className="w-full bg-background border border-input rounded-xl px-5 py-3 text-sm font-semibold focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all shadow-sm"
                   />
+
+                  {/* Sugerencias de puestos */}
+                  {showJobRoleSuggestions && filteredJobRoles.length > 0 && (
+                    <div
+                      ref={suggestionsRef}
+                      className="absolute z-10 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto"
+                    >
+                      {filteredJobRoles.map((role, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => {
+                            setForm({ ...form, jobRole: role });
+                            setShowJobRoleSuggestions(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors first:rounded-t-xl last:rounded-b-xl font-medium"
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <p className="text-[9px] text-muted-foreground ml-1">
+                    Puedes seleccionar un puesto existente o escribir uno nuevo
+                  </p>
                 </div>
 
                 {/* Rol de Acceso */}

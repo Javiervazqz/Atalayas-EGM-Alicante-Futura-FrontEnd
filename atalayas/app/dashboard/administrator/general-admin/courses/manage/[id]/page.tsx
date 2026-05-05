@@ -15,13 +15,16 @@ export default function EditCoursePage() {
     const [fetching, setFetching] = useState(true);
     const [companies, setCompanies] = useState<any[]>([]);
 
+    // Estados para roles
+    const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+    const [loadingRoles, setLoadingRoles] = useState(false);
+
     // Estados para el Buscador de Empresas
     const [companySearch, setCompanySearch] = useState('');
     const [isCompanyListOpen, setIsCompanyListOpen] = useState(false);
     const [companyError, setCompanyError] = useState(false);
-
-    // NUEVO: Estado para el error del título
     const [titleError, setTitleError] = useState(false);
+    const [roleError, setRoleError] = useState(false);
 
     const companyRef = useRef<HTMLDivElement>(null);
 
@@ -30,8 +33,34 @@ export default function EditCoursePage() {
         isPublic: false,
         category: 'BASICO',
         companyId: '',
+        requiredRole: '', // Nuevo campo para el rol requerido
         file: null as File | null
     });
+
+    // Cargar roles disponibles
+    const fetchAvailableRoles = async () => {
+        setLoadingRoles(true);
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const res = await fetch(`${API_ROUTES.USERS.GET_ALL}/roles`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setAvailableRoles(Array.isArray(data) ? data : []);
+            } else {
+                setAvailableRoles(["Técnico", "Ventas", "Administrativo", "Gerente", "Operaciones"]);
+            }
+        } catch (err) {
+            console.error("Error cargando roles:", err);
+            setAvailableRoles(["Técnico", "Ventas", "Administrativo", "Gerente", "Operaciones"]);
+        } finally {
+            setLoadingRoles(false);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -41,6 +70,9 @@ export default function EditCoursePage() {
                     router.push('/login');
                     return;
                 }
+
+                // Cargar roles disponibles
+                await fetchAvailableRoles();
 
                 const baseUrl = API_ROUTES.COURSES.GET_ALL.replace(/\/$/, "");
 
@@ -71,7 +103,6 @@ export default function EditCoursePage() {
 
                 setCompanies(allCompanies);
 
-                // Los cursos públicos siempre son BASICO
                 const isPublicCourse = courseData.isPublic || false;
                 const categoryValue = isPublicCourse ? 'BASICO' : (courseData.category?.toUpperCase() === 'ESPECIALIZADO' ? 'ESPECIALIZADO' : 'BASICO');
 
@@ -80,6 +111,7 @@ export default function EditCoursePage() {
                     isPublic: isPublicCourse,
                     category: categoryValue,
                     companyId: courseData.companyId || '',
+                    requiredRole: courseData.jobRole || '', // Cargar el rol requerido
                     file: null
                 });
 
@@ -126,6 +158,12 @@ export default function EditCoursePage() {
             hasError = true;
         }
 
+        // VALIDACIÓN DE ROL (Si es especialización privada)
+        if (!formData.isPublic && formData.category === 'ESPECIALIZADO' && !formData.requiredRole) {
+            setRoleError(true);
+            hasError = true;
+        }
+
         if (hasError) return;
 
         setLoading(true);
@@ -138,15 +176,20 @@ export default function EditCoursePage() {
 
             const baseUrl = API_ROUTES.COURSES.GET_ALL.replace(/\/$/, "");
 
-            // Los cursos públicos siempre son BASICO (Onboarding)
-            const categoryToSend = formData.isPublic ? 'BASICO' : formData.category;
-
-            const payload = {
+            // Construir payload
+            const payload: any = {
                 title: formData.title.trim(),
                 isPublic: formData.isPublic,
-                category: categoryToSend,
+                category: formData.isPublic ? 'BASICO' : formData.category,
                 companyId: formData.isPublic ? null : (formData.companyId || null),
             };
+
+            // Solo incluir jobRole si es especialización privada
+            if (!formData.isPublic && formData.category === 'ESPECIALIZADO') {
+                payload.jobRole = formData.requiredRole;
+            } else {
+                payload.jobRole = null;
+            }
 
             console.log("Enviando actualización:", payload);
             console.log("URL:", `${baseUrl}/${courseId}`);
@@ -282,7 +325,7 @@ export default function EditCoursePage() {
                                     </p>
                                 )}
                             </div>
-                        )}: (
+                        ) : (
                             <div className="p-6 bg-blue-50 border border-blue-100 rounded-[2rem] flex items-center gap-4 animate-in zoom-in-95 duration-500">
                                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-[#0071e3] text-xl">
                                     <i className="bi bi-globe"></i>
@@ -292,7 +335,7 @@ export default function EditCoursePage() {
                                     <p className="text-blue-600/70 text-xs font-medium">Contenido universal accesible para todas las organizaciones.</p>
                                 </div>
                             </div>
-                        )
+                        )}
 
                         {/* 2. TÍTULO DEL CURSO (CON VALIDACIÓN) */}
                         <div>
@@ -325,7 +368,10 @@ export default function EditCoursePage() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <button
                                         type="button"
-                                        onClick={() => setFormData({ ...formData, category: 'BASICO' })}
+                                        onClick={() => {
+                                            setFormData({ ...formData, category: 'BASICO', requiredRole: '' });
+                                            setRoleError(false);
+                                        }}
                                         className={`p-5 rounded-2xl border-2 flex items-center justify-center gap-3 cursor-pointer transition-all font-black text-[11px] uppercase tracking-widest ${formData.category === 'BASICO' ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-border/60 bg-muted/20 text-muted-foreground hover:border-primary/40'}`}
                                     >
                                         <i className="bi bi-book-half text-lg"></i> Onboarding
@@ -341,12 +387,56 @@ export default function EditCoursePage() {
                             </div>
                         )}
 
+                        {/* ROL REQUERIDO - Solo para cursos privados de especialización */}
+                        {!formData.isPublic && formData.category === 'ESPECIALIZADO' && (
+                            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                                    Rol Requerido
+                                </label>
+                                <select
+                                    value={formData.requiredRole}
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, requiredRole: e.target.value });
+                                        setRoleError(false);
+                                    }}
+                                    className={`w-full px-5 py-4 rounded-2xl bg-background border outline-none font-bold text-foreground transition-all text-sm appearance-none cursor-pointer ${roleError ? 'border-destructive bg-destructive/5' : 'border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5'}`}
+                                    disabled={loadingRoles}
+                                    required
+                                >
+                                    <option value="">Seleccionar rol...</option>
+                                    {availableRoles.map((role) => (
+                                        <option key={role} value={role}>
+                                            {role}
+                                        </option>
+                                    ))}
+                                </select>
+                                {roleError && (
+                                    <p className="text-destructive text-[10px] font-bold mt-2 ml-2 flex items-center gap-1">
+                                        <i className="bi bi-exclamation-circle-fill"></i> Debes seleccionar un rol para el curso de especialización
+                                    </p>
+                                )}
+                                <p className="text-[10px] text-muted-foreground ml-1">
+                                    Solo los empleados con este rol podrán ver y acceder al curso
+                                </p>
+                            </div>
+                        )}
+
                         {/* Información adicional para cursos públicos */}
                         {formData.isPublic && (
                             <div className="p-4 bg-muted/30 rounded-2xl border border-border/40">
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center flex items-center justify-center gap-2">
                                     <i className="bi bi-info-circle"></i>
                                     Los cursos públicos son siempre del tipo "Onboarding"
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Información adicional para cursos privados de onboarding */}
+                        {!formData.isPublic && formData.category === 'BASICO' && (
+                            <div className="p-4 bg-muted/30 rounded-2xl border border-border/40">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center flex items-center justify-center gap-2">
+                                    <i className="bi bi-info-circle"></i>
+                                    Los cursos de Onboarding están disponibles para todos los empleados sin restricción de rol
                                 </p>
                             </div>
                         )}
