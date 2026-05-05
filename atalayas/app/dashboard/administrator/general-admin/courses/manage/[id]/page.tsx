@@ -164,14 +164,6 @@ export default function EditCoursePage() {
                 console.log("Curso actualizado correctamente");
                 router.push('/dashboard/administrator/general-admin/courses/manage');
             } else {
-<<<<<<< enrollment
-                const errorData = await res.json().catch(() => ({}));
-                alert("Error al guardar: " + (errorData.message || "Error del servidor"));
-                setLoading(false);
-            }
-        } catch (err) {
-            alert("Error de conexión.");
-=======
                 const errorText = await res.text();
                 console.error("Error al actualizar:", res.status, errorText);
 
@@ -189,7 +181,6 @@ export default function EditCoursePage() {
         } catch (err) {
             console.error("Error en la petición:", err);
             alert("Error al conectar con el servidor");
->>>>>>> dev
             setLoading(false);
         }
     };
@@ -291,7 +282,7 @@ export default function EditCoursePage() {
                                     </p>
                                 )}
                             </div>
-                        ) : (
+                        )}: (
                             <div className="p-6 bg-blue-50 border border-blue-100 rounded-[2rem] flex items-center gap-4 animate-in zoom-in-95 duration-500">
                                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-[#0071e3] text-xl">
                                     <i className="bi bi-globe"></i>
@@ -301,17 +292,13 @@ export default function EditCoursePage() {
                                     <p className="text-blue-600/70 text-xs font-medium">Contenido universal accesible para todas las organizaciones.</p>
                                 </div>
                             </div>
-                        )}
+                        )
 
                         {/* 2. TÍTULO DEL CURSO (CON VALIDACIÓN) */}
                         <div>
-<<<<<<< enrollment
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] mb-2 ml-1">Nombre del Curso</label>
-=======
                             <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1 text-center sm:text-left">
                                 Nombre del Curso
                             </label>
->>>>>>> dev
                             <input
                                 type="text"
                                 value={formData.title}
