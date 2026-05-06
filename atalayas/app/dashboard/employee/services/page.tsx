@@ -164,7 +164,7 @@ export default function EmployeeServices() {
                                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                                     />
                                                 ) : (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                                                    <div className="w-full h-full flex flex-col items-center justify-center bg-linear-to-br from-muted to-muted/50">
                                                         <i className="bi bi-box-seam text-4xl text-muted-foreground/30"></i>
                                                     </div>
                                                 )}

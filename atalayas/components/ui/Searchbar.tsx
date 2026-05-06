@@ -57,9 +57,9 @@ export default function SearchInput({ value, onChange, placeholder }: SearchInpu
             ml-3 w-full text-sm text-foreground outline-none placeholder:text-muted-foreground transition-opacity duration-300
             /* FORZADO DE TRANSPARENCIA TOTAL */
             appearance-none border-none ring-0 shadow-none
-            !bg-transparent !bg-none !p-0
+            !bg-transparent! !bg-none! !p-0!
             /* Reset para navegadores que fuerzan el fondo en inputs */
-            [-webkit-appearance:none] [background-clip:text]
+            [-webkit-appearance:none] [bg-clip:text]
             ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}
           `}
         />
