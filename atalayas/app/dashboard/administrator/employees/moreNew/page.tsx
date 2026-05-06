@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/ui/Sidebar";
 import PageHeader from "@/components/ui/pageHeader";
@@ -14,6 +14,36 @@ export default function BulkCreatePage() {
     const [error, setError] = useState("");
     const [currentUser, setCurrentUser] = useState<any>(null);
 
+    // Estado para roles disponibles (autocompletado)
+    const [availableJobRoles, setAvailableJobRoles] = useState<string[]>([]);
+    const [activeSuggestionIndex, setActiveSuggestionIndex] = useState<number | null>(null);
+    const [suggestions, setSuggestions] = useState<string[]>([]);
+    const inputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
+    const suggestionsRef = useRef<HTMLDivElement | null>(null);
+
+    // Cargar roles existentes
+    useEffect(() => {
+        const fetchJobRoles = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) return;
+
+                const res = await fetch(`${API_ROUTES.USERS.GET_ALL}/roles`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    setAvailableJobRoles(Array.isArray(data) ? data : []);
+                }
+            } catch (err) {
+                console.error("Error cargando puestos:", err);
+            }
+        };
+
+        fetchJobRoles();
+    }, []);
+
     // Función para generar contraseña aleatoria
     const generateRandomPassword = () => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -23,6 +53,41 @@ export default function BulkCreatePage() {
         }
         return password;
     };
+
+    // Filtrar sugerencias basadas en el texto ingresado
+    const filterSuggestions = (inputValue: string) => {
+        if (!inputValue.trim()) return [];
+        return availableJobRoles.filter(role =>
+            role.toLowerCase().includes(inputValue.toLowerCase())
+        ).slice(0, 5); // Limitar a 5 sugerencias
+    };
+
+    // Manejar cambios en el campo jobRole
+    const handleJobRoleChange = (index: number, value: string) => {
+        updateEmployee(index, 'jobRole', value);
+        setActiveSuggestionIndex(index);
+        setSuggestions(filterSuggestions(value));
+    };
+
+    // Seleccionar una sugerencia
+    const selectSuggestion = (index: number, suggestion: string) => {
+        updateEmployee(index, 'jobRole', suggestion);
+        setSuggestions([]);
+        setActiveSuggestionIndex(null);
+    };
+
+    // Cerrar sugerencias al hacer clic fuera
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
+                setSuggestions([]);
+                setActiveSuggestionIndex(null);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
@@ -48,7 +113,7 @@ export default function BulkCreatePage() {
                         email: row.email || row.correo || "",
                         role: finalRole,
                         jobRole: row.puesto || row.trabajo || row.jobRole || "",
-                        password: generateRandomPassword(), // Generamos contraseña temporal
+                        password: generateRandomPassword(),
                         status: "pendiente",
                         errorMsg: "",
                     };
@@ -88,7 +153,7 @@ export default function BulkCreatePage() {
                 const payload = {
                     name: emp.name,
                     email: emp.email,
-                    password: emp.password, // Enviamos la contraseña generada
+                    password: emp.password,
                     role: emp.role,
                     jobRole: emp.jobRole,
                     companyId: currentUser.companyId,
@@ -186,48 +251,93 @@ export default function BulkCreatePage() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-border/50">
-                                            {employees.map((emp, i) => (
-                                                <tr key={i} className={`transition-colors ${emp.status === 'error' ? 'bg-destructive/5' : 'hover:bg-muted/30'}`}>
-                                                    <td className="px-4 py-2">
-                                                        <input className="w-full bg-transparent p-2 text-sm font-bold outline-none focus:text-primary" value={emp.name} onChange={(e) => updateEmployee(i, 'name', e.target.value)} />
-                                                    </td>
-                                                    <td className="px-4 py-2">
-                                                        <input className="w-full bg-transparent p-2 text-sm font-bold outline-none focus:text-primary" value={emp.email} onChange={(e) => updateEmployee(i, 'email', e.target.value)} />
-                                                    </td>
-                                                    <td className="px-4 py-2">
-                                                        <input className="w-full bg-transparent p-2 text-sm font-bold outline-none focus:text-primary" value={emp.jobRole} onChange={(e) => updateEmployee(i, 'jobRole', e.target.value)} />
-                                                    </td>
-                                                    <td className="px-4 py-2 text-center">
-                                                        <select
-                                                            className="bg-muted px-3 py-1.5 rounded-xl text-[10px] font-black border-none cursor-pointer focus:ring-2 focus:ring-primary/20"
-                                                            value={emp.role}
-                                                            onChange={(e) => updateEmployee(i, 'role', e.target.value)}
-                                                        >
-                                                            <option value="EMPLOYEE">EMPLEADO</option>
-                                                            <option value="ADMIN">ADMIN</option>
-                                                        </select>
-                                                    </td>
-                                                    <td className="px-6 py-2">
-                                                        {emp.status === "completado" ? (
-                                                            <span className="inline-flex items-center gap-1.5 text-green-600 text-[10px] font-black tracking-tighter">
-                                                                <i className="bi bi-check-circle-fill text-sm"></i> LISTO
-                                                            </span>
-                                                        ) : emp.status === "error" ? (
-                                                            <div className="flex flex-col">
-                                                                <span className="text-destructive text-[9px] font-black uppercase italic">Error</span>
-                                                                <span className="text-destructive/80 text-[10px] font-medium leading-none truncate max-w-[120px]">{emp.errorMsg}</span>
+                                            {employees.map((emp, i) => {
+                                                const showSuggestions = activeSuggestionIndex === i && suggestions.length > 0;
+
+                                                return (
+                                                    <tr key={i} className={`transition-colors ${emp.status === 'error' ? 'bg-destructive/5' : 'hover:bg-muted/30'}`}>
+                                                        <td className="px-4 py-2">
+                                                            <input
+                                                                className="w-full bg-transparent p-2 text-sm font-bold outline-none focus:text-primary"
+                                                                value={emp.name}
+                                                                onChange={(e) => updateEmployee(i, 'name', e.target.value)}
+                                                            />
+                                                        </td>
+                                                        <td className="px-4 py-2">
+                                                            <input
+                                                                className="w-full bg-transparent p-2 text-sm font-bold outline-none focus:text-primary"
+                                                                value={emp.email}
+                                                                onChange={(e) => updateEmployee(i, 'email', e.target.value)}
+                                                            />
+                                                        </td>
+                                                        <td className="px-4 py-2 relative">
+                                                            <div className="relative">
+                                                                <input
+                                                                    ref={el => { inputRefs.current[i] = el; }}
+                                                                    className="w-full bg-transparent p-2 text-sm font-bold outline-none focus:text-primary"
+                                                                    value={emp.jobRole}
+                                                                    onChange={(e) => handleJobRoleChange(i, e.target.value)}
+                                                                    onFocus={() => {
+                                                                        setActiveSuggestionIndex(i);
+                                                                        setSuggestions(filterSuggestions(emp.jobRole));
+                                                                    }}
+                                                                    placeholder="Ej. Técnico, Vendedor..."
+                                                                />
+                                                                {showSuggestions && (
+                                                                    <div
+                                                                        ref={suggestionsRef}
+                                                                        className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto"
+                                                                        style={{ top: '100%' }}
+                                                                    >
+                                                                        {suggestions.map((suggestion, idx) => (
+                                                                            <button
+                                                                                key={idx}
+                                                                                type="button"
+                                                                                onClick={() => selectSuggestion(i, suggestion)}
+                                                                                className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors first:rounded-t-xl last:rounded-b-xl font-medium"
+                                                                            >
+                                                                                {suggestion}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                        ) : (
-                                                            <span className="text-muted-foreground/40 text-[10px] font-black uppercase italic tracking-tighter">Pendiente</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-2 text-right">
-                                                        <button onClick={() => removeEmployee(i)} className="w-8 h-8 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all border-none bg-transparent cursor-pointer">
-                                                            <i className="bi bi-trash3"></i>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                                        </td>
+                                                        <td className="px-4 py-2 text-center">
+                                                            <select
+                                                                className="bg-muted px-3 py-1.5 rounded-xl text-[10px] font-black border-none cursor-pointer focus:ring-2 focus:ring-primary/20"
+                                                                value={emp.role}
+                                                                onChange={(e) => updateEmployee(i, 'role', e.target.value)}
+                                                            >
+                                                                <option value="EMPLOYEE">EMPLEADO</option>
+                                                                <option value="ADMIN">ADMIN</option>
+                                                            </select>
+                                                        </td>
+                                                        <td className="px-6 py-2">
+                                                            {emp.status === "completado" ? (
+                                                                <span className="inline-flex items-center gap-1.5 text-green-600 text-[10px] font-black tracking-tighter">
+                                                                    <i className="bi bi-check-circle-fill text-sm"></i> LISTO
+                                                                </span>
+                                                            ) : emp.status === "error" ? (
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-destructive text-[9px] font-black uppercase italic">Error</span>
+                                                                    <span className="text-destructive/80 text-[10px] font-medium leading-none truncate max-w-[120px]">{emp.errorMsg}</span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-muted-foreground/40 text-[10px] font-black uppercase italic tracking-tighter">Pendiente</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-2 text-right">
+                                                            <button
+                                                                onClick={() => removeEmployee(i)}
+                                                                className="w-8 h-8 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all border-none bg-transparent cursor-pointer"
+                                                            >
+                                                                <i className="bi bi-trash3"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>

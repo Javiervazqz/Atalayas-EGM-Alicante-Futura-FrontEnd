@@ -11,7 +11,7 @@ import { useSearchParams } from "next/navigation";
 export default function EmployeeCoursesPage() {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Estados de filtrado
   const [visibilityTab, setVisibilityTab] = useState<"TODOS" | "PÚBLICO" | "PRIVADO">("TODOS");
   const [categoryTab, setCategoryTab] = useState<"TODOS" | "BASICO" | "ESPECIALIZADO">("TODOS");
@@ -19,7 +19,7 @@ export default function EmployeeCoursesPage() {
   const searchParams = useSearchParams();
   const fromTaskId = searchParams.get("fromTask");
 
-  // ... (Función downloadCertificate se mantiene igual)
+  // Función downloadCertificate
   const downloadCertificate = async (courseId: string) => {
     try {
       const token = localStorage.getItem("token");
@@ -49,7 +49,7 @@ export default function EmployeeCoursesPage() {
         });
         const data = await res.json();
         const rawCourses = Array.isArray(data) ? data : data.courses || [];
-        const sortedDataCourses = [...rawCourses].sort((a: any, b: any) => 
+        const sortedDataCourses = [...rawCourses].sort((a: any, b: any) =>
           (a.title || "").trim().localeCompare((b.title || "").trim(), undefined, { numeric: true })
         );
         setCourses(sortedDataCourses);
@@ -89,7 +89,7 @@ export default function EmployeeCoursesPage() {
         />
 
         <div className="p-6 lg:p-10 flex-1 space-y-6">
-          
+
           {/* --- SELECTORES DE FILTRADO --- */}
           <div className="space-y-4">
             {/* Nivel 1: Visibilidad */}
@@ -99,12 +99,11 @@ export default function EmployeeCoursesPage() {
                   <button
                     key={tab}
                     onClick={() => {
-                        setVisibilityTab(tab as any);
-                        if (tab !== "PRIVADO") setCategoryTab("TODOS"); // Reset categoría si no es privado
+                      setVisibilityTab(tab as any);
+                      if (tab !== "PRIVADO") setCategoryTab("TODOS");
                     }}
-                    className={`relative px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${
-                      visibilityTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                    }`}
+                    className={`relative px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${visibilityTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                      }`}
                   >
                     <span className="relative z-10">{tab}</span>
                     {visibilityTab === tab && (
@@ -118,7 +117,7 @@ export default function EmployeeCoursesPage() {
             {/* Nivel 2: Categorías (Solo si PRIVADO está activo) */}
             <AnimatePresence>
               {visibilityTab === "PRIVADO" && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
@@ -129,12 +128,11 @@ export default function EmployeeCoursesPage() {
                       <button
                         key={tab}
                         onClick={() => setCategoryTab(tab as any)}
-                        className={`relative px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${
-                          categoryTab === tab ? "text-secondary" : "text-muted-foreground hover:text-foreground"
-                        }`}
+                        className={`relative px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${categoryTab === tab ? "text-secondary" : "text-muted-foreground hover:text-foreground"
+                          }`}
                       >
                         <span className="relative z-10">
-                            {tab === "TODOS" ? "Todos" : tab === "BASICO" ? "Onboarding" : "Especialización"}
+                          {tab === "TODOS" ? "Todos" : tab === "BASICO" ? "Onboarding" : "Especialización"}
                         </span>
                         {categoryTab === tab && (
                           <motion.div layoutId="catPill" className="absolute inset-0 bg-secondary/10 rounded-lg" />
@@ -170,7 +168,7 @@ export default function EmployeeCoursesPage() {
               ) : (
                 filtered.map((course) => {
                   const isBasico = course.category?.toUpperCase() !== "ESPECIALIZADO";
-                  
+
                   return (
                     <div
                       key={course.id}
@@ -179,24 +177,30 @@ export default function EmployeeCoursesPage() {
                       {/* Portada */}
                       <div className="relative aspect-16/10 overflow-hidden bg-muted">
                         {course.fileUrl ? (
-                          <img 
-                            src={course.fileUrl} 
-                            alt={course.title} 
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                          <img
+                            src={course.fileUrl}
+                            alt={course.title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                           />
                         ) : (
                           <div className={`w-full h-full flex items-center justify-center text-4xl ${isBasico ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"}`}>
                             <i className={`bi ${isBasico ? "bi-compass" : "bi-rocket-takeoff"}`}></i>
                           </div>
                         )}
-                        
-                        {/* Tags de estado */}
-                        <div className="absolute top-4 left-4 flex gap-2">
-                          <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-md border backdrop-blur-md ${
-                            course.isPublic ? "bg-green-500/20 text-green-600 border-green-500/20" : "bg-blue-500/20 text-blue-600 border-blue-500/20"
-                          }`}>
+
+                        {/* Tags de estado - MODIFICADO: añadido badge de rol para especialización */}
+                        <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
+                          <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-md border backdrop-blur-md ${course.isPublic ? "bg-green-500/20 text-green-600 border-green-500/20" : "bg-blue-500/20 text-blue-600 border-blue-500/20"
+                            }`}>
                             {course.isPublic ? "Público" : "Privado"}
                           </span>
+                          {/* Mostrar el rol requerido si es especialización */}
+                          {!isBasico && course.jobRole && (
+                            <span className="text-[8px] font-black uppercase px-2 py-1 rounded-md border bg-purple-500/20 text-purple-600 border-purple-500/20 backdrop-blur-md">
+                              <i className="bi bi-person-badge mr-1"></i>
+                              {course.jobRole}
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -207,17 +211,17 @@ export default function EmployeeCoursesPage() {
 
                         {/* Barra de progreso */}
                         <div className="mb-6">
-                           <div className="flex justify-between text-[9px] font-black uppercase mb-1">
-                             <span className="text-muted-foreground">Progreso</span>
-                             <span>{course.progress || 0}%</span>
-                           </div>
-                           <div className="h-1 bg-muted rounded-full overflow-hidden">
-                             <motion.div 
-                               initial={{ width: 0 }}
-                               animate={{ width: `${course.progress || 0}%` }}
-                               className={`h-full ${course.progress === 100 ? "bg-green-500" : "bg-primary"}`}
-                             />
-                           </div>
+                          <div className="flex justify-between text-[9px] font-black uppercase mb-1">
+                            <span className="text-muted-foreground">Progreso</span>
+                            <span>{course.progress || 0}%</span>
+                          </div>
+                          <div className="h-1 bg-muted rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${course.progress || 0}%` }}
+                              className={`h-full ${course.progress === 100 ? "bg-green-500" : "bg-primary"}`}
+                            />
+                          </div>
                         </div>
 
                         <div className="mt-auto space-y-2">
