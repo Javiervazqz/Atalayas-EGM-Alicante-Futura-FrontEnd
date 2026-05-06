@@ -47,8 +47,7 @@ export default function AnnouncementDetailPage() {
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f] font-sans text-foreground overflow-hidden">
-      {/* Sidebar actualizado a GENERAL_ADMIN */}
-      <Sidebar role="GENERAL_ADMIN" />
+      <Sidebar role="ADMIN" />
 
       <main className="flex-1 overflow-auto flex flex-col no-scrollbar">
         
@@ -58,7 +57,7 @@ export default function AnnouncementDetailPage() {
             day: '2-digit', month: 'long', year: 'numeric' 
           })}`}
           icon={<i className="bi bi-megaphone-fill text-primary"></i>}
-          backUrl="/dashboard/administrator/general-admin/announcements"
+          backUrl="/dashboard/administrator/admin/announcements"
         />
 
         <div className="p-6 lg:p-10 flex-1">
@@ -147,9 +146,9 @@ export default function AnnouncementDetailPage() {
 
                   <div className="bg-primary rounded-[2.5rem] p-8 text-white relative overflow-hidden group shadow-lg shadow-primary/20">
                     <div className="relative z-10">
-                        <h4 className="font-black text-xl mb-3 tracking-tighter italic">Panel de Control</h4>
+                        <h4 className="font-black text-xl mb-3 tracking-tighter italic">¿Alguna duda?</h4>
                         <p className="text-white/80 text-xs font-medium leading-relaxed mb-6">
-                          Como Administrador General, puedes gestionar este comunicado global o contactar con soporte técnico para ajustes avanzados.
+                          Si tienes preguntas sobre este comunicado, contacta directamente con el departamento responsable.
                         </p>
                         <button className="w-full py-3 bg-white text-primary rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-transform">
                           Contactar Soporte

@@ -116,7 +116,6 @@ export default function Sidebar({ role }: SidebarProps) {
 
   useEffect(() => {
     const updateCounts = () => {
-      setPendingSuggestionsCount(Number(localStorage.getItem('count_suggestions')) || 0);
       setPendingRequestsCount(Number(localStorage.getItem('count_requests')) || 0);
     };
     window.addEventListener('local-storage-update', updateCounts);

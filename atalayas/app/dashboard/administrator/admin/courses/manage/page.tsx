@@ -122,7 +122,7 @@ export default function ManageCourses() {
 
               <Link
                 href="/dashboard/administrator/admin/courses/new"
-                className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
+                className="bg-secondary text-secondary-foreground px-8 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
               >
                 <i className="bi bi-plus-lg"></i> Nuevo curso
               </Link>

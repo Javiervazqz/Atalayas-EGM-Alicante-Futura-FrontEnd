@@ -1,166 +1,194 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/ui/Sidebar';
-import PageHeader from '@/components/ui/pageHeader';
-import { API_ROUTES, fetchWithApiFallback } from '@/lib/utils';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Sidebar from "@/components/ui/Sidebar";
+import PageHeader from "@/components/ui/pageHeader";
+import { API_ROUTES } from "@/lib/utils";
 
-export default function NewCoursePage() {
+export default function NewGlobalAnnouncementPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [titleError, setTitleError] = useState(false);
+  const [loadingStep, setLoadingStep] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  
+  // Estado para validaciones
+  const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
 
-  const [formData, setFormData] = useState({
-    title: '',
-    isPublic: true, // Por defecto público según el contexto
-    category: 'BASICO' as 'BASICO' | 'ESPECIALIZADO',
-    file: null as File | null,
+  const [formData, setFormData] = useState({ 
+    title: "", 
+    content: "", 
+    imageFile: null as File | null 
   });
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (file) {
+      setFormData({ ...formData, imageFile: file });
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
 
-    if (!formData.title.trim()) {
-      setTitleError(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validaciones locales
+    const newErrors: { title?: string; content?: string } = {};
+    if (!formData.title.trim()) newErrors.title = "El título es obligatorio";
+    if (!formData.content.trim()) newErrors.content = "El contenido es obligatorio";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
+    setErrors({});
     setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error("Sesión expirada");
+    setLoadingStep("Publicando comunicado global...");
 
-      // Construcción del FormData para envío multimedia
+    try {
+      const token = localStorage.getItem("token");
       const data = new FormData();
-      data.append('title', formData.title.trim());
-      data.append('isPublic', 'true');
-      data.append('category', formData.category);
+      data.append("title", formData.title);
+      data.append("content", formData.content);
       
-      if (formData.file) {
-        data.append('file', formData.file);
+      // Forzamos isPublic a true ya que es el Administrador General
+      data.append("isPublic", "true");
+      
+      if (formData.imageFile) {
+        data.append("image", formData.imageFile);
       }
 
-      const res = await fetch(API_ROUTES.COURSES.CREATE, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-          // Nota: No definir Content-Type aquí, el navegador lo hará automáticamente
+      const res = await fetch(API_ROUTES.ANNOUNCEMENTS.CREATE, {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}` 
         },
         body: data,
       });
 
-      if (!res.ok) throw new Error("Error al crear el curso");
+      if (!res.ok) throw new Error("Error al crear el comunicado global");
 
-      router.push('/dashboard/administrator/general-admin/courses/manage');
-      router.refresh();
+      // Redirección a la ruta de general-admin
+      router.push("/dashboard/administrator/general-admin/announcements");
     } catch (err) {
+      console.error(err);
+      alert("Error en el proceso de creación del servidor.");
     } finally {
       setLoading(false);
     }
   };
 
-  const inputClass = "w-full px-6 py-4 bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.08] focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-[1.5rem] outline-none transition-all text-[15px] font-bold text-foreground placeholder:text-muted-foreground/40";
-
   return (
-    <div className="flex h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f] font-sans text-foreground overflow-hidden">
+    <div className="flex min-h-screen bg-background font-sans">
+      {/* Sidebar configurado para GENERAL_ADMIN */}
       <Sidebar role="GENERAL_ADMIN" />
-
-      <main className="flex-1 flex flex-col min-w-0 bg-white/40 dark:bg-transparent backdrop-blur-3xl overflow-y-auto no-scrollbar">
-        <PageHeader
-          title="Nuevo Curso Público"
-          description="Diseña y publica contenido formativo accesible para toda la red."
-          icon={<i className="bi bi-globe-americas"></i>}
-          backUrl="/dashboard/administrator/general-admin/courses/manage"
+      
+      <main className="flex-1 overflow-auto flex flex-col">
+        <PageHeader 
+          title="Nuevo Comunicado Global"
+          description="Crea un anuncio de alto impacto visible para todas las organizaciones."
+          icon={<i className="bi bi-globe-americas text-primary"></i>}
+          backUrl={`/dashboard/administrator/general-admin/announcements`}
         />
 
-        <div className="p-6 lg:p-12 flex-1 max-w-3xl mx-auto w-full">
+        <div className="p-6 lg:p-10 max-w-5xl mx-auto w-full">
           <form 
             onSubmit={handleSubmit} 
-            className="bg-white dark:bg-[#1c1c1e] p-8 lg:p-12 rounded-[2.5rem] border border-gray-200/50 dark:border-white/6 shadow-[0_20px_50px_rgba(0,0,0,0.02)] space-y-10"
+            className="bg-card p-8 lg:p-12 rounded-[2.5rem] border border-border shadow-sm space-y-8"
           >
-            {/* TÍTULO */}
-            <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">
-                Identificación del Curso
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={e => {
-                  setFormData({ ...formData, title: e.target.value });
-                  if (titleError) setTitleError(false);
-                }}
-                className={`${inputClass} ${titleError ? 'border-red-500/50 bg-red-500/2' : ''}`}
-                placeholder="Ej: Programa de Onboarding 2026..."
-              />
-              {titleError && (
-                <p className="text-red-500 text-[11px] font-bold ml-2 animate-in fade-in slide-in-from-left-2">
-                  Es necesario asignar un nombre al curso
-                </p>
-              )}
-            </div>
-
-            {/* SUBIDA DE IMAGEN (FILE) */}
-            <div className="space-y-3">
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">
-                Identidad Visual (Portada)
-              </label>
-              <div className="relative group">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={e => setFormData({ ...formData, file: e.target.files?.[0] || null })}
-                  className="absolute inset-0 opacity-0 cursor-pointer z-20"
-                />
-                <div className={`
-                  relative h-48 w-full border-2 border-dashed rounded-[2rem] 
-                  flex flex-col items-center justify-center transition-all duration-300
-                  ${formData.file 
-                    ? 'border-primary/40 bg-primary/2' 
-                    : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/1 group-hover:bg-gray-100 dark:group-hover:bg-white/3'}
-                `}>
-                  <div className={`
-                    w-16 h-16 rounded-[1.2rem] flex items-center justify-center text-2xl mb-4 transition-all
-                    ${formData.file ? 'bg-primary text-white scale-110 shadow-lg shadow-primary/20' : 'bg-white dark:bg-white/5 text-muted-foreground shadow-sm'}
-                  `}>
-                    <i className={`bi ${formData.file ? 'bi-check-lg' : 'bi-image'}`}></i>
-                  </div>
-                  
-                  <div className="text-center px-6">
-                    <p className="text-[13px] font-bold text-foreground">
-                      {formData.file ? formData.file.name : 'Seleccionar imagen de portada'}
-                    </p>
-                    <p className="text-[11px] font-medium text-muted-foreground mt-1">
-                      {formData.file ? `${(formData.file.size / 1024).toFixed(1)} KB` : 'Formatos recomendados: JPG, PNG (Max 2MB)'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* BOTÓN SUBMIT */}
-            <div className="pt-6 border-t border-gray-100 dark:border-white/5">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-5 bg-primary text-white rounded-[1.5rem] font-black text-[11px] uppercase tracking-[0.3em] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 disabled:opacity-50 disabled:scale-100"
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-3">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Procesando...
+            
+            {/* Título */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center ml-1">
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+                  Título del Anuncio
+                </label>
+                {errors.title && (
+                  <span className="text-[10px] font-bold text-destructive uppercase tracking-tight">
+                    {errors.title}
                   </span>
-                ) : (
-                  'Publicar Curso Global'
                 )}
-              </button>
+              </div>
+              <input 
+                type="text" 
+                value={formData.title} 
+                onChange={(e) => {
+                  setFormData({...formData, title: e.target.value});
+                  if (errors.title) setErrors({...errors, title: undefined});
+                }} 
+                className={`w-full px-6 py-4 rounded-2xl bg-background border ${errors.title ? 'border-destructive' : 'border-input'} focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold transition-all`} 
+                placeholder="Ej: Mantenimiento global de servidores" 
+              />
             </div>
+
+            {/* Contenido */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center ml-1">
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+                  Cuerpo del Mensaje
+                </label>
+                {errors.content && (
+                  <span className="text-[10px] font-bold text-destructive uppercase tracking-tight">
+                    {errors.content}
+                  </span>
+                )}
+              </div>
+              <textarea 
+                rows={6}
+                value={formData.content} 
+                onChange={(e) => {
+                  setFormData({...formData, content: e.target.value});
+                  if (errors.content) setErrors({...errors, content: undefined});
+                }} 
+                className={`w-full px-6 py-4 rounded-2xl bg-background border ${errors.content ? 'border-destructive' : 'border-input'} focus:border-primary focus:ring-1 focus:ring-primary outline-none font-medium transition-all resize-none`} 
+                placeholder="Describe los detalles del anuncio aquí..." 
+              />
+            </div>
+
+            {/* Subida de Imagen con Preview */}
+            <div className="space-y-4">
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                Imagen de portada (Opcional)
+              </label>
+              <label className="relative h-64 w-full border-2 border-dashed border-border rounded-[2rem] flex items-center justify-center bg-muted/30 hover:border-primary transition-all cursor-pointer group overflow-hidden">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageChange} 
+                  className="hidden" 
+                />
+                
+                {previewUrl ? (
+                  <div className="relative w-full h-full">
+                    <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white font-bold text-sm">Cambiar imagen</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center group-hover:scale-105 transition-transform">
+                      <i className="bi bi-cloud-arrow-up text-4xl text-muted-foreground mb-3"></i>
+                      <p className="font-bold text-foreground">Seleccionar imagen</p>
+                      <p className="text-xs text-muted-foreground mt-1 text-center">Formatos sugeridos: JPG, PNG o WebP</p>
+                  </div>
+                )}
+              </label>
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full py-5 bg-primary text-primary-foreground rounded-2xl font-black text-lg hover:opacity-90 disabled:opacity-50 shadow-xl shadow-primary/20 transition-all uppercase tracking-tight"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-3">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  {loadingStep}
+                </span>
+              ) : "Publicar comunicado"}
+            </button>
           </form>
-          
-          <p className="text-center mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/30">
-            Este curso será visible instantáneamente para todos los usuarios de la plataforma
-          </p>
         </div>
       </main>
     </div>
