@@ -58,7 +58,6 @@ export default function ManageCourses() {
         setAvailableRoles(Array.isArray(data) ? data : []);
       } else {
         console.error("Error cargando roles:", res.status);
-        // Si el endpoint no existe, usar roles por defecto
         setAvailableRoles(["Técnico", "Ventas", "Administrativo", "Gerente", "Operaciones"]);
       }
     } catch (err) {
@@ -88,7 +87,6 @@ export default function ManageCourses() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validar que si es especialización, tenga un rol seleccionado
     if (courseToEdit.category === "ESPECIALIZADO" && !courseToEdit.requiredRole) {
       alert("Para cursos de especialización, debes seleccionar un rol requerido");
       return;
@@ -99,20 +97,17 @@ export default function ManageCourses() {
     try {
       const token = localStorage.getItem("token");
 
-      // 🔥 CORREGIDO: Usar 'jobRole' en lugar de 'requiredRole'
       const payload: any = {
         title: courseToEdit.title,
         category: courseToEdit.category,
       };
 
-      // Solo incluir jobRole si es especialización
       if (courseToEdit.category === "ESPECIALIZADO") {
         payload.jobRole = courseToEdit.requiredRole;
       } else {
         payload.jobRole = null;
       }
 
-      // Si hay una nueva imagen, usamos FormData
       if (courseToEdit.newImageFile) {
         const formData = new FormData();
         formData.append("title", courseToEdit.title);
@@ -139,7 +134,6 @@ export default function ManageCourses() {
           alert(`Error: ${errorData.message || "No se pudo actualizar"}`);
         }
       } else {
-        // Sin imagen, usamos JSON
         const res = await fetch(API_ROUTES.COURSES.UPDATE(courseToEdit.id), {
           method: "PATCH",
           headers: {
@@ -183,17 +177,17 @@ export default function ManageCourses() {
           description="Administra los cursos de formación de tu empresa y el contenido global."
           icon={<i className="bi bi-gear-fill"></i>}
           action={
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-2">
               <Link
                 href="/dashboard/administrator/admin/courses"
-                className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
+                className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap"
               >
                 <i className="bi bi-eye-fill"></i>Vista de empleado
               </Link>
 
               <Link
-                href="/dashboard/administrator/admin/courses/new"
-                className="bg-secondary text-secondary-foreground px-8 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
+                href="/dashboard/administrator/admin/courses/manage/new"
+                className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap"
               >
                 <i className="bi bi-plus-lg"></i> Nuevo curso
               </Link>
@@ -373,7 +367,6 @@ export default function ManageCourses() {
                     setCourseToEdit({
                       ...courseToEdit,
                       category: newCategory,
-                      // Si cambia a BASICO, limpiar requiredRole
                       requiredRole: newCategory === "BASICO" ? "" : courseToEdit.requiredRole
                     });
                   }}

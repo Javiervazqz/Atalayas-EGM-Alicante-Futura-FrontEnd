@@ -10,16 +10,16 @@ export default function NewCoursePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState("");
-  const [useAi, setUseAi] = useState(false);
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
     isPublic: false,
     category: "BASICO",
-    requiredRole: "", // Nuevo campo para el rol requerido
-    file: null as File | null
+    requiredRole: "",
+    imageFile: null as File | null
   });
 
   const user = typeof window !== "undefined"
@@ -42,13 +42,10 @@ export default function NewCoursePage() {
           const data = await res.json();
           setAvailableRoles(Array.isArray(data) ? data : []);
         } else {
-          console.error("Error cargando roles:", res.status);
-          // Si el endpoint no existe, usar roles por defecto
           setAvailableRoles(["Técnico", "Ventas", "Administrativo", "Gerente", "Operaciones"]);
         }
       } catch (err) {
         console.error("Error cargando roles:", err);
-        // Roles de ejemplo en caso de error
         setAvailableRoles(["Técnico", "Ventas", "Administrativo", "Gerente", "Operaciones"]);
       } finally {
         setLoadingRoles(false);
@@ -57,6 +54,16 @@ export default function NewCoursePage() {
 
     fetchAvailableRoles();
   }, []);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData({ ...formData, imageFile: file });
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -73,11 +80,6 @@ export default function NewCoursePage() {
       return;
     }
 
-    if (useAi && !formData.file) {
-      alert("Sube un PDF para usar la IA.");
-      return;
-    }
-
     setLoading(true);
     setLoadingStep("Iniciando creación...");
 
@@ -88,72 +90,42 @@ export default function NewCoursePage() {
         throw new Error("No hay sesión iniciada");
       }
 
-      // 🔥 CORREGIDO: Usar 'jobRole' en lugar de 'requiredRole'
-      const courseData: any = {
-        title: formData.title,
-        isPublic: formData.isPublic,
-        category: formData.category,
-        companyId: user.companyId
-      };
+      // Crear FormData para enviar archivo
+      const formDataToSend = new FormData();
+      formDataToSend.append("title", formData.title);
+      formDataToSend.append("isPublic", String(formData.isPublic));
+      formDataToSend.append("category", formData.category);
+      formDataToSend.append("companyId", user.companyId || "");
 
-      // Solo incluir jobRole si es especialización
-      if (formData.category === "ESPECIALIZADO") {
-        courseData.jobRole = formData.requiredRole; // Cambiado de requiredRole a jobRole
+      if (formData.category === "ESPECIALIZADO" && formData.requiredRole) {
+        formDataToSend.append("jobRole", formData.requiredRole);
       }
 
-      console.log("Enviando datos:", courseData);
+      if (formData.imageFile) {
+        formDataToSend.append("file", formData.imageFile);
+      }
+
+      console.log("Enviando datos...");
       console.log("URL:", API_ROUTES.COURSES.CREATE);
 
-      // 1. Crear el curso
       setLoadingStep("Creando curso...");
       const resCourse = await fetch(API_ROUTES.COURSES.CREATE, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(courseData),
+        body: formDataToSend,
       });
 
-      // Verificar respuesta
       if (!resCourse.ok) {
         const errorText = await resCourse.text();
         console.error("Error respuesta:", resCourse.status, errorText);
-        throw new Error(`Error al crear el curso: ${resCourse.status} ${errorText}`);
+        throw new Error(`Error al crear el curso: ${resCourse.status}`);
       }
 
       const newCourse = await resCourse.json();
       console.log("Curso creado exitosamente:", newCourse);
 
-      // 2. Procesar con IA si está activado y hay archivo
-      if (useAi && formData.file && newCourse.id) {
-        setLoadingStep("🧠 Procesando Podcast con IA...");
-
-        const aiFormData = new FormData();
-        aiFormData.append("title", `Módulo 1: ${formData.title}`);
-        aiFormData.append("file", formData.file);
-
-        try {
-          const aiResponse = await fetch(`http://localhost:3000/courses/${newCourse.id}/content/ai`, {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${token}`
-            },
-            body: aiFormData,
-          });
-
-          if (!aiResponse.ok) {
-            console.warn("El curso se creó pero hubo error en el procesamiento de IA");
-          } else {
-            console.log("Contenido IA procesado correctamente");
-          }
-        } catch (aiError) {
-          console.error("Error en procesamiento IA:", aiError);
-          // No detenemos el flujo, el curso ya está creado
-        }
-      }
-
-      // 3. Redirigir a la lista de cursos
       router.push("/dashboard/administrator/admin/courses/manage");
 
     } catch (err) {
@@ -170,13 +142,48 @@ export default function NewCoursePage() {
       <main className="flex-1 overflow-auto flex flex-col">
         <PageHeader
           title="Nuevo Curso"
-          description="Crea contenido formativo apoyado por Inteligencia Artificial."
+          description="Crea un nuevo curso con imagen de portada y configuración de acceso."
           icon={<i className="bi bi-plus-circle-fill"></i>}
           backUrl="/dashboard/administrator/admin/courses/manage"
         />
 
         <div className="p-6 lg:p-10 max-w-3xl mx-auto w-full">
           <form onSubmit={handleSubmit} className="bg-card p-8 lg:p-10 rounded-[2.5rem] border border-border shadow-sm space-y-8">
+
+            {/* Imagen de portada */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                Imagen de portada
+              </label>
+              <label className="relative h-40 w-full border-2 border-dashed rounded-2xl flex items-center justify-center transition-all cursor-pointer group overflow-hidden bg-muted/20 hover:border-primary">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  disabled={loading}
+                />
+                {imagePreview ? (
+                  <>
+                    <img src={imagePreview} className="w-full h-full object-cover" alt="Preview" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <div className="text-center text-white">
+                        <i className="bi bi-camera text-2xl mb-1 block"></i>
+                        <span className="text-[10px] font-bold">Cambiar imagen</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <i className="bi bi-image text-3xl text-muted-foreground mb-2 block"></i>
+                    <p className="font-bold text-foreground text-sm">Seleccionar imagen</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">JPG, PNG, GIF hasta 5MB</p>
+                  </div>
+                )}
+              </label>
+            </div>
+
+            {/* Título */}
             <div className="space-y-2">
               <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">
                 Nombre del curso
@@ -188,9 +195,11 @@ export default function NewCoursePage() {
                 className="w-full px-6 py-4 rounded-2xl bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold transition-all"
                 placeholder="Ej: Prevención de Riesgos"
                 disabled={loading}
+                required
               />
             </div>
 
+            {/* Categoría */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
                 type="button"
@@ -225,7 +234,7 @@ export default function NewCoursePage() {
                   onChange={(e) => setFormData({ ...formData, requiredRole: e.target.value })}
                   className="w-full px-6 py-4 rounded-2xl bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold transition-all appearance-none cursor-pointer"
                   disabled={loading || loadingRoles}
-                  required
+                  required={formData.category === "ESPECIALIZADO"}
                 >
                   <option value="">Seleccionar rol...</option>
                   {availableRoles.map((role) => (
@@ -240,54 +249,17 @@ export default function NewCoursePage() {
               </div>
             )}
 
-            <div className="space-y-4">
-              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">
-                Material PDF
-              </label>
-              <label className={`relative h-32 w-full border-2 border-dashed rounded-3xl flex items-center justify-center transition-all cursor-pointer group ${loading ? 'border-border opacity-50 cursor-not-allowed' : 'border-border hover:border-primary'}`}>
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={(e) => setFormData({ ...formData, file: e.target.files?.[0] || null })}
-                  className="hidden"
-                  disabled={loading}
-                />
-                <div className="text-center">
-                  <i className="bi bi-file-pdf text-3xl text-muted-foreground mb-2 block"></i>
-                  <p className="font-bold text-foreground">
-                    {formData.file ? formData.file.name : "Seleccionar PDF"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Click para subir
-                  </p>
-                </div>
-              </label>
-            </div>
-
-            {formData.file && (
-              <div
-                onClick={() => !loading && setUseAi(!useAi)}
-                className={`p-5 cursor-pointer rounded-2xl border-2 transition-all flex items-center justify-between ${useAi ? 'border-indigo-500 bg-indigo-50/50' : 'border-transparent bg-muted/50'} ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${useAi ? 'bg-indigo-500 text-white' : 'bg-muted text-muted-foreground'}`}>
-                    <i className="bi bi-mic"></i>
-                  </div>
-                  <div className="flex flex-col">
-                    <p className={`font-bold ${useAi ? 'text-indigo-900' : 'text-foreground'}`}>
-                      Podcast con IA
-                    </p>
-                    <p className="text-[9px] uppercase font-black opacity-50">
-                      Resumen auditivo
-                    </p>
-                  </div>
-                </div>
-                <div className={`w-10 h-5 rounded-full relative transition-colors ${useAi ? 'bg-indigo-500' : 'bg-muted-foreground/30'}`}>
-                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${useAi ? 'left-6' : 'left-1'}`} />
-                </div>
+            {/* Mensaje informativo para cursos de onboarding */}
+            {formData.category === "BASICO" && (
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-primary text-center flex items-center justify-center gap-2">
+                  <i className="bi bi-info-circle"></i>
+                  Los cursos de Onboarding están disponibles para todos los empleados sin restricción de rol
+                </p>
               </div>
             )}
 
+            {/* Botón submit */}
             <button
               type="submit"
               disabled={loading}
