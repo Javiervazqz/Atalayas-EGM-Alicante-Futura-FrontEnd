@@ -80,7 +80,7 @@ export default function ServiceDetail() {
 
                   {service.mediaUrl && (
                       <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-sm group mt-10">
-                        <div className="aspect-[4/3] overflow-hidden bg-muted">
+                        <div className="aspect-4/3 overflow-hidden bg-muted">
                           <img
                             src={service.mediaUrl}
                             alt={service.title}

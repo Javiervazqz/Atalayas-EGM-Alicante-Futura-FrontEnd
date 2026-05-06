@@ -1,190 +1,173 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/ui/Sidebar';
-import { API_ROUTES } from '@/lib/utils';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Sidebar from "@/components/ui/Sidebar";
+import PageHeader from "@/components/ui/pageHeader";
+import { API_ROUTES } from "@/lib/utils";
 
-interface Company {
-  id: string;
-  name: string;
-}
-
-export default function NewAnnouncementPage() {
+export default function NewGlobalAnnouncementPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [isPublic, setIsPublic] = useState(true);
-  const [errors, setErrors] = useState<{ title?: string; body?: string }>({});
+  const [loadingStep, setLoadingStep] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  
+  // Estado para validaciones
+  const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
 
-  const [formData, setFormData] = useState({
-    title: '',
-    body: '',
-    companyId: '',
+  const [formData, setFormData] = useState({ 
+    title: "", 
+    content: "", 
+    imageFile: null as File | null 
   });
 
-  const getToken = () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('token') || '';
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (file) {
+      setFormData({ ...formData, imageFile: file });
+      setPreviewUrl(URL.createObjectURL(file));
     }
-    return '';
-  };
-
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const token = getToken();
-        if (!token) return;
-
-        const res = await fetch(API_ROUTES.COMPANIES.GET_ALL, {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-        });
-        const data = await res.json();
-        setCompanies(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error('Error cargando empresas:', err);
-      }
-    };
-    fetchCompanies();
-  }, []);
-
-  const validate = () => {
-    const newErrors: typeof errors = {};
-    if (!formData.title.trim()) newErrors.title = 'El título es obligatorio';
-    if (!formData.body.trim()) newErrors.body = 'El contenido es obligatorio';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    
+    // Validaciones locales
+    const newErrors: { title?: string; content?: string } = {};
+    if (!formData.title.trim()) newErrors.title = "El título es obligatorio";
+    if (!formData.content.trim()) newErrors.content = "El contenido es obligatorio";
 
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
     setLoading(true);
-    try {
-      const token = getToken();
-      
-      const payload = {
-        title: formData.title.trim(),
-        body: formData.body.trim(),
-        isPublic: isPublic,
-        companyId: isPublic ? null : (formData.companyId || null),
-      };
+    setLoadingStep("Publicando comunicado global...");
 
-      const res = await fetch('http://localhost:3000/announcement', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+    try {
+      const token = localStorage.getItem("token");
+      const data = new FormData();
+      data.append("title", formData.title);
+      data.append("content", formData.content);
+      // Al ser GENERAL_ADMIN, el anuncio es público/global
+      data.append("isPublic", "true");
+      
+      if (formData.imageFile) {
+        data.append("image", formData.imageFile);
+      }
+
+      const res = await fetch(API_ROUTES.ANNOUNCEMENTS.CREATE, {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}` 
         },
-        body: JSON.stringify(payload),
+        body: data,
       });
 
-      if (res.ok) {
-        router.push('/dashboard/administrator/general-admin/announcements');
-        router.refresh();
-      } else {
-        const data = await res.json();
-        alert(`Error ${res.status}: ${data.message || 'No autorizado'}`);
-      }
+      if (!res.ok) throw new Error("Error al crear el comunicado global");
+
+      router.push("/dashboard/administrator/general-admin/announcements");
     } catch (err) {
-      alert('No se pudo conectar con el servidor.');
+      console.error(err);
+      alert("Error en el proceso de creación del servidor.");
     } finally {
       setLoading(false);
     }
   };
 
-  const inputClass = 'w-full px-5 py-3.5 bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] focus:bg-white rounded-2xl outline-none transition-all text-[#424245] placeholder:text-[#c7c7cc] text-sm';
-
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]">
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role="GENERAL_ADMIN" />
+      <main className="flex-1 overflow-auto flex flex-col">
+        <PageHeader 
+          title="Nuevo Comunicado Global"
+          description="Crea un anuncio importante visible para todas las empresas y usuarios."
+          icon={<i className="bi bi-globe-americas"></i>}
+          backUrl={`/dashboard/administrator/admin/announcements`}
+        />
 
-      <main className="flex-1 p-8 md:p-12 overflow-y-auto">
-        <div className="max-w-2xl mx-auto">
-          <header className="mb-12">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="text-[#0071e3] hover:text-[#0077ed] font-semibold mb-4 flex items-center gap-1 group text-sm"
+        <div className="p-6 lg:p-10 max-w-5xl mx-auto w-full">
+          <form onSubmit={handleSubmit} className="bg-card p-8 lg:p-12 rounded-[2.5rem] border border-border shadow-sm space-y-8">
+            
+            {/* Título */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center ml-1">
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Título del Anuncio</label>
+                {errors.title && <span className="text-[10px] font-bold text-destructive uppercase tracking-tight">{errors.title}</span>}
+              </div>
+              <input 
+                type="text" 
+                value={formData.title} 
+                onChange={(e) => {
+                  setFormData({...formData, title: e.target.value});
+                  if (errors.title) setErrors({...errors, title: undefined});
+                }} 
+                className={`w-full px-6 py-4 rounded-2xl bg-background border ${errors.title ? 'border-destructive' : 'border-input'} focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold transition-all`} 
+                placeholder="Ej: Actualización de la plataforma v2.0" 
+              />
+            </div>
+
+            {/* Contenido */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center ml-1">
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Mensaje Global</label>
+                {errors.content && <span className="text-[10px] font-bold text-destructive uppercase tracking-tight">{errors.content}</span>}
+              </div>
+              <textarea 
+                rows={6}
+                value={formData.content} 
+                onChange={(e) => {
+                  setFormData({...formData, content: e.target.value});
+                  if (errors.content) setErrors({...errors, content: undefined});
+                }} 
+                className={`w-full px-6 py-4 rounded-2xl bg-background border ${errors.content ? 'border-destructive' : 'border-input'} focus:border-primary focus:ring-1 focus:ring-primary outline-none font-medium transition-all resize-none`} 
+                placeholder="Escribe el mensaje que verán todos los usuarios..." 
+              />
+            </div>
+
+
+            {/* Subida de Imagen con Preview */}
+            <div className="space-y-4">
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Imagen de portada (Recomendado)</label>
+              <label className="relative h-64 w-full border-2 border-dashed border-border rounded-[2rem] flex items-center justify-center bg-muted/30 hover:border-primary transition-all cursor-pointer group overflow-hidden">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageChange} 
+                  className="hidden" 
+                />
+                
+                {previewUrl ? (
+                  <div className="relative w-full h-full">
+                    <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white font-bold text-sm">Cambiar imagen</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center group-hover:scale-105 transition-transform">
+                      <i className="bi bi-cloud-arrow-up text-4xl text-muted-foreground mb-3"></i>
+                      <p className="font-bold text-foreground">Seleccionar imagen</p>
+                      <p className="text-xs text-muted-foreground mt-1 text-center">Formatos: JPG, PNG o WebP</p>
+                  </div>
+                )}
+              </label>
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full py-5 bg-primary text-primary-foreground rounded-2xl font-black text-lg hover:opacity-90 disabled:opacity-50 shadow-xl shadow-primary/20 transition-all uppercase tracking-tight"
             >
-              <span className="group-hover:-translate-x-1 transition-transform">←</span> Volver
+              {loading ? (
+                <span className="flex items-center justify-center gap-3">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  {loadingStep}
+                </span>
+              ) : "Publicar para todos"}
             </button>
-            <h1 className="text-4xl font-bold text-[#1d1d1f] tracking-tight">Crear anuncio</h1>
-            <p className="text-[#86868b] mt-2 text-base">Configura la visibilidad y el contenido.</p>
-          </header>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-[#1d1d1f] mb-2">Título</label>
-              <input
-                type="text"
-                className={`${inputClass} ${errors.title ? 'border-red-400' : ''}`}
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              />
-              {errors.title && <p className="text-red-500 text-xs mt-1.5">{errors.title}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-[#1d1d1f] mb-2">Contenido</label>
-              <textarea
-                rows={5}
-                className={`${inputClass} resize-none ${errors.body ? 'border-red-400' : ''}`}
-                value={formData.body}
-                onChange={(e) => setFormData({ ...formData, body: e.target.value })}
-              />
-              {errors.body && <p className="text-red-500 text-xs mt-1.5">{errors.body}</p>}
-            </div>
-
-            <div className="flex items-center justify-between px-5 py-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
-              <div>
-                <p className="text-sm font-semibold text-[#1d1d1f]">Anuncio global</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsPublic(!isPublic)}
-                className={`relative w-11 h-6 rounded-full transition-colors ${isPublic ? 'bg-[#0071e3]' : 'bg-gray-300'}`}
-              >
-                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform ${isPublic ? 'translate-x-5' : 'translate-x-0.5'}`} />
-              </button>
-            </div>
-
-            {!isPublic && (
-              <div className="animate-in fade-in slide-in-from-top-2">
-                <label className="block text-sm font-semibold text-[#1d1d1f] mb-2">Empresa destinataria</label>
-                <select
-                  className={inputClass}
-                  value={formData.companyId}
-                  onChange={(e) => setFormData({ ...formData, companyId: e.target.value })}
-                >
-                  <option value="">Selecciona una empresa...</option>
-                  {companies.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div className="flex items-center justify-end gap-3 pt-4">
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="px-5 py-2.5 rounded-full text-sm font-semibold text-[#1d1d1f] bg-white border border-gray-200"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-8 py-2.5 rounded-full text-sm font-semibold text-white bg-[#0071e3] hover:bg-[#0077ed] transition-colors disabled:opacity-50"
-              >
-                {loading ? 'Publicando...' : 'Publicar anuncio'}
-              </button>
-            </div>
           </form>
         </div>
       </main>

@@ -15,13 +15,20 @@ export default function EditCoursePage() {
     const [fetching, setFetching] = useState(true);
     const [companies, setCompanies] = useState<any[]>([]);
 
+    // Estados para roles
+    const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+    const [loadingRoles, setLoadingRoles] = useState(false);
+
     // Estados para el Buscador de Empresas
     const [companySearch, setCompanySearch] = useState('');
     const [isCompanyListOpen, setIsCompanyListOpen] = useState(false);
     const [companyError, setCompanyError] = useState(false);
-
-    // NUEVO: Estado para el error del título
     const [titleError, setTitleError] = useState(false);
+    const [roleError, setRoleError] = useState(false);
+
+    // Estado para la imagen
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
 
     const companyRef = useRef<HTMLDivElement>(null);
 
@@ -30,8 +37,44 @@ export default function EditCoursePage() {
         isPublic: false,
         category: 'BASICO',
         companyId: '',
-        file: null as File | null
+        requiredRole: '',
+        imageFile: null as File | null
     });
+
+    // Cargar roles disponibles
+    const fetchAvailableRoles = async () => {
+        setLoadingRoles(true);
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const res = await fetch(`${API_ROUTES.USERS.GET_ALL}/roles`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setAvailableRoles(Array.isArray(data) ? data : []);
+            } else {
+                setAvailableRoles(["Técnico", "Ventas", "Administrativo", "Gerente", "Operaciones"]);
+            }
+        } catch (err) {
+            console.error("Error cargando roles:", err);
+            setAvailableRoles(["Técnico", "Ventas", "Administrativo", "Gerente", "Operaciones"]);
+        } finally {
+            setLoadingRoles(false);
+        }
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setFormData({ ...formData, imageFile: file });
+            const reader = new FileReader();
+            reader.onloadend = () => setImagePreview(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -41,6 +84,9 @@ export default function EditCoursePage() {
                     router.push('/login');
                     return;
                 }
+
+                // Cargar roles disponibles
+                await fetchAvailableRoles();
 
                 const baseUrl = API_ROUTES.COURSES.GET_ALL.replace(/\/$/, "");
 
@@ -71,7 +117,6 @@ export default function EditCoursePage() {
 
                 setCompanies(allCompanies);
 
-                // Los cursos públicos siempre son BASICO
                 const isPublicCourse = courseData.isPublic || false;
                 const categoryValue = isPublicCourse ? 'BASICO' : (courseData.category?.toUpperCase() === 'ESPECIALIZADO' ? 'ESPECIALIZADO' : 'BASICO');
 
@@ -80,8 +125,14 @@ export default function EditCoursePage() {
                     isPublic: isPublicCourse,
                     category: categoryValue,
                     companyId: courseData.companyId || '',
-                    file: null
+                    requiredRole: courseData.jobRole || '',
+                    imageFile: null
                 });
+
+                // Cargar la imagen actual para preview
+                if (courseData.fileUrl) {
+                    setCurrentImageUrl(courseData.fileUrl);
+                }
 
                 if (courseData.companyId && !isPublicCourse) {
                     const currentComp = allCompanies.find(c => c.id === courseData.companyId);
@@ -126,6 +177,12 @@ export default function EditCoursePage() {
             hasError = true;
         }
 
+        // VALIDACIÓN DE ROL (Si es especialización privada)
+        if (!formData.isPublic && formData.category === 'ESPECIALIZADO' && !formData.requiredRole) {
+            setRoleError(true);
+            hasError = true;
+        }
+
         if (hasError) return;
 
         setLoading(true);
@@ -138,45 +195,66 @@ export default function EditCoursePage() {
 
             const baseUrl = API_ROUTES.COURSES.GET_ALL.replace(/\/$/, "");
 
-            // Los cursos públicos siempre son BASICO (Onboarding)
-            const categoryToSend = formData.isPublic ? 'BASICO' : formData.category;
+            // Usar FormData si hay imagen nueva, si no usar JSON
+            if (formData.imageFile) {
+                const formDataToSend = new FormData();
+                formDataToSend.append('title', formData.title.trim());
+                formDataToSend.append('isPublic', String(formData.isPublic));
+                formDataToSend.append('category', formData.isPublic ? 'BASICO' : formData.category);
+                if (!formData.isPublic && formData.companyId) {
+                    formDataToSend.append('companyId', formData.companyId);
+                }
+                if (!formData.isPublic && formData.category === 'ESPECIALIZADO' && formData.requiredRole) {
+                    formDataToSend.append('jobRole', formData.requiredRole);
+                }
+                formDataToSend.append('file', formData.imageFile);
 
-            const payload = {
-                title: formData.title.trim(),
-                isPublic: formData.isPublic,
-                category: categoryToSend,
-                companyId: formData.isPublic ? null : (formData.companyId || null),
-            };
+                const res = await fetch(`${baseUrl}/${courseId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formDataToSend,
+                });
 
-            console.log("Enviando actualización:", payload);
-            console.log("URL:", `${baseUrl}/${courseId}`);
-
-            const res = await fetch(`${baseUrl}/${courseId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (res.ok) {
-                console.log("Curso actualizado correctamente");
-                router.push('/dashboard/administrator/general-admin/courses/manage');
+                if (res.ok) {
+                    router.push('/dashboard/administrator/general-admin/courses/manage');
+                } else {
+                    const errorText = await res.text();
+                    alert(errorText || "Error al actualizar el curso.");
+                    setLoading(false);
+                }
             } else {
-                const errorText = await res.text();
-                console.error("Error al actualizar:", res.status, errorText);
+                // Sin imagen nueva, usar JSON
+                const payload: any = {
+                    title: formData.title.trim(),
+                    isPublic: formData.isPublic,
+                    category: formData.isPublic ? 'BASICO' : formData.category,
+                    companyId: formData.isPublic ? null : (formData.companyId || null),
+                };
 
-                let errorMessage = "Error al actualizar el curso.";
-                try {
-                    const errorJson = JSON.parse(errorText);
-                    errorMessage = errorJson.message || errorJson.error || errorMessage;
-                } catch {
-                    errorMessage = errorText || errorMessage;
+                if (!formData.isPublic && formData.category === 'ESPECIALIZADO') {
+                    payload.jobRole = formData.requiredRole;
+                } else {
+                    payload.jobRole = null;
                 }
 
-                alert(errorMessage);
-                setLoading(false);
+                const res = await fetch(`${baseUrl}/${courseId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (res.ok) {
+                    router.push('/dashboard/administrator/general-admin/courses/manage');
+                } else {
+                    const errorText = await res.text();
+                    alert(errorText || "Error al actualizar el curso.");
+                    setLoading(false);
+                }
             }
         } catch (err) {
             console.error("Error en la petición:", err);
@@ -212,7 +290,7 @@ export default function EditCoursePage() {
                 <div className="p-6 lg:p-12 flex-1 max-w-3xl mx-auto w-full">
                     <form onSubmit={handleSubmit} className="bg-card p-6 lg:p-10 rounded-[32px] border border-border/60 shadow-sm space-y-8 transition-colors duration-300">
 
-                        {/* INFO VISIBILIDAD (Solo lectura en edición) */}
+                        {/* INFO VISIBILIDAD */}
                         <div className={`p-6 rounded-[24px] border flex items-center gap-4 transition-all duration-500 ${formData.isPublic ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-muted/40 border-border/60 text-muted-foreground'}`}>
                             <div className="w-12 h-12 bg-card rounded-[18px] flex items-center justify-center text-xl shadow-sm border border-border/40 shrink-0">
                                 <i className={`bi ${formData.isPublic ? 'bi-globe' : 'bi-building'}`}></i>
@@ -230,7 +308,7 @@ export default function EditCoursePage() {
                         </div>
 
                         {/* SELECTOR DE EMPRESA - Solo para cursos privados */}
-                        {!formData.isPublic ? (
+                        {!formData.isPublic && (
                             <div className="animate-in fade-in slide-in-from-top-4 duration-500" ref={companyRef}>
                                 <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1 text-center sm:text-left">
                                     Empresa Propietaria
@@ -282,19 +360,60 @@ export default function EditCoursePage() {
                                     </p>
                                 )}
                             </div>
-                        ): (
-                            <div className="p-6 bg-blue-50 border border-blue-100 rounded-[2rem] flex items-center gap-4 animate-in zoom-in-95 duration-500">
-                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-[#0071e3] text-xl">
-                                    <i className="bi bi-globe"></i>
-                                </div>
-                                <div>
-                                    <h3 className="text-[#0071e3] font-bold text-sm uppercase tracking-wider">Curso Maestro / Público</h3>
-                                    <p className="text-blue-600/70 text-xs font-medium">Contenido universal accesible para todas las organizaciones.</p>
-                                </div>
-                            </div>
                         )}
 
-                        {/* 2. TÍTULO DEL CURSO (CON VALIDACIÓN) */}
+                        {/* IMAGEN DE PORTADA */}
+                        <div className="space-y-3">
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                                Imagen de Portada
+                            </label>
+                            <label className="relative h-40 w-full border-2 border-dashed border-border/60 rounded-[24px] flex items-center justify-center bg-muted/20 hover:bg-muted/40 transition-all cursor-pointer group overflow-hidden">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                />
+                                {imagePreview ? (
+                                    <>
+                                        <img src={imagePreview} className="w-full h-full object-cover" alt="Preview" />
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                            <div className="text-center text-white">
+                                                <i className="bi bi-camera text-2xl mb-1 block"></i>
+                                                <span className="text-[10px] font-bold">Cambiar imagen</span>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : currentImageUrl ? (
+                                    <>
+                                        <img src={currentImageUrl} className="w-full h-full object-cover" alt="Current" />
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                            <div className="text-center text-white">
+                                                <i className="bi bi-camera text-2xl mb-1 block"></i>
+                                                <span className="text-[10px] font-bold">Cambiar imagen</span>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center gap-2 px-6">
+                                        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-card text-primary shadow-sm">
+                                            <i className="bi bi-image-fill"></i>
+                                        </div>
+                                        <p className="font-bold text-xs text-foreground text-center">
+                                            Seleccionar imagen de portada
+                                        </p>
+                                        <p className="text-[9px] text-muted-foreground">
+                                            JPG, PNG, GIF hasta 5MB
+                                        </p>
+                                    </div>
+                                )}
+                            </label>
+                            <p className="text-[9px] text-muted-foreground ml-1">
+                                Dejar vacío para mantener la imagen actual
+                            </p>
+                        </div>
+
+                        {/* TÍTULO DEL CURSO */}
                         <div>
                             <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1 text-center sm:text-left">
                                 Nombre del Curso
@@ -325,7 +444,10 @@ export default function EditCoursePage() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <button
                                         type="button"
-                                        onClick={() => setFormData({ ...formData, category: 'BASICO' })}
+                                        onClick={() => {
+                                            setFormData({ ...formData, category: 'BASICO', requiredRole: '' });
+                                            setRoleError(false);
+                                        }}
                                         className={`p-5 rounded-2xl border-2 flex items-center justify-center gap-3 cursor-pointer transition-all font-black text-[11px] uppercase tracking-widest ${formData.category === 'BASICO' ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-border/60 bg-muted/20 text-muted-foreground hover:border-primary/40'}`}
                                     >
                                         <i className="bi bi-book-half text-lg"></i> Onboarding
@@ -341,12 +463,56 @@ export default function EditCoursePage() {
                             </div>
                         )}
 
+                        {/* ROL REQUERIDO - Solo para cursos privados de especialización */}
+                        {!formData.isPublic && formData.category === 'ESPECIALIZADO' && (
+                            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                                    Rol Requerido
+                                </label>
+                                <select
+                                    value={formData.requiredRole}
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, requiredRole: e.target.value });
+                                        setRoleError(false);
+                                    }}
+                                    className={`w-full px-5 py-4 rounded-2xl bg-background border outline-none font-bold text-foreground transition-all text-sm appearance-none cursor-pointer ${roleError ? 'border-destructive bg-destructive/5' : 'border-border focus:border-primary/40 focus:ring-4 focus:ring-primary/5'}`}
+                                    disabled={loadingRoles}
+                                    required
+                                >
+                                    <option value="">Seleccionar rol...</option>
+                                    {availableRoles.map((role) => (
+                                        <option key={role} value={role}>
+                                            {role}
+                                        </option>
+                                    ))}
+                                </select>
+                                {roleError && (
+                                    <p className="text-destructive text-[10px] font-bold mt-2 ml-2 flex items-center gap-1">
+                                        <i className="bi bi-exclamation-circle-fill"></i> Debes seleccionar un rol para el curso de especialización
+                                    </p>
+                                )}
+                                <p className="text-[10px] text-muted-foreground ml-1">
+                                    Solo los empleados con este rol podrán ver y acceder al curso
+                                </p>
+                            </div>
+                        )}
+
                         {/* Información adicional para cursos públicos */}
                         {formData.isPublic && (
                             <div className="p-4 bg-muted/30 rounded-2xl border border-border/40">
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center flex items-center justify-center gap-2">
                                     <i className="bi bi-info-circle"></i>
                                     Los cursos públicos son siempre del tipo "Onboarding"
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Información adicional para cursos privados de onboarding */}
+                        {!formData.isPublic && formData.category === 'BASICO' && (
+                            <div className="p-4 bg-muted/30 rounded-2xl border border-border/40">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center flex items-center justify-center gap-2">
+                                    <i className="bi bi-info-circle"></i>
+                                    Los cursos de Onboarding están disponibles para todos los empleados sin restricción de rol
                                 </p>
                             </div>
                         )}

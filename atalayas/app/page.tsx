@@ -53,7 +53,6 @@ export default function LandingPage() {
     if (initialTheme) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
 
-    // Mantenemos el scroll suave fluido
     const lenis = new Lenis({ lerp: 0.08, smoothWheel: true });
     const raf = (time: number) => { 
       lenis.raf(time * 1000); 
@@ -93,9 +92,9 @@ export default function LandingPage() {
   return (
     <div className="bg-background text-foreground transition-colors duration-500 overflow-x-hidden selection:bg-orange-500/30">
       
-      {/* ── BANNER (NAV) ── */}
-      <nav className="fixed top-8 left-1/2 -translate-x-1/2 z-100 flex items-center gap-2 p-2 rounded-full border border-black/5 dark:border-white/10 bg-white/40 dark:bg-white/3 backdrop-blur-3xl shadow-xl transition-all duration-500">
-        <button onClick={toggleTheme} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+      {/* ── NAV ── */}
+      <nav className="fixed top-6 md:top-8 left-1/2 -translate-x-1/2 z-100 flex items-center gap-1 md:gap-2 p-1.5 md:p-2 rounded-full border border-black/5 dark:border-white/10 bg-white/40 dark:bg-white/3 backdrop-blur-3xl shadow-xl transition-all duration-500 w-[90%] max-w-fit">
+        <button onClick={toggleTheme} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
           <div ref={iconRef} className="w-5 h-5 flex items-center justify-center">
             {isDark ? (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400">
@@ -109,27 +108,28 @@ export default function LandingPage() {
             )}
           </div>
         </button>
-        <div className="h-4 w-px bg-black/10 dark:bg-white/10 mx-2"></div>
-        <Link href="/login" className="px-8 py-2.5 text-[10px] font-black uppercase tracking-widest bg-foreground text-background rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg">
+        <div className="h-4 w-px bg-black/10 dark:bg-white/10 mx-1 md:mx-2"></div>
+        <Link href="/login" className="px-5 md:px-8 py-2 md:py-2.5 text-[9px] md:text-[10px] font-black uppercase tracking-widest bg-foreground text-background rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap">
           Acceso Portal
         </Link>
       </nav>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex items-center px-8 lg:px-24 pt-32 pb-20 overflow-hidden transition-colors duration-500">
+      <section className="relative min-h-screen flex items-center px-6 md:px-12 lg:px-24 pt-32 pb-20 overflow-hidden transition-colors duration-500">
         <div className="absolute inset-0 z-0 pointer-events-none transition-opacity duration-1000 opacity-60">
             <Aurora colorStops={isDark ? ["#2DD4BF", "#FBBF24", "#6366F1"] : ["#00897b", "#f97316", "#4338ca"]} amplitude={1.2} blend={0.6} />
         </div>
 
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-end px-24 lg:flex z-10">
-          <div className="w-120 h-150 rounded-[3rem] backdrop-blur-3xl bg-white/40 dark:bg-white/3 border border-black/5 dark:border-white/10 shadow-2xl relative group overflow-hidden pointer-events-auto transition-all duration-500 p-12 flex flex-col gap-10">
-             <div className="relative z-10 flex flex-col gap-10">
-                <div className="space-y-4">
+        {/* Floating Card - Responsive behavior */}
+        <div className="absolute inset-0 pointer-events-none hidden lg:flex items-center justify-end px-24 z-10">
+          <div className="w-96 xl:w-120 h-auto rounded-[3rem] backdrop-blur-3xl bg-white/40 dark:bg-white/3 border border-black/5 dark:border-white/10 shadow-2xl relative group overflow-hidden pointer-events-auto transition-all duration-500 p-10 flex flex-col gap-8">
+             <div className="relative z-10 flex flex-col gap-8">
+                <div className="space-y-3">
                     <span className="text-[9px] font-black uppercase tracking-[0.3em] text-orange-500">Ecosistema Activo</span>
-                    <h3 className="text-4xl font-extrabold text-foreground tracking-tighter leading-tight">Servicios de <br /> Impulso.</h3>
+                    <h3 className="text-3xl xl:text-4xl font-extrabold text-foreground tracking-tighter leading-tight">Servicios de <br /> Impulso.</h3>
                     <p className="text-xs font-medium text-muted-foreground leading-relaxed">Recursos estratégicos diseñados para potenciar la competitividad de la mediana empresa en Atalayas.</p>
                 </div>
-                <div className="space-y-5">
+                <div className="space-y-4">
                     {[
                         { title: 'Capacitación', desc: 'Formación técnica y talento dual.', icon: 'bi-mortarboard' },
                         { title: 'Subvenciones', desc: 'Gestión de ayudas y fondos europeos.', icon: 'bi-bank' },
@@ -140,9 +140,9 @@ export default function LandingPage() {
                             <div className="w-8 h-8 rounded-lg bg-foreground/5 border border-foreground/10 flex items-center justify-center shrink-0">
                                 <i className={`bi ${serv.icon} text-teal-600 dark:text-teal-400 text-sm`}></i>
                             </div>
-                            <div className="space-y-1">
+                            <div className="space-y-0.5">
                                 <p className="text-xs font-bold text-foreground uppercase tracking-wider">{serv.title}</p>
-                                <p className="text-[11px] text-muted-foreground font-medium">{serv.desc}</p>
+                                <p className="text-[10px] xl:text-[11px] text-muted-foreground font-medium">{serv.desc}</p>
                             </div>
                         </div>
                     ))}
@@ -152,32 +152,33 @@ export default function LandingPage() {
         </div>
 
         <div className="w-full max-w-7xl mx-auto grid lg:grid-cols-2 items-center z-10">
-          <div className="text-center lg:text-left pr-10">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-foreground/5 border border-foreground/10 backdrop-blur-md text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-8">
+          <div className="text-center lg:text-left lg:pr-10">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-foreground/5 border border-foreground/10 backdrop-blur-md text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-6 md:mb-8">
               <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
               Vivero de Empresas y Talento
             </div>
-            <div className="flex flex-col gap-1 mb-10">
-              <h1 className="text-6xl lg:text-[100px] font-black tracking-tighter leading-tight text-foreground">Atalayas</h1>
-              <h2 className="text-3xl lg:text-[55px] font-black tracking-tighter leading-tight text-muted-foreground/30 dark:text-white/30">Ecosistema de</h2>
-              <h2 className={`text-5xl lg:text-[90px] font-black tracking-tighter leading-tight text-transparent bg-clip-text pb-2 ${PREMIUM_GRADIENT}`}>Innovación.</h2>
+            <div className="flex flex-col gap-0 mb-8 md:mb-10">
+              <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-[100px] font-black tracking-tighter leading-[0.9] text-foreground">Atalayas</h1>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[55px] font-black tracking-tighter leading-tight text-muted-foreground/30 dark:text-white/30">Ecosistema de</h2>
+              <h2 className={`text-5xl sm:text-6xl md:text-7xl lg:text-[90px] font-black tracking-tighter leading-[0.9] text-transparent bg-clip-text pb-2 ${PREMIUM_GRADIENT}`}>Innovación.</h2>
             </div>
-            <p className="max-w-md mx-auto lg:mx-0 text-xl font-medium text-muted-foreground leading-relaxed mb-12">Mucho más que un espacio industrial. Somos el vivero donde las medianas empresas alicantinas se conectan e innovan.</p>
-            <Link href="/register" className="inline-block px-12 py-5 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all hover:scale-105 shadow-xl shadow-orange-500/20">Registrar mi Empresa</Link>
+            <p className="max-w-md mx-auto lg:mx-0 text-lg md:text-xl font-medium text-muted-foreground leading-relaxed mb-10 md:mb-12 px-4 lg:px-0">Mucho más que un espacio industrial. Somos el vivero donde las medianas empresas alicantinas se conectan e innovan.</p>
+            <Link href="/register" className="inline-block px-10 md:px-12 py-4 md:py-5 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-[10px] md:text-[11px] uppercase tracking-[0.2em] transition-all hover:scale-105 shadow-xl shadow-orange-500/20">Registrar mi Empresa</Link>
           </div>
         </div>
       </section>
 
-      {/* ── BENTO GRID PURO Y FUNCIONAL ── */}
-      <div className="relative w-full py-32 px-6 overflow-hidden">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[400px]">
+      {/* ── BENTO GRID RESPONSIVE ── */}
+      <div className="relative w-full py-20 md:py-32 px-4 md:px-6 overflow-hidden">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 auto-rows-[350px] md:auto-rows-[400px]">
           {ATALAYAS_INFO.map((item, i) => {
-            const colSpan = i === 0 || i === 3 ? 'md:col-span-2' : 'md:col-span-1';
+            // Mobile: always 1 col. Desktop: specific spans
+            const colSpan = i === 0 || i === 3 ? 'lg:col-span-2 md:col-span-2' : 'lg:col-span-1 md:col-span-1';
 
             return (
               <div 
                 key={i} 
-                className={`${colSpan} relative h-full w-full rounded-[2rem] overflow-hidden group shadow-2xl bg-black`}
+                className={`${colSpan} relative h-full w-full rounded-[1.5rem] md:rounded-[2rem] overflow-hidden group shadow-2xl bg-black`}
               >
                 <div
                   className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-110"
@@ -188,14 +189,14 @@ export default function LandingPage() {
                 
                 <div className="absolute inset-0 bg-white/0 group-hover:bg-white/2 transition-colors duration-500" />
                 
-                <div className="relative z-10 flex flex-col justify-end h-full w-full p-8 md:p-10 pointer-events-none">
-                  <span className={`block text-[10px] font-black uppercase tracking-[0.5em] mb-4 ${item.color}`}>
+                <div className="relative z-10 flex flex-col justify-end h-full w-full p-6 md:p-10 pointer-events-none">
+                  <span className={`block text-[9px] md:text-[10px] font-black uppercase tracking-[0.5em] mb-3 md:mb-4 ${item.color}`}>
                     Impulso Corporativo
                   </span>
                   
-                  <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter leading-none mb-4">
+                  <h2 className="text-2xl md:text-4xl lg:text-5xl font-black text-white tracking-tighter leading-none mb-3 md:mb-4">
                     {item.title === "+200 Empresas" ? (
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 md:gap-3">
                         <span>+</span>
                         <CountUp 
                           from={0} 
@@ -205,14 +206,14 @@ export default function LandingPage() {
                           onStart={() => {}} 
                           onEnd={() => {}} 
                         />
-                        <span className="text-xl md:text-3xl mt-1">Empresas</span>
+                        <span className="text-lg md:text-2xl lg:text-3xl mt-1 uppercase">Empresas</span>
                       </div>
                     ) : (
                       item.title
                     )}
                   </h2>
                   
-                  <p className="text-sm md:text-base text-white/60 font-medium max-w-xl leading-relaxed">
+                  <p className="text-xs md:text-sm lg:text-base text-white/60 font-medium max-w-xl leading-relaxed">
                     {item.desc}
                   </p>
                 </div>
@@ -222,40 +223,36 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* ── FOOTER GENÉRICO ── */}
-      <footer className="relative w-full border-t border-black/10 dark:border-white/10 py-12 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+      {/* ── FOOTER ── */}
+      <footer className="relative w-full border-t border-black/10 dark:border-white/10 py-10 md:py-16 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           
-          {/* Logo y Copyright */}
           <div className="text-center md:text-left">
             <h3 className="text-2xl font-black tracking-tighter text-foreground">Atalayas</h3>
-            <p className="text-xs text-muted-foreground mt-2 font-medium">
-              © {new Date().getFullYear()} Atalayas Ecosistema de Innovación. <br className="md:hidden" /> Todos los derechos reservados.
+            <p className="text-[11px] md:text-xs text-muted-foreground mt-2 font-medium max-w-xs md:max-w-none">
+              © {new Date().getFullYear()} Atalayas Ecosistema de Innovación. <br className="hidden md:block" /> Todos los derechos reservados.
             </p>
           </div>
           
-          {/* Enlaces Legales */}
-          <div className="flex flex-wrap justify-center gap-6 text-sm font-medium text-muted-foreground">
+          <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-xs md:text-sm font-bold uppercase tracking-widest text-muted-foreground">
             <Link href="#" className="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">Privacidad</Link>
             <Link href="#" className="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">Términos</Link>
             <Link href="#" className="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">Contacto</Link>
           </div>
 
-          {/* Redes Sociales */}
-          <div className="flex gap-4">
-            <Link href="#" className="w-10 h-10 rounded-full bg-foreground/5 border border-foreground/10 flex items-center justify-center text-muted-foreground hover:bg-foreground/10 hover:text-orange-500 transition-all">
-              <i className="bi bi-linkedin"></i>
-            </Link>
-            <Link href="#" className="w-10 h-10 rounded-full bg-foreground/5 border border-foreground/10 flex items-center justify-center text-muted-foreground hover:bg-foreground/10 hover:text-orange-500 transition-all">
-              <i className="bi bi-twitter-x"></i>
-            </Link>
-            <Link href="#" className="w-10 h-10 rounded-full bg-foreground/5 border border-foreground/10 flex items-center justify-center text-muted-foreground hover:bg-foreground/10 hover:text-orange-500 transition-all">
-              <i className="bi bi-instagram"></i>
-            </Link>
+          <div className="flex gap-3 md:gap-4">
+            {[
+              { icon: 'bi-linkedin', link: '#' },
+              { icon: 'bi-twitter-x', link: '#' },
+              { icon: 'bi-instagram', link: '#' }
+            ].map((social, i) => (
+              <Link key={i} href={social.link} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-foreground/5 border border-foreground/10 flex items-center justify-center text-muted-foreground hover:bg-foreground/10 hover:text-orange-500 transition-all">
+                <i className={`bi ${social.icon} md:text-lg`}></i>
+              </Link>
+            ))}
           </div>
         </div>
       </footer>
-
     </div>
   );
 }

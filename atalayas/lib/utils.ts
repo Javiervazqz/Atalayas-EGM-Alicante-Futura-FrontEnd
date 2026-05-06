@@ -49,7 +49,9 @@ export const API_ROUTES = {
     DELETE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
    },
   ANNOUNCEMENTS: {
-    GET_ALL: `${BASE_URL}/announcement`
+    GET_ALL: `${BASE_URL}/announcement`,
+    CREATE: `${BASE_URL}/announcement`,
+    GET_BY_ID: (id: string) => `${BASE_URL}/announcement/${id}`
   },
   COMPANY_REQUESTS: {
     CREATE: `${BASE_URL}/company-request`,
@@ -67,32 +69,32 @@ export const API_ROUTES = {
     TOGGLE: `${BASE_URL}/onboarding/toggle`,
   },
 
-    CHATBOT: {
-      SEND:`${BASE_URL}/chatbot`
-    },
-    
-    ENROLLMENTS: {
-      BASE: `${BASE_URL}/enrollment`,
-    },
+  CHATBOT: {
+    SEND:`${BASE_URL}/chatbot`
+  },
+  
+  ENROLLMENTS: {
+    BASE: `${BASE_URL}/enrollment`,
+  },
 
-    SUGGESTIONS: {
-      CREATE: `${BASE_URL}/suggestions`,
+  SUGGESTIONS: {
+    CREATE: `${BASE_URL}/suggestions`,
 
-      GET_ALL: `${BASE_URL}/suggestions`,
+    GET_ALL: `${BASE_URL}/suggestions`,
 
-      GET_MINE: `${BASE_URL}/suggestions/mine`,
+    GET_MINE: `${BASE_URL}/suggestions/mine`,
 
-      GET_ONE: (id: string) => `${BASE_URL}/suggestions/${id}`,
+    GET_ONE: (id: string) => `${BASE_URL}/suggestions/${id}`,
 
-      RESPOND: (id: string) => `${BASE_URL}/suggestions/${id}/respond`,
+    RESPOND: (id: string) => `${BASE_URL}/suggestions/${id}/respond`,
 
-      DELETE: (id: string) => `${BASE_URL}/suggestions/${id}`,
-    },
+    DELETE: (id: string) => `${BASE_URL}/suggestions/${id}`,
+  },
 
-STATS: {
-GET_ADMIN: `${BASE_URL}/stats`,
-GET_GENERAL: `${BASE_URL}/admin/stats`,
-},
+  STATS: {
+  GET_ADMIN: `${BASE_URL}/stats`,
+  GET_GENERAL: `${BASE_URL}/admin/stats`,
+  },
 }
 
 // Agrega esto al final de tu archivo @/lib/utils.ts
