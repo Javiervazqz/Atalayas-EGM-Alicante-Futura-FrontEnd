@@ -139,6 +139,7 @@ export default function Sidebar({ role }: SidebarProps) {
 
   const handleLogout = () => {
     localStorage.clear();
+    window.dispatchEvent(new Event('user:logout')); // Para que otros componentes escuchen el logout
     router.push('/login');
   };
 

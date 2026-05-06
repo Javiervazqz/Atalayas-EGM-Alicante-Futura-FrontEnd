@@ -3,6 +3,8 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 declare module "*.css";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+// 1. Importamos el Provider que vas a crear en la carpeta src/providers
+import { SocketProvider } from "@/app/providers/SocketProvider"; 
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -34,7 +36,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        {/* 2. Envolvemos los children con el Provider */}
+        <SocketProvider>
+          {children}
+        </SocketProvider>
       </body>
     </html>
   );
