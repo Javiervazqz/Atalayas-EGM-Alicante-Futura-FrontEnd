@@ -19,11 +19,10 @@ export default function EmployeeCoursesPage() {
   const searchParams = useSearchParams();
   const fromTaskId = searchParams.get("fromTask");
 
-  // ... (Función downloadCertificate se mantiene igual)
   const downloadCertificate = async (courseId: string) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_ROUTES.ENROLLMENTS.BASE}/certificate/${courseId}`, {
+      const res = await fetch(`${API_ROUTES.ENROLLMENTS.CERTIFICATE(courseId)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return;

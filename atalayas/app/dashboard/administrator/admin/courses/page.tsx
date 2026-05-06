@@ -17,12 +17,12 @@ export default function EmployeeCoursesPage() {
     const fromTaskId = searchParams.get('fromTask');
 
 
-    const downloadCertificate = async (courseId: string) => {
+    const downloadCertificate = async (courseId: string, userId: string) => {
         try {
             const token = localStorage.getItem('token');
 
             const res = await fetch(
-                `${API_ROUTES.ENROLLMENTS.BASE}/certificate/${courseId}`,
+                `${API_ROUTES.ENROLLMENTS.CERTIFICATE(courseId, userId)}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -31,7 +31,8 @@ export default function EmployeeCoursesPage() {
             );
 
             if (!res.ok) {
-                console.error('Error descargando certificado');
+                const errorText = await res.text();
+                console.error('Error descargando certificado:', res.status, errorText);
                 return;
             }
 
@@ -114,7 +115,7 @@ export default function EmployeeCoursesPage() {
                     icon={<i className="bi bi-journal-bookmark-fill"></i>}
                     action={
                         <Link href="/dashboard/administrator/admin/courses/manage"
-                          className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
+                            className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
                         >
                             <i className="bi bi-eye-fill"></i>Vista de Administrador
                         </Link>
@@ -226,7 +227,7 @@ export default function EmployeeCoursesPage() {
 
                                                     {course.progress === 100 && (
                                                         <button
-                                                            onClick={() => downloadCertificate(course.id)}
+                                                            onClick={() => downloadCertificate(course.id, course.userId)}
                                                             className="flex items-center justify-center gap-3 px-8 py-4 bg-orange-500 text-white text-sm font-black uppercase tracking-widest rounded-2xl transition-all hover:opacity-90 active:scale-[0.97] shadow-lg shadow-black/5">
                                                             Descargar certificado
                                                             <i className="bi bi-download text-lg ml-1"></i>

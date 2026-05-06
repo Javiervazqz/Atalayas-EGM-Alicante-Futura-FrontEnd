@@ -23,7 +23,7 @@ export const API_ROUTES = {
   COURSES: {
     GET_ALL: `${BASE_URL}/courses`,
     CREATE: `${BASE_URL}/courses`,
-    GET_BY_ID: (id:string) => `${BASE_URL}/courses/${id}`,
+    GET_BY_ID: (id: string) => `${BASE_URL}/courses/${id}`,
     UPDATE: (id: string) => `${BASE_URL}/courses/${id}`,
   },
   DOCUMENTS: {
@@ -47,7 +47,7 @@ export const API_ROUTES = {
     COMPLETE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}/complete`,
     UPDATE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
     DELETE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
-   },
+  },
   ANNOUNCEMENTS: {
     GET_ALL: `${BASE_URL}/announcement`
   },
@@ -62,37 +62,39 @@ export const API_ROUTES = {
   },
 
   ONBOARDING: {
-    SETUP:`${BASE_URL}/onboarding/setup`,
-    ME:`${BASE_URL}/onboarding/me`,
+    SETUP: `${BASE_URL}/onboarding/setup`,
+    ME: `${BASE_URL}/onboarding/me`,
     TOGGLE: `${BASE_URL}/onboarding/toggle`,
   },
 
-    CHATBOT: {
-      SEND:`${BASE_URL}/chatbot`
-    },
-    
-    ENROLLMENTS: {
-      BASE: `${BASE_URL}/enrollment`,
-    },
+  CHATBOT: {
+    SEND: `${BASE_URL}/chatbot`
+  },
 
-    SUGGESTIONS: {
-      CREATE: `${BASE_URL}/suggestions`,
+  ENROLLMENTS: {
+    BASE: `${BASE_URL}/enrollment`,
+    CERTIFICATE: (courseId: string, userId?: string) =>
+      `${BASE_URL}/enrollment/certificate/${courseId}${userId ? `?userId=${userId}` : ''}`,
+  },
 
-      GET_ALL: `${BASE_URL}/suggestions`,
+  SUGGESTIONS: {
+    CREATE: `${BASE_URL}/suggestions`,
 
-      GET_MINE: `${BASE_URL}/suggestions/mine`,
+    GET_ALL: `${BASE_URL}/suggestions`,
 
-      GET_ONE: (id: string) => `${BASE_URL}/suggestions/${id}`,
+    GET_MINE: `${BASE_URL}/suggestions/mine`,
 
-      RESPOND: (id: string) => `${BASE_URL}/suggestions/${id}/respond`,
+    GET_ONE: (id: string) => `${BASE_URL}/suggestions/${id}`,
 
-      DELETE: (id: string) => `${BASE_URL}/suggestions/${id}`,
-    },
+    RESPOND: (id: string) => `${BASE_URL}/suggestions/${id}/respond`,
 
-STATS: {
-GET_ADMIN: `${BASE_URL}/stats`,
-GET_GENERAL: `${BASE_URL}/admin/stats`,
-},
+    DELETE: (id: string) => `${BASE_URL}/suggestions/${id}`,
+  },
+
+  STATS: {
+    GET_ADMIN: `${BASE_URL}/stats`,
+    GET_GENERAL: `${BASE_URL}/admin/stats`,
+  },
 }
 
 // Agrega esto al final de tu archivo @/lib/utils.ts
@@ -107,6 +109,6 @@ export async function fetchWithApiFallback(url: string, options?: RequestInit) {
   } catch (error) {
     console.error("Fetch error:", error);
     // Aquí puedes retornar un valor por defecto o lanzar el error
-    throw error; 
+    throw error;
   }
 }
