@@ -49,7 +49,9 @@ export const API_ROUTES = {
     DELETE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
    },
   ANNOUNCEMENTS: {
-    GET_ALL: `${BASE_URL}/announcement`
+    GET_ALL: `${BASE_URL}/announcement`,
+    CREATE: `${BASE_URL}/announcement`,
+    GET_BY_ID: (id: string) => `${BASE_URL}/announcement/${id}`
   },
   COMPANY_REQUESTS: {
     CREATE: `${BASE_URL}/company-request`,
