@@ -1,126 +1,76 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, useRef } from 'react';
+import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import Sidebar from '@/components/ui/Sidebar';
 import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
-import zoom from 'medium-zoom'
+import zoom from 'medium-zoom';
 
-// Mantenemos tus constantes de estilo para que la UI sea idéntica
+interface LabProps { data: any; }
+
+const InteractiveLab = dynamic<LabProps>(
+  () => import("@/components/interactiveLab").then((mod) => mod.default),
+  { ssr: false, loading: () => <div className="text-white font-black animate-pulse">CARGANDO MOTOR GRÁFICO...</div> }
+);
+
 const labelClass = "text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block";
 const tabBtnClass = "pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative";
 
-type TabType = 'multimedia' | 'lectura' | 'evaluacion';
+type TabType = "multimedia" | "lectura" | "evaluacion";
 
 export default function EmployeeContentDetail() {
   const params = useParams();
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const audioRef = useRef<HTMLAudioElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
-  const fromTaskId = searchParams.get('fromTask');
 
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabType>('lectura');
-  
+  const [activeTab, setActiveTab] = useState<TabType>("lectura");
   const [showQuizModal, setShowQuizModal] = useState(false);
+  const [showLabModal, setShowLabModal] = useState(false);
+  const [isLabStarted, setIsLabStarted] = useState(false);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [isCorrected, setIsCorrected] = useState(false);
-  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
-  const [quizScore, setQuizScore] = useState(0);
 
-  // 1. Carga de datos
   useEffect(() => {
     const fetchContent = async () => {
-      if (!params.id || !params.contentId) return;
       try {
         const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
-
         const data = await res.json();
-        const rawData = data?.data || data?.content || data || {};
-        setContent(rawData);
-      } catch (error) { 
-        console.error("Error:", error); 
-      } finally { 
-        setLoading(false); 
+        const raw = data?.data || data?.content || data || {};
+        setContent(raw);
+      } catch (error) {
+        console.error("Error fetching content:", error);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchContent();
+    if (params.id && params.contentId) fetchContent();
+  }, [params.id, params.contentId]);
 
-    const markAccess = async () => {
-      const contentId = params.contentId as string;
-      await fetch(`${API_ROUTES.ENROLLMENTS.BASE}/content-access`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({ contentId }),
-      });
-    };
-
-    if (params.contentId) {
-      markAccess();
-    }
-  }, [params.contentId, params.id]);
-
-  // 2. Lógica de Onboarding (Autocompletar tarea)
   useEffect(() => {
-    if (fromTaskId && !loading) {
-      const autoConfirmTask = async () => {
-        try {
-          await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({ taskId: fromTaskId, done: true }),
-          });
-        } catch (err) {
-          console.error("Error al autocompletar:", err);
-        }
-      };
-      autoConfirmTask();
-    }
-  }, [fromTaskId, loading]);
-
-   useEffect(() => {
-    if (activeTab === 'lectura' && imageRef.current) {
-      const zoomInstance = zoom(imageRef.current, {
-        background: 'rgba(0,0,0,0.9)',
-        margin: 40,
-      });
-      return () => { zoomInstance.detach(); };
+    if (activeTab === "lectura" && imageRef.current) {
+      const zoomInstance = zoom(imageRef.current, { background: "rgba(0,0,0,0.9)", margin: 40 });
+      return () => zoomInstance.detach();
     }
   }, [content?.imageUrl, activeTab]);
 
-  const questions = content?.quiz?.questions || (Array.isArray(content?.quiz) ? content.quiz : []);
-  
-  const score = questions.reduce((acc: number, q: any, idx: number) => {
-    return userAnswers[idx] === q.correctAnswer ? acc + 1 : acc;
-  }, 0);
-
-  if (loading) return (
-    <div className="flex h-screen bg-background items-center justify-center">
-      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
+  const hasQuiz = content?.quiz?.questions && content.quiz.questions.length > 0;
+  const hasVideo = !!content?.videoUrl;
 
   return (
     <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
       <Sidebar role="EMPLOYEE" />
 
       <main className="flex-1 flex flex-col min-w-0 relative">
-        <PageHeader 
+        <PageHeader
           title={content?.title || "Cargando..."}
-          description='Unidad de aprendizaje'
+          description="Unidad de aprendizaje"
           icon={<i className="bi bi-book"></i>}
           backUrl={`/dashboard/employee/courses/${params.id}`}
         />
@@ -129,163 +79,153 @@ export default function EmployeeContentDetail() {
           <div className="flex-1 overflow-y-auto bg-muted/30 p-8 no-scrollbar">
             <div className="max-w-4xl mx-auto bg-card shadow-xl border border-border/50 rounded-[2.5rem] overflow-hidden mb-10">
               
-              {/* NAVEGACIÓN POR PESTAÑAS (Igual que en Admin) */}
+              {/* Navegación de Pestañas Condicional */}
               <div className="flex px-12 pt-8 border-b border-border gap-8">
-                {(['lectura', 'multimedia', 'evaluacion'] as TabType[]).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`${tabBtnClass} ${activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                  >
-                    {tab}
-                    {activeTab === tab && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
+                <button onClick={() => setActiveTab("lectura")} className={`${tabBtnClass} ${activeTab === "lectura" ? "text-primary" : "text-muted-foreground"}`}>
+                  Lectura
+                  {activeTab === "lectura" && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
+                </button>
+                
+                {hasVideo && (
+                  <button onClick={() => setActiveTab("multimedia")} className={`${tabBtnClass} ${activeTab === "multimedia" ? "text-primary" : "text-muted-foreground"}`}>
+                    Multimedia
+                    {activeTab === "multimedia" && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
                   </button>
-                ))}
+                )}
+
+                {hasQuiz && (
+                  <button onClick={() => setActiveTab("evaluacion")} className={`${tabBtnClass} ${activeTab === "evaluacion" ? "text-primary" : "text-muted-foreground"}`}>
+                    Evaluación
+                    {activeTab === "evaluacion" && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
+                  </button>
+                )}
               </div>
 
               <div className="p-8 md:p-16">
-                <div className="animate-in fade-in duration-500">
-                  
-                  {/* TAB: MULTIMEDIA */}
-                  {activeTab === 'multimedia' && (
-                    <div className="space-y-6">
-                      {content?.videoUrl ? (
-                        <div className="aspect-video rounded-[2rem] overflow-hidden bg-black shadow-2xl">
-                          <video key={content.videoUrl} controls className="w-full h-full object-cover">
-                            <source src={content.videoUrl} type="video/mp4" />
-                          </video>
-                        </div>
-                      ) : (
-                        <div className="p-20 border-2 border-dashed border-border rounded-[2rem] text-center text-muted-foreground italic text-sm">
-                          Esta unidad no incluye video explicativo.
-                        </div>
-                      )}
+                {activeTab === "lectura" && (
+                  <div className="animate-in fade-in duration-500 space-y-10">
+                    {content?.imageUrl && (
+                      <img ref={imageRef} src={content.imageUrl} className="w-full aspect-video object-cover rounded-[2rem] shadow-lg border border-border/50" alt="Cover" />
+                    )}
+                    <div className="prose dark:prose-invert max-w-none">
+                      <ReactMarkdown components={{
+                        h2: ({node, ...props}) => <h2 className="text-2xl font-black text-foreground mt-10 mb-6" {...props} />,
+                        p: ({node, ...props}) => <p className="text-[17px] leading-[1.8] text-muted-foreground mb-6" {...props} />,
+                        blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-primary bg-muted/40 p-6 rounded-r-2xl my-8 italic" {...props} />,
+                      }}>
+                        {content?.summary}
+                      </ReactMarkdown>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* TAB: LECTURA */}
-                  {activeTab === 'lectura' && (
-                    <div className="space-y-10">
-                      {content?.imageUrl && (
-                        <div className="relative group cursor-zoom-in">
-                            <img ref={imageRef} src={content.imageUrl} className="w-full aspect-video object-cover rounded-[2rem] shadow-lg border border-border/50 transition-transform duration-500 hover:scale-[1.01]" alt="Cover" />
-                            <div className="absolute top-4 right-4 bg-black/20 backdrop-blur-md p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                              <i className="bi bi-zoom-in text-white"></i>
-                            </div>
-                          </div>
-                      )}
-                      <div className="prose dark:prose-invert max-w-none">
-                        <ReactMarkdown
-                          components={{
-                            h2: ({ ...props }) => <h2 className="text-2xl font-black text-foreground mt-10 mb-6" {...props} />,
-                            p: ({ ...props }) => <p className="text-[17px] leading-[1.8] text-muted-foreground mb-6 whitespace-pre-wrap" {...props} />,
-                            li: ({ ...props }) => (
-                              <li className="flex items-start gap-3 text-[16px] text-muted-foreground mb-4">
-                                <span className="mt-2.5 w-2 h-2 rounded-full bg-primary/40 shrink-0" />
-                                <span {...props} />
-                              </li>
-                            ),
-                            blockquote: ({ ...props }) => <blockquote className="border-l-4 border-primary bg-muted/40 p-6 rounded-r-2xl my-8 italic shadow-inner" {...props} />
-                          }}
-                        >
-                          {content?.summary}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  )}
+                {activeTab === "multimedia" && hasVideo && (
+                  <div className="aspect-video rounded-[2rem] overflow-hidden bg-black shadow-2xl">
+                    <video key={content.videoUrl} controls className="w-full h-full object-cover">
+                      <source src={content.videoUrl} type="video/mp4" />
+                    </video>
+                  </div>
+                )}
 
-                  {/* TAB: EVALUACIÓN */}
-                  {activeTab === 'evaluacion' && (
-                    <div className="bg-orange-500/5 border border-orange-500/10 rounded-[2rem] p-12 text-center space-y-6">
-                      <div className="w-20 h-20 bg-orange-500 text-white rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-orange-500/20">
-                        <i className="bi bi-patch-question text-4xl"></i>
-                      </div>
-                      <h4 className="text-2xl font-black italic">Pon a prueba tu conocimiento</h4>
-                      <p className="text-muted-foreground max-w-xs mx-auto text-sm">Completa el cuestionario para validar lo aprendido en esta unidad.</p>
-                      <button 
-                        onClick={() => setShowQuizModal(true)} 
-                        className="bg-orange-500 text-white px-10 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all"
-                      >
-                        Iniciar Autoevaluación
-                      </button>
+                {activeTab === "evaluacion" && hasQuiz && (
+                  <div className="bg-orange-500/5 border border-orange-500/10 rounded-[2rem] p-12 text-center space-y-6">
+                    <div className="w-20 h-20 bg-orange-500 text-white rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-orange-500/20">
+                      <i className="bi bi-patch-question text-4xl"></i>
                     </div>
-                  )}
-                </div>
+                    <h4 className="text-2xl font-black italic">¿Listo para el test?</h4>
+                    <button onClick={() => setShowQuizModal(true)} className="bg-orange-500 text-white px-10 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all">
+                      Iniciar Autoevaluación
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* ASIDE DERECHO (RECURSOS) */}
-          <aside className="w-80 border-l border-border bg-card p-6 flex flex-col gap-6 overflow-y-auto">
-            
+          <aside className="w-80 border-l border-border bg-card p-6 flex flex-col gap-6 overflow-y-auto no-scrollbar">
             {content?.podcast?.url && (
               <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-[2rem] p-5 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                    <i className="bi bi-mic-fill"></i>
-                  </div>
+                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg"><i className="bi bi-mic-fill"></i></div>
                   <div>
-                    <p className="text-[9px] font-black uppercase text-emerald-600 tracking-widest">Audio Guía</p>
-                    <p className="text-[11px] font-bold opacity-70">Resumen Locutado</p>
+                    <p className="text-[9px] font-black uppercase text-emerald-600">Audio Guía</p>
+                    <p className="text-[11px] font-bold opacity-70">Escuchar unidad</p>
                   </div>
                 </div>
                 <audio ref={audioRef} src={content.podcast.url} controls className="w-full h-8 accent-emerald-500" />
               </div>
             )}
 
-            <h4 className={labelClass}>Material Descargable</h4>
-
-            {content?.url?.toLowerCase().includes('.pdf') && (
-              <a href={content.url} target="_blank" rel="noopener noreferrer"
-                className="group w-full p-4 bg-muted/50 border border-border rounded-2xl flex items-center gap-4 hover:border-primary transition-all">
-                <div className="w-10 h-10 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center shrink-0">
-                  <i className="bi bi-file-earmark-pdf text-xl"></i>
-                </div>
+            <h4 className={labelClass}>Materiales</h4>
+            {content?.url?.toLowerCase().includes(".pdf") && (
+              <a href={content.url} target="_blank" rel="noopener noreferrer" className="w-full p-4 bg-muted/50 border border-border rounded-2xl flex items-center gap-4 hover:border-primary transition-all">
+                <div className="w-10 h-10 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center shrink-0"><i className="bi bi-file-earmark-pdf text-xl"></i></div>
                 <div className="text-left overflow-hidden">
-                  <p className="text-[8px] font-black uppercase text-muted-foreground">Formato PDF</p>
-                  <p className="text-xs font-bold text-foreground truncate">Descargar Material</p>
+                  <p className="text-[8px] font-black uppercase text-muted-foreground">Recurso PDF</p>
+                  <p className="text-xs font-bold text-foreground truncate">Descargar Guía</p>
                 </div>
               </a>
+            )}
+
+            {content?.practiceLab && (
+              <button onClick={() => setShowLabModal(true)} className="w-full p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-center gap-4 hover:border-blue-500 transition-all text-left">
+                <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20"><i className="bi bi-controller text-xl"></i></div>
+                <div className="overflow-hidden">
+                  <p className="text-[8px] font-black uppercase text-blue-600">Simulador IA</p>
+                  <p className="text-xs font-bold text-foreground truncate">Práctica Interactiva</p>
+                </div>
+              </button>
             )}
           </aside>
         </div>
       </main>
 
-      {/* MODAL DEL QUIZ (Misma estructura que Admin pero con lógica de respuesta) */}
-      {showQuizModal && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-          <div className="bg-card border border-border rounded-[32px] p-8 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
-            <div className="flex justify-between items-center mb-8 shrink-0">
-              <h3 className="text-2xl font-black italic">Cuestionario</h3>
-              <button onClick={() => setShowQuizModal(false)} className="text-muted-foreground hover:text-foreground">
-                <i className="bi bi-x-circle text-2xl"></i>
-              </button>
+      {/* Modales de Lab y Quiz (Lógica de vista estudiante) */}
+      {showLabModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl md:p-4">
+          <div className="bg-card border border-border md:rounded-[40px] w-full max-w-6xl h-full md:h-[90vh] relative overflow-hidden flex flex-col">
+            <button onClick={() => { setShowLabModal(false); setIsLabStarted(false); }} className="absolute top-4 right-4 z-50 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white"><i className="bi bi-x-lg"></i></button>
+            <div className="flex-1 bg-slate-950 overflow-hidden">
+              {!isLabStarted ? (
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
+                  <div className="w-20 h-20 bg-blue-500/20 text-blue-500 rounded-3xl flex items-center justify-center"><i className="bi bi-controller text-4xl"></i></div>
+                  <h3 className="text-2xl font-black text-white">{content?.practiceLab?.scenarioTitle}</h3>
+                  <button onClick={() => setIsLabStarted(true)} className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs">Empezar Práctica</button>
+                </div>
+              ) : (
+                <div className="w-full h-full"><InteractiveLab data={content.practiceLab} /></div>
+              )}
             </div>
+          </div>
+        </div>
+      )}
 
-            <div className="flex-1 overflow-y-auto pr-2 space-y-10 no-scrollbar">
-              {questions.map((q: any, qIdx: number) => (
+      {showQuizModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="bg-card border border-border rounded-[32px] p-8 max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-2xl font-black italic">Evaluación de Unidad</h3>
+              <button onClick={() => setShowQuizModal(false)}><i className="bi bi-x-circle text-2xl"></i></button>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-10 no-scrollbar">
+              {content?.quiz?.questions.map((q: any, qIdx: number) => (
                 <div key={qIdx} className="space-y-4">
-                  <p className="font-bold text-lg"><span className="text-primary/30 mr-2">Q.0{qIdx + 1}</span> {q.question}</p>
+                  <p className="font-bold text-lg">{q.question}</p>
                   <div className="grid gap-2">
                     {q.options.map((opt: string, oIdx: number) => {
                       const isSelected = userAnswers[qIdx] === opt;
-                      const isCorrect = opt === q.correctAnswer;
-                      
-                      let btnClass = "w-full p-4 rounded-xl border text-left text-sm transition-all ";
-                      if (isCorrected) {
-                        if (isCorrect) btnClass += "border-emerald-500 bg-emerald-500/10 text-emerald-700";
-                        else if (isSelected) btnClass += "border-destructive bg-destructive/10 text-destructive-foreground";
-                        else btnClass += "border-border opacity-50";
-                      } else {
-                        btnClass += isSelected ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:border-primary/40';
-                      }
-
+                      const isCorrect = isCorrected && opt === q.correctAnswer;
+                      const isWrong = isCorrected && isSelected && opt !== q.correctAnswer;
                       return (
-                        <button 
-                          key={oIdx} 
+                        <button
+                          key={oIdx}
                           disabled={isCorrected}
-                          onClick={() => setUserAnswers({...userAnswers, [qIdx]: opt})}
-                          className={btnClass}
+                          onClick={() => setUserAnswers({ ...userAnswers, [qIdx]: opt })}
+                          className={`w-full p-4 rounded-xl border text-left text-sm transition-all 
+                            ${isSelected ? "border-primary bg-primary/5" : "border-border"}
+                            ${isCorrect ? "border-emerald-500 bg-emerald-500/10" : ""}
+                            ${isWrong ? "border-red-500 bg-red-500/10" : ""}
+                          `}
                         >
                           {opt}
                         </button>
@@ -294,32 +234,12 @@ export default function EmployeeContentDetail() {
                   </div>
                 </div>
               ))}
-
-              {isCorrected && (
-                <div className="p-6 bg-primary/10 rounded-2xl text-center">
-                  <p className="text-sm font-bold text-primary uppercase tracking-widest">Resultado</p>
-                  <p className="text-3xl font-black">{score} / {questions.length}</p>
-                </div>
-              )}
             </div>
-
-            <div className="pt-6 mt-6 border-t border-border">
-              {!isCorrected ? (
-                <button 
-                  onClick={() => setIsCorrected(true)} 
-                  className="w-full bg-primary text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20"
-                >
-                  Finalizar y Corregir
-                </button>
-              ) : (
-                <button 
-                  onClick={() => { setShowQuizModal(false); setIsCorrected(false); setUserAnswers({}); }}
-                  className="w-full bg-muted text-foreground py-4 rounded-xl font-black uppercase text-[10px] tracking-widest"
-                >
-                  Cerrar Evaluación
-                </button>
-              )}
-            </div>
+            {!isCorrected && (
+              <div className="pt-6 mt-6 border-t border-border">
+                <button onClick={() => setIsCorrected(true)} className="w-full bg-primary text-white py-4 rounded-xl font-black uppercase text-xs">Enviar Respuestas</button>
+              </div>
+            )}
           </div>
         </div>
       )}
