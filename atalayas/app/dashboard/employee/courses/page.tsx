@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Sidebar from "@/components/ui/Sidebar";
 import PageHeader from "@/components/ui/pageHeader";
 import { API_ROUTES } from "@/lib/utils";
@@ -8,7 +8,8 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 
-export default function EmployeeCoursesPage() {
+// 1. A ESTA FUNCIÓN LE CAMBIAMOS EL NOMBRE A "EmployeeCoursesContent"
+function EmployeeCoursesContent() {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -188,7 +189,7 @@ export default function EmployeeCoursesPage() {
                           </div>
                         )}
 
-                        {/* Tags de estado - MODIFICADO: añadido badge de rol para especialización */}
+                        {/* Tags de estado */}
                         <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
                           <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-md border backdrop-blur-md ${course.isPublic ? "bg-green-500/20 text-green-600 border-green-500/20" : "bg-blue-500/20 text-blue-600 border-blue-500/20"
                             }`}>
@@ -251,5 +252,18 @@ export default function EmployeeCoursesPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+// 2. Y AQUÍ ABAJO EXPORTAMOS EL COMPONENTE PRINCIPAL CON EL SUSPENSE
+export default function EmployeeCoursesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <EmployeeCoursesContent />
+    </Suspense>
   );
 }
