@@ -27,7 +27,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+    // FORZAMOS LA URL AQUÍ: Vercel usa Railway, tu PC usa localhost.
+    const backendUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://zoological-passion-atalayas.up.railway.app' 
+      : 'http://localhost:3000';
 
     const newSocket = io(`${backendUrl}/stats`, {
       transports: ['websocket'],
@@ -35,7 +38,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     newSocket.on('connect', () => {
-      console.log('✅ Socket conectado');
+      console.log('✅ Socket conectado a:', backendUrl);
     });
 
     // Escucha global (Admin General)
