@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://atalayas-egm-alicante-futura-front-opal.vercel.app/";
 
 export const API_ROUTES = {
   AUTH: {
