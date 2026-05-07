@@ -105,10 +105,10 @@ function AdminCoursePageContent() {
                     icon={<i className="bi bi-journal-bookmark-fill"></i>}
                     action={
                         <Link href="/dashboard/administrator/admin/courses/manage"
-                            className="bg-secondary text-secondary-foreground px-4 py-2 rounded-xl text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
+                  className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
                         >
-                            <i className="bi bi-gear-fill text-sm"></i>
-                            <span className="hidden sm:inline">Gestionar Cursos</span>
+                            <i className="bi bi-eye-fill text-sm"></i>
+                            <span className="hidden sm:inline">Vista de Administrador</span>
                             <span className="sm:hidden">Gestionar</span>
                         </Link>
                     }

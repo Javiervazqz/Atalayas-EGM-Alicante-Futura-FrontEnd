@@ -179,23 +179,23 @@ export default function ManageCourses() {
           description="Administra los cursos de formación de tu empresa y el contenido global."
           icon={<i className="bi bi-gear-fill"></i>}
           action={
-            <div className="flex items-center gap-2">
+                <div className="grid grid-cols-2 gap-2">
               {/* Botón 1: Adaptado a móvil y con color corporativo */}
               <Link
                 href="/dashboard/administrator/admin/courses"
-                className="bg-secondary text-secondary-foreground px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
+                  className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
               >
                 <i className="bi bi-eye-fill text-sm"></i>
-                <span className="hidden sm:inline">Vista de Cursos</span>
+                <span className="hidden sm:inline">Vista de Empleado</span>
                 <span className="sm:hidden">Ver</span>
               </Link>
 
               {/* Botón 2: Adaptado a móvil y con color corporativo */}
               <Link
                 href="/dashboard/administrator/admin/courses/manage/new"
-                className="bg-secondary text-secondary-foreground px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
+                  className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
               >
-                <i className="bi bi-plus-lg text-sm"></i>
+                <i className="bi bi-plus-lg text-sm ml-3"></i>
                 <span className="hidden sm:inline">Nuevo Curso</span>
                 <span className="sm:hidden">Crear</span>
               </Link>
@@ -252,7 +252,7 @@ export default function ManageCourses() {
                   {!loading && filtered.map((course) => (
                     <tr key={course.id} className="group hover:bg-muted/30 transition-colors">
                       <td className="px-6 lg:px-8 py-4">
-                        <Link href={`/dashboard/administrator/admin/courses/manage/view/${course.id}`} className="flex items-center gap-4 cursor-pointer group/link">
+                        <Link href={`/dashboard/administrator/admin/courses/${course.id}/manage`} className="flex items-center gap-4 cursor-pointer group/link">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${course.isPublic ? "bg-green-500/10 text-green-600 border-green-500/20 group-hover/link:bg-green-600 group-hover/link:text-white" : "bg-primary/5 text-primary border border-primary/10 group-hover/link:bg-primary group-hover/link:text-white"}`}>
                             <i className={`bi ${course.isPublic ? "bi-globe" : "bi-journal-text"} text-lg`}></i>
                           </div>

@@ -60,8 +60,8 @@ export default function EmployeeContentDetail() {
   }
 }, [content?.imageUrl, activeTab]);
 
-  const hasQuiz = content?.quiz?.questions && content.quiz.questions.length > 0;
-  const hasVideo = !!content?.videoUrl;
+// Ahora verificamos si content.quiz es un array y tiene elementos
+const hasQuiz = Array.isArray(content?.quiz) && content.quiz.length > 0;  const hasVideo = !!content?.videoUrl;
 
   return (
     <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
@@ -208,7 +208,7 @@ export default function EmployeeContentDetail() {
               <button onClick={() => setShowQuizModal(false)}><i className="bi bi-x-circle text-2xl"></i></button>
             </div>
             <div className="flex-1 overflow-y-auto space-y-10 no-scrollbar">
-              {content?.quiz?.questions.map((q: any, qIdx: number) => (
+              {content?.quiz?.map((q: any, qIdx: number) => (
                 <div key={qIdx} className="space-y-4">
                   <p className="font-bold text-lg">{q.question}</p>
                   <div className="grid gap-2">
