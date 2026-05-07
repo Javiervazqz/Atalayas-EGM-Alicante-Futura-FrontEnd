@@ -1,265 +1,346 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
 import Sidebar from "@/components/ui/Sidebar";
-import { API_ROUTES } from "@/lib/utils";
+import PageHeader from "@/components/ui/pageHeader";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { API_ROUTES, fetchWithApiFallback } from "@/lib/utils";
+
+const PREMIUM_GRADIENT_COLS = "from-teal-400 via-amber-400 to-orange-500";
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  imageUrl?: string | null;
+  isPublic: boolean; // Necesario para el tag
+  Company?: { name: string } | null; // Opcional, para mostrar el nombre de la empresa
+}
+
+interface ActivityItem {
+  id: string;
+  type:
+    | "CONTENT_COMPLETED"
+    | "COURSE_ENROLLED"
+    | "DOCUMENT_ADDED"
+    | "ANNOUNCEMENT"
+    | "TASK_COMPLETED";
+  title: string;
+  description: string;
+  icon: string;
+  createdAt: string;
+  href?: string;
+}
 
 export default function EmployeeDashboard() {
-  const [onboardingData, setOnboardingData] = useState<any[]>([]);
-  const [courses, setCourses] = useState<any[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>({});
-  const [currentDay, setCurrentDay] = useState(1);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [activityLoading, setActivityLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      setUser(storedUser);
-
-      const referenceDateRaw = storedUser.firstLoginAt;
-
-      if (referenceDateRaw) {
-        const referenceDate = new Date(storedUser.createdAt);
-        const today = new Date();
-        const start = new Date(
-          referenceDate.getFullYear(),
-          referenceDate.getMonth(),
-          referenceDate.getDate(),
-        );
-        const end = new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          today.getDate(),
-        );
-
-        const diffTime = end.getTime() - start.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
-        setCurrentDay(diffDays > 0 ? diffDays : 1);
-      }
-    }
-
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const headers = { Authorization: `Bearer ${token}` };
-
-        const [resCourses, resOnboarding] = await Promise.all([
-          fetch(API_ROUTES.COURSES.GET_ALL, { headers }),
-          fetch(API_ROUTES.ONBOARDING.ME, { headers }),
-        ]);
-
-        const dataCourses = await resCourses.json();
-        const dataOnboarding = await resOnboarding.json();
-
-        setCourses(Array.isArray(dataCourses) ? dataCourses : []);
-        setOnboardingData(Array.isArray(dataOnboarding) ? dataOnboarding : []);
-      } catch (err) {
-        console.error("Error cargando dashboard:", err);
-      } finally {
-        setTimeout(() => setLoading(false), 800);
-      }
-    };
-
-    fetchData();
+    setMounted(true);
+    fetchRealAnnouncements();
+    fetchActivity();
   }, []);
 
-  const handleToggleTask = async (taskId: string, currentStatus: boolean, stepDay: number) => {
-    const newStatus = !currentStatus;
-    const updatedData = onboardingData.map((step) => ({
-      ...step,
-      onboardingTasks: step.onboardingTasks.map((task: any) =>
-        task.id === taskId ? { ...task, userProgress: [{ done: newStatus }] } : task,
-      ),
-    }));
-    setOnboardingData(updatedData);
-
+  const fetchRealAnnouncements = async () => {
     try {
       const token = localStorage.getItem("token");
-      await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const data = await fetchWithApiFallback(
+        API_ROUTES.ANNOUNCEMENTS.GET_ALL,
+        {
+          headers: { Authorization: `Bearer ${token}` },
         },
-        body: JSON.stringify({ taskId, done: newStatus }),
-      });
-
-      if (newStatus) {
-        const currentStep = updatedData.find((s) => s.day === stepDay);
-        const isNowFinished = currentStep.onboardingTasks.every((t: any) => t.userProgress?.[0]?.done);
-        if (isNowFinished) {
-          setShowSuccess(true);
-          setTimeout(() => setShowSuccess(false), 2000);
-        }
-      }
+      );
+      setAnnouncements(Array.isArray(data) ? data.slice(0, 5) : []);
     } catch (err) {
-      console.error("Error al actualizar tarea:", err);
+      console.error("Error al cargar noticias en Dashboard:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
-        <Sidebar role="EMPLOYEE" />
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <div className="relative flex items-center justify-center">
-            <div className="w-16 h-16 border-4 border-[#005596]/10 border-t-[#005596] rounded-full animate-spin"></div>
-            <div className="absolute w-4 h-4 bg-[#d9ff00] rounded-full shadow-[0_0_15px_rgba(217,255,0,0.8)]"></div>
-          </div>
-          <p className="mt-6 text-[#005596] font-black text-xs uppercase tracking-[0.3em] animate-pulse">
-            Cargando tus datos...
-          </p>
-        </div>
-      </div>
-    );
+  const fetchActivity = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const data = await fetchWithApiFallback(API_ROUTES.ACTIVITY.GET_MY(3), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setActivity(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error al cargar actividad:", err);
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+
+  function formatRelativeDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Hoy";
+    if (diffDays === 1) return "Ayer";
+    if (diffDays < 7) return `Hace ${diffDays} días`;
+    return date.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
   }
 
-  const firstName = user?.name || user?.email?.split("@")[0] || "Empleado";
-  const visibleSteps = onboardingData.filter((s) => s.day <= currentDay);
-  const activeSteps = visibleSteps.filter(step => !step.onboardingTasks?.every((task: any) => task.userProgress?.[0]?.done));
-  const completedSteps = visibleSteps.filter(step => step.onboardingTasks?.length > 0 && step.onboardingTasks.every((task: any) => task.userProgress?.[0]?.done));
-  const sortedSteps = [...activeSteps, ...completedSteps];
+  const nextSlide = useCallback(() => {
+    if (announcements.length === 0) return;
+    setCurrentIndex((prev) => (prev + 1) % announcements.length);
+  }, [announcements.length]);
 
-  const allTasks = visibleSteps.flatMap((s) => s.onboardingTasks || []);
-  const completedTasks = allTasks.filter((t) => t.userProgress?.[0]?.done).length;
-  const progressPercent = allTasks.length > 0 ? Math.round((completedTasks / allTasks.length) * 100) : 0;
-  const maxOnboardingDay = onboardingData.length > 0 ? Math.max(...onboardingData.map((s) => s.day)) : 0;
-  const visibleDay = currentDay > maxOnboardingDay ? maxOnboardingDay : currentDay;
+  const prevSlide = useCallback(() => {
+    if (announcements.length === 0) return;
+    setCurrentIndex((prev) =>
+      prev === 0 ? announcements.length - 1 : prev - 1,
+    );
+  }, [announcements.length]);
+
+  useEffect(() => {
+    if (!mounted || announcements.length <= 1) return;
+    const timer = setTimeout(() => {
+      nextSlide();
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [currentIndex, mounted, nextSlide, announcements.length]);
+
+  if (!mounted) return null;
+
+  const actualAnuncio = announcements[currentIndex];
+
+  const quickActions = [
+    {
+      title: "Mis Cursos",
+      desc: "Continúa con tu progreso actual.",
+      icon: "bi-journal-bookmark-fill",
+      color: "text-primary",
+      href: "/dashboard/employee/courses",
+    },
+    {
+      title: "Onboarding",
+      desc: "Explora la ruta actual de tu onboarding.",
+      icon: "bi-rocket-takeoff-fill",
+      color: "text-secondary",
+      href: "/dashboard/employee/onboarding",
+    },
+    {
+      title: "Documentos",
+      desc: "Manuales, logos y normativas.",
+      icon: "bi-file-earmark-text-fill",
+      color: "text-primary",
+      href: "/dashboard/documents",
+    },
+    {
+      title: "Comunidad",
+      desc: "Conecta con otros empleados.",
+      icon: "bi-people-fill",
+      color: "text-secondary",
+      href: "/dashboard/employee/community",
+    },
+  ];
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
+    <div className="flex h-screen overflow-hidden bg-background font-sans">
       <Sidebar role="EMPLOYEE" />
 
-      {showSuccess && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center pointer-events-none">
-          <div className="bg-white/95 backdrop-blur-xl p-12 rounded-[48px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white animate-in zoom-in duration-300 flex flex-col items-center gap-6">
-            <div className="w-24 h-24 bg-[#d9ff00] rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(217,255,0,0.5)]">
-              <span className="text-3xl animate-bounce">👍</span>
-            </div>
-            <div className="text-center">
-              <h2 className="text-3xl font-black text-[#005596] tracking-tight">¡Día Completado!</h2>
-              <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">Sigue así, vas por buen camino</p>
-            </div>
-          </div>
-        </div>
-      )}
+      <motion.main
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="flex-1 overflow-y-auto flex flex-col relative no-scrollbar"
+      >
+        <PageHeader
+          title="Mi Panel"
+          description="Bienvenido a tu espacio de trabajo. Mantente al día con las noticias corporativas."
+          icon={<i className="bi bi-person-workspace"></i>}
+        />
 
-      <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-        <div className="flex-1 h-screen overflow-y-auto px-6 md:px-12 py-10 no-scrollbar">
-          <header className="mb-10 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-black text-[#1d1d1f] tracking-tight">¡Hola, {firstName}!</h1>
-              <p className="text-gray-500 mt-1 font-medium">
-                Estás en tu <span className="font-black px-2 py-0.5 rounded-lg bg-[#d9ff00] text-[#005596]">Día {visibleDay}</span> de incorporación.
-              </p>
+        <div className="p-6 lg:p-10 flex-1 space-y-8">
+          {/* ── CARRUSEL DINÁMICO ── */}
+          <section className="space-y-4">
+            <div className="px-4">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/70">
+                Destacados de la empresa
+              </h2>
             </div>
-            <button onClick={() => setCurrentDay((prev) => prev + 1)} className="bg-gray-100 text-gray-400 text-[10px] font-black px-3 py-2 rounded-lg hover:bg-gray-200 transition-all">DEBUG +1 DIA</button>
-          </header>
 
-          <section className="space-y-6 mb-12">
-            <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em] mb-4">Tu Ruta de Incorporación</h2>
-            {sortedSteps.map((step) => {
-              const isStepDone = step.onboardingTasks?.every((t: any) => t.userProgress?.[0]?.done);
-              return (
-                <div key={step.id} className={`transition-all duration-700 rounded-[32px] border p-8 shadow-sm ${isStepDone ? "bg-gray-50/50 border-gray-100 opacity-60 grayscale-[0.8] scale-[0.98]" : "bg-white border-gray-100 hover:shadow-md animate-in fade-in slide-in-from-bottom-4"}`}>
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider ${isStepDone ? "bg-gray-200 text-gray-400" : "bg-[#d9ff00] text-[#005596]"}`}>{step.badge || `Día ${step.day}`}</span>
-                    {isStepDone && <span className="text-gray-400 text-[10px] font-bold">✓ BLOQUE FINALIZADO</span>}
-                  </div>
-                  <h3 className={`text-xl font-bold mb-1 ${isStepDone ? "text-gray-400" : "text-[#1d1d1f]"}`}>{step.title}</h3>
-                  <p className="text-gray-500 text-sm mb-6 font-medium">{step.description}</p>
-                  <div className="grid gap-3">
-                    {step.onboardingTasks?.map((task: any) => {
-                      const isDone = task.userProgress?.[0]?.done || false;
-                      
-                      // Lógica de transformación de URL específica para tu estructura
-                      const getCorrectUrl = () => {
-                        if (!task.linkAction) return "#";
-                        
-                        // Extraer parámetros si vienen en formato query string
-                        const urlParts = task.linkAction.split('?');
-                        if (urlParts.length > 1) {
-                          const params = new URLSearchParams(urlParts[1]);
-                          const cId = params.get('courseId');
-                          const contId = params.get('contentId');
-                          
-                          // Si tenemos ambos, construimos la ruta /courses/ID/content/ID
-                          if (cId && contId) {
-                            return `/dashboard/employee/courses/${cId}/content/${contId}?fromTask=${task.id}`;
-                          }
-                          // Si solo hay curso, /courses/ID
-                          if (cId) {
-                            return `/dashboard/employee/courses/${cId}?fromTask=${task.id}`;
-                          }
-                        }
-                        
-                        // Fallback: Si no tiene parámetros, concatenamos el ID de la tarea
-                        return `${task.linkAction}${task.linkAction.includes('?') ? '&' : '?'}fromTask=${task.id}`;
-                      };
+            {loading ? (
+              <div className="w-full aspect-video md:aspect-21/9 lg:aspect-25/8 bg-muted animate-pulse rounded-[3.5rem]" />
+            ) : announcements.length > 0 && actualAnuncio ? (
+              <div
+                className={`relative p-[1.5px] rounded-[3.5rem] transition-all duration-500 bg-transparent hover:bg-linear-to-r ${PREMIUM_GRADIENT_COLS} shadow-2xl group`}
+              >
+                <Link
+                  href={`/dashboard/employee/announcements/${actualAnuncio.id}`}
+                  className="relative block w-full aspect-video md:aspect-21/9 lg:aspect-25/8 rounded-[calc(3.5rem-1.5px)] overflow-hidden bg-card cursor-pointer"
+                >
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentIndex}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.25, ease: "linear" }}
+                      className="absolute inset-0"
+                    >
+                      <div
+                        className="absolute inset-0 bg-cover bg-center transition-transform duration-[2s] ease-out group-hover:scale-105"
+                        style={{
+                          backgroundImage: `url(${actualAnuncio.imageUrl || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070"})`,
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-linear-to-r from-black/90 via-black/30 to-transparent z-10" />
 
-                      return (
-                        <div key={task.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all group ${isDone ? "bg-white/50 border-transparent" : "border-gray-50 bg-gray-50/30 hover:bg-white hover:border-[#d9ff00]"}`}>
-                          <div 
-                            onClick={() => handleToggleTask(task.id, isDone, step.day)} 
-                            className="flex items-center gap-4 cursor-pointer flex-1"
-                          >
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isDone ? "bg-[#005596] border-[#005596]" : "border-gray-200 group-hover:border-[#d9ff00]"}`}>
-                              {isDone && <span className="text-[#d9ff00] text-[10px]">✓</span>}
-                            </div>
-                            <span className={`text-sm font-bold ${isDone ? "text-gray-400 line-through" : "text-[#1d1d1f]"}`}>
-                              {task.label}
+                      <div className="absolute inset-0 z-20 flex flex-col justify-center p-10 md:p-20">
+                        <div className="max-w-3xl space-y-4">
+                          {/* ── NUEVO TAG DE ESTADO ── */}
+                          <div className="flex gap-2">
+                            <span
+                              className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.2em] backdrop-blur-md text-white border border-white/20 ${actualAnuncio.isPublic ? "bg-blue-500/40" : "bg-purple-500/40"}`}
+                            >
+                              {actualAnuncio.isPublic
+                                ? "Global"
+                                : actualAnuncio.Company?.name || "Empresa"}
                             </span>
                           </div>
 
-                          {task.linkAction && !isDone && (
-                            <Link 
-                              href={getCorrectUrl()}
-                              className="ml-4 px-4 py-2 bg-[#005596] text-[#d9ff00] text-[10px] font-black uppercase tracking-wider rounded-xl hover:scale-105 transition-transform shadow-sm whitespace-nowrap"
-                            >
-                              Ir a la tarea
-                            </Link>
-                          )}
+                          <h3 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.95] text-white">
+                            {actualAnuncio.title}
+                          </h3>
+                          <p className="text-white/70 text-base md:text-lg font-medium max-w-xl leading-relaxed line-clamp-2">
+                            {actualAnuncio.content}
+                          </p>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </section>
-        </div>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
 
-        <aside className="w-full md:w-80 h-screen border-l border-gray-100 bg-white p-8 flex flex-col gap-8 shrink-0 overflow-y-auto no-scrollbar">
-          <div className="space-y-4">
-            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Progreso Global</h4>
-            <div className="bg-gray-50 rounded-[24px] p-5 border border-gray-100">
-              <div className="flex justify-between items-end mb-2">
-                <span className="text-2xl font-black text-[#005596]">{progressPercent}%</span>
-                <span className="text-[10px] font-bold text-gray-400 uppercase">{completedTasks} de {allTasks.length}</span>
+                  {announcements.length > 1 && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          prevSlide();
+                        }}
+                        className="absolute left-1 inset-y-0 z-30 flex items-center bg-transparent border-none text-white/20 hover:text-white transition-all duration-300"
+                      >
+                        <i className="bi bi-chevron-left text-7xl scale-y-[1.5] scale-x-[0.5] font-thin"></i>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          nextSlide();
+                        }}
+                        className="absolute right-1 inset-y-0 z-30 flex items-center bg-transparent border-none text-white/20 hover:text-white transition-all duration-300"
+                      >
+                        <i className="bi bi-chevron-right text-7xl scale-y-[1.5] scale-x-[0.5] font-thin"></i>
+                      </button>
+                    </>
+                  )}
+                </Link>
               </div>
-              <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-[#d9ff00] rounded-full transition-all duration-1000" style={{ width: `${progressPercent}%` }} />
+            ) : (
+              <div className="w-full aspect-video md:aspect-21/9 lg:aspect-25/8 bg-muted rounded-[3.5rem] flex items-center justify-center border-2 border-dashed border-border">
+                <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">
+                  No hay anuncios disponibles
+                </p>
+              </div>
+            )}
+          </section>
+
+          {/* ── GRID DE CONTENIDO ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            {/* ACCESOS RÁPIDOS */}
+            <div className="lg:col-span-2 space-y-6">
+              <h2 className="text-xl font-bold tracking-tight px-2 text-foreground">
+                Accesos Rápidos
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {quickActions.map((item, i) => (
+                  <Link
+                    key={i}
+                    href={item.href}
+                    className="p-8 bg-card border border-border rounded-[2.5rem] hover:border-primary/50 hover:shadow-xl transition-all group flex items-start gap-5"
+                  >
+                    <div
+                      className={`w-14 h-14 rounded-2xl bg-muted flex items-center justify-center text-2xl ${item.color} group-hover:scale-110 transition-transform`}
+                    >
+                      <i className={`bi ${item.icon}`}></i>
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-foreground tracking-tight">
+                        {item.title}
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* ACTIVIDAD */}
+            <div className="space-y-6 pb-10">
+              <h2 className="text-xl font-bold tracking-tight px-2 text-foreground">
+                Última Actividad
+              </h2>
+              <div className="bg-card border border-border rounded-[2.5rem] p-8 shadow-sm space-y-8">
+                {activityLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="pl-6 border-l-2 border-muted space-y-2 animate-pulse"
+                    >
+                      <div className="h-2 w-16 bg-muted rounded" />
+                      <div className="h-3 w-32 bg-muted rounded" />
+                      <div className="h-2 w-48 bg-muted rounded" />
+                    </div>
+                  ))
+                ) : activity.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    Sin actividad reciente
+                  </p>
+                ) : (
+                  activity.map((item) => (
+                    <div
+                      key={item.id}
+                      className="relative pl-6 border-l-2 border-muted hover:border-primary transition-colors group"
+                    >
+                      <div className="absolute -left-1.75 top-0 w-3 h-3 rounded-full bg-background border-2 border-primary" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">
+                        {formatRelativeDate(item.createdAt)}
+                      </p>
+                      {item.href ? (
+                        <Link href={item.href}>
+                          <h5 className="text-sm font-bold text-foreground leading-none mb-2 flex items-center gap-2 group-hover:text-primary transition-colors">
+                            <i className={`bi ${item.icon} text-xs`} />
+                            {item.title}
+                          </h5>
+                        </Link>
+                      ) : (
+                        <h5 className="text-sm font-bold text-foreground leading-none mb-2 flex items-center gap-2">
+                          <i className={`bi ${item.icon} text-xs`} />
+                          {item.title}
+                        </h5>
+                      )}
+                      <p className="text-xs text-muted-foreground leading-snug">
+                        {item.description}
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
-          <section>
-            <h2 className="text-xs font-black text-[#005596] uppercase tracking-[0.2em] mb-6">Formación Recomendada</h2>
-            <div className="grid gap-4">
-              {courses.slice(0, 5).map((course) => (
-                <Link key={course.id} href={`/dashboard/employee/courses/${course.id}`}>
-                  <div className="bg-white p-4 rounded-2xl border border-gray-100 hover:border-[#d9ff00] transition-all group">
-                    <h4 className="font-bold text-[#1d1d1f] text-xs mb-1 group-hover:text-[#005596] line-clamp-1">{course.title}</h4>
-                    <span className="text-[9px] font-black uppercase text-[#005596] bg-blue-50 px-2 py-0.5 rounded">{user.company.name}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        </aside>
-      </main>
+        </div>
+      </motion.main>
     </div>
   );
 }

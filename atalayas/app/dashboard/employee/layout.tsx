@@ -1,10 +1,10 @@
-import ChatBot from '@/components/ui/ChatBot';
+import ChatWidget from '@/components/ui/ChatBot';
 
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      <ChatBot />
+      <ChatWidget />
     </>
   );
 }

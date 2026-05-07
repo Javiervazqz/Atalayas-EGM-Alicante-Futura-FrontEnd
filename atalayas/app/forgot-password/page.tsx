@@ -16,7 +16,6 @@ export default function ForgotPasswordPage() {
     setError('');
 
     try {
-      // Ajusta esta ruta según tu backend de NestJS
       const res = await fetch(`${API_ROUTES.AUTH.FORGOT_PASSWORD}`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -37,140 +36,132 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{
-        background: '#f5f5f7',
-        fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
-      }}
-    >
-      {/* Top nav */}
-      <nav className="flex items-center justify-between px-8 py-5">
-        <Link href="/login" className="flex items-center gap-2" style={{ textDecoration: 'none' }}>
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #1d1d1f 0%, #434343 100%)' }}
-          >
-            <span className="text-white text-xs font-semibold">A</span>
-          </div>
-          <span style={{ color: '#1d1d1f', fontSize: '17px', fontWeight: 600, letterSpacing: '-0.02em' }}>
-            Atalayas
-          </span>
-        </Link>
-      </nav>
+    <div className="min-h-screen flex font-sans bg-background">
+      
+      {/* =========================================
+          LADO IZQUIERDO: FORMULARIO
+      ========================================= */}
+      <div className="w-full lg:w-1/2 flex flex-col relative z-10">
+        
+        {/* Cabecera / Logo */}
+        <nav className="flex items-center px-8 lg:px-12 py-8">
+          <Link href="/login" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary shadow-lg shadow-primary/20">
+              <span className="text-primary-foreground text-lg font-extrabold">A</span>
+            </div>
+            <span className="text-foreground text-xl font-extrabold tracking-tight">
+              Atalayas
+            </span>
+          </Link>
+        </nav>
 
-      {/* Main */}
-      <main className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-sm">
-          
-          <div
-            className="rounded-3xl px-10 py-12"
-            style={{
-              background: '#ffffff',
-              boxShadow: '0 2px 20px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.06)',
-            }}
-          >
-            <div className="text-center mb-10">
-              <h1
-                style={{
-                  color: '#1d1d1f',
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  letterSpacing: '-0.03em',
-                  marginBottom: '12px',
-                }}
-              >
+        {/* Contenedor Central */}
+        <main className="flex-1 flex items-center justify-center px-6 lg:px-12 py-10">
+          <div className="w-full max-w-[400px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+            
+            <div className="mb-10">
+              <Link href="/login" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm font-bold transition-colors mb-6">
+                <i className="bi bi-arrow-left"></i> Volver
+              </Link>
+              <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight mb-3">
                 Recuperar contraseña
               </h1>
-              <p style={{ color: '#86868b', fontSize: '15px', fontWeight: 400, lineHeight: '1.4' }}>
+              <p className="text-muted-foreground text-base">
                 {submitted 
-                  ? 'Revisa tu bandeja de entrada para restablecer tu contraseña.'
-                  : 'Introduce tu correo y te enviaremos instrucciones.'}
+                  ? 'Revisa tu bandeja de entrada. Te hemos enviado un enlace seguro para restablecer tu contraseña.'
+                  : 'Introduce el correo electrónico asociado a tu cuenta y te enviaremos las instrucciones.'}
               </p>
             </div>
 
             {error && (
-              <div
-                className="rounded-xl px-4 py-3 mb-6 text-center"
-                style={{ background: '#fff2f2', border: '1px solid #ffd0d0' }}
-              >
-                <p style={{ color: '#ff3b30', fontSize: '13px' }}>{error}</p>
+              <div className="rounded-2xl px-5 py-4 mb-8 flex items-center gap-3 bg-destructive/10 border border-destructive/20 animate-in fade-in">
+                <i className="bi bi-exclamation-triangle-fill text-destructive text-lg"></i>
+                <p className="text-destructive text-sm font-bold">{error}</p>
               </div>
             )}
 
             {!submitted ? (
-              <form onSubmit={handleResetRequest} className="space-y-4">
-                <div>
+              <form onSubmit={handleResetRequest} className="space-y-5">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-foreground px-1">Correo electrónico</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Correo electrónico"
+                    placeholder="ejemplo@empresa.com"
                     required
-                    style={{
-                      width: '100%',
-                      background: '#f5f5f7',
-                      border: '1px solid rgba(0,0,0,0.08)',
-                      borderRadius: '12px',
-                      padding: '13px 16px',
-                      fontSize: '15px',
-                      color: '#1d1d1f',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
+                    className="w-full bg-card border border-input rounded-2xl px-5 py-4 text-sm text-foreground font-medium placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all shadow-sm"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  style={{
-                    width: '100%',
-                    background: loading ? '#86868b' : '#0071e3',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '12px',
-                    padding: '13px 16px',
-                    fontSize: '15px',
-                    fontWeight: 500,
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    transition: 'background 0.2s',
-                    fontFamily: 'inherit',
-                  }}
+                  className="w-full bg-secondary text-secondary-foreground font-bold rounded-2xl px-4 py-4 mt-4 hover:opacity-90 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-secondary/20 flex items-center justify-center gap-2"
                 >
-                  {loading ? 'Enviando...' : 'Recuperar contraseña'}
+                  {loading ? (
+                    <><i className="bi bi-arrow-repeat animate-spin text-lg"></i> Procesando...</>
+                  ) : (
+                    <><i className="bi bi-envelope-paper"></i> Enviar instrucciones</>
+                  )}
                 </button>
               </form>
             ) : (
-              <div className="text-center">
+              <div className="animate-in zoom-in-95 duration-500">
+                <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center text-3xl mb-6 border border-primary/20">
+                  <i className="bi bi-check2-circle"></i>
+                </div>
                 <Link
                   href="/login"
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    background: '#0071e3',
-                    color: '#ffffff',
-                    textDecoration: 'none',
-                    borderRadius: '12px',
-                    padding: '13px 16px',
-                    fontSize: '15px',
-                    fontWeight: 500,
-                  }}
+                  className="w-full bg-card border border-border text-foreground font-bold rounded-2xl px-4 py-4 flex items-center justify-center gap-2 hover:bg-muted transition-all shadow-sm"
                 >
-                  Volver al login
+                  Volver al inicio de sesión
                 </Link>
               </div>
             )}
-          </div>
-        </div>
-      </main>
 
-      {/* Footer minimalista similar al original */}
-      <footer className="px-8 py-6">
-        <p className="text-center" style={{ color: '#b0b0b5', fontSize: '11px' }}>
-          © 2026 Atalayas EGM Alicante Futura
-        </p>
-      </footer>
+          </div>
+        </main>
+
+        {/* Footer del lado izquierdo */}
+        <footer className="px-8 lg:px-12 py-6">
+          <div className="flex items-center justify-between flex-wrap gap-4 text-xs font-medium text-muted-foreground">
+            <p>© 2026 Atalayas EGM</p>
+            <div className="flex gap-6">
+              <a href="#" className="hover:text-foreground transition-colors">Soporte técnico</a>
+            </div>
+          </div>
+        </footer>
+      </div>
+
+      {/* =========================================
+          LADO DERECHO: IMAGEN Y BRANDING (Escritorio)
+      ========================================= */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-primary items-center justify-center overflow-hidden">
+        
+        {/* Imagen de fondo */}
+        <img 
+          src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop" 
+          alt="Edificios modernos de oficinas" 
+          className="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-40 scale-105"
+        />
+        
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-primary/30"></div>
+
+        {/* 🚀 SOLUCIÓN: Eliminado el delay-300 */}
+        <div className="relative z-10 max-w-lg p-12 animate-in fade-in zoom-in-95 duration-1000">
+          <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 mb-8">
+             <i className="bi bi-shield-lock text-white text-3xl"></i>
+          </div>
+          <h2 className="text-4xl xl:text-5xl font-extrabold text-white tracking-tight mb-6 leading-tight">
+            Seguridad en todo momento.
+          </h2>
+          <p className="text-lg text-white/80 font-medium leading-relaxed">
+            Recupera tu acceso de forma rápida y segura para seguir disfrutando de todos los servicios del ecosistema de Alicante Futura.
+          </p>
+        </div>
+
+      </div>
     </div>
   );
 }

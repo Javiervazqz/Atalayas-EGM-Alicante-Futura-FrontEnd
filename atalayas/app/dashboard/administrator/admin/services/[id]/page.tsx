@@ -3,13 +3,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
+import ContactCard from '@/components/ui/ContactCard';
 import { API_ROUTES } from '@/lib/utils';
 import mediumZoom from 'medium-zoom';
-import ContactCard from '@/components/ui/ContactCard';
-import Link from 'next/link';
 
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
-const inputClass = "w-full px-5 py-3.5 bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] focus:bg-white rounded-2xl outline-none transition-all text-[#424245] text-sm placeholder:text-[#c7c7cc]";
+const inputClass = "w-full px-4 py-3 bg-background border border-input focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all text-sm font-medium placeholder:text-muted-foreground/50 shadow-sm";
 
 export default function AdminServiceDetail() {
   const params = useParams();
@@ -31,7 +30,6 @@ export default function AdminServiceDetail() {
     address: '', schedule: '', externalUrl: '', price: '',
   });
 
-  // ── Fetch ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchService = async () => {
       if (typeof params.id !== 'string') return;
@@ -65,23 +63,19 @@ export default function AdminServiceDetail() {
     }
   }, [service?.mediaUrl, isEditing]);
 
-  // ── Save ───────────────────────────────────────────────────────────────────
   const handleSave = async () => {
     setErrors({});
     if (!formData.title.trim()) { setErrors({ title: 'El título es obligatorio' }); return; }
 
     setSaving(true);
-    const clean = (v: string) => v.trim() || null;
     try {
       const res = await fetch(API_ROUTES.SERVICES.GET_BY_ID(params.id as string), {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify({
-          title: formData.title, description: clean(formData.description), mediaUrl: clean(formData.mediaUrl),
-          providerName: clean(formData.providerName), phone: clean(formData.phone), email: clean(formData.email),
-          address: clean(formData.address), schedule: clean(formData.schedule),
-          externalUrl: clean(formData.externalUrl), price: clean(formData.price),
-        }),
+        headers: { 
+          'Content-Type': 'application/json', 
+          Authorization: `Bearer ${localStorage.getItem('token')}` 
+        },
+        body: JSON.stringify(formData),
       });
       if (res.ok) {
         const updated = await res.json();
@@ -89,15 +83,11 @@ export default function AdminServiceDetail() {
         setIsEditing(false);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
-      } else {
-        const err = await res.json();
-        alert(`Error: ${err.message || 'No se pudo guardar'}`);
       }
-    } catch { alert('No se pudo conectar con el servidor.'); }
-    finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
-
-  const handleDiscard = () => { hydrateForm(service); setErrors({}); setIsEditing(false); };
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -106,267 +96,186 @@ export default function AdminServiceDetail() {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      if (res.ok) { router.push('/dashboard/administrator/admin/services'); router.refresh(); }
-      else alert('No se pudo eliminar el servicio.');
-    } catch { alert('Error de conexión.'); }
-    finally { setDeleting(false); setShowDeleteModal(false); }
+      if (res.ok) router.push('/dashboard/administrator/admin/services');
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
+    }
   };
 
-  const set = (key: string, value: string) => setFormData(prev => ({ ...prev, [key]: value }));
-  const canEdit = service && !service.isPublic; // Solo puede editar servicios de su empresa
-  const hasContactInfo = service && (service.providerName || service.phone || service.email || service.address || service.schedule || service.price || service.externalUrl);
-
   if (loading) return (
-    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    <div className="flex min-h-screen bg-background items-center justify-center font-sans">
+      <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
     </div>
   );
+
   if (!service) return null;
 
+  const canModify = service && !service.isPublic;
+  const hasContactInfo = !!(service.providerName || service.phone || service.email || service.address || service.externalUrl || service.price);
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f7', fontFamily: appleFont }}>
+    <div className="flex min-h-screen w-full bg-background font-sans text-foreground overflow-hidden">
       <Sidebar role="ADMIN" />
 
-      <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>
-
-        {/* HEADER */}
-        <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)', padding: '32px 0' }}>
-          <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 24px' }}>
-            <Link
-              href="/dashboard/administrator/admin/services"
-              className="group text-[#0071e3] text-sm font-semibold hover:underline mb-6 inline-flex items-center gap-2 transition-all"
-            >
-              <i className="bi bi-arrow-left-circle-fill transition-transform duration-300 group-hover:-translate-x-1.5"></i>
-              <span>Volver a Servicios</span> {/* Opcional: añadir texto mejora el SEO y accesibilidad */}
-            </Link>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
-              <div style={{ width: '72px', height: '72px', background: 'rgba(0,113,227,0.1)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', flexShrink: 0 }}>
-                🏢
+      <main className="flex-1 flex flex-col relative w-full overflow-y-auto overflow-x-hidden no-scrollbar">
+        <PageHeader 
+          title={isEditing ? "Editando Servicio" : service.title}
+          description={
+            <span className="hidden sm:block">
+              {isEditing ? "Modifica los detalles del servicio corporativo." : (service.isPublic ? "Servicio oficial Atalayas EGM" : "Servicio privado de empresa")}
+            </span> as any
+          }
+          icon={<i className={`bi ${isEditing ? 'bi-pencil-square' : 'bi-briefcase-fill'}`}></i>}
+          backUrl="/dashboard/administrator/admin/services"
+          action={
+            canModify && (
+              <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                {saveSuccess && <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest animate-pulse hidden sm:inline">Guardado</span>}
+                
+                {!isEditing ? (
+                  <>
+                    <button onClick={() => setIsEditing(true)} className="bg-secondary text-secondary-foreground px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 shadow-sm shrink-0">
+                      <i className="bi bi-pencil text-sm"></i>
+                      <span className="hidden sm:inline">Editar</span>
+                    </button>
+                    <button onClick={() => setShowDeleteModal(true)} className="bg-card text-muted-foreground hover:bg-destructive hover:text-white border border-border hover:border-destructive w-8 h-8 sm:w-9 sm:h-9 rounded-xl transition-all flex items-center justify-center shadow-sm shrink-0">
+                      <i className="bi bi-trash3 text-sm"></i>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={handleSave} disabled={saving} className="bg-secondary text-secondary-foreground px-3 sm:px-5 py-2 rounded-xl text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm shrink-0">
+                      {saving ? <i className="bi bi-arrow-repeat animate-spin text-sm"></i> : <i className="bi bi-check-lg text-sm"></i>} 
+                      <span className="hidden sm:inline">Guardar</span>
+                    </button>
+                    <button onClick={() => { hydrateForm(service); setIsEditing(false); }} className="bg-card sm:bg-transparent border sm:border-none border-border text-muted-foreground hover:text-foreground hover:bg-muted sm:hover:bg-transparent w-8 h-8 sm:w-auto sm:h-auto rounded-xl sm:px-3 text-xs font-semibold transition-colors flex items-center justify-center shrink-0">
+                      <span className="hidden sm:inline">Cancelar</span>
+                      <i className="bi bi-x-lg sm:hidden text-sm"></i>
+                    </button>
+                  </>
+                )}
               </div>
-              <div style={{ flex: 1, minWidth: '250px' }}>
-                <h1 style={{ fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: 800, color: '#1d1d1f', letterSpacing: '-0.02em', margin: 0 }}>
-                  {service.title}
-                </h1>
-                <span style={{
-                  display: 'inline-block', marginTop: '8px', fontSize: '12px', fontWeight: 700,
-                  color: service.isPublic ? '#34c759' : '#0071e3',
-                  background: service.isPublic ? 'rgba(52,199,89,0.1)' : 'rgba(0,113,227,0.1)',
-                  padding: '4px 10px', borderRadius: '999px'
-                }}>
-                  {service.isPublic ? '🌐 Público' : '🏢 Tu empresa'}
-                </span>
+            )
+          }
+        />
+
+        <div className="p-4 sm:p-6 lg:p-10 flex-1">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+
+              {/* COLUMNA IZQUIERDA */}
+              <div className="lg:col-span-7 space-y-8">
+                {isEditing && canModify ? (
+                  <section className="bg-card border border-border rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 lg:p-10 shadow-sm space-y-6 animate-in fade-in duration-300">
+                    <h3 className="text-xl font-bold tracking-tight">Información Principal</h3>
+                    
+                    <div className="space-y-5">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Título del servicio</label>
+                        <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className={`${inputClass} text-base font-bold ${errors.title ? 'border-destructive' : ''}`} />
+                      </div>
+                      
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Descripción detallada</label>
+                        <textarea rows={8} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className={`${inputClass} leading-relaxed resize-none`} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">URL Imagen Portada</label>
+                        <input value={formData.mediaUrl} onChange={e => setFormData({...formData, mediaUrl: e.target.value})} className={inputClass} placeholder="https://..." />
+                      </div>
+                    </div>
+                  </section>
+                ) : (
+                  <section className="bg-card border border-border rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 lg:p-10 shadow-sm animate-in fade-in duration-500">
+                    <div className="flex items-center gap-3 mb-6">
+                      <span className={`text-[10px] font-semibold px-3 py-1 rounded-md uppercase tracking-wider border ${service.isPublic ? 'bg-primary/5 text-primary border-primary/20' : 'bg-secondary/5 text-secondary border-secondary/20'}`}>
+                        {service.isPublic ? 'Global' : 'Privado'}
+                      </span>
+                    </div>
+
+                    <h2 className="text-2xl sm:text-3xl font-bold mb-6 tracking-tight leading-tight">{service.title}</h2>
+                    <div className="prose prose-slate dark:prose-invert max-w-none">
+                      <p className="text-muted-foreground text-sm sm:text-base leading-relaxed whitespace-pre-wrap font-medium">
+                        {service.description || 'Sin descripción disponible.'}
+                      </p>
+                    </div>
+
+                    {service.mediaUrl && (
+                      <div className="overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border border-border shadow-sm group mt-8">
+                        <img ref={zoomRef} src={service.mediaUrl} alt={service.title} className="w-full h-auto cursor-zoom-in hover:opacity-95 transition-opacity" />
+                      </div>
+                    )}
+                  </section>
+                )}
               </div>
 
-              {saveSuccess && (
-                <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-200 animate-in fade-in duration-300">
-                  ✓ Cambios guardados
-                </span>
-              )}
-
-              {/* Botones solo si puede editar */}
-              {canEdit && (
-                <div className="flex items-center gap-3 shrink-0">
-                  {!isEditing ? (
-                    <>
-                      <button onClick={() => setShowDeleteModal(true)}
-                        className="px-4 py-2 rounded-xl text-sm font-semibold text-red-500 bg-red-50 hover:bg-red-100 transition-colors">
-                        Eliminar
-                      </button>
-                      <button onClick={() => setIsEditing(true)}
-                        className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#0071e3] text-white hover:bg-[#0077ed] transition-colors">
-                        Editar servicio
-                      </button>
-                    </>
+              {/* COLUMNA DERECHA */}
+              <aside className="lg:col-span-5">
+                <div className="sticky top-8 space-y-8">
+                  {isEditing && canModify ? (
+                    <section className="bg-card border border-border rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-sm space-y-5 animate-in slide-in-from-right-4 duration-300">
+                      <h3 className="text-lg font-bold tracking-tight">Contacto y Enlaces</h3>
+                      
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Proveedor</label>
+                          <input value={formData.providerName} onChange={e => setFormData({...formData, providerName: e.target.value})} className={inputClass} placeholder="Ej: Nombre Empresa" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Teléfono</label>
+                          <input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className={inputClass} placeholder="600 000 000" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Email</label>
+                          <input value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className={inputClass} placeholder="contacto@servicios.com" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Horario</label>
+                          <input value={formData.schedule} onChange={e => setFormData({...formData, schedule: e.target.value})} className={inputClass} placeholder="Lunes a Viernes..." />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">URL Enlace Externo</label>
+                          <input value={formData.externalUrl} onChange={e => setFormData({...formData, externalUrl: e.target.value})} className={inputClass} placeholder="https://..." />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Precio / Tarifa</label>
+                          <input value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className={inputClass} placeholder="Ej: 30€ o Gratis" />
+                        </div>
+                      </div>
+                    </section>
                   ) : (
-                    <>
-                      <button onClick={handleDiscard}
-                        className="px-4 py-2 rounded-xl text-sm font-semibold text-[#424245] bg-[#f5f5f7] hover:bg-gray-200 transition-colors">
-                        Descartar
-                      </button>
-                      <button onClick={handleSave} disabled={saving}
-                        className="px-5 py-2 rounded-xl text-sm font-semibold bg-[#0071e3] text-white hover:bg-[#0077ed] transition-colors disabled:opacity-60">
-                        {saving ? 'Guardando...' : 'Guardar cambios'}
-                      </button>
-                    </>
+                    hasContactInfo && (
+                      <div className="animate-in fade-in slide-in-from-right-4 duration-700">
+                        <ContactCard service={service} />
+                      </div>
+                    )
                   )}
                 </div>
-              )}
+              </aside>
+
             </div>
-          </div>
-        </div>
-
-        {/* CONTENIDO */}
-        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 24px' }}>
-          <div className="content-layout">
-
-            <div>
-              <h3 style={{ fontSize: '19px', fontWeight: 700, color: '#1d1d1f', marginBottom: '20px' }}>
-                {isEditing ? 'Editando información' : 'Sobre el servicio'}
-              </h3>
-
-              {isEditing ? (
-                <div className="space-y-5">
-
-                  {/* Info principal */}
-                  <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm space-y-4">
-                    <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#86868b]">Información principal</p>
-
-                    <div className="space-y-1">
-                      <input value={formData.title} onChange={e => { set('title', e.target.value); if (errors.title) setErrors({}); }}
-                        placeholder="Título del servicio..."
-                        className={`w-full px-5 py-4 rounded-2xl outline-none transition-all text-lg font-bold ${errors.title ? 'border-2 border-red-400 bg-red-50/30 text-red-900' : 'border-2 border-transparent bg-[#f5f5f7] focus:border-[#0071e3] focus:bg-white text-[#1d1d1f]'}`}
-                      />
-                      {errors.title && <p className="text-red-500 text-xs font-bold ml-2 flex items-center gap-1">⚠️ {errors.title}</p>}
-                    </div>
-
-                    <textarea rows={5} value={formData.description} onChange={e => set('description', e.target.value)}
-                      placeholder="Descripción detallada..."
-                      className="w-full px-5 py-4 bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3] focus:bg-white rounded-2xl outline-none transition-all resize-none text-[#424245] leading-relaxed text-sm placeholder:text-[#c7c7cc]"
-                    />
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-[#86868b] ml-1">Imagen (URL)</label>
-                      <input type="url" value={formData.mediaUrl} onChange={e => set('mediaUrl', e.target.value)}
-                        placeholder="https://ejemplo.com/imagen.jpg" className={inputClass} />
-                      {formData.mediaUrl && <p className="text-xs text-green-600 font-medium ml-1">✓ Enlace detectado</p>}
-                    </div>
-                  </div>
-
-                  {/* Contacto */}
-                  <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm space-y-4">
-                    <div>
-                      <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#86868b]">Datos de contacto</p>
-                      <p className="text-xs text-[#86868b] mt-1">Todos opcionales.</p>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold text-[#86868b] ml-1 mb-1 block">Proveedor / Empresa</label>
-                      <input value={formData.providerName} onChange={e => set('providerName', e.target.value)}
-                        placeholder="Ej: Gestoría García" className={inputClass} />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-bold text-[#86868b] ml-1 mb-1 block">Teléfono</label>
-                        <input type="tel" value={formData.phone} onChange={e => set('phone', e.target.value)}
-                          placeholder="600 000 000" className={inputClass} />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold text-[#86868b] ml-1 mb-1 block">Email</label>
-                        <input type="email" value={formData.email} onChange={e => set('email', e.target.value)}
-                          placeholder="contacto@empresa.com" className={inputClass} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold text-[#86868b] ml-1 mb-1 block">Dirección</label>
-                      <input value={formData.address} onChange={e => set('address', e.target.value)}
-                        placeholder="Dirección del servicio" className={inputClass} />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-bold text-[#86868b] ml-1 mb-1 block">Horario</label>
-                        <input value={formData.schedule} onChange={e => set('schedule', e.target.value)}
-                          placeholder="Lun–Vie 9:00–18:00" className={inputClass} />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold text-[#86868b] ml-1 mb-1 block">Precio</label>
-                        <input value={formData.price} onChange={e => set('price', e.target.value)}
-                          placeholder="Gratuito para empleados" className={inputClass} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold text-[#86868b] ml-1 mb-1 block">Enlace externo</label>
-                      <input type="url" value={formData.externalUrl} onChange={e => set('externalUrl', e.target.value)}
-                        placeholder="https://..." className={inputClass} />
-                    </div>
-                  </div>
-
-                  {/* Danger zone */}
-                  <div className="border border-red-200 rounded-[2rem] p-6 bg-red-50/30">
-                    <div className="flex items-center justify-between flex-wrap gap-3">
-                      <div>
-                        <p className="font-bold text-[#1d1d1f] text-sm">Eliminar este servicio</p>
-                        <p className="text-xs text-[#86868b] mt-0.5">Acción permanente, no se puede deshacer.</p>
-                      </div>
-                      <button onClick={() => setShowDeleteModal(true)}
-                        className="px-5 py-2.5 rounded-xl text-sm font-bold text-red-600 bg-white border border-red-200 hover:bg-red-50 transition-colors">
-                        Eliminar servicio
-                      </button>
-                    </div>
-                  </div>
-
-                </div>
-              ) : (
-                <>
-                  <p style={{ fontSize: '16px', lineHeight: '1.7', color: '#424245', whiteSpace: 'pre-wrap', marginBottom: '32px' }}>
-                    {service.description || 'No hay descripción disponible.'}
-                  </p>
-
-                  {service.mediaUrl && (
-                    <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                      <div className="overflow-hidden rounded-[2rem] border border-gray-100 shadow-sm">
-                        <img ref={zoomRef} src={service.mediaUrl} alt={service.title} className="w-full h-auto cursor-zoom-in" />
-                      </div>
-                    </div>
-                  )}
-
-                  {hasContactInfo && (
-                    <div className="action-box-mobile">
-                      <ContactCard service={service} />
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* ACTION BOX LATERAL */}
-            {!isEditing && hasContactInfo && (
-              <div className="action-box">
-                <ContactCard service={service} />
-              </div>
-            )}
           </div>
         </div>
       </main>
 
+      {/* MODAL DE ELIMINACIÓN */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-in fade-in duration-200"
-          onClick={() => setShowDeleteModal(false)}>
-          <div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200"
-            onClick={e => e.stopPropagation()}>
-            <div className="text-5xl mb-6 text-center">🗑️</div>
-            <h2 className="text-2xl font-bold text-[#1d1d1f] mb-3 text-center tracking-tight">¿Eliminar servicio?</h2>
-            <p className="text-[15px] text-[#86868b] mb-8 text-center leading-relaxed">
-              Estás a punto de eliminar <span className="font-semibold text-[#1d1d1f]">"{service.title}"</span>. Esta acción es permanente.
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowDeleteModal(false)}>
+          <div className="bg-card rounded-[2rem] p-8 max-w-sm w-full shadow-2xl border border-border text-center animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+            <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-6 text-2xl"><i className="bi bi-trash3"></i></div>
+            <h3 className="text-xl font-bold text-foreground mb-2">¿Eliminar servicio?</h3>
+            <p className="text-sm text-muted-foreground mb-8">Esta acción es irreversible y el servicio dejará de ser visible para los empleados.</p>
             <div className="flex flex-col gap-3">
-              <button onClick={handleDelete} disabled={deleting}
-                className="w-full py-4 rounded-2xl font-bold bg-[#ff3b30] text-white hover:bg-[#e32d24] active:scale-[0.98] transition-all disabled:opacity-60">
-                {deleting ? 'Eliminando...' : 'Eliminar servicio'}
+              <button onClick={handleDelete} disabled={deleting} className="w-full py-3.5 rounded-xl font-semibold bg-destructive text-white hover:opacity-90 shadow-sm text-sm transition-all">
+                {deleting ? 'Borrando...' : 'Confirmar Eliminación'}
               </button>
-              <button onClick={() => setShowDeleteModal(false)}
-                className="w-full py-4 rounded-2xl font-semibold text-[#0071e3] hover:bg-[#f5f5f7] transition-colors">
-                Cancelar
-              </button>
+              <button onClick={() => setShowDeleteModal(false)} className="w-full py-3.5 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors text-sm">Cancelar</button>
             </div>
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        .content-layout { display: grid; grid-template-columns: 1fr 300px; gap: 48px; }
-        .action-box { display: block; }
-        .action-box-mobile { display: none; }
-        @media (max-width: 1024px) {
-          .content-layout { grid-template-columns: 1fr; gap: 0; }
-          .action-box { display: none; }
-          .action-box-mobile { display: block; margin-bottom: 32px; }
-        }
-      `}</style>
     </div>
   );
 }

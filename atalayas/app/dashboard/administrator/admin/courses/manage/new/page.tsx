@@ -1,171 +1,285 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/ui/Sidebar';
-import { API_ROUTES } from '@/lib/utils';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Sidebar from "@/components/ui/Sidebar";
+import PageHeader from "@/components/ui/pageHeader";
+import { API_ROUTES } from "@/lib/utils";
 
 export default function NewCoursePage() {
-    const router = useRouter();
-    const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState("");
+  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-    // Estado para validación visual de errores
-    const [titleError, setTitleError] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    isPublic: false,
+    category: "BASICO",
+    requiredRole: "",
+    imageFile: null as File | null
+  });
 
-    // Obtener datos del usuario logueado
-    const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
+  const user = typeof window !== "undefined"
+    ? JSON.parse(localStorage.getItem("user") || '{"companyId": null}')
+    : { companyId: null };
 
-    const [formData, setFormData] = useState({
-        title: '',
-        category: 'BASICO' as 'BASICO' | 'ESPECIALIZADO',
-        file: null as File | null,
-    });
+  // Cargar roles disponibles desde los empleados existentes
+  useEffect(() => {
+    const fetchAvailableRoles = async () => {
+      setLoadingRoles(true);
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+        const res = await fetch(`${API_ROUTES.USERS.GET_ALL}/roles`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        // Validación de Título (Mismo estilo que general-admin)
-        if (!formData.title.trim()) {
-            setTitleError(true);
-            return;
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableRoles(Array.isArray(data) ? data : []);
+        } else {
+          setAvailableRoles(["Técnico", "Ventas", "Administrativo", "Gerente", "Operaciones"]);
         }
-
-        setLoading(true);
-
-        try {
-            const token = localStorage.getItem('token');
-
-            const payload = {
-                title: formData.title.trim(),
-                isPublic: false, // Los cursos creados por admin de empresa son privados por defecto
-                category: formData.category,
-                fileUrl: formData.file ? formData.file.name : null,
-                companyId: user.companyId || null
-            };
-
-            const resCourse = await fetch(API_ROUTES.COURSES.CREATE, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!resCourse.ok) throw new Error("Error al crear el curso");
-
-            // Redirección al listado de cursos del admin
-            router.push('/dashboard/administrator/admin/courses');
-
-        } catch (err) {
-            console.error(err);
-            alert("Ocurrió un error al crear el curso.");
-        } finally {
-            setLoading(false);
-        }
+      } catch (err) {
+        console.error("Error cargando roles:", err);
+        setAvailableRoles(["Técnico", "Ventas", "Administrativo", "Gerente", "Operaciones"]);
+      } finally {
+        setLoadingRoles(false);
+      }
     };
 
-    return (
-        <div className="flex min-h-screen bg-[#f5f5f7]">
-            <Sidebar role="ADMIN" />
+    fetchAvailableRoles();
+  }, []);
 
-            <main className="flex-1 p-12 overflow-y-auto">
-                <div className="max-w-2xl mx-auto">
-                    <header className="mb-10">
-                        <button
-                            onClick={() => router.back()}
-                            className="text-[#0071e3] font-medium mb-4 flex items-center gap-2 hover:underline bg-transparent border-none cursor-pointer"
-                        >
-                            <i className="bi bi-arrow-left"></i> Volver
-                        </button>
-                        <h1 className="text-4xl font-bold text-[#1d1d1f] tracking-tight">Nuevo Curso</h1>
-                        <p className="text-[#86868b] mt-2">Crea un nuevo contenido formativo para tu organización.</p>
-                    </header>
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData({ ...formData, imageFile: file });
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
 
-                    <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-                        {/* 1. NOMBRE DEL CURSO CON ERROR VISUAL */}
-                        <div>
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] mb-2 ml-1">Nombre del Curso</label>
-                            <input
-                                type="text"
-                                value={formData.title}
-                                onChange={e => {
-                                    setFormData({ ...formData, title: e.target.value });
-                                    if (titleError) setTitleError(false);
-                                }}
-                                className={`w-full px-6 py-5 rounded-2xl bg-[#f5f5f7] border-2 outline-none font-bold text-[#1d1d1f] transition-all ${titleError ? 'border-red-500 bg-red-50' : 'border-transparent focus:border-[#0071e3]'}`}
-                                placeholder="Título del curso..."
-                                disabled={loading}
-                            />
-                            {titleError && (
-                                <p className="text-red-500 text-[10px] font-bold mt-2 ml-2">
-                                    <i className="bi bi-exclamation-triangle-fill"></i> Error: El nombre del curso es obligatorio
-                                </p>
-                            )}
-                        </div>
+    // Validaciones
+    if (!formData.title.trim()) {
+      alert("El título es obligatorio");
+      return;
+    }
 
-                        {/* 2. CATEGORÍA (CON ICONOS) */}
-                        <div className="space-y-4">
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-1">Tipo de Formación</label>
-                            <div className="grid grid-cols-2 gap-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, category: 'BASICO' })}
-                                    disabled={loading}
-                                    className={`p-4 rounded-2xl border-2 flex items-center justify-center gap-2 cursor-pointer transition-all font-bold ${formData.category === 'BASICO' ? 'border-[#0071e3] bg-blue-50 text-[#0071e3]' : 'border-transparent bg-[#f5f5f7] text-[#86868b]'}`}
-                                >
-                                    <i className="bi bi-book"></i> Onboarding
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, category: 'ESPECIALIZADO' })}
-                                    disabled={loading}
-                                    className={`p-4 rounded-2xl border-2 flex items-center justify-center gap-2 cursor-pointer transition-all font-bold ${formData.category === 'ESPECIALIZADO' ? 'border-[#0071e3] bg-blue-50 text-[#0071e3]' : 'border-transparent bg-[#f5f5f7] text-[#86868b]'}`}
-                                >
-                                    <i className="bi bi-mortarboard"></i> Especialización
-                                </button>
-                            </div>
-                        </div>
+    // Validar que si es especialización, tenga un rol seleccionado
+    if (formData.category === "ESPECIALIZADO" && !formData.requiredRole) {
+      alert("Para cursos de especialización, debes seleccionar un rol requerido");
+      return;
+    }
 
-                        {/* 3. SUBIDA DE PDF (ESTILO GRUPO) */}
-                        <div className="space-y-4">
-                            <label className="block text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-1">Material de estudio (PDF)</label>
-                            <div className="relative h-28 w-full border-2 border-dashed border-gray-200 rounded-3xl flex items-center justify-center bg-[#f5f5f7] hover:border-blue-400 transition-all cursor-pointer group">
-                                <input
-                                    type="file"
-                                    accept=".pdf"
-                                    onChange={e => setFormData({ ...formData, file: e.target.files?.[0] || null })}
-                                    disabled={loading}
-                                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                />
-                                <p className="font-bold text-[#1d1d1f] px-4 truncate flex items-center">
-                                    <i className={`bi ${formData.file ? 'bi-file-earmark-check-fill text-green-500' : 'bi-file-earmark-pdf text-[#0071e3]'} text-xl mr-2 group-hover:scale-110 transition-transform`}></i>
-                                    {formData.file ? formData.file.name : 'Subir documento base'}
-                                </p>
-                            </div>
-                        </div>
+    setLoading(true);
+    setLoadingStep("Iniciando creación...");
 
-                        {/* BOTÓN SUBMIT (MISMO ESTILO QUE GENERAL ADMIN) */}
-                        <div className="pt-4">
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className={`w-full py-5 text-white rounded-2xl font-bold text-lg transition-all active:scale-[0.98] cursor-pointer shadow-lg disabled:opacity-50 ${loading ? 'bg-gray-400' : 'bg-[#1d1d1f] hover:bg-black'}`}
-                            >
-                                {loading ? (
-                                    <span className="flex items-center justify-center gap-2">
-                                        <i className="bi bi-arrow-repeat animate-spin"></i> Creando curso...
-                                    </span>
-                                ) : (
-                                    'Crear Curso'
-                                )}
-                            </button>
-                        </div>
+    try {
+      const token = localStorage.getItem("token");
 
-                    </form>
-                </div>
-            </main>
+      if (!token) {
+        throw new Error("No hay sesión iniciada");
+      }
+
+      // Crear FormData para enviar archivo
+      const formDataToSend = new FormData();
+      formDataToSend.append("title", formData.title);
+      formDataToSend.append("isPublic", String(formData.isPublic));
+      formDataToSend.append("category", formData.category);
+      formDataToSend.append("companyId", user.companyId || "");
+
+      if (formData.category === "ESPECIALIZADO" && formData.requiredRole) {
+        formDataToSend.append("jobRole", formData.requiredRole);
+      }
+
+      if (formData.imageFile) {
+        formDataToSend.append("file", formData.imageFile);
+      }
+
+      console.log("Enviando datos...");
+      console.log("URL:", API_ROUTES.COURSES.CREATE);
+
+      setLoadingStep("Creando curso...");
+      const resCourse = await fetch(API_ROUTES.COURSES.CREATE, {
+        method: "POST",
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formDataToSend,
+      });
+
+      if (!resCourse.ok) {
+        const errorText = await resCourse.text();
+        console.error("Error respuesta:", resCourse.status, errorText);
+        throw new Error(`Error al crear el curso: ${resCourse.status}`);
+      }
+
+      const newCourse = await resCourse.json();
+      console.log("Curso creado exitosamente:", newCourse);
+
+      router.push("/dashboard/administrator/admin/courses/manage");
+
+    } catch (err) {
+      console.error("Error detallado:", err);
+      alert(err instanceof Error ? err.message : "Error en el proceso de creación.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen bg-background font-sans">
+      <Sidebar role="ADMIN" />
+      <main className="flex-1 overflow-auto flex flex-col">
+        <PageHeader
+          title="Nuevo Curso"
+          description="Crea un nuevo curso con imagen de portada y configuración de acceso."
+          icon={<i className="bi bi-plus-circle-fill"></i>}
+          backUrl="/dashboard/administrator/admin/courses/manage"
+        />
+
+        <div className="p-6 lg:p-10 max-w-3xl mx-auto w-full">
+          <form onSubmit={handleSubmit} className="bg-card p-8 lg:p-10 rounded-[2.5rem] border border-border shadow-sm space-y-8">
+
+            {/* Imagen de portada */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                Imagen de portada
+              </label>
+              <label className="relative h-40 w-full border-2 border-dashed rounded-2xl flex items-center justify-center transition-all cursor-pointer group overflow-hidden bg-muted/20 hover:border-primary">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  disabled={loading}
+                />
+                {imagePreview ? (
+                  <>
+                    <img src={imagePreview} className="w-full h-full object-cover" alt="Preview" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <div className="text-center text-white">
+                        <i className="bi bi-camera text-2xl mb-1 block"></i>
+                        <span className="text-[10px] font-bold">Cambiar imagen</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <i className="bi bi-image text-3xl text-muted-foreground mb-2 block"></i>
+                    <p className="font-bold text-foreground text-sm">Seleccionar imagen</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">JPG, PNG, GIF hasta 5MB</p>
+                  </div>
+                )}
+              </label>
+            </div>
+
+            {/* Título */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                Nombre del curso
+              </label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full px-6 py-4 rounded-2xl bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold transition-all"
+                placeholder="Ej: Prevención de Riesgos"
+                disabled={loading}
+                required
+              />
+            </div>
+
+            {/* Categoría */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({ ...formData, category: 'BASICO', requiredRole: '' });
+                }}
+                className={`p-4 rounded-2xl border-2 font-bold transition-all flex items-center justify-center gap-2 ${formData.category === 'BASICO' ? 'border-primary bg-primary/5 text-primary' : 'border-transparent bg-muted/50 text-muted-foreground'}`}
+                disabled={loading}
+              >
+                <i className="bi bi-book text-xl"></i>
+                Onboarding
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, category: 'ESPECIALIZADO' })}
+                className={`p-4 rounded-2xl border-2 font-bold transition-all flex items-center justify-center gap-2 ${formData.category === 'ESPECIALIZADO' ? 'border-primary bg-primary/5 text-primary' : 'border-transparent bg-muted/50 text-muted-foreground'}`}
+                disabled={loading}
+              >
+                <i className="bi bi-mortarboard text-xl"></i>
+                Especialización
+              </button>
+            </div>
+
+            {/* Campo de Rol Requerido - Solo para especialización */}
+            {formData.category === "ESPECIALIZADO" && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                  Rol Requerido
+                </label>
+                <select
+                  value={formData.requiredRole}
+                  onChange={(e) => setFormData({ ...formData, requiredRole: e.target.value })}
+                  className="w-full px-6 py-4 rounded-2xl bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold transition-all appearance-none cursor-pointer"
+                  disabled={loading || loadingRoles}
+                  required={formData.category === "ESPECIALIZADO"}
+                >
+                  <option value="">Seleccionar rol...</option>
+                  {availableRoles.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-muted-foreground ml-1">
+                  Solo los empleados con este rol podrán ver y acceder al curso
+                </p>
+              </div>
+            )}
+
+            {/* Mensaje informativo para cursos de onboarding */}
+            {formData.category === "BASICO" && (
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-primary text-center flex items-center justify-center gap-2">
+                  <i className="bi bi-info-circle"></i>
+                  Los cursos de Onboarding están disponibles para todos los empleados sin restricción de rol
+                </p>
+              </div>
+            )}
+
+            {/* Botón submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-bold text-lg hover:opacity-90 disabled:opacity-50 shadow-lg transition-all flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <i className="bi bi-arrow-repeat animate-spin"></i>
+                  {loadingStep}
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-plus-circle"></i>
+                  Crear Curso
+                </>
+              )}
+            </button>
+          </form>
         </div>
-    );
+      </main>
+    </div>
+  );
 }

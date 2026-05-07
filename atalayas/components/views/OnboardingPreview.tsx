@@ -50,14 +50,11 @@ export default function OnboardingPreview({ steps }: { steps: Step[] }) {
                   return (
                     <div
                       key={taskId}
-                      onClick={() => toggleTask(taskId)}
                       className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                         isDone ? "bg-gray-50 border-transparent opacity-60" : "border-gray-50 bg-gray-50/50 hover:bg-white hover:border-[#d9ff00]"
                       }`}
                     >
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isDone ? "bg-[#005596] border-[#005596]" : "border-gray-200"}`}>
-                        {isDone && <span className="text-[#d9ff00] text-[10px]">✓</span>}
-                      </div>
+                      
                       <span className={`text-sm font-bold ${isDone ? "text-gray-400 line-through" : "text-[#1d1d1f]"}`}>
                         {task.label}
                       </span>

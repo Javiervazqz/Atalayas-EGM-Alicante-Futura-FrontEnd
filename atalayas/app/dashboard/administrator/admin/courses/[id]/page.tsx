@@ -1,249 +1,155 @@
-"use client";
+'use client';
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
+import { API_ROUTES } from '@/lib/utils';
+import { motion } from "framer-motion";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import Sidebar from "@/components/ui/Sidebar";
-import { API_ROUTES } from "@/lib/utils";
-import SearchInput from "@/components/ui/Searchbar";
+const labelClass = "text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block";
 
 export default function AdminCourseDetailPage() {
-  const { id } = useParams();
-  const router = useRouter();
+  const params = useParams();
+  const courseId = params.id as string;
+
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [error, setError] = useState(false);
+
+  const cleanMarkdown = (text: string): string => {
+    if (!text) return "";
+    return text
+      .replace(/\*\*?([^*]+)\*\*?/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/^- /gm, "")
+      .replace(/#/g, "")
+      .trim();
+  };
 
   useEffect(() => {
-    const fetchCourse = async () => {
+    const fetchCourseData = async () => {
+      if (!courseId) return;
       try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(API_ROUTES.COURSES.GET_BY_ID(id as string), {
-          headers: { Authorization: `Bearer ${token}` },
+        setLoading(true);
+        const res = await fetch(API_ROUTES.COURSES.GET_BY_ID(courseId), {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
+        if (!res.ok) throw new Error("Error");
         const data = await res.json();
-        setCourse(data);
-      } catch (error) {
-        console.error("Error fetching course:", error);
+        setCourse(data.course || data.data || data);
+      } catch (err) {
+        setError(true);
       } finally {
         setLoading(false);
       }
     };
-    if (id) fetchCourse();
-  }, [id]);
+    fetchCourseData();
+  }, [courseId]);
 
   const contentList = course?.Content || course?.content || [];
+  const sortedContent = [...contentList].sort((a, b) => a.order - b.order);
 
-  const filteredContents = contentList
-    .filter((c: any) =>
-      c.title.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
-    .sort((a: any, b: any) => a.order - b.order);
-
- if (loading) {
-     return (
-       <div
-         className="flex min-h-screen bg-[#f5f5f7]"
-         style={{
-           fontFamily:
-             "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
-         }}
-       >
-         <Sidebar role="ADMIN" />
- 
-         <div className="flex-1 flex flex-col items-center justify-center">
-           <div className="relative flex items-center justify-center">
-             {/* Círculo exterior giratorio */}
- 
-             <div className="w-16 h-16 border-4 border-[#005596]/10 border-t-[#005596] rounded-full animate-spin"></div>
- 
-             {/* Punto central */}
- 
-             <div className="absolute w-4 h-4 bg-[#d9ff00] rounded-full shadow-[0_0_15px_rgba(217,255,0,0.8)]"></div>
-           </div>
- 
-           <p className="mt-6 text-[#005596] font-black text-xs uppercase tracking-[0.3em] animate-pulse">
-             Cargando datos...
-           </p>
-         </div>
-       </div>
-     );
-   }
+  if (loading) return (
+    <div className="flex h-screen bg-background items-center justify-center">
+      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 
   return (
-    <div
-      className="flex min-h-screen bg-[#f5f5f7]"
-      style={{
-        fontFamily:
-          "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
-      }}
-    >
+    <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
       <Sidebar role="ADMIN" />
 
-      <main className="flex-1 h-screen overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-8 py-10">
-          {/* BREADCRUMB */}
-          <Link
-            href="/dashboard/administrator/admin/courses"
-            className="group text-[#0071e3] text-sm font-semibold hover:underline mb-6 inline-flex items-center gap-2 transition-all"
-          >
-            <i className="bi bi-arrow-left-circle-fill transition-transform duration-300 group-hover:-translate-x-1.5"></i>
-            <span>Volver a Cursos</span> {/* Opcional: añadir texto mejora el SEO y accesibilidad */}
-          </Link>
+      <main className="flex-1 flex flex-col min-w-0 relative">
+        <PageHeader 
+          title={course?.title || "Cargando curso..."}
+          description="Gestión de unidades y lecciones"
+          icon={<i className="bi bi-shield-lock-fill"></i>}
+          backUrl="/dashboard/administrator/admin/courses"
+          action={
+            <button 
+              onClick={() => window.location.href = `/dashboard/administrator/admin/courses/${courseId}/manage`}
+              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap"
+            >
+              <i className="bi bi-eye-fill"></i>               
+              Vista de Administrador
+            </button>
+          }
+        />
 
-          {/* HEADER */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-            <div>
-              <span className="text-[11px] font-black text-[#005596] uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full">
-                Moderación de Contenidos
-              </span>
-              <h1 className="text-4xl font-black text-[#1d1d1f] mt-2 tracking-tight">
-                {course?.title}
-              </h1>
-              <p className="text-[#86868b] mt-1">
-                Gestiona las lecciones, cuestionarios y material multimedia.
-              </p>
-            </div>
+        <div className="flex-1 overflow-y-auto bg-muted/30 p-8 no-scrollbar">
+          <div className="max-w-6xl mx-auto">
+            
+            {/* Listado de Contenidos */}
+            <section className="space-y-6">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-xl font-black italic tracking-tight uppercase">Estructura del Programa</h2>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">Lista de unidades publicadas para los empleados</p>
+                </div>
+                <div className="bg-card border border-border/50 px-4 py-2 rounded-2xl flex items-center gap-3 shadow-sm">
+                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total:</span>
+                  <span className="text-sm font-black text-primary">{sortedContent.length}</span>
+                </div>
+              </div>
 
-            <div className="flex items-center gap-3">
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Buscar lección..."
-              />
-              <Link
-                href={`/dashboard/administrator/admin/courses/${id}/content/new`}
-                className="bg-[#0071e3] text-white px-6 py-2.5 rounded-full font-semibold hover:bg-[#0077ed] transition-all shadow-md shrink-0 text-center"
-              >
-                Añadir Lección
-              </Link>
-            </div>
-          </div>
+              {sortedContent.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {sortedContent.map((content: any, index: number) => (
+                    <motion.div
+                      key={content.id}
+                      whileHover={{ y: -6 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      onClick={() => window.location.href = `/dashboard/administrator/admin/courses/${courseId}/content/${content.id}`}
+                      className="group cursor-pointer bg-card rounded-[2rem] border border-border/50 overflow-hidden shadow-sm hover:shadow-2xl hover:border-primary/30 transition-all duration-500 flex flex-col h-full"
+                    >
+                      <div className="relative aspect-16/10 overflow-hidden bg-muted">
+                        {content.imageUrl ? (
+                          <img 
+                            src={content.imageUrl} 
+                            alt={content.title} 
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-primary/5">
+                            <i className="bi bi-folder-fill text-4xl text-primary/20"></i>
+                          </div>
+                        )}
+                      </div>
 
-          {/* INFO CARDS */}
-          <div className="grid grid-cols-2 gap-4 mb-10">
-            <div className="bg-white p-6 rounded-[24px] border border-gray-200 shadow-sm">
-              <p className="text-[11px] font-bold text-[#86868b] uppercase">
-                Categoría
-              </p>
-              <p className="text-lg font-bold text-[#1d1d1f]">
-                {course?.category}
-              </p>
-            </div>
-            <div className="bg-white p-6 rounded-[24px] border border-gray-200 shadow-sm">
-              <p className="text-[11px] font-bold text-[#86868b] uppercase">
-                Total Contenidos
-              </p>
-              <p className="text-lg font-bold text-[#1d1d1f]">
-                {contentList.length} Unidades
-              </p>
-            </div>
-          </div>
+                      <div className="p-6 flex flex-col flex-1">
+                        <h3 className="text-lg font-black leading-tight group-hover:text-primary transition-colors line-clamp-2 mb-3">
+                          {content.title}
+                        </h3>
 
-          {/* TABLA ESTILO APPLE */}
-          <div className="bg-white rounded-[32px] border border-gray-200 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-[#fbfbfd] border-b border-gray-100">
-                    <th className="px-8 py-5 text-[11px] font-black text-[#86868b] uppercase tracking-widest w-16">
-                      Orden
-                    </th>
-                    <th className="px-6 py-5 text-[11px] font-black text-[#86868b] uppercase tracking-widest">
-                      Título de la Lección
-                    </th>
-                    <th className="px-6 py-5 text-[11px] font-black text-[#86868b] uppercase tracking-widest">
-                      Multimedia
-                    </th>
-                    <th className="px-6 py-5 text-[11px] font-black text-[#86868b] uppercase tracking-widest text-right">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {filteredContents.length > 0 ? (
-                    filteredContents.map((content: any) => (
-                      <tr
-                        key={content.id}
-                        // CLICK EN TODA LA FILA PARA IR AL DETALLE
-                        onClick={() =>
-                          router.push(
-                            `/dashboard/administrator/admin/courses/${id}/content/${content.id}`,
-                          )
-                        }
-                        className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
-                      >
-                        <td className="px-8 py-5 font-mono text-sm text-[#86868b]">
-                          {String(content.order).padStart(2, "0")}
-                        </td>
-                        <td className="px-6 py-5">
-                          <div className="font-bold text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors">
-                            {content.title}
+                        {content.summary && (
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-6 font-medium">
+                            {cleanMarkdown(content.summary)}
+                          </p>
+                        )}
+
+                        <div className="mt-auto pt-5 border-t border-border/40 flex items-center justify-between">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">
+                            Acceder al contenido
+                          </span>
+                          <div className="w-8 h-8 rounded-xl bg-muted group-hover:bg-primary group-hover:text-white transition-all flex items-center justify-center">
+                            <i className="bi bi-eye-fill text-xs"></i>
                           </div>
-                          <div className="text-[11px] text-[#86868b] line-clamp-1 max-w-xs">
-                            {content.summary || "Sin resumen"}
-                          </div>
-                        </td>
-                        <td className="px-6 py-5">
-                          <div className="flex gap-2">
-                            {content.quiz && (
-                              <span className="bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded">
-                                QUIZ
-                              </span>
-                            )}
-                            {content.podcast && (
-                              <span className="bg-purple-50 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded">
-                                AUDIO
-                              </span>
-                            )}
-                            {content.url && (
-                              <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded">
-                                PORTADA
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 text-right">
-                          <div className="flex items-center justify-end gap-4">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation(); // Evita que se dispare el click de la fila
-                                router.push(
-                                  `/dashboard/administrator/admin/courses/${id}/content/${content.id}/edit`,
-                                );
-                              }}
-                              className="text-[#0071e3] text-xs font-bold hover:underline"
-                            >
-                              Editar
-                            </button>
-                            <button
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-red-500 text-xs font-bold hover:underline"
-                            >
-                              Eliminar
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className="px-8 py-20 text-center">
-                        <div className="text-[#86868b] font-medium">
-                          Este curso aún no tiene lecciones creadas.
                         </div>
-                        <Link
-                          href={`/dashboard/administrator/admin/courses/${id}/content/new`}
-                          className="text-[#0071e3] text-sm font-bold mt-2 inline-block hover:underline"
-                        >
-                          Crear la primera lección ahora
-                        </Link>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-20 text-center bg-card rounded-[3rem] border border-dashed border-border/50">
+                  <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4 text-muted-foreground/30">
+                     <i className="bi bi-plus-circle text-3xl"></i>
+                  </div>
+                  <p className="text-muted-foreground font-bold italic">No hay unidades en este programa.</p>
+                </div>
+              )}
+            </section>
           </div>
         </div>
       </main>

@@ -1,185 +1,248 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import Sidebar from '@/components/ui/Sidebar';
+import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
-import mediumZoom from 'medium-zoom';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
+import zoom from 'medium-zoom';
 
-const appleFont = "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
+interface LabProps { data: any; }
+
+const InteractiveLab = dynamic<LabProps>(
+  () => import("@/components/interactiveLab").then((mod) => mod.default),
+  { ssr: false, loading: () => <div className="text-white font-black animate-pulse">CARGANDO MOTOR GRÁFICO...</div> }
+);
+
+const labelClass = "text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block";
+const tabBtnClass = "pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative";
+
+type TabType = "multimedia" | "lectura" | "evaluacion";
 
 export default function EmployeeContentDetail() {
   const params = useParams();
-  const zoomRef = useRef<HTMLImageElement>(null);
-  const searchParams = useSearchParams();
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabType>("lectura");
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [showLabModal, setShowLabModal] = useState(false);
+  const [isLabStarted, setIsLabStarted] = useState(false);
+  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+  const [isCorrected, setIsCorrected] = useState(false);
 
   useEffect(() => {
     const fetchContent = async () => {
-      const contentId = params.contentId;
-      const courseId = params.id;
-      if (!contentId || !courseId) return;
-
       try {
-        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(contentId as string, courseId as string), {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         const data = await res.json();
-        const finalData = data.content || data.data || data;
-        setContent(finalData);
+        const raw = data?.data || data?.content || data || {};
+        setContent(raw);
       } catch (error) {
-        console.error("Error al cargar la lección:", error);
+        console.error("Error fetching content:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchContent();
-  }, [params.contentId, params.id]);
+    if (params.id && params.contentId) fetchContent();
+  }, [params.id, params.contentId]);
 
   useEffect(() => {
-    if (zoomRef.current && content?.imageUrl) {
-      const zoom = mediumZoom(zoomRef.current, { background: 'rgba(255,255,255,0.95)', margin: 24 });
-      return () => { zoom.detach(); };
+    if (activeTab === "lectura" && imageRef.current) {
+      const zoomInstance = zoom(imageRef.current, { background: "rgba(0,0,0,0.9)", margin: 40 });
+      return () => zoomInstance.detach();
     }
-  }, [content?.imageUrl]);
+  }, [content?.imageUrl, activeTab]);
 
-  useEffect(() => {
-  const completeTask = async () => {
-    const fromTaskId = searchParams.get('fromTask');
-    
-    // Si venimos de una tarea de onboarding y el contenido ha cargado bien
-    if (fromTaskId && content) {
-      try {
-        const token = localStorage.getItem("token");
-        await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ taskId: fromTaskId, done: true }),
-        });
-        console.log("Tarea de onboarding completada automáticamente");
-      } catch (err) {
-        console.error("Error al autocompletar tarea:", err);
-      }
-    }
-  };
-
-  completeTask();
-}, [content, searchParams]);
-
-  if (loading) return (
-    <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-    </div>
-  );
-
-  if (!content) return null;
-
-  // Verificamos si existen recursos para mostrar la barra lateral
-  const hasResources = content.url || content.podcast;
+  const hasQuiz = content?.quiz?.questions && content.quiz.questions.length > 0;
+  const hasVideo = !!content?.videoUrl;
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
+    <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
       <Sidebar role="EMPLOYEE" />
 
-      <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>
-        
-        {/* HEADER */}
-        <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)', padding: '32px 0' }}>
-          <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 24px' }}>
-            <Link href={`/dashboard/employee/courses/${params.id}`}
-              style={{ color: '#0071e3', fontSize: '15px', fontWeight: 500, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '24px' }}>
-              ‹ Volver al curso
-            </Link>
+      <main className="flex-1 flex flex-col min-w-0 relative">
+        <PageHeader
+          title={content?.title || "Cargando..."}
+          description="Unidad de aprendizaje"
+          icon={<i className="bi bi-book"></i>}
+          backUrl={`/dashboard/employee/courses/${params.id}`}
+        />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-              <div style={{ width: '64px', height: '64px', background: 'rgba(0,113,227,0.1)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px' }}>
-                📖
-              </div>
-              <div>
-                <h1 style={{ fontSize: 'clamp(22px, 4vw, 30px)', fontWeight: 800, color: '#1d1d1f', letterSpacing: '-0.02em', margin: 0 }}>
-                  {content.title}
-                </h1>
-                <span className="inline-block mt-1 text-[11px] font-bold text-blue-600 uppercase tracking-wider">
-                  Lección {content.order || 1}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* CUERPO DINÁMICO */}
-        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 24px' }}>
-          <div className={hasResources ? "content-with-sidebar" : "content-full"}>
-            
-            <article>
-              <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#1d1d1f', marginBottom: '20px' }}>
-                Desarrollo de la unidad
-              </h3>
-
-              <div className="prose prose-slate max-w-none">
-                <p style={{ fontSize: '18px', lineHeight: '1.8', color: '#424245', whiteSpace: 'pre-wrap' }}>
-                  {content.summary || 'Sin contenido proporcionado'}
-                </p>
-              </div>
-            </article>
-
-            {/* SOLO SE MUESTRA SI HAY RECURSOS */}
-            {hasResources && (
-              <aside className="space-y-6">
-                <h4 className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.2em] px-1">Material Extra</h4>
+        <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 overflow-y-auto bg-muted/30 p-8 no-scrollbar">
+            <div className="max-w-4xl mx-auto bg-card shadow-xl border border-border/50 rounded-[2.5rem] overflow-hidden mb-10">
+              
+              {/* Navegación de Pestañas Condicional */}
+              <div className="flex px-12 pt-8 border-b border-border gap-8">
+                <button onClick={() => setActiveTab("lectura")} className={`${tabBtnClass} ${activeTab === "lectura" ? "text-primary" : "text-muted-foreground"}`}>
+                  Lectura
+                  {activeTab === "lectura" && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
+                </button>
                 
-                {content.url && (
-                  <div className="bg-white p-6 rounded-[2rem] border border-black/5 shadow-sm text-center">
-                    <div className="text-4xl mb-3">📄</div>
-                    <p className="text-[11px] font-black text-[#1d1d1f] uppercase mb-5">Guía PDF</p>
-                    <a href={content.url} target="_blank" rel="noopener noreferrer"
-                      className="block w-full py-3 bg-[#0071e3] text-white rounded-xl text-xs font-bold hover:bg-[#0077ed] transition-all">
-                      Abrir PDF
-                    </a>
+                {hasVideo && (
+                  <button onClick={() => setActiveTab("multimedia")} className={`${tabBtnClass} ${activeTab === "multimedia" ? "text-primary" : "text-muted-foreground"}`}>
+                    Multimedia
+                    {activeTab === "multimedia" && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
+                  </button>
+                )}
+
+                {hasQuiz && (
+                  <button onClick={() => setActiveTab("evaluacion")} className={`${tabBtnClass} ${activeTab === "evaluacion" ? "text-primary" : "text-muted-foreground"}`}>
+                    Evaluación
+                    {activeTab === "evaluacion" && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
+                  </button>
+                )}
+              </div>
+
+              <div className="p-8 md:p-16">
+                {activeTab === "lectura" && (
+                  <div className="animate-in fade-in duration-500 space-y-10">
+                    {content?.imageUrl && (
+                      <img ref={imageRef} src={content.imageUrl} className="w-full aspect-video object-cover rounded-[2rem] shadow-lg border border-border/50" alt="Cover" />
+                    )}
+                    <div className="prose dark:prose-invert max-w-none">
+                      <ReactMarkdown components={{
+                        h2: ({node, ...props}) => <h2 className="text-2xl font-black text-foreground mt-10 mb-6" {...props} />,
+                        p: ({node, ...props}) => <p className="text-[17px] leading-[1.8] text-muted-foreground mb-6" {...props} />,
+                        blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-primary bg-muted/40 p-6 rounded-r-2xl my-8 italic" {...props} />,
+                      }}>
+                        {content?.summary}
+                      </ReactMarkdown>
+                    </div>
                   </div>
                 )}
-                
-                {content.podcast && (
-                  <div className="bg-[#1d1d1f] p-6 rounded-[2rem] text-white shadow-xl shadow-black/10">
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-lg">🎙️</span>
-                      <p className="text-[10px] font-black opacity-60 tracking-widest uppercase">Podcast</p>
+
+                {activeTab === "multimedia" && hasVideo && (
+                  <div className="aspect-video rounded-[2rem] overflow-hidden bg-black shadow-2xl">
+                    <video key={content.videoUrl} controls className="w-full h-full object-cover">
+                      <source src={content.videoUrl} type="video/mp4" />
+                    </video>
+                  </div>
+                )}
+
+                {activeTab === "evaluacion" && hasQuiz && (
+                  <div className="bg-orange-500/5 border border-orange-500/10 rounded-[2rem] p-12 text-center space-y-6">
+                    <div className="w-20 h-20 bg-orange-500 text-white rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-orange-500/20">
+                      <i className="bi bi-patch-question text-4xl"></i>
                     </div>
-                    <button className="w-full py-2.5 bg-white text-black rounded-lg text-xs font-bold hover:bg-gray-100 transition-colors">
-                      Escuchar Resumen
+                    <h4 className="text-2xl font-black italic">¿Listo para el test?</h4>
+                    <button onClick={() => setShowQuizModal(true)} className="bg-orange-500 text-white px-10 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all">
+                      Iniciar Autoevaluación
                     </button>
                   </div>
                 )}
-              </aside>
-            )}
+              </div>
+            </div>
           </div>
+
+          <aside className="w-80 border-l border-border bg-card p-6 flex flex-col gap-6 overflow-y-auto no-scrollbar">
+            {content?.podcast?.url && (
+              <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-[2rem] p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg"><i className="bi bi-mic-fill"></i></div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase text-emerald-600">Audio Guía</p>
+                    <p className="text-[11px] font-bold opacity-70">Escuchar unidad</p>
+                  </div>
+                </div>
+                <audio ref={audioRef} src={content.podcast.url} controls className="w-full h-8 accent-emerald-500" />
+              </div>
+            )}
+
+            <h4 className={labelClass}>Materiales</h4>
+            {content?.url?.toLowerCase().includes(".pdf") && (
+              <a href={content.url} target="_blank" rel="noopener noreferrer" className="w-full p-4 bg-muted/50 border border-border rounded-2xl flex items-center gap-4 hover:border-primary transition-all">
+                <div className="w-10 h-10 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center shrink-0"><i className="bi bi-file-earmark-pdf text-xl"></i></div>
+                <div className="text-left overflow-hidden">
+                  <p className="text-[8px] font-black uppercase text-muted-foreground">Recurso PDF</p>
+                  <p className="text-xs font-bold text-foreground truncate">Descargar Guía</p>
+                </div>
+              </a>
+            )}
+
+            {content?.practiceLab && (
+              <button onClick={() => setShowLabModal(true)} className="w-full p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-center gap-4 hover:border-blue-500 transition-all text-left">
+                <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20"><i className="bi bi-controller text-xl"></i></div>
+                <div className="overflow-hidden">
+                  <p className="text-[8px] font-black uppercase text-blue-600">Simulador IA</p>
+                  <p className="text-xs font-bold text-foreground truncate">Práctica Interactiva</p>
+                </div>
+              </button>
+            )}
+          </aside>
         </div>
       </main>
 
-      <style jsx>{`
-        .content-with-sidebar { 
-          display: grid; 
-          grid-template-columns: 1fr 300px; 
-          gap: 64px; 
-        }
-        .content-full { 
-          max-width: 800px;
-          margin: 0 auto;
-        }
-        @media (max-width: 1024px) {
-          .content-with-sidebar { 
-            grid-template-columns: 1fr; 
-            gap: 48px; 
-          }
-        }
-      `}</style>
+      {/* Modales de Lab y Quiz (Lógica de vista estudiante) */}
+      {showLabModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl md:p-4">
+          <div className="bg-card border border-border md:rounded-[40px] w-full max-w-6xl h-full md:h-[90vh] relative overflow-hidden flex flex-col">
+            <button onClick={() => { setShowLabModal(false); setIsLabStarted(false); }} className="absolute top-4 right-4 z-50 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white"><i className="bi bi-x-lg"></i></button>
+            <div className="flex-1 bg-slate-950 overflow-hidden">
+              {!isLabStarted ? (
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
+                  <div className="w-20 h-20 bg-blue-500/20 text-blue-500 rounded-3xl flex items-center justify-center"><i className="bi bi-controller text-4xl"></i></div>
+                  <h3 className="text-2xl font-black text-white">{content?.practiceLab?.scenarioTitle}</h3>
+                  <button onClick={() => setIsLabStarted(true)} className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs">Empezar Práctica</button>
+                </div>
+              ) : (
+                <div className="w-full h-full"><InteractiveLab data={content.practiceLab} /></div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showQuizModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="bg-card border border-border rounded-[32px] p-8 max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-2xl font-black italic">Evaluación de Unidad</h3>
+              <button onClick={() => setShowQuizModal(false)}><i className="bi bi-x-circle text-2xl"></i></button>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-10 no-scrollbar">
+              {content?.quiz?.questions.map((q: any, qIdx: number) => (
+                <div key={qIdx} className="space-y-4">
+                  <p className="font-bold text-lg">{q.question}</p>
+                  <div className="grid gap-2">
+                    {q.options.map((opt: string, oIdx: number) => {
+                      const isSelected = userAnswers[qIdx] === opt;
+                      const isCorrect = isCorrected && opt === q.correctAnswer;
+                      const isWrong = isCorrected && isSelected && opt !== q.correctAnswer;
+                      return (
+                        <button
+                          key={oIdx}
+                          disabled={isCorrected}
+                          onClick={() => setUserAnswers({ ...userAnswers, [qIdx]: opt })}
+                          className={`w-full p-4 rounded-xl border text-left text-sm transition-all 
+                            ${isSelected ? "border-primary bg-primary/5" : "border-border"}
+                            ${isCorrect ? "border-emerald-500 bg-emerald-500/10" : ""}
+                            ${isWrong ? "border-red-500 bg-red-500/10" : ""}
+                          `}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {!isCorrected && (
+              <div className="pt-6 mt-6 border-t border-border">
+                <button onClick={() => setIsCorrected(true)} className="w-full bg-primary text-white py-4 rounded-xl font-black uppercase text-xs">Enviar Respuestas</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

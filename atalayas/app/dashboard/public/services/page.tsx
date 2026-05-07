@@ -19,7 +19,6 @@ export default function ServicesPage() {
   const [filter, setFilter] = useState<'ALL' | 'INFO' | 'BOOKING' | 'ANNOUNCEMENT'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Recuperamos el usuario para el Sidebar
   const user = typeof window !== 'undefined' 
     ? JSON.parse(localStorage.getItem('user') || '{}') 
     : {};
@@ -56,26 +55,24 @@ export default function ServicesPage() {
   });
 
  return (
-  <div className="flex min-h-screen bg-[#f5f5f7]">
-    <Sidebar role='PUBLIC' />
+  <div className="flex min-h-screen bg-background font-sans">
+    <Sidebar role={role} />
     
     <main className="flex-1 h-screen overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-8 py-12">
+      <div className="max-w-6xl mx-auto px-6 lg:px-8 py-10 lg:py-12">
         
-        {/* Header con Título y Búsqueda en la misma fila */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
-            <nav className="flex items-center gap-2 text-sm text-[#86868b] mb-4">
-              <Link href="/dashboard/public" className="hover:text-[#0071e3] transition-colors">Dashboard</Link>
+            <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+              <Link href="/dashboard/public" className="hover:text-secondary transition-colors">Dashboard</Link>
               <span className="opacity-50">/</span>
-              <span className="text-[#1d1d1f] font-medium">Servicios</span>
+              <span className="text-foreground font-medium">Servicios</span>
             </nav>
-            <h1 className="text-4xl font-bold text-[#1d1d1f] tracking-tight">
+            <h1 className="text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
               Servicios y Recursos
             </h1>
           </div>
 
-          {/* Aquí el buscador desplegable */}
           <SearchInput 
             value={searchQuery} 
             onChange={setSearchQuery} 
@@ -83,46 +80,49 @@ export default function ServicesPage() {
           />
         </div>
 
-          {/* Grid Principal */}
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="h-64 bg-white rounded-[2.5rem] border border-gray-100 animate-pulse" />
-              ))}
-            </div>
-          ) : filteredServices.length === 0 ? (
-            <div className="text-center py-24 bg-white rounded-[2.5rem] border border-dashed border-gray-300">
-              <span className="text-4xl mb-4 block">🔍</span>
-              <p className="text-[#86868b] font-medium">No hay servicios disponibles en esta categoría.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredServices.sort((a, b) => a.title.localeCompare(b.title)).map((service) => {
-                return (
-                  <Link key={service.id} href={`/dashboard/public/services/${service.id}`}>
-                    <div className="group bg-white p-8 rounded-[2.5rem] border border-gray-200/50 shadow-sm hover:shadow-2xl hover:shadow-gray-300/40 transition-all duration-500 flex flex-col h-full active:scale-95">
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="h-64 bg-card rounded-3xl border border-border animate-pulse" />
+            ))}
+          </div>
+        ) : filteredServices.length === 0 ? (
+          <div className="text-center py-24 bg-card rounded-3xl border border-dashed border-border">
+            <span className="text-4xl text-muted-foreground/50 mb-4 block"><i className="bi bi-search"></i></span>
+            <p className="text-muted-foreground font-medium">No hay servicios disponibles en esta categoría.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredServices.sort((a, b) => a.title.localeCompare(b.title)).map((service) => {
+              return (
+                <Link key={service.id} href={`/dashboard/public/services/${service.id}`}>
+                  <div className="group bg-card p-6 lg:p-8 rounded-3xl border border-border shadow-sm hover:shadow-xl hover:border-secondary transition-all duration-300 flex flex-col h-full active:scale-95">
 
-                      <h3 className="text-xl font-bold text-[#1d1d1f] mb-3 group-hover:text-[#0071e3] transition-colors leading-tight">
-                        {service.title}
-                      </h3>
-
-                      <p className="text-[#86868b] text-[15px] leading-relaxed line-clamp-3 mb-8 flex-1">
-                        {service.description || 'Sin descripción.'}
-                      </p>
-
-                      <div className="flex items-center justify-between pt-6 border-t border-gray-50">
-                        <span className={`text-[11px] font-black uppercase tracking-widest ${service.isPublic ? 'text-green-600' : 'text-gray-400'}`}>
-                          {service.isPublic ? '🌐 Público' : '🔒 Privado'}
-                        </span>
-                      </div>
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-secondary/10 transition-colors">
+                      <i className="bi bi-briefcase text-primary group-hover:text-secondary text-xl"></i>
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
-  );
+
+                    <h3 className="text-lg font-bold text-foreground mb-3 group-hover:text-secondary transition-colors leading-tight">
+                      {service.title}
+                    </h3>
+
+                    <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 mb-8 flex-1">
+                      {service.description || 'Sin descripción.'}
+                    </p>
+
+                    <div className="flex items-center justify-between pt-5 border-t border-border">
+                      <span className={`text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${service.isPublic ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                        {service.isPublic ? '🌐 Público' : '🔒 Privado'}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </main>
+  </div>
+ );
 }

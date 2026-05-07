@@ -1,153 +1,255 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Sidebar from '@/components/ui/Sidebar';
-import { API_ROUTES } from '@/lib/utils';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-
-interface Course {
-    id: string;
-    title: string;
-    isPublic: boolean;
-    category: string;
-}
+import { useEffect, useState } from "react";
+import Sidebar from "@/components/ui/Sidebar";
+import PageHeader from "@/components/ui/pageHeader";
+import { API_ROUTES } from "@/lib/utils";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 
 export default function EmployeeCoursesPage() {
-    const [courses, setCourses] = useState<Course[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'BASICO' | 'ESPECIALIZADO'>('BASICO');
-    const [activeMenu, setActiveMenu] = useState<string | null>(null);
-    const searchParams = useSearchParams();
-    const fromTaskId = searchParams.get('fromTask');
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+  // Estados de filtrado
+  const [visibilityTab, setVisibilityTab] = useState<"TODOS" | "PÚBLICO" | "PRIVADO">("TODOS");
+  const [categoryTab, setCategoryTab] = useState<"TODOS" | "BASICO" | "ESPECIALIZADO">("TODOS");
 
-    useEffect(() => {
-        const fetchCourses = async () => {
-            try {
-                const headers = { Authorization: `Bearer ${getToken()}` };
-                const res = await fetch(API_ROUTES.COURSES.GET_ALL, { headers });
-                const data = await res.json();
-                const finalData = Array.isArray(data) ? data : (data.courses || []);
-                setCourses(finalData);
-            } catch (err) {
-                console.error("Error cargando cursos:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchCourses();
-    }, []);
+  const searchParams = useSearchParams();
+  const fromTaskId = searchParams.get("fromTask");
 
-  useEffect(() => {
-  const autoConfirmTask = async () => {
-    if (fromTaskId) {
-      try {
-        const token = localStorage.getItem("token");
-        await fetch(API_ROUTES.ONBOARDING.TOGGLE, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ taskId: fromTaskId, done: true }),
-        });
-        console.log("Tarea de onboarding completada automáticamente");
-      } catch (err) {
-        console.error("Error al autocompletar:", err);
-      }
+  // Función downloadCertificate
+  const downloadCertificate = async (courseId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_ROUTES.ENROLLMENTS.BASE}/certificate/${courseId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "certificado.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error:", error);
     }
   };
 
-  autoConfirmTask();
-}, [fromTaskId]);
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const res = await fetch(API_ROUTES.ENROLLMENTS.BASE, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        const data = await res.json();
+        const rawCourses = Array.isArray(data) ? data : data.courses || [];
+        const sortedDataCourses = [...rawCourses].sort((a: any, b: any) =>
+          (a.title || "").trim().localeCompare((b.title || "").trim(), undefined, { numeric: true })
+        );
+        setCourses(sortedDataCourses);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
 
-    const toggleMenu = (id: string) => setActiveMenu(activeMenu === id ? null : id);
+  // Lógica de filtrado combinada
+  const filtered = courses.filter((c) => {
+    // 1. Filtro de Visibilidad
+    if (visibilityTab === "PÚBLICO" && !c.isPublic) return false;
+    if (visibilityTab === "PRIVADO" && c.isPublic) return false;
 
-    const filtered = courses.filter(c =>
-        activeTab === 'BASICO'
-            ? (c.category?.toUpperCase() !== 'ESPECIALIZADO')
-            : (c.category?.toUpperCase() === 'ESPECIALIZADO')
-    );
+    // 2. Filtro de Categoría (solo aplica si estamos en Privados o Todos)
+    if (visibilityTab !== "PÚBLICO") {
+      if (categoryTab === "BASICO") return c.category?.toUpperCase() !== "ESPECIALIZADO";
+      if (categoryTab === "ESPECIALIZADO") return c.category?.toUpperCase() === "ESPECIALIZADO";
+    }
 
+    return true;
+  });
 
-    return (
-        <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'-apple-system', sans-serif" }}>
-            <Sidebar role="EMPLOYEE" />
+  return (
+    <div className="flex min-h-screen bg-background font-sans text-foreground">
+      <Sidebar role="EMPLOYEE" />
 
-            <main className="flex-1 p-10 overflow-auto">
-                <div className="mb-10">
-                    <h1 className="text-3xl font-bold text-[#1d1d1f] tracking-tight mb-2">Mi Formación</h1>
-                    <p className="text-[#86868b] text-base">Accede a tus contenidos y material de estudio.</p>
-                </div>
+      <main className="flex-1 overflow-auto flex flex-col relative">
+        <PageHeader
+          title="Mi Formación"
+          description="Explora los programas de capacitación y material especializado para tu crecimiento."
+          icon={<i className="bi bi-journal-bookmark-fill"></i>}
+        />
 
-                {/* Tabs Consistentes */}
-                <div className="flex gap-8 border-b border-gray-200 mb-8">
-                    {['BASICO', 'ESPECIALIZADO'].map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab as any)}
-                            className={`pb-4 text-sm font-semibold cursor-pointer transition-all ${activeTab === tab ? 'border-b-2 border-[#0071e3] text-[#0071e3]' : 'text-[#86868b] hover:text-[#1d1d1f]'
-                                }`}
-                        >
-                            {tab === 'BASICO' ? 'Onboarding' : 'Especialización'}
-                        </button>
+        <div className="p-6 lg:p-10 flex-1 space-y-6">
+
+          {/* --- SELECTORES DE FILTRADO --- */}
+          <div className="space-y-4">
+            {/* Nivel 1: Visibilidad */}
+            <div className="flex items-center gap-4">
+              <div className="flex gap-1 bg-card border border-border p-1 rounded-xl shadow-sm">
+                {["TODOS", "PRIVADO", "PÚBLICO"].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      setVisibilityTab(tab as any);
+                      if (tab !== "PRIVADO") setCategoryTab("TODOS");
+                    }}
+                    className={`relative px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${visibilityTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                  >
+                    <span className="relative z-10">{tab}</span>
+                    {visibilityTab === tab && (
+                      <motion.div layoutId="visPill" className="absolute inset-0 bg-primary/10 rounded-lg" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Nivel 2: Categorías (Solo si PRIVADO está activo) */}
+            <AnimatePresence>
+              {visibilityTab === "PRIVADO" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex items-center gap-4 overflow-hidden"
+                >
+                  <div className="flex gap-1 bg-card/50 border border-border/50 p-1 rounded-xl">
+                    {["TODOS", "BASICO", "ESPECIALIZADO"].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setCategoryTab(tab as any)}
+                        className={`relative px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${categoryTab === tab ? "text-secondary" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                      >
+                        <span className="relative z-10">
+                          {tab === "TODOS" ? "Todos" : tab === "BASICO" ? "Onboarding" : "Especialización"}
+                        </span>
+                        {categoryTab === tab && (
+                          <motion.div layoutId="catPill" className="absolute inset-0 bg-secondary/10 rounded-lg" />
+                        )}
+                      </button>
                     ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <hr className="border-border/50" />
+
+          {/* Grid de Cursos */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${visibilityTab}-${categoryTab}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8"
+            >
+              {loading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-100 bg-card rounded-[2.5rem] border border-border animate-pulse shadow-sm" />
+                ))
+              ) : filtered.length === 0 ? (
+                <div className="col-span-full py-20 text-center bg-card border-2 border-dashed border-border rounded-[2.5rem]">
+                  <i className="bi bi-search text-3xl text-muted-foreground mb-4 block"></i>
+                  <p className="text-muted-foreground font-bold">No se encontraron cursos con estos filtros</p>
                 </div>
+              ) : (
+                filtered.map((course) => {
+                  const isBasico = course.category?.toUpperCase() !== "ESPECIALIZADO";
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {loading ? [1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-white rounded-2xl animate-pulse border border-gray-200" />)
-                        : filtered.map((course) => (
-                            <div key={course.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 flex flex-col justify-between group hover:shadow-md transition-all relative">
+                  return (
+                    <div
+                      key={course.id}
+                      className="group bg-card rounded-[2.5rem] border border-border shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 flex flex-col overflow-hidden relative"
+                    >
+                      {/* Portada */}
+                      <div className="relative aspect-16/10 overflow-hidden bg-muted">
+                        {course.fileUrl ? (
+                          <img
+                            src={course.fileUrl}
+                            alt={course.title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          />
+                        ) : (
+                          <div className={`w-full h-full flex items-center justify-center text-4xl ${isBasico ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"}`}>
+                            <i className={`bi ${isBasico ? "bi-compass" : "bi-rocket-takeoff"}`}></i>
+                          </div>
+                        )}
 
-                                <div>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase ${activeTab === 'BASICO' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
-                                            {activeTab === 'BASICO' ? 'Onboarding' : 'Especialización'}
-                                        </span>
+                        {/* Tags de estado - MODIFICADO: añadido badge de rol para especialización */}
+                        <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
+                          <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-md border backdrop-blur-md ${course.isPublic ? "bg-green-500/20 text-green-600 border-green-500/20" : "bg-blue-500/20 text-blue-600 border-blue-500/20"
+                            }`}>
+                            {course.isPublic ? "Público" : "Privado"}
+                          </span>
+                          {/* Mostrar el rol requerido si es especialización */}
+                          {!isBasico && course.jobRole && (
+                            <span className="text-[8px] font-black uppercase px-2 py-1 rounded-md border bg-purple-500/20 text-purple-600 border-purple-500/20 backdrop-blur-md">
+                              <i className="bi bi-person-badge mr-1"></i>
+                              {course.jobRole}
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-                                        {/* MENÚ DE TRES PUNTOS RESTAURADO */}
-                                        <div className="relative">
-                                            <button
-                                                onClick={() => toggleMenu(course.id)}
-                                                className="p-1 hover:bg-gray-100 cursor-pointer rounded-full transition-colors"
-                                            >
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
-                                                    <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
-                                                </svg>
-                                            </button>
+                      <div className="p-7 flex-1 flex flex-col">
+                        <h3 className="text-base font-black text-foreground leading-tight mb-2 line-clamp-2">
+                          {course.title}
+                        </h3>
 
-                                            {activeMenu === course.id && (
-                                                <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden animate-in fade-in zoom-in duration-200">
-                                                    <button className="w-full text-left cursor-pointer px-4 py-3 text-sm text-[#1d1d1f] hover:bg-[#f5f5f7] flex items-center gap-2 transition-colors">
-                                                        <span>📥</span> Descargar
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
+                        {/* Barra de progreso */}
+                        <div className="mb-6">
+                          <div className="flex justify-between text-[9px] font-black uppercase mb-1">
+                            <span className="text-muted-foreground">Progreso</span>
+                            <span>{course.progress || 0}%</span>
+                          </div>
+                          <div className="h-1 bg-muted rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${course.progress || 0}%` }}
+                              className={`h-full ${course.progress === 100 ? "bg-green-500" : "bg-primary"}`}
+                            />
+                          </div>
+                        </div>
 
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-4 ${activeTab === 'BASICO' ? 'bg-blue-100' : 'bg-purple-100'}`}>
-                                        {activeTab === 'BASICO' ? '📖' : '🎓'}
-                                    </div>
-                                    <h3 className="text-[#1d1d1f] font-semibold text-lg leading-tight mb-4">{course.title}</h3>
-                                </div>
-
-                                <Link
-                                    key={course.id}
-                                    href={`/dashboard/employee/courses/${course.id}`} // Corregido: ${course.id}
-                                    className="w-full py-2.5 bg-[#0071e3] text-white cursor-pointer text-sm font-medium rounded-xl text-center hover:bg-[#0077ed] transition-colors shadow-sm inline-block"
-                                >
-                                    Ver
-                                </Link>
-                            </div>
-                        ))}
-                </div>
-            </main>
-
-            {/* Backdrop para cerrar el menú */}
-            {activeMenu && <div className="fixed inset-0 z-0" onClick={() => setActiveMenu(null)} />}
+                        <div className="mt-auto space-y-2">
+                          <Link
+                            href={`/dashboard/employee/courses/${course.id}`}
+                            className="flex items-center justify-center gap-2 w-full py-3 bg-foreground text-background dark:bg-muted dark:text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
+                          >
+                            Entrar
+                            <i className="bi bi-arrow-right"></i>
+                          </Link>
+                          {course.progress === 100 && (
+                            <button
+                              onClick={() => downloadCertificate(course.id)}
+                              className="w-full py-3 bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all hover:bg-orange-600"
+                            >
+                              Descargar Diploma
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
-    );
+      </main>
+    </div>
+  );
 }

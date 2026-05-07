@@ -1,132 +1,282 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
-import Link from 'next/link';
+import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
-import SearchInput from '@/components/ui/Searchbar';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSearchParams } from 'next/navigation';
 
-export default function AdminCourses() {
+export default function AdminCoursePage() {
     const [courses, setCourses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'BASICO' | 'ESPECIALIZADO'>('BASICO');
-    const [searchQuery, setSearchQuery] = useState('');
+    const [currentUser, setCurrentUser] = useState<any>(null);
+
+    // Estados de filtrado
+    const [visibilityTab, setVisibilityTab] = useState<"Todos" | "Público" | "Privado">("Todos");
+    const [categoryTab, setCategoryTab] = useState<"Todos" | "Onboarding" | "Especialización">("Todos");
+
+    const searchParams = useSearchParams();
+    const fromTaskId = searchParams.get('fromTask');
+
+    const downloadCertificate = async (courseId: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(
+                `${API_ROUTES.ENROLLMENTS.BASE}/certificate/${courseId}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (!res.ok) return;
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'certificado.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
+
+    // Obtener usuario actual para saber si es admin
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setCurrentUser(JSON.parse(storedUser));
+        }
+    }, []);
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchCourses = async () => {
             try {
-                const res = await fetch(API_ROUTES.COURSES.GET_ALL, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                const token = localStorage.getItem('token');
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+                let url = API_ROUTES.ENROLLMENTS.BASE;
+                let isAdmin = user.role === 'ADMIN' || user.role === 'GENERAL_ADMIN';
+
+                // Para admin, obtener todos los cursos disponibles
+                if (isAdmin) {
+                    url = API_ROUTES.COURSES.GET_ALL;
+                }
+
+                const res = await fetch(url, {
+                    headers: { Authorization: `Bearer ${token}` }
                 });
                 const data = await res.json();
-                setCourses(Array.isArray(data) ? data : []);
+
+                let rawCourses = [];
+                if (isAdmin) {
+                    rawCourses = Array.isArray(data) ? data : [];
+                } else {
+                    rawCourses = Array.isArray(data) ? data : (data.courses || []);
+                }
+
+                const sortedDataCourses = [...rawCourses].sort((a: any, b: any) =>
+                    (a.title || "").trim().localeCompare((b.title || "").trim(), undefined, { numeric: true })
+                );
+                setCourses(sortedDataCourses);
             } catch (err) {
                 console.error(err);
             } finally {
                 setLoading(false);
             }
         };
-        fetchData();
+        fetchCourses();
     }, []);
 
-    const filtered = courses.filter(c => {
-        const matchesTab = activeTab === 'BASICO'
-            ? (c.category?.toUpperCase() !== 'ESPECIALIZADO')
-            : (c.category?.toUpperCase() === 'ESPECIALIZADO');
+    const filtered = courses.filter((c) => {
+        // 1. Filtro de Visibilidad
+        if (visibilityTab === "Público" && !c.isPublic) return false;
+        if (visibilityTab === "Privado" && c.isPublic) return false;
 
-        const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase());
+        // 2. Filtro de Categoría
+        if (categoryTab === "Onboarding") return c.category?.toUpperCase() !== "ESPECIALIZADO";
+        if (categoryTab === "Especialización") return c.category?.toUpperCase() === "ESPECIALIZADO";
 
-        return matchesTab && matchesSearch;
+        return true;
     });
 
     return (
-        <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'-apple-system', sans-serif" }}>
+        <div className="flex min-h-screen bg-background font-sans text-foreground">
             <Sidebar role="ADMIN" />
 
-            <main className="flex-1 p-10 overflow-auto">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-                    <div>
-                        <h1 className="text-4xl font-bold text-[#1d1d1f] tracking-tight">Formación de Empresa</h1>
-                        <p className="text-[#86868b] mt-1 text-lg">Supervisa el progreso de tus empleados en los cursos.</p>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <SearchInput
-                            value={searchQuery}
-                            onChange={setSearchQuery}
-                            placeholder='Buscar cursos...'
-                        />
-
-                        <Link
-                            href="/dashboard/administrator/admin/courses/manage"
-                            className="bg-[#0071e3] text-white px-6 py-2.5 rounded-full font-semibold hover:bg-[#0077ed] transition-all shadow-md shrink-0 text-center"
+            <main className="flex-1 overflow-auto flex flex-col relative">
+                <PageHeader
+                    title="Formación"
+                    description="Gestión y visualización de todos los cursos disponibles en la plataforma."
+                    icon={<i className="bi bi-journal-bookmark-fill"></i>}
+                    action={
+                        <Link href="/dashboard/administrator/admin/courses/manage"
+                            className="bg-secondary text-secondary-foreground px-4 py-2 rounded-xl text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
                         >
-                            Vista Cursos
+                            <i className="bi bi-gear-fill text-sm"></i>
+                            <span className="hidden sm:inline">Gestionar Cursos</span>
+                            <span className="sm:hidden">Gestionar</span>
                         </Link>
-                    </div>
-                </div>
+                    }
+                />
 
-                <div className="flex gap-8 border-b border-gray-200 mb-8">
-                    {['BASICO', 'ESPECIALIZADO'].map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab as any)}
-                            className={`pb-4 text-sm font-semibold cursor-pointer transition-all ${activeTab === tab
-                                ? 'border-b-2 border-[#0071e3] text-[#0071e3]'
-                                : 'text-[#86868b] hover:text-[#1d1d1f]'
-                                }`}
-                        >
-                            {tab === 'BASICO' ? 'Onboarding' : 'Especialización'}
-                        </button>
-                    ))}
-                </div>
+                <div className="p-6 lg:p-10 flex-1 space-y-6">
 
-                {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="h-64 bg-white rounded-2xl animate-pulse border border-gray-200" />
-                        ))}
-                    </div>
-                ) : filtered.length === 0 ? (
-                    <div className="text-center py-20 bg-white rounded-[2.5rem] border border-dashed border-gray-300">
-                        <p className="text-[#86868b] font-medium">No se han encontrado cursos en esta sección.</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {filtered.map((course) => (
-                            <div key={course.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 flex flex-col justify-between group hover:shadow-md transition-all">
-                                <div>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase ${activeTab === 'BASICO' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'
-                                            }`}>
-                                            {activeTab === 'BASICO' ? 'Onboarding' : 'Especialización'}
-                                        </span>
-                                    </div>
-
-                                    {/* ICONOS BOOTSTRAP ACTUALIZADOS */}
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl mb-4 ${activeTab === 'BASICO' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'
-                                        }`}>
-                                        {activeTab === 'BASICO' ? (
-                                            <i className="bi bi-book"></i>
-                                        ) : (
-                                            <i className="bi bi-mortarboard"></i>
-                                        )}
-                                    </div>
-
-                                    <h3 className="text-[#1d1d1f] font-semibold text-lg leading-tight mb-4 min-h-12 line-clamp-2">
-                                        {course.title}
-                                    </h3>
-                                </div>
-                                <Link
-                                    href={`/dashboard/administrator/admin/courses/${course.id}`}
-                                    className="w-full py-2.5 bg-[#0071e3] text-white text-sm font-medium rounded-xl text-center hover:bg-[#0077ed] transition-colors shadow-sm"
+                    {/* --- SELECTORES DE FILTRADO --- */}
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                        {/* Nivel 1: Visibilidad */}
+                        <div className="flex flex-wrap gap-1 bg-card border border-border p-1 rounded-xl shadow-sm w-full lg:w-auto">
+                            {(["Todos", "Privado", "Público"] as const).map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => {
+                                        setVisibilityTab(tab);
+                                        if (tab !== "Privado") setCategoryTab("Todos");
+                                    }}
+                                    className={`flex-1 lg:flex-none relative px-3 sm:px-5 py-2 text-[11px] font-medium rounded-lg transition-all ${visibilityTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                                        }`}
                                 >
-                                    Gestionar Curso
-                                </Link>
-                            </div>
-                        ))}
+                                    <span className="relative z-10">{tab}</span>
+                                    {visibilityTab === tab && (
+                                        <motion.div layoutId="visPillCourses" className="absolute inset-0 bg-primary/10 rounded-lg" />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Nivel 2: Categorías (Solo si Privado está activo) */}
+                        <AnimatePresence>
+                            {visibilityTab === "Privado" && (
+                                <motion.div
+                                    initial={{ opacity: 0, width: 0, height: 0 }}
+                                    animate={{ opacity: 1, width: "auto", height: "auto" }}
+                                    exit={{ opacity: 0, width: 0, height: 0 }}
+                                    className="overflow-hidden w-full lg:w-auto"
+                                >
+                                    <div className="flex flex-wrap gap-1 bg-card/50 border border-border/50 p-1 rounded-xl">
+                                        {(["Todos", "Onboarding", "Especialización"] as const).map((tab) => (
+                                            <button
+                                                key={tab}
+                                                onClick={() => setCategoryTab(tab)}
+                                                className={`flex-1 lg:flex-none relative px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] font-medium rounded-lg transition-all ${categoryTab === tab ? "text-secondary" : "text-muted-foreground hover:text-foreground"
+                                                    }`}
+                                            >
+                                                <span className="relative z-10">{tab}</span>
+                                                {categoryTab === tab && (
+                                                    <motion.div layoutId="catPillCourses" className="absolute inset-0 bg-secondary/10 rounded-lg" />
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
-                )}
+
+                    <hr className="border-border/50" />
+
+                    {/* Grid de Cursos */}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={`${visibilityTab}-${categoryTab}`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8"
+                        >
+                            {loading ? (
+                                Array.from({ length: 4 }).map((_, i) => (
+                                    <div key={i} className="h-[350px] bg-card rounded-[2.5rem] border border-border animate-pulse shadow-sm" />
+                                ))
+                            ) : filtered.length === 0 ? (
+                                <div className="col-span-full py-20 text-center bg-card border-2 border-dashed border-border rounded-[2.5rem]">
+                                    <i className="bi bi-search text-3xl text-muted-foreground mb-4 block"></i>
+                                    <p className="text-muted-foreground font-bold">No se encontraron cursos con estos filtros</p>
+                                </div>
+                            ) : (
+                                filtered.map((course) => {
+                                    const isBasico = course.category?.toUpperCase() !== "ESPECIALIZADO";
+
+                                    return (
+                                        <div
+                                            key={course.id}
+                                            className="group bg-card rounded-[2.5rem] border border-border shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 flex flex-col overflow-hidden relative"
+                                        >
+                                            {/* Portada */}
+                                            <div className="relative aspect-16/10 overflow-hidden bg-muted">
+                                                {course.fileUrl ? (
+                                                    <img
+                                                        src={course.fileUrl}
+                                                        alt={course.title}
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                    />
+                                                ) : (
+                                                    <div className={`w-full h-full flex items-center justify-center text-4xl ${isBasico ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"}`}>
+                                                        <i className={`bi ${isBasico ? "bi-compass" : "bi-rocket-takeoff"}`}></i>
+                                                    </div>
+                                                )}
+
+                                                {/* Tags de estado */}
+                                                <div className="absolute top-4 left-4 flex gap-2 flex-wrap pr-4">
+                                                    <span className={`text-[9px] font-semibold px-2 py-1 rounded-md border backdrop-blur-md ${course.isPublic ? "bg-green-500/20 text-green-600 border-green-500/20" : "bg-blue-500/20 text-blue-600 border-blue-500/20"
+                                                        }`}>
+                                                        {course.isPublic ? "Público" : "Privado"}
+                                                    </span>
+                                                    {!isBasico && course.jobRole && (
+                                                        <span className="text-[9px] font-semibold px-2 py-1 rounded-md border bg-purple-500/20 text-purple-600 border-purple-500/20 backdrop-blur-md">
+                                                            <i className="bi bi-person-badge mr-1"></i>
+                                                            {course.jobRole}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="p-7 flex-1 flex flex-col">
+                                                <h3 className="text-base font-bold text-foreground leading-tight mb-2 line-clamp-2">
+                                                    {course.title}
+                                                </h3>
+
+                                                {/* Barra de progreso */}
+                                                <div className="mb-6">
+                                                    <div className="flex justify-between text-[10px] font-semibold text-muted-foreground mb-1">
+                                                        <span>Progreso</span>
+                                                        <span>{course.progress || 0}%</span>
+                                                    </div>
+                                                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${course.progress || 0}%` }}
+                                                            className={`h-full ${course.progress === 100 ? "bg-green-500" : "bg-primary"}`}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-auto space-y-2">
+                                                    <Link
+                                                        href={`/dashboard/administrator/admin/courses/${course.id}`}
+                                                        className="flex items-center justify-center gap-2 w-full py-3 bg-foreground text-background dark:bg-muted dark:text-foreground text-[11px] font-semibold rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
+                                                    >
+                                                        Entrar
+                                                        <i className="bi bi-arrow-right"></i>
+                                                    </Link>
+                                                    {course.progress === 100 && (
+                                                        <button
+                                                            onClick={() => downloadCertificate(course.id)}
+                                                            className="w-full py-3 bg-orange-500 text-white text-[11px] font-semibold rounded-xl transition-all hover:bg-orange-600"
+                                                        >
+                                                            Descargar Diploma
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
             </main>
         </div>
     );

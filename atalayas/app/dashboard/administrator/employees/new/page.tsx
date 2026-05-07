@@ -1,78 +1,141 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/ui/Sidebar';
-import { API_ROUTES } from '@/lib/utils';
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Sidebar from "@/components/ui/Sidebar";
+import PageHeader from "@/components/ui/pageHeader";
+import { API_ROUTES } from "@/lib/utils";
 
 export default function NewEmployeePage() {
   const router = useRouter();
-  
-  // 1. Referencia para el Rol (Uncontrolled)
-  const roleRef = useRef<HTMLSelectElement>(null);
 
-  // 2. Estados del resto del formulario
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [companyId, setCompanyId] = useState(''); // Estado para la empresa (General Admin)
-  
+  // Estados de UI
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [companies, setCompanies] = useState<any[]>([]);
 
-  // Carga de datos de usuario y empresas
+  // Estados para autocompletado de puestos
+  const [availableJobRoles, setAvailableJobRoles] = useState<string[]>([]);
+  const [filteredJobRoles, setFilteredJobRoles] = useState<string[]>([]);
+  const [showJobRoleSuggestions, setShowJobRoleSuggestions] = useState(false);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+  const jobRoleInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  // Estado del formulario unificado (sin password)
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    jobRole: "",
+    role: "EMPLOYEE",
+    companyId: "",
+  });
+
+  // Cargar roles existentes
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
+    const fetchJobRoles = async () => {
+      setLoadingRoles(true);
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await fetch(`${API_ROUTES.USERS.GET_ALL}/roles`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableJobRoles(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error("Error cargando puestos:", err);
+      } finally {
+        setLoadingRoles(false);
+      }
+    };
+
+    fetchJobRoles();
+  }, []);
+
+  // Filtrar sugerencias basadas en el texto ingresado
+  useEffect(() => {
+    if (form.jobRole.trim() === "") {
+      setFilteredJobRoles([]);
+      return;
+    }
+
+    const filtered = availableJobRoles.filter(role =>
+      role.toLowerCase().includes(form.jobRole.toLowerCase())
+    );
+    setFilteredJobRoles(filtered);
+  }, [form.jobRole, availableJobRoles]);
+
+  // Cerrar sugerencias al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        jobRoleInputRef.current &&
+        !jobRoleInputRef.current.contains(event.target as Node)
+      ) {
+        setShowJobRoleSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Función para generar contraseña aleatoria
+  const generateRandomPassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
+  // Inicialización de usuario
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const user = JSON.parse(storedUser);
       setCurrentUser(user);
-
-      if (user.role === 'GENERAL_ADMIN') {
-        fetch(API_ROUTES.COMPANIES.GET_ALL, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-        .then(res => res.json())
-        .then(data => { if (Array.isArray(data)) setCompanies(data); });
-      }
+      setForm((prev) => ({ ...prev, companyId: user.companyId || "" }));
     }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
-    // LEEMOS EL ROL DIRECTAMENTE DEL ELEMENTO HTML
-    const selectedRole = roleRef.current?.value || 'PUBLIC';
-    
     try {
-      const token = localStorage.getItem('token');
-      const finalCompanyId = currentUser.role === 'ADMIN' ? currentUser.companyId : companyId;
+      const token = localStorage.getItem("token");
 
-      const payload = { 
-        email, 
-        password, 
-        name, 
-        role: selectedRole, // <--- Valor real del selector
-        companyId: finalCompanyId || undefined
+      // Generar contraseña aleatoria
+      const randomPassword = generateRandomPassword();
+
+      const payload = {
+        ...form,
+        password: randomPassword,
       };
 
-      const res = await fetch(API_ROUTES.USERS.CREATE, { 
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+      const res = await fetch(API_ROUTES.USERS.CREATE || API_ROUTES.USERS.GET_ALL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Error al crear el empleado');
+      if (!res.ok) throw new Error(data.message || "Error al registrar el usuario");
 
-      router.push('/dashboard/administrator/employees');
-      
+      router.push("/dashboard/administrator/employees");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -83,78 +146,164 @@ export default function NewEmployeePage() {
   if (!currentUser) return null;
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7]" style={{ fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
+    <div className="flex min-h-screen bg-background font-sans">
       <Sidebar role={currentUser.role} />
-      <main className="flex-1 p-10 overflow-auto">
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-[#86868b] hover:text-[#1d1d1f] font-medium text-sm mb-6 transition-colors">
-          ← Volver
-        </button>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#1d1d1f] tracking-tight">Añadir nuevo empleado</h1>
-          <p className="text-[#86868b]">Introduce los datos para el nuevo acceso al sistema.</p>
-        </div>
+      <main className="flex-1 overflow-auto flex flex-col relative">
+        <PageHeader
+          title="Nuevo Empleado"
+          description="Añade un nuevo miembro a tu organización. Se generará una contraseña temporal automáticamente."
+          icon={<i className="bi bi-person-plus-fill"></i>}
+          backUrl="/dashboard/administrator/employees"
+        />
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 max-w-2xl">
-          {error && <div className="p-3 mb-6 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm">{error}</div>}
+        <div className="p-6 lg:p-10 max-w-3xl mx-auto w-full">
+          <div className="bg-card rounded-[2rem] shadow-sm border border-border p-8 lg:p-10 transition-all">
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Nombre</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre completo" required className="w-full bg-[#f5f5f7] border-transparent focus:border-[#0071e3] focus:bg-white rounded-xl px-4 py-3 text-sm outline-none transition-all" />
+            {/* Mensaje de Error */}
+            {error && (
+              <div className="p-4 mb-8 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive font-bold text-xs flex items-center gap-2 animate-in fade-in">
+                <i className="bi bi-exclamation-octagon-fill text-sm"></i> {error}
+              </div>
+            )}
+
+            {/* Mensaje informativo sobre la contraseña */}
+            <div className="p-4 mb-8 bg-primary/5 border border-primary/20 rounded-xl text-primary text-xs flex items-center gap-2">
+              <i className="bi bi-info-circle-fill text-sm"></i>
+              <span>Se generará una contraseña temporal automáticamente y se enviará al correo del usuario.</span>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-10">
+
+              {/* Encabezado de Sección */}
+              <div className="flex items-center gap-4 pb-2 border-b border-border/50">
+                <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center text-lg shrink-0 border border-primary/20">
+                  <i className="bi bi-person-vcard"></i>
+                </div>
+                <h3 className="font-bold text-foreground text-base tracking-tight">
+                  Información del empleado
+                </h3>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Email</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@empresa.com" required className="w-full bg-[#f5f5f7] border-transparent focus:border-[#0071e3] focus:bg-white rounded-xl px-4 py-3 text-sm outline-none transition-all" />
-              </div>
+              {/* Formulario en Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
 
-              <div>
-                <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Contraseña</label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required className="w-full bg-[#f5f5f7] border-transparent focus:border-[#0071e3] focus:bg-white rounded-xl px-4 py-3 text-sm outline-none transition-all" />
-              </div>
+                {/* Nombre */}
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 ml-1">
+                    Nombre Completo
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej. Juan Pérez García"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className="w-full bg-background border border-input rounded-xl px-5 py-3 text-sm font-semibold focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all shadow-sm"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Rol</label>
-                <select 
-                  ref={roleRef}
-                  defaultValue="PUBLIC"
-                  className="w-full bg-[#f5f5f7] rounded-xl px-4 py-3 text-sm outline-none cursor-pointer border-transparent focus:border-[#0071e3] transition-all"
-                >
-                  {currentUser.role === 'GENERAL_ADMIN' && <option value="PUBLIC">Acceso público</option> }
-                  <option value="EMPLOYEE">Empleado</option>
-                  <option value="ADMIN">Administrador de empresa</option>
-                  {currentUser.role === 'GENERAL_ADMIN' && <option value="GENERAL_ADMIN">Administrador General</option>}
-                </select>
-              </div>
+                {/* Email */}
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 ml-1">
+                    Email Corporativo
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="nombre@empresa.com"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    className="w-full bg-background border border-input rounded-xl px-5 py-3 text-sm font-semibold focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all shadow-sm"
+                  />
+                </div>
 
-              {currentUser.role === 'GENERAL_ADMIN' && (
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-[#1d1d1f] uppercase tracking-wider mb-2">Empresa asignada</label>
-                  <select 
-                    value={companyId} 
-                    onChange={(e) => setCompanyId(e.target.value)} 
-                    required 
-                    className="w-full bg-[#f5f5f7] rounded-xl px-4 py-3 text-sm outline-none cursor-pointer"
+                {/* Puesto de Trabajo con autocompletado */}
+                <div className="relative space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 ml-1">
+                    Puesto de Trabajo
+                  </label>
+                  <input
+                    ref={jobRoleInputRef}
+                    type="text"
+                    required
+                    placeholder="Ej. Técnico de Mantenimiento"
+                    value={form.jobRole}
+                    onChange={(e) => {
+                      setForm({ ...form, jobRole: e.target.value });
+                      setShowJobRoleSuggestions(true);
+                    }}
+                    onFocus={() => setShowJobRoleSuggestions(true)}
+                    className="w-full bg-background border border-input rounded-xl px-5 py-3 text-sm font-semibold focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all shadow-sm"
+                  />
+
+                  {/* Sugerencias de puestos */}
+                  {showJobRoleSuggestions && filteredJobRoles.length > 0 && (
+                    <div
+                      ref={suggestionsRef}
+                      className="absolute z-10 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto"
+                    >
+                      {filteredJobRoles.map((role, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => {
+                            setForm({ ...form, jobRole: role });
+                            setShowJobRoleSuggestions(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors first:rounded-t-xl last:rounded-b-xl font-medium"
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <p className="text-[9px] text-muted-foreground ml-1">
+                    Puedes seleccionar un puesto existente o escribir uno nuevo
+                  </p>
+                </div>
+
+                {/* Rol de Acceso */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 ml-1">
+                    Rol de Acceso
+                  </label>
+                  <select
+                    value={form.role}
+                    onChange={(e) => setForm({ ...form, role: e.target.value })}
+                    className="w-full bg-background border border-input rounded-xl px-5 py-3 text-sm font-bold focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none cursor-pointer transition-all shadow-sm"
                   >
-                    <option value="">Seleccionar empresa...</option>
-                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    <option value="EMPLOYEE">Empleado Estándar</option>
+                    <option value="ADMIN">Administrador de Empresa</option>
                   </select>
                 </div>
-              )}
-            </div>
+              </div>
 
-            <div className="pt-6 mt-6 border-t border-gray-100 flex justify-end gap-3">
-              <button 
-                type="submit" 
-                disabled={loading} 
-                className="px-8 py-3 rounded-xl font-bold text-sm text-white bg-[#0071e3] hover:bg-[#0077ed] transition-all shadow-md active:scale-95 disabled:bg-gray-400"
-              >
-                {loading ? 'Creando...' : 'Crear empleado'}
-              </button>
-            </div>
-          </form>
+              {/* Botones de Acción */}
+              <div className="pt-6 border-t border-border flex justify-end items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => router.back()}
+                  className="px-6 py-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-8 py-3 bg-secondary text-secondary-foreground rounded-xl font-bold text-sm hover:opacity-90 shadow-md shadow-secondary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <><i className="bi bi-arrow-repeat animate-spin"></i> Creando...</>
+                  ) : (
+                    'Crear Empleado'
+                  )}
+                </button>
+              </div>
+
+            </form>
+          </div>
         </div>
       </main>
     </div>
