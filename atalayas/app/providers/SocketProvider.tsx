@@ -27,10 +27,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    // FORZAMOS LA URL AQUÍ: Vercel usa Railway, tu PC usa localhost.
-    const backendUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://zoological-passion-atalayas.up.railway.app' 
-      : 'http://localhost:3000';
+    // URL puesta a fuego para que no haya margen de error
+    const backendUrl = 'https://zoological-passion-atalayas.up.railway.app';
 
     const newSocket = io(`${backendUrl}/stats`, {
       transports: ['websocket'],
