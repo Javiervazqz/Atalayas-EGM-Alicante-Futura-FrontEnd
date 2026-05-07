@@ -617,7 +617,7 @@ export default function CompanyAdminStatsPage() {
                 {suggestions.pending > 0 && (
                   <div className="mt-4">
                     <Link
-                      href="/dashboard/administrator/suggestions"
+                      href="/dashboard/administrator/admin/suggestions" // 👈 AQUÍ ESTÁ EL CAMBIO
                       className="inline-flex items-center gap-2 text-xs font-medium bg-pink-500/10 text-pink-500 border border-pink-500/20 px-4 py-2 rounded-xl hover:bg-pink-500/20 transition-colors"
                     >
                       Ir al buzón <i className="bi bi-arrow-right"></i>
