@@ -183,17 +183,17 @@ export default function ManageCourses() {
               {/* Botón 1: Adaptado a móvil y con color corporativo */}
               <Link
                 href="/dashboard/administrator/admin/courses"
-                className="bg-secondary text-secondary-foreground px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
+              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap"
               >
                 <i className="bi bi-eye-fill text-sm"></i>
-                <span className="hidden sm:inline">Vista de Cursos</span>
+                <span className="hidden sm:inline">Vista de Empleado</span>
                 <span className="sm:hidden">Ver</span>
               </Link>
 
               {/* Botón 2: Adaptado a móvil y con color corporativo */}
               <Link
                 href="/dashboard/administrator/admin/courses/manage/new"
-                className="bg-secondary text-secondary-foreground px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
+              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap"
               >
                 <i className="bi bi-plus-lg text-sm"></i>
                 <span className="hidden sm:inline">Nuevo Curso</span>

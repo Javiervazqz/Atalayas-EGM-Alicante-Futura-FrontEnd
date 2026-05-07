@@ -56,7 +56,7 @@ export default function EmployeeContentDetail() {
   useEffect(() => {
     if (activeTab === "lectura" && imageRef.current) {
       const zoomInstance = zoom(imageRef.current, { background: "rgba(0,0,0,0.9)", margin: 40 });
-      return () => zoomInstance.detach();
+      return () =>{ if(zoomInstance)zoomInstance.detach();}
     }
   }, [content?.imageUrl, activeTab]);
 
@@ -103,21 +103,50 @@ export default function EmployeeContentDetail() {
 
               <div className="p-8 md:p-16">
                 {activeTab === "lectura" && (
-                  <div className="animate-in fade-in duration-500 space-y-10">
-                    {content?.imageUrl && (
-                      <img ref={imageRef} src={content.imageUrl} className="w-full aspect-video object-cover rounded-[2rem] shadow-lg border border-border/50" alt="Cover" />
-                    )}
-                    <div className="prose dark:prose-invert max-w-none">
-                      <ReactMarkdown components={{
-                        h2: ({node, ...props}) => <h2 className="text-2xl font-black text-foreground mt-10 mb-6" {...props} />,
-                        p: ({node, ...props}) => <p className="text-[17px] leading-[1.8] text-muted-foreground mb-6" {...props} />,
-                        blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-primary bg-muted/40 p-6 rounded-r-2xl my-8 italic" {...props} />,
-                      }}>
-                        {content?.summary}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
-                )}
+  <div className="animate-in fade-in duration-500 space-y-10">
+    {content?.imageUrl && (
+      // ✅ Añade el wrapper con efecto zoom igual que admin
+      <div className="relative group cursor-zoom-in">
+        <img
+          ref={imageRef}
+          src={content.imageUrl}
+          className="w-full aspect-video object-cover rounded-[2rem] shadow-lg border border-border/50 transition-transform duration-500 hover:scale-[1.01]"
+          alt="Cover"
+        />
+        <div className="absolute top-4 right-4 bg-black/20 backdrop-blur-md p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <i className="bi bi-zoom-in text-white"></i>
+        </div>
+      </div>
+    )}
+    <div className="prose dark:prose-invert max-w-none">
+      <ReactMarkdown
+        components={{
+          h2: ({ ...props }) => (
+            <h2 className="text-2xl font-black text-foreground mt-10 mb-6" {...props} />
+          ),
+          p: ({ ...props }) => (
+            <p className="text-[17px] leading-[1.8] text-muted-foreground mb-6" {...props} />
+          ),
+          // ✅ Esto faltaba — es lo que hace diferente el estilo de las listas
+          li: ({ ...props }) => (
+            <li className="flex items-start gap-3 text-[16px] text-muted-foreground mb-4">
+              <span className="mt-2.5 w-2 h-2 rounded-full bg-primary/40 shrink-0" />
+              <span {...props} />
+            </li>
+          ),
+          blockquote: ({ ...props }) => (
+            <blockquote
+              className="border-l-4 border-primary bg-muted/40 p-6 rounded-r-2xl my-8 italic shadow-inner"
+              {...props}
+            />
+          ),
+        }}
+      >
+        {content?.summary}
+      </ReactMarkdown>
+    </div>
+  </div>
+)}
 
                 {activeTab === "multimedia" && hasVideo && (
                   <div className="aspect-video rounded-[2rem] overflow-hidden bg-black shadow-2xl">
@@ -235,11 +264,49 @@ export default function EmployeeContentDetail() {
                 </div>
               ))}
             </div>
-            {!isCorrected && (
-              <div className="pt-6 mt-6 border-t border-border">
-                <button onClick={() => setIsCorrected(true)} className="w-full bg-primary text-white py-4 rounded-xl font-black uppercase text-xs">Enviar Respuestas</button>
-              </div>
-            )}
+            {/* Sección de Resultados después de corregir */}
+{isCorrected && (
+  <div className="pt-6 mt-6 border-t border-border animate-in slide-in-from-bottom-4 duration-500">
+    <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl text-center">
+        <p className="text-[10px] font-black uppercase text-emerald-600 mb-1">Aciertos</p>
+        <p className="text-2xl font-black text-emerald-700">
+          {content?.quiz?.questions.filter((q: any, i: number) => userAnswers[i] === q.correctAnswer).length}
+        </p>
+      </div>
+      <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-center">
+        <p className="text-[10px] font-black uppercase text-red-600 mb-1">Errores</p>
+        <p className="text-2xl font-black text-red-700">
+          {content?.quiz?.questions.filter((q: any, i: number) => userAnswers[i] !== q.correctAnswer).length}
+        </p>
+      </div>
+    </div>
+    
+    <button 
+      onClick={() => {
+        setIsCorrected(false);
+        setUserAnswers({});
+        setShowQuizModal(false);
+      }} 
+      className="w-full bg-foreground text-background py-4 rounded-xl font-black uppercase text-xs hover:opacity-90 transition-all"
+    >
+      Finalizar Revisión
+    </button>
+  </div>
+)}
+
+{/* Botón original para enviar (solo se ve si no se ha corregido) */}
+{!isCorrected && (
+  <div className="pt-6 mt-6 border-t border-border">
+    <button 
+      onClick={() => setIsCorrected(true)} 
+      disabled={Object.keys(userAnswers).length < (content?.quiz?.questions.length || 0)}
+      className="w-full bg-primary text-white py-4 rounded-xl font-black uppercase text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      Enviar Respuestas
+    </button>
+  </div>
+)}
           </div>
         </div>
       )}

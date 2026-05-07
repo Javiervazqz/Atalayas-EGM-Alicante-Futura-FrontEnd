@@ -158,7 +158,7 @@ export default function EditCompanyPage() {
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
 
                   {/* Preview */}
-                  <div className="relative group flex-shrink-0" title="Haz clic para subir un nuevo logo">
+                  <div className="relative group shrink-0" title="Haz clic para subir un nuevo logo">
                     <div className="w-40 h-40 rounded-[2rem] overflow-hidden border-4 border-background shadow-xl bg-muted/20">
                       <img
                         src={logoPreview || (currentLogoUrl ? encodeURI(currentLogoUrl) : 'https://placehold.co/400x400/f5f5f7/86868b?text=LOGO')}
