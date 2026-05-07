@@ -82,7 +82,7 @@ function EmployeeServicesContent() {
             <Sidebar role="EMPLOYEE" />
             <main className="flex-1 h-screen overflow-y-auto flex flex-col relative no-scrollbar">
                 <PageHeader 
-                    title="Servicios EGM"
+                    title="Servicios"
                     description="Accede a los recursos y herramientas corporativas disponibles en Atalayas."
                     icon={<i className="bi bi-briefcase-fill"></i>}
                 />

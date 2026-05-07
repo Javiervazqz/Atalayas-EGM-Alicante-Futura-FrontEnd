@@ -135,9 +135,9 @@ export default function EmployeeAnnouncementsPage() {
       
       <main className="flex-1 flex flex-col min-w-0 bg-white/40 dark:bg-transparent backdrop-blur-3xl">
         <PageHeader 
-          title="Comunicados"
+          title="Anuncios"
           description="Explora las últimas noticias y actualizaciones de la plataforma."
-          icon={<i className="bi bi-megaphone-fill text-primary" />}
+          icon={<i className="bi bi-megaphone-fill" />}
           action={
             <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar anuncios..." />
           }
@@ -154,7 +154,7 @@ export default function EmployeeAnnouncementsPage() {
             {/* Grid de Noticias */}
             <div className="space-y-6">
               <div className="flex justify-between items-end px-4">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 italic">Historial de Comunicados</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 italic">Historial de Anuncios</h3>
                 <p className="text-[10px] font-bold text-muted-foreground/40">Visualizando {filtered.length} noticias</p>
               </div>
 

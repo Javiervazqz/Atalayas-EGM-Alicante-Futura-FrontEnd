@@ -183,21 +183,19 @@ export default function ManageCourses() {
               {/* Botón 1: Adaptado a móvil y con color corporativo */}
               <Link
                 href="/dashboard/administrator/admin/courses"
-                  className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
-              >
-                <i className="bi bi-eye-fill text-sm"></i>
-                <span className="hidden sm:inline">Vista de Empleado</span>
-                <span className="sm:hidden">Ver</span>
+className="bg-secondary text-secondary-foreground rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm
+                      w-9 h-9 sm:w-auto sm:h-auto sm:px-5 sm:py-2"              >
+                <i className="bi bi-eye-fill shrink-0"></i>
+                    <span className="hidden sm:inline whitespace-nowrap">Vista Empleado</span>
               </Link>
 
               {/* Botón 2: Adaptado a móvil y con color corporativo */}
               <Link
                 href="/dashboard/administrator/admin/courses/manage/new"
-                  className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
-              >
-                <i className="bi bi-plus-lg text-sm ml-3"></i>
-                <span className="hidden sm:inline">Nuevo Curso</span>
-                <span className="sm:hidden">Crear</span>
+className="bg-secondary text-secondary-foreground rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm
+                      w-9 h-9 sm:w-auto sm:h-auto sm:px-5 sm:py-2"              >
+                <i className="bi bi-plus-lg shrink-0"></i>
+                <span className="hidden sm:inline whitespace-nowrap">Nuevo Curso</span>
               </Link>
             </div>
           }
