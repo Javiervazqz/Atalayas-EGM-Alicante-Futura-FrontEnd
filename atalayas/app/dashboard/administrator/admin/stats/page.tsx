@@ -13,6 +13,7 @@ interface Overview {
   totalUsers: number;
   totalCourses: number;
   totalEnrollments: number;
+  completedEnrollments: number;
   totalDocuments: number;
   avgProgress: number;
   completionRate: number;
@@ -372,7 +373,7 @@ export default function CompanyAdminStatsPage() {
   const [loading, setLoading] = useState(true);
   
   // ✅ CORRECCIÓN 1: La variable debe estar en minúscula para que coincida con el Provider
-  const { companyOnlineUsers } = useSocket();
+  const { onlineUsers } = useSocket();
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
