@@ -19,6 +19,7 @@ interface User {
   jobRole?: string;
   companyId: string | null;
   createdAt: string;
+  avatarUrl?: string;
   Company?: Company;
 }
 
@@ -228,7 +229,7 @@ export default function EmployeesPage() {
               )}
             </div>
 
-            {/* TABLA REORDENADA */}
+            {/* TABLA */}
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
@@ -263,9 +264,18 @@ export default function EmployeesPage() {
                         {/* 1. Usuario */}
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-sm font-bold text-primary border border-primary/20 shrink-0">
-                              {user.name?.charAt(0).toUpperCase() || 'U'}
-                            </div>
+                            {/* Avatar: muestra imagen si existe, si no la inicial */}
+                            {user.avatarUrl ? (
+                              <img
+                                src={user.avatarUrl}
+                                alt={user.name}
+                                className="w-10 h-10 rounded-xl object-cover border border-border/50 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-sm font-bold text-primary border border-primary/20 shrink-0">
+                                {user.name?.charAt(0).toUpperCase() || 'U'}
+                              </div>
+                            )}
                             <div className="min-w-0">
                               <p className="text-sm font-bold text-foreground truncate">{user.name}</p>
                               <p className="text-xs font-medium text-muted-foreground truncate">{user.email}</p>

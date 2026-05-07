@@ -58,7 +58,6 @@ export default function ManageCourses() {
         setAvailableRoles(Array.isArray(data) ? data : []);
       } else {
         console.error("Error cargando roles:", res.status);
-        // Si el endpoint no existe, usar roles por defecto
         setAvailableRoles(["Técnico", "Ventas", "Administrativo", "Gerente", "Operaciones"]);
       }
     } catch (err) {
@@ -88,7 +87,6 @@ export default function ManageCourses() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validar que si es especialización, tenga un rol seleccionado
     if (courseToEdit.category === "ESPECIALIZADO" && !courseToEdit.requiredRole) {
       alert("Para cursos de especialización, debes seleccionar un rol requerido");
       return;
@@ -99,20 +97,17 @@ export default function ManageCourses() {
     try {
       const token = localStorage.getItem("token");
 
-      // 🔥 CORREGIDO: Usar 'jobRole' en lugar de 'requiredRole'
       const payload: any = {
         title: courseToEdit.title,
         category: courseToEdit.category,
       };
 
-      // Solo incluir jobRole si es especialización
       if (courseToEdit.category === "ESPECIALIZADO") {
         payload.jobRole = courseToEdit.requiredRole;
       } else {
         payload.jobRole = null;
       }
 
-      // Si hay una nueva imagen, usamos FormData
       if (courseToEdit.newImageFile) {
         const formData = new FormData();
         formData.append("title", courseToEdit.title);
@@ -139,7 +134,6 @@ export default function ManageCourses() {
           alert(`Error: ${errorData.message || "No se pudo actualizar"}`);
         }
       } else {
-        // Sin imagen, usamos JSON
         const res = await fetch(API_ROUTES.COURSES.UPDATE(courseToEdit.id), {
           method: "PATCH",
           headers: {
@@ -183,17 +177,17 @@ export default function ManageCourses() {
           description="Administra los cursos de formación de tu empresa y el contenido global."
           icon={<i className="bi bi-gear-fill"></i>}
           action={
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-2">
               <Link
                 href="/dashboard/administrator/admin/courses"
-                className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
+                className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap"
               >
                 <i className="bi bi-eye-fill"></i>Vista de empleado
               </Link>
 
               <Link
-                href="/dashboard/administrator/admin/courses/new"
-                className="bg-secondary text-secondary-foreground px-8 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
+                href="/dashboard/administrator/admin/courses/manage/new"
+                className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap"
               >
                 <i className="bi bi-plus-lg"></i> Nuevo curso
               </Link>
@@ -244,7 +238,7 @@ export default function ManageCourses() {
                   {!loading && filtered.map((course) => (
                     <tr key={course.id} className="group hover:bg-muted/30 transition-colors">
                       <td className="px-6 lg:px-8 py-5">
-                        <Link href={`/dashboard/administrator/admin/courses/${course.id}/manage`} className="flex items-center gap-4 cursor-pointer group/link">
+                        <Link href={`/dashboard/administrator/admin/courses/manage/view/${course.id}`} className="flex items-center gap-4 cursor-pointer group/link">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${course.isPublic ? "bg-green-500/10 text-green-600 border-green-500/20 group-hover/link:bg-green-600 group-hover/link:text-white" : "bg-primary/5 text-primary border border-primary/10 group-hover/link:bg-primary group-hover/link:text-white"}`}>
                             <i className={`bi ${course.isPublic ? "bi-globe" : "bi-journal-text"} text-lg`}></i>
                           </div>
@@ -373,7 +367,6 @@ export default function ManageCourses() {
                     setCourseToEdit({
                       ...courseToEdit,
                       category: newCategory,
-                      // Si cambia a BASICO, limpiar requiredRole
                       requiredRole: newCategory === "BASICO" ? "" : courseToEdit.requiredRole
                     });
                   }}

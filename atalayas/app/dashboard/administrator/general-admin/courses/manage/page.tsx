@@ -13,7 +13,7 @@ export default function GlobalManageCourses() {
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados de Filtros
+  // Estados de Filtros (se mantienen igual)
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'BASICO' | 'ESPECIALIZADO'>('ALL');
   const [showOnlyPublic, setShowOnlyPublic] = useState(false);
@@ -111,7 +111,6 @@ export default function GlobalManageCourses() {
 
   // Lógica de navegación al hacer click en la fila
   const handleRowClick = (id: string, e: React.MouseEvent) => {
-    // Evitamos la navegación si el usuario hace click en los botones de acción o links
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('a')) {
       return;
@@ -129,11 +128,11 @@ export default function GlobalManageCourses() {
         <PageHeader
           title="Gestión Global de Cursos"
           description={`Control maestro de contenidos para ${companies.length} empresas registradas.`}
-          icon={<i className="bi bi-journal-bookmark-fill"></i>}
+          icon={<i className="bi bi-gear-fill"></i>}
           action={
             <Link
               href="/dashboard/administrator/general-admin/courses/manage/new"
-              className="bg-secondary text-white px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-sm hover:shadow-md flex items-center gap-2"
+              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
             >
               <i className="bi bi-plus-lg"></i> Nuevo curso público
             </Link>
@@ -142,7 +141,7 @@ export default function GlobalManageCourses() {
 
         <div className="p-6 lg:p-10 space-y-8 max-w-7xl mx-auto w-full">
 
-          {/* BARRA DE FILTROS */}
+          {/* BARRA DE FILTROS (SE MANTIENE IGUAL) */}
           <div className="bg-card p-6 lg:p-8 rounded-[24px] border border-border/60 shadow-sm flex flex-col gap-6 transition-colors duration-300">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
@@ -239,63 +238,67 @@ export default function GlobalManageCourses() {
             </div>
           </div>
 
-          {/* TABLA DE RESULTADOS */}
-          <div className="bg-card rounded-[24px] border border-border/60 overflow-hidden shadow-sm transition-colors duration-300">
+          {/* TABLA DE RESULTADOS (ESTILO ADMIN) */}
+          <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm flex flex-col">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-150">
                 <thead>
-                  <tr className="bg-muted/30 border-b border-border/60">
-                    <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-widest w-1/3">Curso</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Empresa / Visibilidad</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Categoría</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Acciones</th>
+                  <tr className="bg-muted/40 border-b border-border">
+                    <th className="px-6 lg:px-8 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Curso</th>
+                    <th className="px-6 lg:px-8 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Empresa / Visibilidad</th>
+                    <th className="px-6 lg:px-8 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Categoría</th>
+                    <th className="px-6 lg:px-8 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border/60">
+                <tbody className="divide-y divide-border">
                   {filtered.map((course) => (
                     <tr
                       key={course.id}
-                      className="group hover:bg-muted/20 transition-colors cursor-pointer"
+                      className="group hover:bg-muted/30 transition-colors cursor-pointer"
                       onClick={(e) => handleRowClick(course.id, e)}
                     >
-                      <td className="px-8 py-5">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">
-                            {course.title}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground/50 font-medium mt-1">
-                            Click para ver contenido del curso
-                          </span>
+                      <td className="px-6 lg:px-8 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${course.isPublic ? "bg-green-500/10 text-green-600 border-green-500/20 group-hover:bg-green-600 group-hover:text-white" : "bg-primary/5 text-primary border border-primary/10 group-hover:bg-primary group-hover:text-white"
+                            }`}>
+                            <i className={`bi ${course.isPublic ? "bi-globe" : "bi-building"} text-lg`}></i>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-foreground group-hover:text-primary transition-colors">{course.title}</span>
+                            <span className="text-[10px] font-bold uppercase tracking-tighter opacity-60 flex items-center gap-1 mt-1">
+                              {course.isPublic ? <span className="text-green-600"><i className="bi bi-globe"></i> Público</span> : <span className="text-primary"><i className="bi bi-building"></i> Privado</span>}
+                              <span className="mx-1">•</span> Click para ver contenido
+                            </span>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-8 py-5 text-center">
-                        <span className={`text-[9px] font-black px-3 py-1 rounded-lg tracking-wider uppercase border ${course.isPublic ? 'bg-primary/5 text-primary border-primary/10' : 'bg-muted text-muted-foreground border-border/50'}`}>
+                      <td className="px-6 lg:px-8 py-5 text-center">
+                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${course.isPublic ? "bg-green-500/10 text-green-600 border border-green-500/20" : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                          }`}>
                           {getCompanyName(course)}
                         </span>
                       </td>
-                      <td className="px-8 py-5 text-center">
-                        <span className={`text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-wider border ${course.category?.toUpperCase() === 'ESPECIALIZADO' ? 'bg-secondary/5 text-secondary border-secondary/10' : 'bg-primary/5 text-primary border-primary/10'}`}>
-                          {course.category?.toUpperCase() === 'ESPECIALIZADO' ? 'Especialización' : 'Onboarding'}
+                      <td className="px-6 lg:px-8 py-5 text-center">
+                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${course.category?.toUpperCase() === "ESPECIALIZADO" ? "bg-secondary/10 text-secondary border border-secondary/20" : "bg-primary/10 text-primary border border-primary/20"
+                          }`}>
+                          {course.category?.toUpperCase() === "ESPECIALIZADO" ? "Especialización" : "Onboarding"}
                         </span>
                       </td>
-                      <td className="px-8 py-5 text-right">
-                        <div className="flex justify-end gap-2">
-                          {/* BOTÓN EDITAR */}
+                      <td className="px-6 lg:px-8 py-5 text-right">
+                        <div className="flex items-center justify-end gap-2">
                           <Link
                             href={`/dashboard/administrator/general-admin/courses/manage/${course.id}`}
-                            className="w-10 h-10 flex items-center justify-center bg-muted/50 hover:bg-primary/10 rounded-xl transition-all group/btn border border-border/40"
+                            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all border border-transparent hover:border-primary/20"
                             title="Editar curso"
                           >
-                            <i className="bi bi-pencil-square text-primary group-hover/btn:scale-110 transition-transform"></i>
+                            <i className="bi bi-pencil-square"></i>
                           </Link>
-
-                          {/* BOTÓN ELIMINAR */}
                           <button
                             onClick={() => setCourseToDelete(course.id)}
-                            className="w-10 h-10 flex items-center justify-center bg-muted/50 hover:bg-destructive/10 rounded-xl transition-all group/btn cursor-pointer border border-border/40"
+                            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all border border-transparent hover:border-destructive/20 cursor-pointer bg-transparent"
                             title="Eliminar curso"
                           >
-                            <i className="bi bi-trash3 text-destructive/60 group-hover/btn:text-destructive transition-colors"></i>
+                            <i className="bi bi-trash3"></i>
                           </button>
                         </div>
                       </td>

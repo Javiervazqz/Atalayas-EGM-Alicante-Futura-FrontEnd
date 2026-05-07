@@ -30,6 +30,8 @@ export default function LoginPage() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
+      window.dispatchEvent(new Event('user:login')); // Emitimos evento global para que otros componentes puedan reaccionar
+
       const role = data.user.role;
       
       if (role === 'GENERAL_ADMIN') router.push('/dashboard/administrator/general-admin');
