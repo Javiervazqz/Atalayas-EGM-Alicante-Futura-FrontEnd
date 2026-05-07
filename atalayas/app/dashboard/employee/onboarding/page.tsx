@@ -18,14 +18,12 @@ export default function EmployeeDashboard() {
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
       setUser(storedUser);
 
-      // Lógica de cálculo basada en firstLoginAt o createdAt
       const dateToCompare = storedUser.firstLoginAt || storedUser.createdAt;
 
       if (dateToCompare) {
         const referenceDate = new Date(dateToCompare);
         const today = new Date();
         
-        // Ponemos ambas fechas a las 00:00:00 para comparar días naturales exactos
         const start = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
         const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         
@@ -78,6 +76,16 @@ export default function EmployeeDashboard() {
   };
 
   const firstName = user?.name?.split(' ')[0] || "Usuario";
+
+  // --- LÓGICA DE CAP (TOPE) ---
+  // 1. Buscamos el día más alto definido en tu base de datos
+  const maxAvailableDay = onboardingData.length > 0 
+    ? Math.max(...onboardingData.map(s => s.day)) 
+    : 1;
+
+  // 2. El día a mostrar será el menor entre el día real y el máximo disponible
+  const displayDay = Math.min(currentDay, maxAvailableDay);
+
   const visibleSteps = onboardingData.filter((s) => s.day <= currentDay);
   const allTasks = visibleSteps.flatMap((s) => s.onboardingTasks || []);
   const completedTasks = allTasks.filter((t) => t.userProgress?.[0]?.done).length;
@@ -91,7 +99,8 @@ export default function EmployeeDashboard() {
         
         <PageHeader 
           title={`¡Bienvenido, ${firstName}!`}
-          description={`Estás en tu día ${currentDay} de incorporación profesional. Revisa tus objetivos para hoy.`}
+          // CAMBIO AQUÍ: Usamos displayDay en lugar de currentDay
+          description={`Estás en tu día ${displayDay} de incorporación profesional. Revisa tus objetivos para hoy.`}
           icon={<i className="bi bi-person-badge-fill"></i>}
         />
 
@@ -99,7 +108,6 @@ export default function EmployeeDashboard() {
           
           <div className="grid lg:grid-cols-3 gap-10">
             
-            {/* COLUMNA IZQUIERDA: ONBOARDING */}
             <div className="lg:col-span-2 space-y-8">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-black text-foreground uppercase tracking-widest text-[13px]">
@@ -153,9 +161,7 @@ export default function EmployeeDashboard() {
               )}
             </div>
 
-            {/* COLUMNA DERECHA */}
             <div className="space-y-10">
-              
               <div className="bg-card border border-border rounded-[2rem] p-8 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <h4 className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Progreso Total</h4>
@@ -200,7 +206,6 @@ export default function EmployeeDashboard() {
                   Contactar
                 </button>
               </div>
-
             </div>
           </div>
         </div>

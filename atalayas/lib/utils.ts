@@ -95,6 +95,10 @@ STATS: {
 GET_ADMIN: `${BASE_URL}/stats`,
 GET_GENERAL: `${BASE_URL}/admin/stats`,
 },
+
+ACTIVITY: {
+  GET_MY: (limit = 5) => `${BASE_URL}/activity/me?limit=${limit}`,
+},
 }
 
 // Agrega esto al final de tu archivo @/lib/utils.ts

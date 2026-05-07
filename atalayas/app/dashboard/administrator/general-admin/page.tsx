@@ -8,9 +8,9 @@ import { API_ROUTES } from '@/lib/utils';
 
 interface Stats {
   employees: number;
-  courses: number;
-  documents: number;
-  avgProgress: number;
+  publicCourses: number;
+  publicServices: number;
+  suggestions: number;
 }
 
 interface Course {
@@ -20,59 +20,98 @@ interface Course {
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats>({ employees: 0, courses: 0, documents: 0, avgProgress: 0 });
+  const [stats, setStats] = useState<Stats>({ 
+    employees: 0, 
+    publicCourses: 0, 
+    publicServices: 0, 
+    suggestions: 0 
+  });
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
-        const [usersRes, coursesRes] = await Promise.all([
+        const token = localStorage.getItem('token');
+        const headers = { Authorization: `Bearer ${token}` };
+        
+        // Ejecutamos peticiones en paralelo
+        const [usersRes, coursesRes, servicesRes, suggestionsRes] = await Promise.all([
           fetch(API_ROUTES.USERS.GET_ALL, { headers }),
           fetch(API_ROUTES.COURSES.GET_ALL, { headers }),
+          fetch(API_ROUTES.SERVICES.GET_ALL, { headers }),
+          fetch(`${API_ROUTES.SUGGESTIONS.GET_ALL}?target=ADMIN`, { headers }),
         ]);
 
         const usersData = await usersRes.json();
         const coursesData = await coursesRes.json();
+        const servicesData = await servicesRes.json();
+        const suggestionsData = await suggestionsRes.json();
 
-        setCourses(Array.isArray(coursesData) ? coursesData : []);
+        // --- PROCESAMIENTO Y FILTRADO ---
+
+        // 1. Filtrar solo cursos públicos para la lista y el conteo
+        const allCourses = Array.isArray(coursesData) ? coursesData : [];
+        const publicCoursesList = allCourses.filter((c: any) => c.isPublic === true);
+
+        // 2. Filtrar servicios públicos
+        const allServices = Array.isArray(servicesData) ? servicesData : (servicesData?.data || []);
+        const publicServicesCount = allServices.filter((s: any) => s.isPublic === true).length;
+
+        // 3. Usuarios (Filtrar por rol EMPLOYEE)
+        const employeesCount = Array.isArray(usersData) 
+          ? usersData.filter((u: any) => u.role === 'EMPLOYEE').length 
+          : 0;
+
+        // 4. Sugerencias pendientes
+        const pendingSuggestions = Array.isArray(suggestionsData) 
+          ? suggestionsData.filter((s: any) => s.status === 'PENDING').length 
+          : 0;
+
+        setCourses(publicCoursesList);
         setStats({
-          employees: Array.isArray(usersData) ? usersData.filter((u: any) => u.role === 'EMPLOYEE').length : 0,
-          courses: Array.isArray(coursesData) ? coursesData.length : 0,
-          documents: 0,
-          avgProgress: 0,
+          employees: employeesCount,
+          publicCourses: publicCoursesList.length,
+          publicServices: publicServicesCount,
+          suggestions: pendingSuggestions,
         });
+      } catch (error) {
+        console.error("Error cargando datos del dashboard:", error);
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
   const statCards = [
-    { label: 'Total Empleados', value: stats.employees, icon: 'bi-people' },
-    { label: 'Cursos Activos', value: stats.courses, icon: 'bi-journal-code' },
-    { label: 'Docs. Firmados', value: stats.documents, icon: 'bi-file-earmark-check' },
-    { label: 'Progreso Medio', value: `${stats.avgProgress}%`, icon: 'bi-pie-chart' },
+    { label: 'Total de Usuarios', value: stats.employees, icon: 'bi-people' },
+    { label: 'Cursos Públicos', value: stats.publicCourses, icon: 'bi-journal-code' },
+    { label: 'Servicios Públicos', value: stats.publicServices, icon: 'bi-briefcase' },
+    { 
+      label: 'Sugerencias Pendientes', 
+      value: stats.suggestions, 
+      icon: 'bi-chat-left-dots',
+      alert: stats.suggestions > 0 
+    },
   ];
 
   const quickActions = [
     { label: 'Alta de empleado', icon: 'bi-person-plus', href: '/dashboard/administrator/employees/new' },
     { label: 'Diseñar curso', icon: 'bi-journal-plus', href: '/dashboard/administrator/general-admin/courses/manage/new' },
     { label: 'Añadir servicio', icon: 'bi-briefcase', href: '/dashboard/administrator/general-admin/services/new' },
-    { label: 'Generar informes', icon: 'bi-bar-chart-line', href: '/dashboard/administrator/general-admin/reports' },
+    { label: 'Ver sugerencias', icon: 'bi-chat-right-text', href: '/dashboard/administrator/general-admin/suggestions' },
   ];
 
   return (
-    // bg-background maneja el fondo general (Gris claro en Light, Azul oscuro en Dark)
     <div className="flex min-h-screen bg-background font-sans text-foreground transition-colors duration-300">
       <Sidebar role="GENERAL_ADMIN" />
 
       <main className="flex-1 overflow-auto flex flex-col relative">
         <PageHeader 
-          title="Panel de Control"
-          description="Resumen operativo y gestión global del ecosistema Atalayas."
+          title="Panel de Control Público"
+          description="Gestión y supervisión de los activos visibles del ecosistema."
           icon={<i className="bi bi-grid"></i>}
         />
 
@@ -83,13 +122,13 @@ export default function AdminDashboard() {
             {statCards.map((stat) => (
               <div 
                 key={stat.label} 
-                className="bg-card rounded-[20px] p-6 border border-border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group flex flex-col justify-between h-[140px]"
+                className={`bg-card rounded-[20px] p-6 border border-border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group flex flex-col justify-between h-35 ${stat.alert ? 'ring-1 ring-primary/50' : ''}`}
               >
-                <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-primary to-secondary opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute top-0 left-0 w-full h-0.75 bg-linear-to-r from-primary to-secondary opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 
                 <div className="flex items-start justify-between w-full">
                   <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">{stat.label}</h3>
-                  <div className="w-9 h-9 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/30 transition-all duration-300 shadow-sm">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center shadow-sm transition-all duration-300 ${stat.alert ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-muted border border-border text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/30'}`}>
                     <i className={`bi ${stat.icon} text-sm`}></i>
                   </div>
                 </div>
@@ -105,10 +144,10 @@ export default function AdminDashboard() {
 
           <div className="grid lg:grid-cols-[1fr_400px] gap-8">
             
-            {/* ── CURSOS RECIENTES ── */}
+            {/* ── CURSOS PÚBLICOS RECIENTES ── */}
             <div className="bg-card rounded-[20px] border border-border shadow-sm flex flex-col overflow-hidden h-full transition-colors duration-300">
               <div className="px-7 py-5 border-b border-border flex justify-between items-center">
-                <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-foreground">Cursos recientes</h2>
+                <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-foreground">Cursos Públicos</h2>
                 <Link href="/dashboard/administrator/general-admin/courses/manage" className="text-xs font-bold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
                   Ver todos <i className="bi bi-arrow-right"></i>
                 </Link>
@@ -124,23 +163,20 @@ export default function AdminDashboard() {
                     <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center text-muted-foreground text-xl mb-4 border border-border shadow-inner">
                       <i className="bi bi-journal-x"></i>
                     </div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">No hay cursos registrados</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">No hay cursos públicos</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
                     {courses.slice(0, 5).map((course) => (
                       <div key={course.id} className="flex items-center gap-4 p-3.5 rounded-xl hover:bg-muted/50 border border-transparent hover:border-border transition-all group cursor-pointer">
-                        
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-muted text-muted-foreground group-hover:bg-background group-hover:text-primary group-hover:shadow-sm border border-transparent group-hover:border-border transition-all">
                           <i className="bi bi-mortarboard-fill"></i>
                         </div>
-                        
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">{course.title}</p>
                         </div>
-                        
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${course.isPublic ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border'}`}>
-                          {course.isPublic ? 'Global' : 'Privado'}
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border bg-primary/10 text-primary border-primary/20">
+                          Público
                         </span>
                       </div>
                     ))}
