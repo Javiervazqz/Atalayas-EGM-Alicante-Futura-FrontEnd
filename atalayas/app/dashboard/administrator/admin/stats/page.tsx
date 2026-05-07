@@ -430,9 +430,9 @@ export default function CompanyAdminStatsPage() {
                 <div className="flex items-baseline gap-2">
                   
                   {/* ✅ CORRECCIÓN 2: Renderizar la variable correcta */}
-                  <span className="text-4xl font-semibold tabular-nums tracking-tighter">{companyOnlineUsers || 0}</span>
+                  <span className="text-4xl font-semibold tabular-nums tracking-tighter">{onlineUsers || 0}</span>
                   <span className="text-sm text-muted-foreground">
-                    empleado{companyOnlineUsers !== 1 ? 's' : ''} en línea
+                    empleado{onlineUsers !== 1 ? 's' : ''} en línea
                   </span>
                   
                 </div>
