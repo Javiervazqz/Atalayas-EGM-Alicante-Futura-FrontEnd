@@ -54,11 +54,11 @@ export default function EmployeeContentDetail() {
   }, [params.id, params.contentId]);
 
   useEffect(() => {
-    if (activeTab === "lectura" && imageRef.current) {
-      const zoomInstance = zoom(imageRef.current, { background: "rgba(0,0,0,0.9)", margin: 40 });
-      return () => zoomInstance.detach();
-    }
-  }, [content?.imageUrl, activeTab]);
+  if (activeTab === "lectura" && imageRef.current) {
+    const zoomInstance = zoom(imageRef.current, { background: "rgba(0,0,0,0.9)", margin: 40 });
+    return () => { zoomInstance.detach(); }; // ← llaves añadidas
+  }
+}, [content?.imageUrl, activeTab]);
 
   const hasQuiz = content?.quiz?.questions && content.quiz.questions.length > 0;
   const hasVideo = !!content?.videoUrl;
