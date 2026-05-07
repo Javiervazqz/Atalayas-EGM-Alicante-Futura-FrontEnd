@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
 import PageHeader from '@/components/ui/pageHeader';
 import { API_ROUTES } from '@/lib/utils';
@@ -8,12 +8,11 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 
-export default function AdminCoursePage() {
+function AdminCoursePageContent() {
     const [courses, setCourses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
 
-    // Estados de filtrado
     const [visibilityTab, setVisibilityTab] = useState<"Todos" | "Público" | "Privado">("Todos");
     const [categoryTab, setCategoryTab] = useState<"Todos" | "Onboarding" | "Especialización">("Todos");
 
@@ -42,7 +41,6 @@ export default function AdminCoursePage() {
         }
     };
 
-    // Obtener usuario actual para saber si es admin
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
@@ -59,7 +57,6 @@ export default function AdminCoursePage() {
                 let url = API_ROUTES.ENROLLMENTS.BASE;
                 let isAdmin = user.role === 'ADMIN' || user.role === 'GENERAL_ADMIN';
 
-                // Para admin, obtener todos los cursos disponibles
                 if (isAdmin) {
                     url = API_ROUTES.COURSES.GET_ALL;
                 }
@@ -90,14 +87,10 @@ export default function AdminCoursePage() {
     }, []);
 
     const filtered = courses.filter((c) => {
-        // 1. Filtro de Visibilidad
         if (visibilityTab === "Público" && !c.isPublic) return false;
         if (visibilityTab === "Privado" && c.isPublic) return false;
-
-        // 2. Filtro de Categoría
         if (categoryTab === "Onboarding") return c.category?.toUpperCase() !== "ESPECIALIZADO";
         if (categoryTab === "Especialización") return c.category?.toUpperCase() === "ESPECIALIZADO";
-
         return true;
     });
 
@@ -123,9 +116,7 @@ export default function AdminCoursePage() {
 
                 <div className="p-6 lg:p-10 flex-1 space-y-6">
 
-                    {/* --- SELECTORES DE FILTRADO --- */}
                     <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                        {/* Nivel 1: Visibilidad */}
                         <div className="flex flex-wrap gap-1 bg-card border border-border p-1 rounded-xl shadow-sm w-full lg:w-auto">
                             {(["Todos", "Privado", "Público"] as const).map((tab) => (
                                 <button
@@ -134,8 +125,7 @@ export default function AdminCoursePage() {
                                         setVisibilityTab(tab);
                                         if (tab !== "Privado") setCategoryTab("Todos");
                                     }}
-                                    className={`flex-1 lg:flex-none relative px-3 sm:px-5 py-2 text-[11px] font-medium rounded-lg transition-all ${visibilityTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                                        }`}
+                                    className={`flex-1 lg:flex-none relative px-3 sm:px-5 py-2 text-[11px] font-medium rounded-lg transition-all ${visibilityTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
                                 >
                                     <span className="relative z-10">{tab}</span>
                                     {visibilityTab === tab && (
@@ -145,7 +135,6 @@ export default function AdminCoursePage() {
                             ))}
                         </div>
 
-                        {/* Nivel 2: Categorías (Solo si Privado está activo) */}
                         <AnimatePresence>
                             {visibilityTab === "Privado" && (
                                 <motion.div
@@ -159,8 +148,7 @@ export default function AdminCoursePage() {
                                             <button
                                                 key={tab}
                                                 onClick={() => setCategoryTab(tab)}
-                                                className={`flex-1 lg:flex-none relative px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] font-medium rounded-lg transition-all ${categoryTab === tab ? "text-secondary" : "text-muted-foreground hover:text-foreground"
-                                                    }`}
+                                                className={`flex-1 lg:flex-none relative px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] font-medium rounded-lg transition-all ${categoryTab === tab ? "text-secondary" : "text-muted-foreground hover:text-foreground"}`}
                                             >
                                                 <span className="relative z-10">{tab}</span>
                                                 {categoryTab === tab && (
@@ -176,7 +164,6 @@ export default function AdminCoursePage() {
 
                     <hr className="border-border/50" />
 
-                    {/* Grid de Cursos */}
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={`${visibilityTab}-${categoryTab}`}
@@ -197,30 +184,18 @@ export default function AdminCoursePage() {
                             ) : (
                                 filtered.map((course) => {
                                     const isBasico = course.category?.toUpperCase() !== "ESPECIALIZADO";
-
                                     return (
-                                        <div
-                                            key={course.id}
-                                            className="group bg-card rounded-[2.5rem] border border-border shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 flex flex-col overflow-hidden relative"
-                                        >
-                                            {/* Portada */}
+                                        <div key={course.id} className="group bg-card rounded-[2.5rem] border border-border shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 flex flex-col overflow-hidden relative">
                                             <div className="relative aspect-16/10 overflow-hidden bg-muted">
                                                 {course.fileUrl ? (
-                                                    <img
-                                                        src={course.fileUrl}
-                                                        alt={course.title}
-                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                                    />
+                                                    <img src={course.fileUrl} alt={course.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                 ) : (
                                                     <div className={`w-full h-full flex items-center justify-center text-4xl ${isBasico ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"}`}>
                                                         <i className={`bi ${isBasico ? "bi-compass" : "bi-rocket-takeoff"}`}></i>
                                                     </div>
                                                 )}
-
-                                                {/* Tags de estado */}
                                                 <div className="absolute top-4 left-4 flex gap-2 flex-wrap pr-4">
-                                                    <span className={`text-[9px] font-semibold px-2 py-1 rounded-md border backdrop-blur-md ${course.isPublic ? "bg-green-500/20 text-green-600 border-green-500/20" : "bg-blue-500/20 text-blue-600 border-blue-500/20"
-                                                        }`}>
+                                                    <span className={`text-[9px] font-semibold px-2 py-1 rounded-md border backdrop-blur-md ${course.isPublic ? "bg-green-500/20 text-green-600 border-green-500/20" : "bg-blue-500/20 text-blue-600 border-blue-500/20"}`}>
                                                         {course.isPublic ? "Público" : "Privado"}
                                                     </span>
                                                     {!isBasico && course.jobRole && (
@@ -233,11 +208,7 @@ export default function AdminCoursePage() {
                                             </div>
 
                                             <div className="p-7 flex-1 flex flex-col">
-                                                <h3 className="text-base font-bold text-foreground leading-tight mb-2 line-clamp-2">
-                                                    {course.title}
-                                                </h3>
-
-                                                {/* Barra de progreso */}
+                                                <h3 className="text-base font-bold text-foreground leading-tight mb-2 line-clamp-2">{course.title}</h3>
                                                 <div className="mb-6">
                                                     <div className="flex justify-between text-[10px] font-semibold text-muted-foreground mb-1">
                                                         <span>Progreso</span>
@@ -251,14 +222,12 @@ export default function AdminCoursePage() {
                                                         />
                                                     </div>
                                                 </div>
-
                                                 <div className="mt-auto space-y-2">
                                                     <Link
                                                         href={`/dashboard/administrator/admin/courses/${course.id}`}
                                                         className="flex items-center justify-center gap-2 w-full py-3 bg-foreground text-background dark:bg-muted dark:text-foreground text-[11px] font-semibold rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
                                                     >
-                                                        Entrar
-                                                        <i className="bi bi-arrow-right"></i>
+                                                        Entrar <i className="bi bi-arrow-right"></i>
                                                     </Link>
                                                     {course.progress === 100 && (
                                                         <button
@@ -279,5 +248,17 @@ export default function AdminCoursePage() {
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function AdminCoursePage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen bg-background items-center justify-center">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+        }>
+            <AdminCoursePageContent />
+        </Suspense>
     );
 }
