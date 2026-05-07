@@ -40,7 +40,7 @@ export default function GeneralAdminNewCoursePage() {
       data.append('title', formData.title);
       data.append('category', formData.category);
       data.append('isPublic', String(formData.isPublic));
-      data.append('image', formData.imageFile);
+      data.append('file', formData.imageFile);
 
       const res = await fetch(API_ROUTES.COURSES.CREATE, {
         method: 'POST',

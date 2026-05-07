@@ -107,7 +107,7 @@ export default function GeneralAdminContentDetail() {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      if (res.ok) router.push(`/dashboard/administrator/general-admin/courses/${params.id}`);
+      if (res.ok) router.push(`/dashboard/administrator/general-admin/courses/manage/view/${params.id}`);
     } catch (error) { console.error(error); } finally { setIsDeleting(false); setShowDeleteModal(false); }
   };
 

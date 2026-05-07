@@ -252,7 +252,7 @@ export default function ManageCourses() {
                   {!loading && filtered.map((course) => (
                     <tr key={course.id} className="group hover:bg-muted/30 transition-colors">
                       <td className="px-6 lg:px-8 py-4">
-                        <Link href={`/dashboard/administrator/admin/courses/manage/view/${course.id}`} className="flex items-center gap-4 cursor-pointer group/link">
+                        <Link href={`/dashboard/administrator/admin/courses/${course.id}/manage`} className="flex items-center gap-4 cursor-pointer group/link">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${course.isPublic ? "bg-green-500/10 text-green-600 border-green-500/20 group-hover/link:bg-green-600 group-hover/link:text-white" : "bg-primary/5 text-primary border border-primary/10 group-hover/link:bg-primary group-hover/link:text-white"}`}>
                             <i className={`bi ${course.isPublic ? "bi-globe" : "bi-journal-text"} text-lg`}></i>
                           </div>
