@@ -78,6 +78,7 @@ export const API_ROUTES = {
 
   ENROLLMENTS: {
     BASE: `${BASE_URL}/enrollment`,
+    BULK: `${BASE_URL}/enrollment/bulk`,
   },
 
   SUGGESTIONS: {
