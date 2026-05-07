@@ -4,13 +4,16 @@ import { useEffect, useState } from "react";
 import Sidebar from "@/components/ui/Sidebar";
 import PageHeader from "@/components/ui/pageHeader";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { API_ROUTES } from "@/lib/utils";
 
 export default function ManageCourses() {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState<"ALL" | "BASICO" | "ESPECIALIZADO">("ALL");
+  
+  // Usamos los mismos estados que en la otra vista para mantener consistencia
+  const [filter, setFilter] = useState<"Todos" | "Onboarding" | "Especialización">("Todos");
 
   // Estados para Eliminación
   const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
@@ -42,7 +45,6 @@ export default function ManageCourses() {
     }
   };
 
-  // Cargar roles disponibles desde los empleados existentes
   const fetchAvailableRoles = async () => {
     setLoadingRoles(true);
     try {
@@ -163,8 +165,8 @@ export default function ManageCourses() {
   const filtered = courses.filter((c) => {
     const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase());
     let matchesTab = true;
-    if (filter === "BASICO") matchesTab = c.category?.toUpperCase() !== "ESPECIALIZADO";
-    if (filter === "ESPECIALIZADO") matchesTab = c.category?.toUpperCase() === "ESPECIALIZADO";
+    if (filter === "Onboarding") matchesTab = c.category?.toUpperCase() !== "ESPECIALIZADO";
+    if (filter === "Especialización") matchesTab = c.category?.toUpperCase() === "ESPECIALIZADO";
     return matchesSearch && matchesTab;
   });
 
@@ -178,18 +180,24 @@ export default function ManageCourses() {
           icon={<i className="bi bi-gear-fill"></i>}
           action={
             <div className="flex items-center gap-2">
+              {/* Botón 1: Adaptado a móvil y con color corporativo */}
               <Link
                 href="/dashboard/administrator/admin/courses"
-                className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap"
+                className="bg-secondary text-secondary-foreground px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
               >
-                <i className="bi bi-eye-fill"></i>Vista de empleado
+                <i className="bi bi-eye-fill text-sm"></i>
+                <span className="hidden sm:inline">Vista de Cursos</span>
+                <span className="sm:hidden">Ver</span>
               </Link>
 
+              {/* Botón 2: Adaptado a móvil y con color corporativo */}
               <Link
                 href="/dashboard/administrator/admin/courses/manage/new"
-                className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap"
+                className="bg-secondary text-secondary-foreground px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
               >
-                <i className="bi bi-plus-lg"></i> Nuevo curso
+                <i className="bi bi-plus-lg text-sm"></i>
+                <span className="hidden sm:inline">Nuevo Curso</span>
+                <span className="sm:hidden">Crear</span>
               </Link>
             </div>
           }
@@ -197,80 +205,86 @@ export default function ManageCourses() {
 
         <div className="p-6 lg:p-10 flex-1 max-w-7xl mx-auto w-full">
           <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm flex flex-col">
-            {/* Filtros y Buscador */}
-            <div className="p-5 border-b border-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/20">
-              <div className="flex bg-background border border-input p-1 rounded-xl shrink-0">
-                {["ALL", "BASICO", "ESPECIALIZADO"].map((tab) => (
+            
+            {/* Filtros y Buscador Integrados y Unificados */}
+            <div className="p-5 border-b border-border flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-muted/10">
+              
+              <div className="flex flex-wrap gap-1 bg-card border border-border p-1 rounded-xl shadow-sm w-full xl:w-auto">
+                {(["Todos", "Onboarding", "Especialización"] as const).map((tab) => (
                   <button
                     key={tab}
-                    onClick={() => setFilter(tab as any)}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${filter === tab ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    onClick={() => setFilter(tab)}
+                    className={`flex-1 xl:flex-none relative px-3 sm:px-5 py-2 text-[11px] font-medium rounded-lg transition-all ${filter === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
                       }`}
                   >
-                    {tab === "ALL" ? "Todos" : tab === "BASICO" ? "Onboarding" : "Especialización"}
+                    <span className="relative z-10">{tab}</span>
+                    {filter === tab && (
+                      <motion.div layoutId="manageFilterPill" className="absolute inset-0 bg-primary/10 rounded-lg" />
+                    )}
                   </button>
                 ))}
               </div>
-              <div className="relative w-full sm:max-w-xs">
+
+              <div className="relative w-full xl:max-w-xs">
                 <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"></i>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar curso..."
-                  className="w-full bg-background border border-input rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:border-primary transition-all font-medium"
+                  placeholder="Buscar curso por título..."
+                  className="w-full bg-background border border-input rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none focus:border-primary transition-all font-medium shadow-sm"
                 />
               </div>
             </div>
 
             {/* Tabla */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-150">
+              <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
                   <tr className="bg-muted/40 border-b border-border">
-                    <th className="px-6 lg:px-8 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Nombre del Curso</th>
-                    <th className="px-6 lg:px-8 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Categoría</th>
-                    <th className="px-6 lg:px-8 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Rol Requerido</th>
-                    <th className="px-6 lg:px-8 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Acciones</th>
+                    <th className="px-6 lg:px-8 py-4 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Nombre del Curso</th>
+                    <th className="px-6 lg:px-8 py-4 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest text-center">Categoría</th>
+                    <th className="px-6 lg:px-8 py-4 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest text-center">Rol Requerido</th>
+                    <th className="px-6 lg:px-8 py-4 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {!loading && filtered.map((course) => (
                     <tr key={course.id} className="group hover:bg-muted/30 transition-colors">
-                      <td className="px-6 lg:px-8 py-5">
-                        <Link href={`/dashboard/administrator/admin/courses/${course.id}/manage`} className="flex items-center gap-4 cursor-pointer group/link">
+                      <td className="px-6 lg:px-8 py-4">
+                        <Link href={`/dashboard/administrator/admin/courses/manage/view/${course.id}`} className="flex items-center gap-4 cursor-pointer group/link">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${course.isPublic ? "bg-green-500/10 text-green-600 border-green-500/20 group-hover/link:bg-green-600 group-hover/link:text-white" : "bg-primary/5 text-primary border border-primary/10 group-hover/link:bg-primary group-hover/link:text-white"}`}>
                             <i className={`bi ${course.isPublic ? "bi-globe" : "bi-journal-text"} text-lg`}></i>
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-bold text-foreground group-hover/link:text-primary transition-colors">{course.title}</span>
-                            <span className="text-[10px] font-bold uppercase tracking-tighter opacity-60 flex items-center gap-1">
-                              {course.isPublic ? <span className="text-green-600"><i className="bi bi-globe"></i> Público</span> : <span className="text-primary"><i className="bi bi-building"></i> Privado</span>}
+                            <span className="font-semibold text-sm text-foreground group-hover/link:text-primary transition-colors">{course.title}</span>
+                            <span className="text-[10px] font-medium text-muted-foreground flex items-center gap-1 mt-0.5">
+                              {course.isPublic ? <span className="text-green-600 font-semibold">Público</span> : <span className="text-primary font-semibold">Privado</span>}
                               <span className="mx-1">•</span> Click para ver contenido
                             </span>
                           </div>
                         </Link>
                       </td>
-                      <td className="px-6 lg:px-8 py-5 text-center">
-                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${course.category?.toUpperCase() === "ESPECIALIZADO" ? "bg-secondary/10 text-secondary border border-secondary/20" : "bg-primary/10 text-primary border border-primary/20"}`}>
+                      <td className="px-6 lg:px-8 py-4 text-center">
+                        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-md ${course.category?.toUpperCase() === "ESPECIALIZADO" ? "bg-secondary/10 text-secondary border border-secondary/20" : "bg-primary/10 text-primary border border-primary/20"}`}>
                           {course.category?.toUpperCase() === "ESPECIALIZADO" ? "Especialización" : "Onboarding"}
                         </span>
                       </td>
-                      <td className="px-6 lg:px-8 py-5 text-center">
+                      <td className="px-6 lg:px-8 py-4 text-center">
                         {course.category?.toUpperCase() === "ESPECIALIZADO" && course.jobRole ? (
-                          <span className="text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                            <i className="bi bi-person-badge mr-1 text-[8px]"></i>
+                          <span className="text-[10px] font-semibold px-2.5 py-1 rounded-md bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                            <i className="bi bi-person-badge mr-1"></i>
                             {course.jobRole}
                           </span>
                         ) : (
-                          <span className="text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider bg-muted/50 text-muted-foreground border border-border/50">
-                            <i className="bi bi-people mr-1 text-[8px]"></i>
+                          <span className="text-[10px] font-semibold px-2.5 py-1 rounded-md bg-muted/50 text-muted-foreground border border-border/50">
+                            <i className="bi bi-people mr-1"></i>
                             Todos los roles
                           </span>
                         )}
                       </td>
-                      <td className="px-6 lg:px-8 py-5 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="px-6 lg:px-8 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
                           {!course.isPublic && (
                             <>
                               <button
@@ -279,17 +293,17 @@ export default function ManageCourses() {
                                   requiredRole: course.jobRole || "",
                                   imageUrl: course.fileUrl || null
                                 })}
-                                className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all border border-transparent hover:border-primary/20 cursor-pointer"
+                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all border border-transparent hover:border-primary/20 cursor-pointer"
                                 title="Editar curso"
                               >
-                                <i className="bi bi-pencil-square"></i>
+                                <i className="bi bi-pencil-square text-[15px]"></i>
                               </button>
                               <button
                                 onClick={() => setCourseToDelete(course.id)}
-                                className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all border border-transparent hover:border-destructive/20 cursor-pointer bg-transparent"
+                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all border border-transparent hover:border-destructive/20 cursor-pointer"
                                 title="Eliminar curso"
                               >
-                                <i className="bi bi-trash3"></i>
+                                <i className="bi bi-trash3 text-[15px]"></i>
                               </button>
                             </>
                           )}
@@ -297,6 +311,14 @@ export default function ManageCourses() {
                       </td>
                     </tr>
                   ))}
+                  {!loading && filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-12 text-center text-muted-foreground">
+                        <i className="bi bi-inbox text-3xl mb-3 block opacity-50"></i>
+                        <p className="text-sm font-medium">No se encontraron cursos</p>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -307,14 +329,14 @@ export default function ManageCourses() {
       {/* Modal de Edición Rápida */}
       {courseToEdit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-card w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl border border-border max-h-[90vh] overflow-y-auto">
-            <h3 className="text-2xl font-black text-foreground mb-6 tracking-tight">Editar Curso</h3>
+          <div className="bg-card w-full max-w-md rounded-[2rem] p-8 shadow-2xl border border-border max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-foreground mb-6">Editar Curso</h3>
 
             <form onSubmit={handleUpdate} className="space-y-5">
 
               {/* Campo de Imagen */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-2 block">Imagen de portada</label>
+                <label className="text-[10px] font-semibold uppercase text-muted-foreground tracking-widest mb-2 block">Imagen de portada</label>
                 <label className="relative h-32 w-full border-2 border-dashed border-border rounded-2xl flex items-center justify-center bg-muted/30 hover:border-primary transition-all cursor-pointer group overflow-hidden">
                   <input
                     type="file"
@@ -336,30 +358,30 @@ export default function ManageCourses() {
                   ) : (
                     <div className="text-center">
                       <i className="bi bi-camera text-xl text-muted-foreground"></i>
-                      <p className="text-[10px] font-bold">Cambiar imagen</p>
+                      <p className="text-[10px] font-semibold mt-1">Cambiar imagen</p>
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <i className="bi bi-pencil text-white"></i>
+                    <i className="bi bi-pencil text-white text-xl"></i>
                   </div>
                 </label>
               </div>
 
               {/* Título */}
               <div>
-                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-2 block">Título del curso</label>
+                <label className="text-[10px] font-semibold uppercase text-muted-foreground tracking-widest mb-2 block">Título del curso</label>
                 <input
                   type="text"
                   value={courseToEdit.title}
                   onChange={(e) => setCourseToEdit({ ...courseToEdit, title: e.target.value })}
-                  className="w-full bg-muted/50 border border-input rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary transition-all"
+                  className="w-full bg-background border border-input rounded-xl px-4 py-3 text-sm outline-none focus:border-primary transition-all"
                   required
                 />
               </div>
 
               {/* Categoría */}
               <div>
-                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-2 block">Categoría</label>
+                <label className="text-[10px] font-semibold uppercase text-muted-foreground tracking-widest mb-2 block">Categoría</label>
                 <select
                   value={courseToEdit.category}
                   onChange={(e) => {
@@ -370,7 +392,7 @@ export default function ManageCourses() {
                       requiredRole: newCategory === "BASICO" ? "" : courseToEdit.requiredRole
                     });
                   }}
-                  className="w-full bg-muted/50 border border-input rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary transition-all appearance-none"
+                  className="w-full bg-background border border-input rounded-xl px-4 py-3 text-sm outline-none focus:border-primary transition-all appearance-none"
                 >
                   <option value="BASICO">Onboarding</option>
                   <option value="ESPECIALIZADO">Especialización</option>
@@ -380,13 +402,13 @@ export default function ManageCourses() {
               {/* Rol Requerido - Solo para especialización */}
               {courseToEdit.category === "ESPECIALIZADO" && (
                 <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-2 block">
+                  <label className="text-[10px] font-semibold uppercase text-muted-foreground tracking-widest mb-2 block">
                     Rol Requerido
                   </label>
                   <select
                     value={courseToEdit.requiredRole || ""}
                     onChange={(e) => setCourseToEdit({ ...courseToEdit, requiredRole: e.target.value })}
-                    className="w-full bg-muted/50 border border-input rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary transition-all appearance-none cursor-pointer"
+                    className="w-full bg-background border border-input rounded-xl px-4 py-3 text-sm outline-none focus:border-primary transition-all appearance-none cursor-pointer"
                     disabled={loadingRoles}
                     required
                   >
@@ -403,18 +425,18 @@ export default function ManageCourses() {
                 </div>
               )}
 
-              <div className="flex flex-col gap-3 pt-4">
+              <div className="flex flex-col gap-2 pt-4">
                 <button
                   type="submit"
                   disabled={updating}
-                  className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20 uppercase text-xs tracking-widest"
+                  className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:opacity-90 transition-all text-sm"
                 >
                   {updating ? "Guardando..." : "Guardar cambios"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setCourseToEdit(null)}
-                  className="w-full py-3.5 bg-muted text-foreground rounded-xl font-bold hover:bg-border transition-all uppercase text-xs tracking-widest"
+                  className="w-full py-3 bg-card border border-border text-foreground rounded-xl font-semibold hover:bg-muted transition-all text-sm"
                 >
                   Cancelar
                 </button>
@@ -427,23 +449,23 @@ export default function ManageCourses() {
       {/* Modal de Eliminación */}
       {courseToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-card w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl text-center border border-border">
+          <div className="bg-card w-full max-w-sm rounded-[2rem] p-8 shadow-2xl text-center border border-border">
             <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
               <i className="bi bi-exclamation-triangle"></i>
             </div>
-            <h3 className="text-2xl font-black text-foreground mb-2 tracking-tight">¿Eliminar curso?</h3>
-            <p className="text-muted-foreground text-sm mb-8">Esta acción borrará permanentemente el curso.</p>
-            <div className="flex flex-col gap-3">
+            <h3 className="text-xl font-bold text-foreground mb-2">¿Eliminar curso?</h3>
+            <p className="text-muted-foreground text-sm mb-8">Esta acción borrará permanentemente el curso y no se puede deshacer.</p>
+            <div className="flex flex-col gap-2">
               <button
                 onClick={confirmDelete}
                 disabled={deleting}
-                className="w-full py-3.5 bg-destructive text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-destructive/20"
+                className="w-full py-3 bg-destructive text-white rounded-xl font-semibold hover:opacity-90 transition-all"
               >
                 {deleting ? "Borrando..." : "Sí, eliminar curso"}
               </button>
               <button
                 onClick={() => setCourseToDelete(null)}
-                className="w-full py-3.5 bg-muted text-foreground rounded-xl font-bold hover:bg-border transition-all"
+                className="w-full py-3 bg-card border border-border text-foreground rounded-xl font-semibold hover:bg-muted transition-all"
               >
                 Cancelar
               </button>

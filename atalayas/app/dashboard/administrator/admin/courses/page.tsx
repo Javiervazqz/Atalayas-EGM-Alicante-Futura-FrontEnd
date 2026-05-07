@@ -8,14 +8,14 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 
-export default function EmployeeCoursesPage() {
+export default function AdminCoursePage() {
     const [courses, setCourses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
 
-    // Estados de filtrado (igual que la vista de empleado)
-    const [visibilityTab, setVisibilityTab] = useState<"TODOS" | "PÚBLICO" | "PRIVADO">("TODOS");
-    const [categoryTab, setCategoryTab] = useState<"TODOS" | "BASICO" | "ESPECIALIZADO">("TODOS");
+    // Estados de filtrado
+    const [visibilityTab, setVisibilityTab] = useState<"Todos" | "Público" | "Privado">("Todos");
+    const [categoryTab, setCategoryTab] = useState<"Todos" | "Onboarding" | "Especialización">("Todos");
 
     const searchParams = useSearchParams();
     const fromTaskId = searchParams.get('fromTask');
@@ -56,12 +56,10 @@ export default function EmployeeCoursesPage() {
                 const token = localStorage.getItem('token');
                 const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-                // 🔥 MODIFICADO: Si es ADMIN o GENERAL_ADMIN, usa el endpoint de cursos normal (sin filtrar por rol)
-                // Si es EMPLOYEE, usa el endpoint de enrollments
                 let url = API_ROUTES.ENROLLMENTS.BASE;
                 let isAdmin = user.role === 'ADMIN' || user.role === 'GENERAL_ADMIN';
 
-                // Para admin, obtener todos los cursos disponibles (sin filtrar por rol)
+                // Para admin, obtener todos los cursos disponibles
                 if (isAdmin) {
                     url = API_ROUTES.COURSES.GET_ALL;
                 }
@@ -73,10 +71,8 @@ export default function EmployeeCoursesPage() {
 
                 let rawCourses = [];
                 if (isAdmin) {
-                    // Para admin, los cursos vienen directamente del array
                     rawCourses = Array.isArray(data) ? data : [];
                 } else {
-                    // Para empleado, la estructura puede ser diferente
                     rawCourses = Array.isArray(data) ? data : (data.courses || []);
                 }
 
@@ -93,16 +89,14 @@ export default function EmployeeCoursesPage() {
         fetchCourses();
     }, []);
 
-    // 🔥 MODIFICADO: Para admin, no filtrar por jobRole, mostrar todos los cursos
-    // Solo aplicar los filtros de UI (visibilidad y categoría)
     const filtered = courses.filter((c) => {
         // 1. Filtro de Visibilidad
-        if (visibilityTab === "PÚBLICO" && !c.isPublic) return false;
-        if (visibilityTab === "PRIVADO" && c.isPublic) return false;
+        if (visibilityTab === "Público" && !c.isPublic) return false;
+        if (visibilityTab === "Privado" && c.isPublic) return false;
 
         // 2. Filtro de Categoría
-        if (categoryTab === "BASICO") return c.category?.toUpperCase() !== "ESPECIALIZADO";
-        if (categoryTab === "ESPECIALIZADO") return c.category?.toUpperCase() === "ESPECIALIZADO";
+        if (categoryTab === "Onboarding") return c.category?.toUpperCase() !== "ESPECIALIZADO";
+        if (categoryTab === "Especialización") return c.category?.toUpperCase() === "ESPECIALIZADO";
 
         return true;
     });
@@ -113,14 +107,16 @@ export default function EmployeeCoursesPage() {
 
             <main className="flex-1 overflow-auto flex flex-col relative">
                 <PageHeader
-                    title="Mi Formación (Vista Admin)"
-                    description="Vista de prueba: Como administrador, puedes ver todos los cursos sin restricción de rol."
+                    title="Formación"
+                    description="Gestión y visualización de todos los cursos disponibles en la plataforma."
                     icon={<i className="bi bi-journal-bookmark-fill"></i>}
                     action={
                         <Link href="/dashboard/administrator/admin/courses/manage"
-                            className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
+                            className="bg-secondary text-secondary-foreground px-4 py-2 rounded-xl text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
                         >
-                            <i className="bi bi-eye-fill"></i>Vista de Administrador
+                            <i className="bi bi-gear-fill text-sm"></i>
+                            <span className="hidden sm:inline">Gestionar Cursos</span>
+                            <span className="sm:hidden">Gestionar</span>
                         </Link>
                     }
                 />
@@ -128,51 +124,47 @@ export default function EmployeeCoursesPage() {
                 <div className="p-6 lg:p-10 flex-1 space-y-6">
 
                     {/* --- SELECTORES DE FILTRADO --- */}
-                    <div className="space-y-4">
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                         {/* Nivel 1: Visibilidad */}
-                        <div className="flex items-center gap-4">
-                            <div className="flex gap-1 bg-card border border-border p-1 rounded-xl shadow-sm">
-                                {["TODOS", "PRIVADO", "PÚBLICO"].map((tab) => (
-                                    <button
-                                        key={tab}
-                                        onClick={() => {
-                                            setVisibilityTab(tab as any);
-                                            if (tab !== "PRIVADO") setCategoryTab("TODOS");
-                                        }}
-                                        className={`relative px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${visibilityTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                                            }`}
-                                    >
-                                        <span className="relative z-10">{tab}</span>
-                                        {visibilityTab === tab && (
-                                            <motion.div layoutId="visPill" className="absolute inset-0 bg-primary/10 rounded-lg" />
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
+                        <div className="flex flex-wrap gap-1 bg-card border border-border p-1 rounded-xl shadow-sm w-full lg:w-auto">
+                            {(["Todos", "Privado", "Público"] as const).map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => {
+                                        setVisibilityTab(tab);
+                                        if (tab !== "Privado") setCategoryTab("Todos");
+                                    }}
+                                    className={`flex-1 lg:flex-none relative px-3 sm:px-5 py-2 text-[11px] font-medium rounded-lg transition-all ${visibilityTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                                        }`}
+                                >
+                                    <span className="relative z-10">{tab}</span>
+                                    {visibilityTab === tab && (
+                                        <motion.div layoutId="visPillCourses" className="absolute inset-0 bg-primary/10 rounded-lg" />
+                                    )}
+                                </button>
+                            ))}
                         </div>
 
-                        {/* Nivel 2: Categorías (Solo si PRIVADO está activo) */}
+                        {/* Nivel 2: Categorías (Solo si Privado está activo) */}
                         <AnimatePresence>
-                            {visibilityTab === "PRIVADO" && (
+                            {visibilityTab === "Privado" && (
                                 <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: "auto" }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="flex items-center gap-4 overflow-hidden"
+                                    initial={{ opacity: 0, width: 0, height: 0 }}
+                                    animate={{ opacity: 1, width: "auto", height: "auto" }}
+                                    exit={{ opacity: 0, width: 0, height: 0 }}
+                                    className="overflow-hidden w-full lg:w-auto"
                                 >
-                                    <div className="flex gap-1 bg-card/50 border border-border/50 p-1 rounded-xl">
-                                        {["TODOS", "BASICO", "ESPECIALIZADO"].map((tab) => (
+                                    <div className="flex flex-wrap gap-1 bg-card/50 border border-border/50 p-1 rounded-xl">
+                                        {(["Todos", "Onboarding", "Especialización"] as const).map((tab) => (
                                             <button
                                                 key={tab}
-                                                onClick={() => setCategoryTab(tab as any)}
-                                                className={`relative px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${categoryTab === tab ? "text-secondary" : "text-muted-foreground hover:text-foreground"
+                                                onClick={() => setCategoryTab(tab)}
+                                                className={`flex-1 lg:flex-none relative px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] font-medium rounded-lg transition-all ${categoryTab === tab ? "text-secondary" : "text-muted-foreground hover:text-foreground"
                                                     }`}
                                             >
-                                                <span className="relative z-10">
-                                                    {tab === "TODOS" ? "Todos" : tab === "BASICO" ? "Onboarding" : "Especialización"}
-                                                </span>
+                                                <span className="relative z-10">{tab}</span>
                                                 {categoryTab === tab && (
-                                                    <motion.div layoutId="catPill" className="absolute inset-0 bg-secondary/10 rounded-lg" />
+                                                    <motion.div layoutId="catPillCourses" className="absolute inset-0 bg-secondary/10 rounded-lg" />
                                                 )}
                                             </button>
                                         ))}
@@ -195,7 +187,7 @@ export default function EmployeeCoursesPage() {
                         >
                             {loading ? (
                                 Array.from({ length: 4 }).map((_, i) => (
-                                    <div key={i} className="h-100 bg-card rounded-[2.5rem] border border-border animate-pulse shadow-sm" />
+                                    <div key={i} className="h-[350px] bg-card rounded-[2.5rem] border border-border animate-pulse shadow-sm" />
                                 ))
                             ) : filtered.length === 0 ? (
                                 <div className="col-span-full py-20 text-center bg-card border-2 border-dashed border-border rounded-[2.5rem]">
@@ -226,14 +218,13 @@ export default function EmployeeCoursesPage() {
                                                 )}
 
                                                 {/* Tags de estado */}
-                                                <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
-                                                    <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-md border backdrop-blur-md ${course.isPublic ? "bg-green-500/20 text-green-600 border-green-500/20" : "bg-blue-500/20 text-blue-600 border-blue-500/20"
+                                                <div className="absolute top-4 left-4 flex gap-2 flex-wrap pr-4">
+                                                    <span className={`text-[9px] font-semibold px-2 py-1 rounded-md border backdrop-blur-md ${course.isPublic ? "bg-green-500/20 text-green-600 border-green-500/20" : "bg-blue-500/20 text-blue-600 border-blue-500/20"
                                                         }`}>
                                                         {course.isPublic ? "Público" : "Privado"}
                                                     </span>
-                                                    {/* Mostrar el rol requerido si es especialización (solo para admin) */}
                                                     {!isBasico && course.jobRole && (
-                                                        <span className="text-[8px] font-black uppercase px-2 py-1 rounded-md border bg-purple-500/20 text-purple-600 border-purple-500/20 backdrop-blur-md">
+                                                        <span className="text-[9px] font-semibold px-2 py-1 rounded-md border bg-purple-500/20 text-purple-600 border-purple-500/20 backdrop-blur-md">
                                                             <i className="bi bi-person-badge mr-1"></i>
                                                             {course.jobRole}
                                                         </span>
@@ -242,17 +233,17 @@ export default function EmployeeCoursesPage() {
                                             </div>
 
                                             <div className="p-7 flex-1 flex flex-col">
-                                                <h3 className="text-base font-black text-foreground leading-tight mb-2 line-clamp-2">
+                                                <h3 className="text-base font-bold text-foreground leading-tight mb-2 line-clamp-2">
                                                     {course.title}
                                                 </h3>
 
                                                 {/* Barra de progreso */}
                                                 <div className="mb-6">
-                                                    <div className="flex justify-between text-[9px] font-black uppercase mb-1">
-                                                        <span className="text-muted-foreground">Progreso</span>
+                                                    <div className="flex justify-between text-[10px] font-semibold text-muted-foreground mb-1">
+                                                        <span>Progreso</span>
                                                         <span>{course.progress || 0}%</span>
                                                     </div>
-                                                    <div className="h-1 bg-muted rounded-full overflow-hidden">
+                                                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                                                         <motion.div
                                                             initial={{ width: 0 }}
                                                             animate={{ width: `${course.progress || 0}%` }}
@@ -264,7 +255,7 @@ export default function EmployeeCoursesPage() {
                                                 <div className="mt-auto space-y-2">
                                                     <Link
                                                         href={`/dashboard/administrator/admin/courses/${course.id}`}
-                                                        className="flex items-center justify-center gap-2 w-full py-3 bg-foreground text-background dark:bg-muted dark:text-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
+                                                        className="flex items-center justify-center gap-2 w-full py-3 bg-foreground text-background dark:bg-muted dark:text-foreground text-[11px] font-semibold rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
                                                     >
                                                         Entrar
                                                         <i className="bi bi-arrow-right"></i>
@@ -272,7 +263,7 @@ export default function EmployeeCoursesPage() {
                                                     {course.progress === 100 && (
                                                         <button
                                                             onClick={() => downloadCertificate(course.id)}
-                                                            className="w-full py-3 bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all hover:bg-orange-600"
+                                                            className="w-full py-3 bg-orange-500 text-white text-[11px] font-semibold rounded-xl transition-all hover:bg-orange-600"
                                                         >
                                                             Descargar Diploma
                                                         </button>
