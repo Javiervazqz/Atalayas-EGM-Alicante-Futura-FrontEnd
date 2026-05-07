@@ -31,7 +31,7 @@ const navItems = {
     { label: 'Panel', href: '/dashboard/administrator/admin', icon: <i className="bi bi-house-fill"></i> },
     { label: 'Mi Empresa', href: '/dashboard/administrator/admin/company', icon: <i className="bi bi-building-fill"></i> },
     { label: 'Empleados', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
-    { label: 'Onboarding', href: '/dashboard/administrator/employees/onboarding', icon: <i className="bi bi-person-walking"></i>},
+    { label: 'Onboarding', href: '/dashboard/administrator/onboarding', icon: <i className="bi bi-person-walking"></i>},
     { label: 'Cursos', href: '/dashboard/administrator/admin/courses/manage', icon: <i className="bi bi-mortarboard-fill"></i> },
     { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill"></i> },
     { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill"></i> },
@@ -144,18 +144,17 @@ export default function Sidebar({ role }: SidebarProps) {
   };
 
   const checkActive = (href: string) => {
-    if (pathname === href) return true;
-    const isBasePanel = href.endsWith('/admin') || 
-                        href.endsWith('/general-admin') || 
-                        href.endsWith('/employee') || 
-                        href.endsWith('/public');
-    
-    if (isBasePanel) return pathname === href;
-    if (href === '/dashboard/administrator/employees' && pathname.includes('/onboarding')) {
-      return false;
-    }
-    return href !== '/dashboard' && pathname.startsWith(href + '/');
-  };
+  // Coincidencia exacta
+  if (pathname === href) return true;
+  
+  // Evitar que "Panel" marque todo como activo si es solo "/"
+  if (href === '/dashboard/administrator/admin' || href === '/dashboard/employee') {
+     return pathname === href;
+  }
+
+  // Si la ruta actual empieza por el href y no es la raíz del dashboard
+  return href !== '/dashboard' && pathname.startsWith(href) && pathname[href.length] === '/';
+};
 
   if (!mounted) return null;
 
