@@ -31,7 +31,7 @@ export default function ServiceDetail() {
 
   if (loading) return (
     <div className="flex min-h-screen bg-background items-center justify-center font-sans">
-      <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
+      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -40,46 +40,52 @@ export default function ServiceDetail() {
   const hasSidebar = !!(service.mediaUrl || service.providerName || service.phone || service.email);
 
   return (
-    <div className="flex min-h-screen bg-background font-sans text-foreground">
+    // Bloqueamos el overflow horizontal en la raíz
+    <div className="flex min-h-screen w-full bg-background font-sans text-foreground overflow-hidden">
       <Sidebar role="EMPLOYEE" />
 
-      <main className="flex-1 overflow-auto flex flex-col relative">
+      {/* Scroll natural vertical, sin barras y bloqueado en horizontal */}
+      <main className="flex-1 flex flex-col relative w-full overflow-y-auto overflow-x-hidden no-scrollbar">
         
         <PageHeader 
           title={service.title}
-          description={service.isPublic ? "Servicio oficial Atalayas EGM" : "Servicio privado de empresa"}
+          description={
+            <span className="hidden sm:block">
+              {service.isPublic ? "Servicio oficial Atalayas EGM" : "Servicio privado de empresa"}
+            </span> as any
+          }
           icon={<i className="bi bi-briefcase-fill"></i>}
           backUrl="/dashboard/employee/services"
         />
 
-        <div className="p-6 lg:p-10 flex-1">
+        <div className="p-4 sm:p-6 lg:p-10 flex-1">
           <div className="max-w-7xl mx-auto">
             
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
 
               {/* COLUMNA IZQUIERDA: DESCRIPCIÓN */}
               <div className="lg:col-span-7 space-y-8">
-                <section className="bg-card border border-border rounded-[2.5rem] p-8 lg:p-12 shadow-sm">
-                  <div className="flex items-center gap-3 mb-8">
-                    <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-[0.15em] border ${
+                <section className="bg-card border border-border rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 lg:p-12 shadow-sm animate-in fade-in duration-500">
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className={`text-[10px] font-semibold px-3 py-1 rounded-md uppercase tracking-wider border ${
                       service.isPublic 
                       ? 'bg-primary/5 text-primary border-primary/20' 
                       : 'bg-secondary/5 text-secondary border-secondary/20'
                     }`}>
-                      {service.isPublic ? '🌐 Servicio de Atalayas EGM' : '🔒 Servicio de mi empresa'}
+                      {service.isPublic ? '🌐 Servicio EGM' : '🔒 Servicio Interno'}
                     </span>
                   </div>
 
-                  <h2 className="text-3xl font-bold mb-8 tracking-tight">Detalles del servicio</h2>
+                  <h2 className="text-2xl sm:text-3xl font-bold mb-6 tracking-tight leading-tight">Detalles del servicio</h2>
                   
                   <div className="prose prose-slate dark:prose-invert max-w-none">
-                    <p className="text-muted-foreground text-lg leading-relaxed whitespace-pre-wrap font-medium opacity-90">
+                    <p className="text-muted-foreground text-sm sm:text-base leading-relaxed whitespace-pre-wrap font-medium">
                       {service.description || 'No hay una descripción detallada disponible actualmente.'}
                     </p>
                   </div>
 
                   {service.mediaUrl && (
-                      <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-sm group mt-10">
+                      <div className="bg-card border border-border rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-sm group mt-8">
                         <div className="aspect-4/3 overflow-hidden bg-muted">
                           <img
                             src={service.mediaUrl}
@@ -87,8 +93,9 @@ export default function ServiceDetail() {
                             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                           />
                         </div>
-                        <div className="px-6 py-4 bg-muted/30 border-t border-border">
-                            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                        <div className="px-5 sm:px-6 py-3 sm:py-4 bg-muted/30 border-t border-border flex items-center gap-2">
+                            <i className="bi bi-image text-muted-foreground text-sm"></i>
+                            <span className="text-[10px] font-semibold uppercase text-muted-foreground tracking-widest">
                                 Imagen del servicio
                             </span>
                         </div>
