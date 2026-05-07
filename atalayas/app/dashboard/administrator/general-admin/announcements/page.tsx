@@ -187,7 +187,7 @@ export default function AnnouncementsPage() {
         <PageHeader 
           title="Anuncios Públicos" 
           description="Visualización de comunicados globales y noticias de la plataforma."
-          icon={<i className="bi bi-megaphone-fill text-primary" />}
+          icon={<i className="bi bi-megaphone-fill" />}
           action={
             <div className="flex gap-4">
               <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar noticias..." />

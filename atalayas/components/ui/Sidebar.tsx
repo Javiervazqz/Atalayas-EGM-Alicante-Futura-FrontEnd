@@ -14,7 +14,7 @@ type NavGroup = { group: string; items: NavItem[] };
 const navItems = {
   GENERAL_ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: <i className="bi bi-grid-fill"></i> },
-    { label: 'Perfil Empresa', href: '/dashboard/company', icon: <i className="bi bi-building-gear"></i> },
+    { label: 'Perfil Empresa', href: '/dashboard/administrator/general-admin/company', icon: <i className="bi bi-building-gear"></i> },
     { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: <i className="bi bi-buildings-fill"></i> },
     { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
     { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses/manage', icon: <i className="bi bi-journal-bookmark-fill"></i> },
@@ -24,7 +24,7 @@ const navItems = {
     { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-globe-americas"></i>},
     { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: <i className="bi bi-envelope-open-fill "></i> },
     { label: 'Sugerencias', href: '/dashboard/administrator/general-admin/suggestions', icon: <i className="bi bi-mailbox2"></i>},
-    { label: 'Matriculación masiva', href: '/dashboard/administrator/bulk-enroll', icon: <i className="bi bi-bar-chart-fill"></i> },
+    /* label: 'Matriculación masiva', href: '/dashboard/administrator/bulk-enroll', icon: <i className="bi bi-bar-chart-fill"></i> */
     { label: 'Estadísticas', href: '/dashboard/administrator/general-admin/stats', icon: <i className="bi bi-bar-chart-fill"></i> },
   ],
   ADMIN: [

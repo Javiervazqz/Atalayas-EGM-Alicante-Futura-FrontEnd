@@ -1,11 +1,11 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
 export const API_ROUTES = {
   AUTH: {
@@ -23,7 +23,7 @@ export const API_ROUTES = {
   COURSES: {
     GET_ALL: `${BASE_URL}/courses`,
     CREATE: `${BASE_URL}/courses`,
-    GET_BY_ID: (id:string) => `${BASE_URL}/courses/${id}`,
+    GET_BY_ID: (id: string) => `${BASE_URL}/courses/${id}`,
     UPDATE: (id: string) => `${BASE_URL}/courses/${id}`,
   },
   DOCUMENTS: {
@@ -38,20 +38,23 @@ export const API_ROUTES = {
     GET_ALL: `${BASE_URL}/company`,
     GET_BY_ID: (id: string) => `${BASE_URL}/company/${id}`,
     DELETE: (id: string) => `${BASE_URL}/company/${id}`,
-
   },
   CONTENT: {
     GET_ALL: (courseId: string) => `${BASE_URL}/courses/${courseId}/content`,
     CREATE: (courseId: string) => `${BASE_URL}/courses/${courseId}/content`,
-    GET_BY_ID: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
-    COMPLETE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}/complete`,
-    UPDATE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
-    DELETE: (courseId: string, contentId: string) => `${BASE_URL}/courses/${courseId}/content/${contentId}`,
-   },
+    GET_BY_ID: (courseId: string, contentId: string) =>
+      `${BASE_URL}/courses/${courseId}/content/${contentId}`,
+    COMPLETE: (courseId: string, contentId: string) =>
+      `${BASE_URL}/courses/${courseId}/content/${contentId}/complete`,
+    UPDATE: (courseId: string, contentId: string) =>
+      `${BASE_URL}/courses/${courseId}/content/${contentId}`,
+    DELETE: (courseId: string, contentId: string) =>
+      `${BASE_URL}/courses/${courseId}/content/${contentId}`,
+  },
   ANNOUNCEMENTS: {
     GET_ALL: `${BASE_URL}/announcement`,
     CREATE: `${BASE_URL}/announcement`,
-    GET_BY_ID: (id: string) => `${BASE_URL}/announcement/${id}`
+    GET_BY_ID: (id: string) => `${BASE_URL}/announcement/${id}`,
   },
   COMPANY_REQUESTS: {
     CREATE: `${BASE_URL}/company-request`,
@@ -64,15 +67,15 @@ export const API_ROUTES = {
   },
 
   ONBOARDING: {
-    SETUP:`${BASE_URL}/onboarding/setup`,
-    ME:`${BASE_URL}/onboarding/me`,
+    SETUP: `${BASE_URL}/onboarding/setup`,
+    ME: `${BASE_URL}/onboarding/me`,
     TOGGLE: `${BASE_URL}/onboarding/toggle`,
   },
 
   CHATBOT: {
-    SEND:`${BASE_URL}/chatbot`
+    SEND: `${BASE_URL}/chatbot`,
   },
-  
+
   ENROLLMENTS: {
     BASE: `${BASE_URL}/enrollment`,
   },
@@ -92,10 +95,14 @@ export const API_ROUTES = {
   },
 
   STATS: {
-  GET_ADMIN: `${BASE_URL}/stats`,
-  GET_GENERAL: `${BASE_URL}/admin/stats`,
+    GET_ADMIN: `${BASE_URL}/stats`,
+    GET_GENERAL: `${BASE_URL}/admin/stats`,
   },
-}
+
+  ACTIVITY: {
+    GET_MY: (limit = 5) => `${BASE_URL}/activity/me?limit=${limit}`,
+  },
+};
 
 // Agrega esto al final de tu archivo @/lib/utils.ts
 
@@ -109,6 +116,6 @@ export async function fetchWithApiFallback(url: string, options?: RequestInit) {
   } catch (error) {
     console.error("Fetch error:", error);
     // Aquí puedes retornar un valor por defecto o lanzar el error
-    throw error; 
+    throw error;
   }
 }

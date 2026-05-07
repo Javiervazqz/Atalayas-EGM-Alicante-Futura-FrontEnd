@@ -88,7 +88,7 @@ export default function NewGlobalAnnouncementPage() {
         <PageHeader 
           title="Nuevo Comunicado Global"
           description="Crea un anuncio de alto impacto visible para todas las organizaciones."
-          icon={<i className="bi bi-globe-americas text-primary"></i>}
+          icon={<i className="bi bi-globe-americas"></i>}
           backUrl={`/dashboard/administrator/general-admin/announcements`}
         />
 
