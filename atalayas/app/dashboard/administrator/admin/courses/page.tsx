@@ -125,14 +125,6 @@ export default function EmployeeCoursesPage() {
                     }
                 />
 
-                {/* Badge informativo para el admin */}
-                <div className="px-6 lg:px-10 -mt-4">
-                    <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 flex items-center gap-3 text-primary text-xs font-medium">
-                        <i className="bi bi-info-circle-fill text-sm"></i>
-                        <span>Modo administrador: Estás viendo TODOS los cursos de especialización, independientemente del rol requerido.</span>
-                    </div>
-                </div>
-
                 <div className="p-6 lg:p-10 flex-1 space-y-6">
 
                     {/* --- SELECTORES DE FILTRADO --- */}
