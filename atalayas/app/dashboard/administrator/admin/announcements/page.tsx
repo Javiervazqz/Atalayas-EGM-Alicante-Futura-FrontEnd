@@ -260,7 +260,7 @@ export default function AnnouncementsPage() {
         <PageHeader 
           title="Anuncios y Noticias" 
           description="Control de comunicados destacados e historial."
-          icon={<i className="bi bi-megaphone-fill text-primary" />}
+          icon={<i className="bi bi-megaphone-fill" />}
           action={
             <div className="flex gap-4">
               <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar..." />
@@ -287,7 +287,7 @@ export default function AnnouncementsPage() {
 
             <div className="space-y-6">
                 <div className="flex justify-between items-end px-4">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">Historial completo</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">Historial de anuncios</h3>
                   <p className="text-[10px] font-bold text-muted-foreground/40">Pág {currentPage} de {totalPages || 1}</p>
                 </div>
 

@@ -6,7 +6,7 @@ import Sidebar from "@/components/ui/Sidebar";
 import PageHeader from "@/components/ui/pageHeader";
 import { API_ROUTES } from "@/lib/utils";
 
-export default function NewGlobalAnnouncementPage() {
+export default function NewAnnouncementPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState("");
@@ -20,6 +20,8 @@ export default function NewGlobalAnnouncementPage() {
     content: "", 
     imageFile: null as File | null 
   });
+
+  const user = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user") || "{}") : {};
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -44,15 +46,14 @@ export default function NewGlobalAnnouncementPage() {
 
     setErrors({});
     setLoading(true);
-    setLoadingStep("Publicando comunicado global...");
+    setLoadingStep("Publicando comunicado...");
 
     try {
       const token = localStorage.getItem("token");
       const data = new FormData();
       data.append("title", formData.title);
       data.append("content", formData.content);
-      // Al ser GENERAL_ADMIN, el anuncio es público/global
-      data.append("isPublic", "true");
+      data.append("companyId", user.companyId);
       
       if (formData.imageFile) {
         data.append("image", formData.imageFile);
@@ -66,9 +67,9 @@ export default function NewGlobalAnnouncementPage() {
         body: data,
       });
 
-      if (!res.ok) throw new Error("Error al crear el comunicado global");
+      if (!res.ok) throw new Error("Error al crear el comunicado");
 
-      router.push("/dashboard/administrator/general-admin/announcements");
+      router.push("/dashboard/administrator/admin/announcements");
     } catch (err) {
       console.error(err);
       alert("Error en el proceso de creación del servidor.");
@@ -79,13 +80,13 @@ export default function NewGlobalAnnouncementPage() {
 
   return (
     <div className="flex min-h-screen bg-background font-sans">
-      <Sidebar role="GENERAL_ADMIN" />
+      <Sidebar role="ADMIN" />
       <main className="flex-1 overflow-auto flex flex-col">
         <PageHeader 
-          title="Nuevo Comunicado Global"
-          description="Crea un anuncio importante visible para todas las empresas y usuarios."
-          icon={<i className="bi bi-globe-americas"></i>}
-          backUrl={`/dashboard/administrator/admin/announcements`}
+          title="Nuevo Comunicado"
+          description="Crea un anuncio importante para los empleados."
+          icon={<i className="bi bi-megaphone-fill"></i>}
+          backUrl={`/dashboard/administrator/admin/announcements`} // Se integra el volver atrás aquí como en tus otras páginas
         />
 
         <div className="p-6 lg:p-10 max-w-5xl mx-auto w-full">
@@ -94,7 +95,7 @@ export default function NewGlobalAnnouncementPage() {
             {/* Título */}
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
-                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Título del Anuncio</label>
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Título</label>
                 {errors.title && <span className="text-[10px] font-bold text-destructive uppercase tracking-tight">{errors.title}</span>}
               </div>
               <input 
@@ -105,14 +106,14 @@ export default function NewGlobalAnnouncementPage() {
                   if (errors.title) setErrors({...errors, title: undefined});
                 }} 
                 className={`w-full px-6 py-4 rounded-2xl bg-background border ${errors.title ? 'border-destructive' : 'border-input'} focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold transition-all`} 
-                placeholder="Ej: Actualización de la plataforma v2.0" 
+                placeholder="Ej: Mantenimiento programado" 
               />
             </div>
 
             {/* Contenido */}
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
-                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Mensaje Global</label>
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Mensaje</label>
                 {errors.content && <span className="text-[10px] font-bold text-destructive uppercase tracking-tight">{errors.content}</span>}
               </div>
               <textarea 
@@ -123,14 +124,14 @@ export default function NewGlobalAnnouncementPage() {
                   if (errors.content) setErrors({...errors, content: undefined});
                 }} 
                 className={`w-full px-6 py-4 rounded-2xl bg-background border ${errors.content ? 'border-destructive' : 'border-input'} focus:border-primary focus:ring-1 focus:ring-primary outline-none font-medium transition-all resize-none`} 
-                placeholder="Escribe el mensaje que verán todos los usuarios..." 
+                placeholder="Escribe el mensaje aquí..." 
               />
             </div>
 
 
             {/* Subida de Imagen con Preview */}
             <div className="space-y-4">
-              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Imagen de portada (Recomendado)</label>
+              <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Imagen de portada (Opcional)</label>
               <label className="relative h-64 w-full border-2 border-dashed border-border rounded-[2rem] flex items-center justify-center bg-muted/30 hover:border-primary transition-all cursor-pointer group overflow-hidden">
                 <input 
                   type="file" 
@@ -148,9 +149,9 @@ export default function NewGlobalAnnouncementPage() {
                   </div>
                 ) : (
                   <div className="text-center group-hover:scale-105 transition-transform">
-                      <i className="bi bi-cloud-arrow-up text-4xl text-muted-foreground mb-3"></i>
-                      <p className="font-bold text-foreground">Seleccionar imagen</p>
-                      <p className="text-xs text-muted-foreground mt-1 text-center">Formatos: JPG, PNG o WebP</p>
+                     <i className="bi bi-image text-4xl text-muted-foreground mb-3"></i>
+                     <p className="font-bold text-foreground">Seleccionar imagen</p>
+                     <p className="text-xs text-muted-foreground mt-1 text-center">Click para subir archivo</p>
                   </div>
                 )}
               </label>
@@ -166,7 +167,7 @@ export default function NewGlobalAnnouncementPage() {
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   {loadingStep}
                 </span>
-              ) : "Publicar para todos"}
+              ) : "Publicar Comunicado"}
             </button>
           </form>
         </div>

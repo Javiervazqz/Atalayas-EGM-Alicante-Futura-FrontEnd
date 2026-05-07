@@ -57,7 +57,7 @@ export default function AnnouncementDetailPage() {
           description={`Publicado el ${new Date(announcement.createdAt).toLocaleDateString('es-ES', { 
             day: '2-digit', month: 'long', year: 'numeric' 
           })}`}
-          icon={<i className="bi bi-megaphone-fill text-primary"></i>}
+          icon={<i className="bi bi-megaphone-fill"></i>}
           backUrl="/dashboard/administrator/general-admin/announcements"
         />
 

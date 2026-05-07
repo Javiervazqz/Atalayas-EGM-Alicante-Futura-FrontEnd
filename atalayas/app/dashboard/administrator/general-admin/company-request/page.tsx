@@ -280,8 +280,7 @@ export default function CompanyRequestsPage() {
                               </span>
                             </div>
 
-                            <div className="col-span-4 md:col-span-3 flex items-center justify-end gap-3 pr-2">
-                              {req.status === 'PENDING' && (
+<div className="col-span-4 md:col-span-3 flex items-center justify-end gap-1 pr-0">                              {req.status === 'PENDING' && (
                                 <>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); handleApprove(req.id); }}
@@ -299,7 +298,6 @@ export default function CompanyRequestsPage() {
                                   </button>
                                 </>
                               )}
-                              <i className={`bi bi-chevron-down text-muted-foreground/30 transition-transform duration-300 ${isSelected ? 'rotate-180 text-foreground' : ''}`}></i>
                             </div>
                           </div>
 

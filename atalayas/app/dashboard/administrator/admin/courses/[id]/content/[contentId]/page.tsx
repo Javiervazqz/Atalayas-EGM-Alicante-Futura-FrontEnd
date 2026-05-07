@@ -226,7 +226,7 @@ export default function AdminContentDetail() {
           title={isEditing ? "Modo Editor" : content?.title || "Cargando..."}
           description="Gestión de unidad de aprendizaje"
           icon={<i className="bi bi-file-earmark-text"></i>}
-          backUrl={`/dashboard/administrator/admin/courses/${params.id}`}
+          backUrl={`/dashboard/administrator/admin/courses/${params.id}/manage`}
           action={
             <div className="flex gap-3">
               {isEditing && (

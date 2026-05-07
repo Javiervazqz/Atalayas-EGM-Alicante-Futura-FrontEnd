@@ -6,6 +6,7 @@ import PageHeader from '@/components/ui/pageHeader';
 import Link from 'next/link';
 import { API_ROUTES } from '@/lib/utils';
 
+// --- Interfaces ---
 interface Company {
   id: string;
   name: string;
@@ -23,6 +24,7 @@ interface User {
   Company?: Company;
 }
 
+// --- Constantes de Estilo ---
 const ROLE_LABELS: Record<string, string> = {
   GENERAL_ADMIN: 'Súper Admin',
   ADMIN: 'Admin Empresa',
@@ -53,6 +55,7 @@ export default function EmployeesPage() {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const headers = { Authorization: `Bearer ${getToken()}` };
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       setCurrentUser(storedUser);
@@ -113,15 +116,9 @@ export default function EmployeesPage() {
   };
 
   const handleDownloadCSV = () => {
-    // Filtrar solo empleados
     const employeesToExport = users.filter(user => user.role === 'EMPLOYEE');
+    const csvRows = [['nombre', 'email', 'rol', 'puesto']];
 
-    // Definir las columnas del CSV sin contraseña
-    const csvRows = [
-      ['nombre', 'email', 'rol', 'puesto'] // Cabeceras sin password
-    ];
-
-    // Agregar los datos de cada empleado
     employeesToExport.forEach(employee => {
       csvRows.push([
         employee.name || '',
@@ -131,10 +128,7 @@ export default function EmployeesPage() {
       ]);
     });
 
-    // Convertir a string CSV
     const csvContent = csvRows.map(row => row.join(',')).join('\n');
-
-    // Crear y descargar el archivo
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -162,47 +156,47 @@ export default function EmployeesPage() {
   if (!currentUser) return null;
 
   return (
-    <div className="flex min-h-screen bg-background font-sans text-foreground">
+    <div className="flex flex-col md:flex-row min-h-screen bg-background font-sans text-foreground">
       <Sidebar role={currentUser.role} />
 
-      <main className="flex-1 overflow-auto flex flex-col relative">
+      <main className="flex-1 overflow-x-hidden flex flex-col relative">
         <PageHeader
-          title={currentUser.role === 'GENERAL_ADMIN' ? "Gestión Global de Usuarios" : "Panel de Empleados"}
-          description={currentUser.role === 'GENERAL_ADMIN' ? "Control total de perfiles y empresas" : "Administra los miembros de tu organización"}
+          title={currentUser.role === 'GENERAL_ADMIN' ? "Gestión Global" : "Empleados"}
+          description={currentUser.role === 'GENERAL_ADMIN' ? "Control de perfiles y empresas" : "Administra tu equipo"}
           icon={<i className="bi bi-people-fill"></i>}
           action={
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 justify-end w-full md:w-auto">
               {currentUser.role !== 'GENERAL_ADMIN' && (
                 <>
                   <button
                     onClick={handleDownloadCSV}
-                    className="bg-background border border-input hover:bg-muted text-foreground font-bold px-4 py-2.5 rounded-xl transition-all text-xs flex items-center gap-2"
+                    className="flex-1 md:flex-none bg-background border border-input hover:bg-muted text-foreground font-bold px-3 py-2 rounded-xl transition-all text-xs flex items-center justify-center gap-2"
                   >
-                    <i className="bi bi-download"></i> Descargar CSV
+                    <i className="bi bi-download"></i> <span className="hidden sm:inline">CSV</span>
                   </button>
                   <Link
                     href="/dashboard/administrator/employees/moreNew"
-                    className="bg-background border border-input hover:bg-muted text-foreground font-bold px-4 py-2.5 rounded-xl transition-all text-xs flex items-center gap-2"
+                    className="flex-1 md:flex-none bg-background border border-input hover:bg-muted text-foreground font-bold px-3 py-2 rounded-xl transition-all text-xs flex items-center justify-center gap-2"
                   >
-                    <i className="bi bi-file-earmark-arrow-up"></i> Carga Masiva
+                    <i className="bi bi-file-earmark-arrow-up"></i> <span className="hidden sm:inline">Masiva</span>
                   </Link>
                 </>
               )}
               <Link
                 href="/dashboard/administrator/employees/new"
-                className="bg-secondary hover:opacity-90 text-secondary-foreground font-bold px-6 py-2.5 rounded-xl transition-opacity text-xs shadow-sm flex items-center gap-2"
+                className="w-full md:w-auto bg-secondary hover:opacity-90 text-secondary-foreground font-bold px-4 py-2 rounded-xl transition-opacity text-xs shadow-sm flex items-center justify-center gap-2"
               >
-                <i className="bi bi-person-plus-fill"></i> Nuevo Usuario
+                <i className="bi bi-person-plus-fill"></i> Nuevo
               </Link>
             </div>
           }
         />
 
-        <div className="p-6 lg:p-10 flex-1 max-w-7xl mx-auto w-full animate-in fade-in duration-500">
-          <div className="bg-card rounded-3xl shadow-sm border border-border overflow-hidden flex flex-col">
+        <div className="p-4 md:p-6 lg:p-10 flex-1 max-w-7xl mx-auto w-full animate-in fade-in duration-500">
+          <div className="bg-card rounded-2xl md:rounded-3xl shadow-sm border border-border overflow-hidden flex flex-col">
 
-            {/* FILTROS INTEGRADOS */}
-            <div className="p-5 border-b border-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/20">
+            {/* FILTROS */}
+            <div className="p-4 border-b border-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/20">
               <div className="relative w-full sm:max-w-md">
                 <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"></i>
                 <input
@@ -229,97 +223,83 @@ export default function EmployeesPage() {
               )}
             </div>
 
-            {/* TABLA */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
+            {/* TABLA RESPONSIVE */}
+            <div className="overflow-x-auto scrollbar-hide">
+              <table className="w-full text-left min-w-[600px] md:min-w-full">
                 <thead>
-                  <tr className="border-b border-border bg-muted/40">
-                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Usuario</th>
-
-                    {/* Columna Empresa condicional */}
+                  <tr className="border-b border-border bg-muted/40 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                    <th className="px-6 py-4">Usuario</th>
                     {currentUser.role === 'GENERAL_ADMIN' && (
-                      <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Empresa</th>
+                      <th className="hidden lg:table-cell px-6 py-4">Empresa</th>
                     )}
-
-                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Rol</th>
-
-                    {/* Columna Puesto */}
-                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Puesto</th>
-
-                    <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Acciones</th>
+                    <th className="px-6 py-4 text-center">Rol</th>
+                    <th className="hidden md:table-cell px-6 py-4">Puesto</th>
+                    <th className="px-6 py-4 text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {loading ? (
                     [...Array(5)].map((_, i) => (
                       <tr key={i} className="animate-pulse">
-                        <td className="px-6 py-5" colSpan={currentUser.role === 'GENERAL_ADMIN' ? 5 : 4}>
-                          <div className="h-4 bg-muted rounded w-full"></div>
+                        <td className="px-6 py-5" colSpan={5}>
+                          <div className="h-4 bg-muted rounded w-3/4"></div>
                         </td>
                       </tr>
                     ))
                   ) : displayedUsers.length > 0 ? (
                     displayedUsers.map((user) => (
                       <tr key={user.id} className="hover:bg-muted/30 transition-colors group">
-                        {/* 1. Usuario */}
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-4">
-                            {/* Avatar: muestra imagen si existe, si no la inicial */}
+                          <div className="flex items-center gap-3 md:gap-4">
                             {user.avatarUrl ? (
                               <img
                                 src={user.avatarUrl}
                                 alt={user.name}
-                                className="w-10 h-10 rounded-xl object-cover border border-border/50 shrink-0"
+                                className="w-8 h-8 md:w-10 md:h-10 rounded-xl object-cover border border-border/50 shrink-0"
                               />
                             ) : (
-                              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-sm font-bold text-primary border border-primary/20 shrink-0">
+                              <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xs md:text-sm font-bold text-primary border border-primary/20 shrink-0">
                                 {user.name?.charAt(0).toUpperCase() || 'U'}
                               </div>
                             )}
                             <div className="min-w-0">
                               <p className="text-sm font-bold text-foreground truncate">{user.name}</p>
-                              <p className="text-xs font-medium text-muted-foreground truncate">{user.email}</p>
+                              <p className="text-[11px] md:text-xs font-medium text-muted-foreground truncate">{user.email}</p>
                             </div>
                           </div>
                         </td>
 
-                        {/* 2. Empresa (Solo GENERAL_ADMIN) */}
                         {currentUser.role === 'GENERAL_ADMIN' && (
-                          <td className="px-6 py-4">
+                          <td className="hidden lg:table-cell px-6 py-4">
                             <span className="text-[11px] font-bold text-foreground bg-muted px-2.5 py-1 rounded-md border border-border">
                               {user.Company?.name || 'Independiente'}
                             </span>
                           </td>
                         )}
 
-                        {/* 3. Rol */}
-                        <td className="px-6 py-4">
-                          <div className="flex justify-center">
-                            <span className={`px-3 py-1 rounded-lg text-[9px] uppercase font-black tracking-widest ${ROLE_COLORS[user.role]}`}>
-                              {ROLE_LABELS[user.role] || user.role}
-                            </span>
-                          </div>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`inline-block px-3 py-1 rounded-lg text-[8px] md:text-[9px] uppercase font-black tracking-widest ${ROLE_COLORS[user.role]}`}>
+                            {ROLE_LABELS[user.role] || user.role}
+                          </span>
                         </td>
 
-                        {/* 4. Puesto */}
-                        <td className="px-6 py-4">
+                        <td className="hidden md:table-cell px-6 py-4">
                           <span className="text-[11px] font-bold text-foreground/80 uppercase tracking-tight">
                             {user.jobRole || <span className="text-muted-foreground/30 italic font-normal">Sin asignar</span>}
                           </span>
                         </td>
 
-                        {/* 5. Acciones */}
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-1">
                             <Link
                               href={`/dashboard/administrator/employees/${user.id}`}
-                              className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all border border-transparent hover:border-primary/10"
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
                             >
                               <i className="bi bi-pencil-square"></i>
                             </Link>
                             <button
                               onClick={() => setUserToDelete(user)}
-                              className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-all border border-transparent"
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-all"
                             >
                               <i className="bi bi-trash"></i>
                             </button>
@@ -329,8 +309,8 @@ export default function EmployeesPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={currentUser.role === 'GENERAL_ADMIN' ? 5 : 4} className="px-6 py-20 text-center text-muted-foreground font-medium">
-                        No hay empleados registrados
+                      <td colSpan={5} className="px-6 py-20 text-center text-muted-foreground font-medium">
+                        No hay usuarios que coincidan con la búsqueda
                       </td>
                     </tr>
                   )}
