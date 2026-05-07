@@ -167,7 +167,7 @@ export default function Sidebar({ role }: SidebarProps) {
       {!mobileOpen && (
         <button 
           onClick={() => setMobileOpen(true)}
-          className="lg:hidden fixed top-15 left-4 z-9999 w-12 h-12 bg-white dark:bg-card border border-border shadow-xl rounded-2xl flex items-center justify-center text-primary transition-all active:scale-90"
+          className="lg:hidden fixed top-20 left-5 z-9999 w-12 h-12 bg-white dark:bg-card border border-border shadow-xl rounded-2xl flex items-center justify-center text-primary transition-all active:scale-90"
         >
           <i className="bi bi-list text-2xl"></i>
         </button>
