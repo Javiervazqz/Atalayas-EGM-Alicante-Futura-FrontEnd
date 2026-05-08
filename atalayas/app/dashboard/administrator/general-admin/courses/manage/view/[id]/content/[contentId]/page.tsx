@@ -18,7 +18,7 @@ const InteractiveLab = dynamic<LabProps>(
 
 const inputClass = 'w-full px-4 py-2.5 bg-background border border-border focus:border-primary focus:ring-4 focus:ring-primary/5 rounded-xl outline-none transition-all text-foreground text-sm font-medium shadow-sm placeholder:text-muted-foreground/40';
 const labelClass = 'text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block';
-const tabBtnClass = 'pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative';
+const tabBtnClass = 'pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative whitespace-nowrap';
 
 type TabType = 'multimedia' | 'lectura' | 'evaluacion';
 
@@ -115,35 +115,43 @@ export default function GeneralAdminContentDetail() {
     <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
       <Sidebar role="GENERAL_ADMIN" />
 
-      <main className="flex-1 flex flex-col min-w-0 relative">
+      <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
         <PageHeader
           title={isEditing ? 'Modo Editor' : content?.title || 'Cargando...'}
           description="Gestión de unidad de aprendizaje"
           icon={<i className="bi bi-file-earmark-text"></i>}
           backUrl={`/dashboard/administrator/general-admin/courses/manage/view/${params.id}`}
           action={
-            <div className="flex gap-3">
+            <div className="flex gap-2 md:gap-3">
               {isEditing && (
-                <button onClick={() => setIsEditing(false)} className="bg-muted text-foreground px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                <button onClick={() => setIsEditing(false)} className="bg-muted text-foreground px-3 md:px-6 py-2 md:py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                   Descartar
                 </button>
               )}
               <button
                 onClick={isEditing ? handleSave : () => setIsEditing(true)}
                 disabled={loading}
-                className={`${isEditing ? 'bg-emerald-500' : 'bg-primary'} text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95`}
+                className={`${isEditing ? 'bg-emerald-500' : 'bg-primary'} text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95`}
               >
-                {isEditing ? 'Guardar Cambios' : 'Editar Unidad'}
+                {isEditing ? 'Guardar' : 'Editar'}
               </button>
             </div>
           }
         />
 
-        <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 overflow-y-auto bg-muted/30 p-8 no-scrollbar">
-            <div className="max-w-4xl mx-auto bg-card shadow-xl border border-border/50 rounded-[2.5rem] overflow-hidden mb-10">
+        {/*
+          Desktop: flex-row (main content | right aside panel)
+          Mobile:  flex-col (content stacked, aside below)
+        */}
+        <div className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden">
+
+          {/* ── Main scrollable area ── */}
+          <div className="flex-1 md:overflow-y-auto bg-muted/30 p-4 md:p-8 no-scrollbar">
+            <div className="max-w-4xl mx-auto bg-card shadow-xl border border-border/50 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden mb-6 md:mb-10">
+
+              {/* Tabs */}
               {!isEditing && (
-                <div className="flex px-12 pt-8 border-b border-border gap-8">
+                <div className="flex px-6 md:px-12 pt-6 md:pt-8 border-b border-border gap-6 md:gap-8 overflow-x-auto no-scrollbar">
                   {(['lectura', 'multimedia', 'evaluacion'] as TabType[]).map((tab) => {
                     if (tab === 'multimedia' && !content?.videoUrl) return null;
                     if (tab === 'evaluacion' && (!content?.quiz?.questions || content.quiz.questions.length === 0)) return null;
@@ -157,7 +165,7 @@ export default function GeneralAdminContentDetail() {
                 </div>
               )}
 
-              <div className="p-8 md:p-16">
+              <div className="p-5 md:p-8 lg:p-16">
                 {isEditing ? (
                   <div className="space-y-10">
                     <section className="space-y-6">
@@ -185,17 +193,17 @@ export default function GeneralAdminContentDetail() {
                         <h3 className="text-lg font-black border-l-4 border-orange-500 pl-4 uppercase tracking-tighter text-orange-600">Editor de Evaluación</h3>
                         <button onClick={addQuestion} className="text-[9px] font-black uppercase bg-orange-500/10 text-orange-600 px-4 py-2 rounded-lg hover:bg-orange-500 hover:text-white transition-all">+ Añadir Pregunta</button>
                       </div>
-                      <div className="space-y-10">
+                      <div className="space-y-8 md:space-y-10">
                         {formData.quiz.questions.map((q: any, qIdx: number) => (
-                          <div key={qIdx} className="relative p-8 bg-muted/20 border border-border/50 rounded-[2rem] space-y-6">
-                            <button onClick={() => removeQuestion(qIdx)} className="absolute top-6 right-6 text-muted-foreground hover:text-destructive transition-colors">
+                          <div key={qIdx} className="relative p-5 md:p-8 bg-muted/20 border border-border/50 rounded-[1.5rem] md:rounded-[2rem] space-y-5 md:space-y-6">
+                            <button onClick={() => removeQuestion(qIdx)} className="absolute top-5 right-5 text-muted-foreground hover:text-destructive transition-colors">
                               <i className="bi bi-trash3 text-lg"></i>
                             </button>
                             <div className="space-y-2">
                               <label className={labelClass}>Pregunta {qIdx + 1}</label>
                               <input value={q.question} onChange={(e) => updateQuestionText(qIdx, e.target.value)} className={inputClass} placeholder="Escribe el enunciado..." />
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                               {q.options.map((opt: string, oIdx: number) => (
                                 <div key={oIdx} className="space-y-1">
                                   <label className="text-[9px] font-bold text-muted-foreground uppercase px-2">Opción {oIdx + 1}</label>
@@ -222,21 +230,21 @@ export default function GeneralAdminContentDetail() {
                     {activeTab === 'multimedia' && (
                       <div className="space-y-6">
                         {content?.videoUrl ? (
-                          <div className="aspect-video rounded-[2rem] overflow-hidden bg-black shadow-2xl">
+                          <div className="aspect-video rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-black shadow-2xl">
                             <video key={content.videoUrl} controls className="w-full h-full object-cover">
                               <source src={content.videoUrl} type="video/mp4" />
                             </video>
                           </div>
                         ) : (
-                          <div className="p-20 border-2 border-dashed border-border rounded-[2rem] text-center text-muted-foreground italic text-sm">No hay video disponible.</div>
+                          <div className="p-12 md:p-20 border-2 border-dashed border-border rounded-[2rem] text-center text-muted-foreground italic text-sm">No hay video disponible.</div>
                         )}
                       </div>
                     )}
                     {activeTab === 'lectura' && (
-                      <div className="space-y-10">
+                      <div className="space-y-8 md:space-y-10">
                         {content?.imageUrl && (
                           <div className="relative group cursor-zoom-in">
-                            <img ref={imageRef} src={content.imageUrl} className="w-full aspect-video object-cover rounded-[2rem] shadow-lg border border-border/50 transition-transform duration-500 hover:scale-[1.01]" alt="Cover" />
+                            <img ref={imageRef} src={content.imageUrl} className="w-full aspect-video object-cover rounded-[1.5rem] md:rounded-[2rem] shadow-lg border border-border/50 transition-transform duration-500 hover:scale-[1.01]" alt="Cover" />
                             <div className="absolute top-4 right-4 bg-black/20 backdrop-blur-md p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                               <i className="bi bi-zoom-in text-white"></i>
                             </div>
@@ -244,10 +252,10 @@ export default function GeneralAdminContentDetail() {
                         )}
                         <div className="prose dark:prose-invert max-w-none">
                           <ReactMarkdown components={{
-                            h2: ({ ...props }) => <h2 className="text-2xl font-black text-foreground mt-10 mb-6" {...props} />,
-                            p: ({ ...props }) => <p className="text-[17px] leading-[1.8] text-muted-foreground mb-6" {...props} />,
-                            li: ({ ...props }) => <li className="flex items-start gap-3 text-[16px] text-muted-foreground mb-4"><span className="mt-2.5 w-2 h-2 rounded-full bg-primary/40 shrink-0" /><span {...props} /></li>,
-                            blockquote: ({ ...props }) => <blockquote className="border-l-4 border-primary bg-muted/40 p-6 rounded-r-2xl my-8 italic shadow-inner" {...props} />,
+                            h2: ({ ...props }) => <h2 className="text-xl md:text-2xl font-black text-foreground mt-8 md:mt-10 mb-4 md:mb-6" {...props} />,
+                            p: ({ ...props }) => <p className="text-[15px] md:text-[17px] leading-[1.8] text-muted-foreground mb-6" {...props} />,
+                            li: ({ ...props }) => <li className="flex items-start gap-3 text-[14px] md:text-[16px] text-muted-foreground mb-3 md:mb-4"><span className="mt-2.5 w-2 h-2 rounded-full bg-primary/40 shrink-0" /><span {...props} /></li>,
+                            blockquote: ({ ...props }) => <blockquote className="border-l-4 border-primary bg-muted/40 p-4 md:p-6 rounded-r-2xl my-6 md:my-8 italic shadow-inner" {...props} />,
                           }}>
                             {content?.summary}
                           </ReactMarkdown>
@@ -255,12 +263,12 @@ export default function GeneralAdminContentDetail() {
                       </div>
                     )}
                     {activeTab === 'evaluacion' && (
-                      <div className="bg-orange-500/5 border border-orange-500/10 rounded-[2rem] p-12 text-center space-y-6">
-                        <div className="w-20 h-20 bg-orange-500 text-white rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-orange-500/20">
-                          <i className="bi bi-patch-question text-4xl"></i>
+                      <div className="bg-orange-500/5 border border-orange-500/10 rounded-[2rem] p-8 md:p-12 text-center space-y-6">
+                        <div className="w-16 h-16 md:w-20 md:h-20 bg-orange-500 text-white rounded-2xl md:rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-orange-500/20">
+                          <i className="bi bi-patch-question text-3xl md:text-4xl"></i>
                         </div>
-                        <h4 className="text-2xl font-black italic">Pon a prueba tu conocimiento</h4>
-                        <button onClick={() => setShowQuizModal(true)} className="bg-orange-500 text-white px-10 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all">
+                        <h4 className="text-xl md:text-2xl font-black italic">Pon a prueba tu conocimiento</h4>
+                        <button onClick={() => setShowQuizModal(true)} className="bg-orange-500 text-white px-8 md:px-10 py-3 md:py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all">
                           Iniciar Autoevaluación
                         </button>
                       </div>
@@ -271,9 +279,22 @@ export default function GeneralAdminContentDetail() {
             </div>
           </div>
 
-          <aside className="w-80 border-l border-border bg-card p-6 flex flex-col gap-6 overflow-y-auto no-scrollbar">
+          {/*
+            Aside / Materiales
+            Desktop: fixed right panel (w-80)
+            Mobile:  full-width section stacked below (border-t)
+          */}
+          <aside className="
+            w-full md:w-80
+            border-t md:border-t-0 md:border-l border-border
+            bg-card
+            p-4 md:p-6
+            flex flex-col gap-4 md:gap-6
+            md:overflow-y-auto md:shrink-0
+            no-scrollbar
+          ">
             {content?.podcast?.url && (
-              <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-[2rem] p-5 space-y-4">
+              <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-5 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
                     <i className="bi bi-mic-fill"></i>
@@ -313,7 +334,7 @@ export default function GeneralAdminContentDetail() {
               </button>
             )}
 
-            <div className="mt-auto pt-6 border-t border-border">
+            <div className="md:mt-auto pt-4 md:pt-6 border-t border-border">
               <button onClick={() => setShowDeleteModal(true)} className="w-full py-3 text-[9px] font-black uppercase text-destructive hover:bg-destructive/5 rounded-xl tracking-widest transition-all">
                 Eliminar Unidad
               </button>
@@ -324,24 +345,24 @@ export default function GeneralAdminContentDetail() {
 
       {/* Modal Lab */}
       {showLabModal && (
-        <div className="fixed inset-0 z-120 flex items-center justify-center bg-black/95 backdrop-blur-xl md:p-4">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/95 backdrop-blur-xl md:p-4">
           <div className="bg-card border border-border md:rounded-[40px] w-full max-w-6xl h-full md:h-[90vh] relative overflow-hidden shadow-2xl flex flex-col">
-            <div className="absolute top-4 right-4 z-130">
+            <div className="absolute top-4 right-4 z-[130]">
               <button onClick={() => { setShowLabModal(false); setIsLabStarted(false); }} className="w-10 h-10 bg-white/10 hover:bg-destructive hover:text-white backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all shadow-lg">
                 <i className="bi bi-x-lg"></i>
               </button>
             </div>
             <div className="flex-1 flex flex-col bg-slate-950 overflow-hidden">
               {!isLabStarted ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in zoom-in duration-300">
-                  <div className="w-20 h-20 bg-blue-500/20 text-blue-500 rounded-3xl flex items-center justify-center mx-auto shadow-2xl">
-                    <i className="bi bi-controller text-4xl"></i>
+                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in zoom-in duration-300 p-6">
+                  <div className="w-16 h-16 md:w-20 md:h-20 bg-blue-500/20 text-blue-500 rounded-3xl flex items-center justify-center mx-auto shadow-2xl">
+                    <i className="bi bi-controller text-3xl md:text-4xl"></i>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-white mb-2">{content?.practiceLab?.scenarioTitle || 'Simulador'}</h3>
-                    <p className="text-slate-400 max-w-md mx-auto text-sm px-6">Ordena los elementos en sus categorías correspondientes para completar la práctica.</p>
+                    <h3 className="text-xl md:text-2xl font-black text-white mb-2">{content?.practiceLab?.scenarioTitle || 'Simulador'}</h3>
+                    <p className="text-slate-400 max-w-md mx-auto text-sm px-4 md:px-6">Ordena los elementos en sus categorías correspondientes para completar la práctica.</p>
                   </div>
-                  <button onClick={() => setIsLabStarted(true)} className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-lg transition-all active:scale-95">
+                  <button onClick={() => setIsLabStarted(true)} className="bg-blue-600 hover:bg-blue-500 text-white px-8 md:px-10 py-3 md:py-4 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-lg transition-all active:scale-95">
                     Empezar Práctica
                   </button>
                 </div>
@@ -357,19 +378,19 @@ export default function GeneralAdminContentDetail() {
 
       {/* Modal Quiz */}
       {showQuizModal && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-          <div className="bg-card border border-border rounded-[32px] p-8 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
-            <div className="flex justify-between items-center mb-8 shrink-0">
-              <h3 className="text-2xl font-black italic">Simulación Estudiante</h3>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-3 md:p-4">
+          <div className="bg-card border border-border rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center mb-6 md:mb-8 shrink-0">
+              <h3 className="text-xl md:text-2xl font-black italic">Simulación Estudiante</h3>
               <button onClick={() => setShowQuizModal(false)} className="text-muted-foreground hover:text-foreground"><i className="bi bi-x-circle text-2xl"></i></button>
             </div>
-            <div className="flex-1 overflow-y-auto pr-2 space-y-10 no-scrollbar">
+            <div className="flex-1 overflow-y-auto pr-2 space-y-8 md:space-y-10 no-scrollbar">
               {content?.quiz?.questions.map((q: any, qIdx: number) => (
                 <div key={qIdx} className="space-y-4">
-                  <p className="font-bold text-lg"><span className="text-primary/30 mr-2">Q.0{qIdx + 1}</span> {q.question}</p>
+                  <p className="font-bold text-base md:text-lg"><span className="text-primary/30 mr-2">Q.0{qIdx + 1}</span> {q.question}</p>
                   <div className="grid gap-2">
                     {q.options.map((opt: string, oIdx: number) => (
-                      <button key={oIdx} onClick={() => !isCorrected && setUserAnswers({ ...userAnswers, [qIdx]: opt })} className={`w-full p-4 rounded-xl border text-left text-sm transition-all ${userAnswers[qIdx] === opt ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                      <button key={oIdx} onClick={() => !isCorrected && setUserAnswers({ ...userAnswers, [qIdx]: opt })} className={`w-full p-3 md:p-4 rounded-xl border text-left text-sm transition-all ${userAnswers[qIdx] === opt ? 'border-primary bg-primary/5' : 'border-border'}`}>
                         {opt}
                       </button>
                     ))}
@@ -377,8 +398,8 @@ export default function GeneralAdminContentDetail() {
                 </div>
               ))}
             </div>
-            <div className="pt-6 mt-6 border-t border-border">
-              <button onClick={() => setIsCorrected(true)} className="w-full bg-primary text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest">Corregir Respuestas</button>
+            <div className="pt-4 md:pt-6 mt-4 md:mt-6 border-t border-border">
+              <button onClick={() => setIsCorrected(true)} className="w-full bg-primary text-white py-3 md:py-4 rounded-xl font-black uppercase text-xs tracking-widest">Corregir Respuestas</button>
             </div>
           </div>
         </div>
@@ -386,8 +407,8 @@ export default function GeneralAdminContentDetail() {
 
       {/* Modal Delete */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-card border border-border rounded-[32px] p-10 max-w-sm w-full text-center shadow-2xl">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-card border border-border rounded-[1.5rem] md:rounded-[2rem] p-8 md:p-10 max-w-sm w-full text-center shadow-2xl">
             <i className="bi bi-exclamation-triangle text-4xl text-destructive mb-4 block"></i>
             <h3 className="text-xl font-black mb-2">¿Seguro que deseas borrar?</h3>
             <div className="flex gap-3 mt-8">

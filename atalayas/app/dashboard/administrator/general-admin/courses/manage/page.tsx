@@ -126,7 +126,7 @@ export default function GlobalManageCourses() {
 
       <main className="flex-1 overflow-auto flex flex-col relative">
         <PageHeader
-          title="Gestión Global de Cursos"
+          title="Gestión de Cursos"
           description={`Control maestro de contenidos para ${companies.length} empresas registradas.`}
           icon={<i className="bi bi-gear-fill"></i>}
           action={

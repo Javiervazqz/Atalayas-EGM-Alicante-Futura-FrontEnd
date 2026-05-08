@@ -1,23 +1,34 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useRef } from 'react';
-import { useParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import Sidebar from '@/components/ui/Sidebar';
-import PageHeader from '@/components/ui/pageHeader';
-import { API_ROUTES } from '@/lib/utils';
-import ReactMarkdown from 'react-markdown';
-import zoom from 'medium-zoom';
+import { useEffect, useState, useRef } from "react";
+import { useParams } from "next/navigation";
+import dynamic from "next/dynamic";
+import Sidebar from "@/components/ui/Sidebar";
+import PageHeader from "@/components/ui/pageHeader";
+import { API_ROUTES } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
+import zoom from "medium-zoom";
 
-interface LabProps { data: any; }
+interface LabProps {
+  data: any;
+}
 
 const InteractiveLab = dynamic<LabProps>(
   () => import("@/components/interactiveLab").then((mod) => mod.default),
-  { ssr: false, loading: () => <div className="text-white font-black animate-pulse">CARGANDO MOTOR GRÁFICO...</div> }
+  {
+    ssr: false,
+    loading: () => (
+      <div className="text-white font-black animate-pulse">
+        CARGANDO MOTOR GRÁFICO...
+      </div>
+    ),
+  },
 );
 
-const labelClass = "text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block";
-const tabBtnClass = "pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative";
+const labelClass =
+  "text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block";
+const tabBtnClass =
+  "pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative whitespace-nowrap";
 
 type TabType = "multimedia" | "lectura" | "evaluacion";
 
@@ -38,9 +49,17 @@ export default function EmployeeContentDetail() {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const res = await fetch(API_ROUTES.CONTENT.GET_BY_ID(params.id as string, params.contentId as string), {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const res = await fetch(
+          API_ROUTES.CONTENT.GET_BY_ID(
+            params.id as string,
+            params.contentId as string,
+          ),
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          },
+        );
         const data = await res.json();
         const raw = data?.data || data?.content || data || {};
         setContent(raw);
@@ -55,19 +74,24 @@ export default function EmployeeContentDetail() {
 
   useEffect(() => {
     if (activeTab === "lectura" && imageRef.current) {
-      const zoomInstance = zoom(imageRef.current, { background: "rgba(0,0,0,0.9)", margin: 40 });
-      return () =>{ if(zoomInstance)zoomInstance.detach();}
+      const zoomInstance = zoom(imageRef.current, {
+        background: "rgba(0,0,0,0.9)",
+        margin: 40,
+      });
+      return () => {
+        zoomInstance.detach();
+      };
     }
   }, [content?.imageUrl, activeTab]);
 
-  const hasQuiz = content?.quiz?.questions && content.quiz.questions.length > 0;
+  const hasQuiz = Array.isArray(content?.quiz) && content.quiz.length > 0;
   const hasVideo = !!content?.videoUrl;
 
   return (
     <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
       <Sidebar role="EMPLOYEE" />
 
-      <main className="flex-1 flex flex-col min-w-0 relative">
+      <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
         <PageHeader
           title={content?.title || "Cargando..."}
           description="Unidad de aprendizaje"
@@ -75,94 +99,121 @@ export default function EmployeeContentDetail() {
           backUrl={`/dashboard/employee/courses/${params.id}`}
         />
 
-        <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 overflow-y-auto bg-muted/30 p-8 no-scrollbar">
-            <div className="max-w-4xl mx-auto bg-card shadow-xl border border-border/50 rounded-[2.5rem] overflow-hidden mb-10">
-              
-              {/* Navegación de Pestañas Condicional */}
-              <div className="flex px-12 pt-8 border-b border-border gap-8">
-                <button onClick={() => setActiveTab("lectura")} className={`${tabBtnClass} ${activeTab === "lectura" ? "text-primary" : "text-muted-foreground"}`}>
+        {/*
+          Desktop: flex-row (main content | right aside panel)
+          Mobile:  flex-col (content then aside stacked below)
+        */}
+        <div className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden">
+          {/* ── Main scrollable area ── */}
+          <div className="flex-1 md:overflow-y-auto bg-muted/30 p-4 md:p-8 no-scrollbar">
+            <div className="max-w-4xl mx-auto bg-card shadow-xl border border-border/50 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden mb-6 md:mb-10">
+              {/* Tab navigation */}
+              <div className="flex px-6 md:px-12 pt-6 md:pt-8 border-b border-border gap-6 md:gap-8 overflow-x-auto no-scrollbar">
+                <button
+                  onClick={() => setActiveTab("lectura")}
+                  className={`${tabBtnClass} ${activeTab === "lectura" ? "text-primary" : "text-muted-foreground"}`}
+                >
                   Lectura
-                  {activeTab === "lectura" && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
+                  {activeTab === "lectura" && (
+                    <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />
+                  )}
                 </button>
-                
+
                 {hasVideo && (
-                  <button onClick={() => setActiveTab("multimedia")} className={`${tabBtnClass} ${activeTab === "multimedia" ? "text-primary" : "text-muted-foreground"}`}>
+                  <button
+                    onClick={() => setActiveTab("multimedia")}
+                    className={`${tabBtnClass} ${activeTab === "multimedia" ? "text-primary" : "text-muted-foreground"}`}
+                  >
                     Multimedia
-                    {activeTab === "multimedia" && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
+                    {activeTab === "multimedia" && (
+                      <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />
+                    )}
                   </button>
                 )}
 
                 {hasQuiz && (
-                  <button onClick={() => setActiveTab("evaluacion")} className={`${tabBtnClass} ${activeTab === "evaluacion" ? "text-primary" : "text-muted-foreground"}`}>
+                  <button
+                    onClick={() => setActiveTab("evaluacion")}
+                    className={`${tabBtnClass} ${activeTab === "evaluacion" ? "text-primary" : "text-muted-foreground"}`}
+                  >
                     Evaluación
-                    {activeTab === "evaluacion" && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />}
+                    {activeTab === "evaluacion" && (
+                      <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t-full" />
+                    )}
                   </button>
                 )}
               </div>
 
-              <div className="p-8 md:p-16">
+              <div className="p-5 md:p-8 lg:p-16">
                 {activeTab === "lectura" && (
-  <div className="animate-in fade-in duration-500 space-y-10">
-    {content?.imageUrl && (
-      // ✅ Añade el wrapper con efecto zoom igual que admin
-      <div className="relative group cursor-zoom-in">
-        <img
-          ref={imageRef}
-          src={content.imageUrl}
-          className="w-full aspect-video object-cover rounded-[2rem] shadow-lg border border-border/50 transition-transform duration-500 hover:scale-[1.01]"
-          alt="Cover"
-        />
-        <div className="absolute top-4 right-4 bg-black/20 backdrop-blur-md p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          <i className="bi bi-zoom-in text-white"></i>
-        </div>
-      </div>
-    )}
-    <div className="prose dark:prose-invert max-w-none">
-      <ReactMarkdown
-        components={{
-          h2: ({ ...props }) => (
-            <h2 className="text-2xl font-black text-foreground mt-10 mb-6" {...props} />
-          ),
-          p: ({ ...props }) => (
-            <p className="text-[17px] leading-[1.8] text-muted-foreground mb-6" {...props} />
-          ),
-          // ✅ Esto faltaba — es lo que hace diferente el estilo de las listas
-          li: ({ ...props }) => (
-            <li className="flex items-start gap-3 text-[16px] text-muted-foreground mb-4">
-              <span className="mt-2.5 w-2 h-2 rounded-full bg-primary/40 shrink-0" />
-              <span {...props} />
-            </li>
-          ),
-          blockquote: ({ ...props }) => (
-            <blockquote
-              className="border-l-4 border-primary bg-muted/40 p-6 rounded-r-2xl my-8 italic shadow-inner"
-              {...props}
-            />
-          ),
-        }}
-      >
-        {content?.summary}
-      </ReactMarkdown>
-    </div>
-  </div>
-)}
+                  <div className="animate-in fade-in duration-500 space-y-8 md:space-y-10">
+                    {content?.imageUrl && (
+                      <img
+                        ref={imageRef}
+                        src={content.imageUrl}
+                        className="w-full aspect-video object-cover rounded-[1.5rem] md:rounded-[2rem] shadow-lg border border-border/50"
+                        alt="Cover"
+                      />
+                    )}
+                    <div className="prose dark:prose-invert max-w-none">
+                      <ReactMarkdown
+                        components={{
+                          h2: ({ ...props }) => (
+                            <h2
+                              className="text-xl md:text-2xl font-black text-foreground mt-8 mb-4"
+                              {...props}
+                            />
+                          ),
+                          p: ({ ...props }) => (
+                            <p
+                              className="text-[15px] md:text-[17px] leading-[1.8] text-muted-foreground mb-6"
+                              {...props}
+                            />
+                          ),
+                          li: ({ ...props }) => (
+                            <li className="flex items-start gap-3 text-[14px] md:text-[16px] text-muted-foreground mb-4">
+                              <span className="mt-2.5 w-2 h-2 rounded-full bg-primary/40 shrink-0" />
+                              <span {...props} />
+                            </li>
+                          ),
+                          blockquote: ({ ...props }) => (
+                            <blockquote
+                              className="border-l-4 border-primary bg-muted/40 p-4 md:p-6 rounded-r-2xl my-8 italic"
+                              {...props}
+                            />
+                          ),
+                        }}
+                      >
+                        {content?.summary}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                )}
 
                 {activeTab === "multimedia" && hasVideo && (
-                  <div className="aspect-video rounded-[2rem] overflow-hidden bg-black shadow-2xl">
-                    <video key={content.videoUrl} controls className="w-full h-full object-cover">
+                  <div className="aspect-video rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-black shadow-2xl">
+                    <video
+                      key={content.videoUrl}
+                      controls
+                      className="w-full h-full object-cover"
+                    >
                       <source src={content.videoUrl} type="video/mp4" />
                     </video>
                   </div>
                 )}
 
                 {activeTab === "evaluacion" && hasQuiz && (
-                  <div className="bg-orange-500/5 border border-orange-500/10 rounded-[2rem] p-12 text-center space-y-6">
-                    <div className="w-20 h-20 bg-orange-500 text-white rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-orange-500/20">
-                      <i className="bi bi-patch-question text-4xl"></i>
+                  <div className="bg-orange-500/5 border border-orange-500/10 rounded-[2rem] p-8 md:p-12 text-center space-y-6">
+                    <div className="w-16 h-16 md:w-20 md:h-20 bg-orange-500 text-white rounded-2xl md:rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-orange-500/20">
+                      <i className="bi bi-patch-question text-3xl md:text-4xl"></i>
                     </div>
-                    <h4 className="text-2xl font-black italic">¿Listo para el test?</h4>
-                    <button onClick={() => setShowQuizModal(true)} className="bg-orange-500 text-white px-10 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all">
+                    <h4 className="text-xl md:text-2xl font-black italic">
+                      ¿Listo para el test?
+                    </h4>
+                    <button
+                      onClick={() => setShowQuizModal(true)}
+                      className="bg-orange-500 text-white px-8 md:px-10 py-3 md:py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-all"
+                    >
                       Iniciar Autoevaluación
                     </button>
                   </div>
@@ -171,37 +222,84 @@ export default function EmployeeContentDetail() {
             </div>
           </div>
 
-          <aside className="w-80 border-l border-border bg-card p-6 flex flex-col gap-6 overflow-y-auto no-scrollbar">
+          {/*
+            Aside / Materiales
+            Desktop: fixed right panel (w-80)
+            Mobile:  full-width section stacked below (border-t)
+          */}
+          <aside
+            className="
+            w-full md:w-80
+            border-t md:border-t-0 md:border-l border-border
+            bg-card
+            p-4 md:p-6
+            flex flex-col gap-4 md:gap-6
+            md:overflow-y-auto md:shrink-0
+            no-scrollbar
+          "
+          >
             {content?.podcast?.url && (
-              <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-[2rem] p-5 space-y-4">
+              <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-5 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg"><i className="bi bi-mic-fill"></i></div>
+                  <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg">
+                    <i className="bi bi-mic-fill"></i>
+                  </div>
                   <div>
-                    <p className="text-[9px] font-black uppercase text-emerald-600">Audio Guía</p>
-                    <p className="text-[11px] font-bold opacity-70">Escuchar unidad</p>
+                    <p className="text-[9px] font-black uppercase text-emerald-600">
+                      Audio Guía
+                    </p>
+                    <p className="text-[11px] font-bold opacity-70">
+                      Escuchar unidad
+                    </p>
                   </div>
                 </div>
-                <audio ref={audioRef} src={content.podcast.url} controls className="w-full h-8 accent-emerald-500" />
+                <audio
+                  ref={audioRef}
+                  src={content.podcast.url}
+                  controls
+                  className="w-full h-8 accent-emerald-500"
+                />
               </div>
             )}
 
             <h4 className={labelClass}>Materiales</h4>
+
             {content?.url?.toLowerCase().includes(".pdf") && (
-              <a href={content.url} target="_blank" rel="noopener noreferrer" className="w-full p-4 bg-muted/50 border border-border rounded-2xl flex items-center gap-4 hover:border-primary transition-all">
-                <div className="w-10 h-10 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center shrink-0"><i className="bi bi-file-earmark-pdf text-xl"></i></div>
+              <a
+                href={content.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full p-4 bg-muted/50 border border-border rounded-2xl flex items-center gap-4 hover:border-primary transition-all"
+              >
+                <div className="w-10 h-10 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center shrink-0">
+                  <i className="bi bi-file-earmark-pdf text-xl"></i>
+                </div>
                 <div className="text-left overflow-hidden">
-                  <p className="text-[8px] font-black uppercase text-muted-foreground">Recurso PDF</p>
-                  <p className="text-xs font-bold text-foreground truncate">Descargar Guía</p>
+                  <p className="text-[8px] font-black uppercase text-muted-foreground">
+                    Recurso PDF
+                  </p>
+                  <p className="text-xs font-bold text-foreground truncate">
+                    Descargar Guía
+                  </p>
                 </div>
               </a>
             )}
 
             {content?.practiceLab && (
-              <button onClick={() => setShowLabModal(true)} className="w-full p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-center gap-4 hover:border-blue-500 transition-all text-left">
-                <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20"><i className="bi bi-controller text-xl"></i></div>
+              <button
+                onClick={() => setShowLabModal(true)}
+                className="w-full p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-center gap-4 hover:border-blue-500 transition-all text-left"
+              >
+                <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
+                  <i className="bi bi-controller text-xl"></i>
+                </div>
                 <div className="overflow-hidden">
-                  <p className="text-[8px] font-black uppercase text-blue-600">Simulador IA</p>
-                  <p className="text-xs font-bold text-foreground truncate">Práctica Interactiva</p>
+                  <p className="text-[8px] font-black uppercase text-blue-600">
+                    Simulador IA
+                  </p>
+                  <p className="text-xs font-bold text-foreground truncate">
+                    Práctica Interactiva
+                  </p>
                 </div>
               </button>
             )}
@@ -209,48 +307,78 @@ export default function EmployeeContentDetail() {
         </div>
       </main>
 
-      {/* Modales de Lab y Quiz (Lógica de vista estudiante) */}
+      {/* Modal Lab */}
       {showLabModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl md:p-4">
           <div className="bg-card border border-border md:rounded-[40px] w-full max-w-6xl h-full md:h-[90vh] relative overflow-hidden flex flex-col">
-            <button onClick={() => { setShowLabModal(false); setIsLabStarted(false); }} className="absolute top-4 right-4 z-50 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white"><i className="bi bi-x-lg"></i></button>
+            <button
+              onClick={() => {
+                setShowLabModal(false);
+                setIsLabStarted(false);
+              }}
+              className="absolute top-4 right-4 z-50 w-10 h-10 bg-white/10 hover:bg-destructive rounded-full flex items-center justify-center text-white transition-all"
+            >
+              <i className="bi bi-x-lg"></i>
+            </button>
             <div className="flex-1 bg-slate-950 overflow-hidden">
               {!isLabStarted ? (
-                <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
-                  <div className="w-20 h-20 bg-blue-500/20 text-blue-500 rounded-3xl flex items-center justify-center"><i className="bi bi-controller text-4xl"></i></div>
-                  <h3 className="text-2xl font-black text-white">{content?.practiceLab?.scenarioTitle}</h3>
-                  <button onClick={() => setIsLabStarted(true)} className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs">Empezar Práctica</button>
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-6 p-6">
+                  <div className="w-16 h-16 md:w-20 md:h-20 bg-blue-500/20 text-blue-500 rounded-3xl flex items-center justify-center">
+                    <i className="bi bi-controller text-3xl md:text-4xl"></i>
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-black text-white">
+                    {content?.practiceLab?.scenarioTitle}
+                  </h3>
+                  <button
+                    onClick={() => setIsLabStarted(true)}
+                    className="bg-blue-600 text-white px-8 md:px-10 py-3 md:py-4 rounded-2xl font-black uppercase text-xs"
+                  >
+                    Empezar Práctica
+                  </button>
                 </div>
               ) : (
-                <div className="w-full h-full"><InteractiveLab data={content.practiceLab} /></div>
+                <div className="w-full h-full">
+                  <InteractiveLab data={content.practiceLab} />
+                </div>
               )}
             </div>
           </div>
         </div>
       )}
 
+      {/* Modal Quiz */}
       {showQuizModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-          <div className="bg-card border border-border rounded-[32px] p-8 max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-2xl font-black italic">Evaluación de Unidad</h3>
-              <button onClick={() => setShowQuizModal(false)}><i className="bi bi-x-circle text-2xl"></i></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-3 md:p-4">
+          <div className="bg-card border border-border rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-8 max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center mb-6 md:mb-8">
+              <h3 className="text-xl md:text-2xl font-black italic">
+                Evaluación de Unidad
+              </h3>
+              <button
+                onClick={() => setShowQuizModal(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <i className="bi bi-x-circle text-2xl"></i>
+              </button>
             </div>
-            <div className="flex-1 overflow-y-auto space-y-10 no-scrollbar">
-              {content?.quiz?.questions.map((q: any, qIdx: number) => (
+            <div className="flex-1 overflow-y-auto space-y-8 md:space-y-10 no-scrollbar">
+              {content?.quiz?.map((q: any, qIdx: number) => (
                 <div key={qIdx} className="space-y-4">
-                  <p className="font-bold text-lg">{q.question}</p>
+                  <p className="font-bold text-base md:text-lg">{q.question}</p>
                   <div className="grid gap-2">
                     {q.options.map((opt: string, oIdx: number) => {
                       const isSelected = userAnswers[qIdx] === opt;
                       const isCorrect = isCorrected && opt === q.correctAnswer;
-                      const isWrong = isCorrected && isSelected && opt !== q.correctAnswer;
+                      const isWrong =
+                        isCorrected && isSelected && opt !== q.correctAnswer;
                       return (
                         <button
                           key={oIdx}
                           disabled={isCorrected}
-                          onClick={() => setUserAnswers({ ...userAnswers, [qIdx]: opt })}
-                          className={`w-full p-4 rounded-xl border text-left text-sm transition-all 
+                          onClick={() =>
+                            setUserAnswers({ ...userAnswers, [qIdx]: opt })
+                          }
+                          className={`w-full p-3 md:p-4 rounded-xl border text-left text-sm transition-all
                             ${isSelected ? "border-primary bg-primary/5" : "border-border"}
                             ${isCorrect ? "border-emerald-500 bg-emerald-500/10" : ""}
                             ${isWrong ? "border-red-500 bg-red-500/10" : ""}
@@ -264,49 +392,16 @@ export default function EmployeeContentDetail() {
                 </div>
               ))}
             </div>
-            {/* Sección de Resultados después de corregir */}
-{isCorrected && (
-  <div className="pt-6 mt-6 border-t border-border animate-in slide-in-from-bottom-4 duration-500">
-    <div className="grid grid-cols-2 gap-4 mb-6">
-      <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl text-center">
-        <p className="text-[10px] font-black uppercase text-emerald-600 mb-1">Aciertos</p>
-        <p className="text-2xl font-black text-emerald-700">
-          {content?.quiz?.questions.filter((q: any, i: number) => userAnswers[i] === q.correctAnswer).length}
-        </p>
-      </div>
-      <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-center">
-        <p className="text-[10px] font-black uppercase text-red-600 mb-1">Errores</p>
-        <p className="text-2xl font-black text-red-700">
-          {content?.quiz?.questions.filter((q: any, i: number) => userAnswers[i] !== q.correctAnswer).length}
-        </p>
-      </div>
-    </div>
-    
-    <button 
-      onClick={() => {
-        setIsCorrected(false);
-        setUserAnswers({});
-        setShowQuizModal(false);
-      }} 
-      className="w-full bg-foreground text-background py-4 rounded-xl font-black uppercase text-xs hover:opacity-90 transition-all"
-    >
-      Finalizar Revisión
-    </button>
-  </div>
-)}
-
-{/* Botón original para enviar (solo se ve si no se ha corregido) */}
-{!isCorrected && (
-  <div className="pt-6 mt-6 border-t border-border">
-    <button 
-      onClick={() => setIsCorrected(true)} 
-      disabled={Object.keys(userAnswers).length < (content?.quiz?.questions.length || 0)}
-      className="w-full bg-primary text-white py-4 rounded-xl font-black uppercase text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      Enviar Respuestas
-    </button>
-  </div>
-)}
+            {!isCorrected && (
+              <div className="pt-4 md:pt-6 mt-4 md:mt-6 border-t border-border">
+                <button
+                  onClick={() => setIsCorrected(true)}
+                  className="w-full bg-primary text-white py-3 md:py-4 rounded-xl font-black uppercase text-xs"
+                >
+                  Enviar Respuestas
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

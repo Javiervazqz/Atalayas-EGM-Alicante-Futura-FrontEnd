@@ -82,31 +82,29 @@ export default function GeneralAdminCourseManagePage() {
           <>
             <PageHeader
               title={course?.title || 'Detalle del Curso'}
-              description="Gestión de contenidos y material didáctico."
+              description="Gestión de contenidos."
               icon={<i className="bi bi-journal-bookmark"></i>}
               backUrl="/dashboard/administrator/general-admin/courses/manage"
               action={
-                <div className="flex">
-                  {/*<Link
-                    href={`/dashboard/administrator/general-admin/courses/${id}`}
-                    className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
-                  >
-                    <i className="bi bi-eye-fill"></i> Vista Empleado
-                  </Link>*/}
-                  <Link
-                    href={`/dashboard/administrator/general-admin/courses/manage/view/${id}/content/new`}
-                    className="bg-secondary text-secondary-foreground px-7 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
-                  >
-                    <i className="bi bi-plus-lg"></i> Añadir Unidad
-                  </Link>
-                </div>
+                <Link
+                  href={`/dashboard/administrator/general-admin/courses/manage/view/${id}/content/new`}
+                  className="bg-secondary text-secondary-foreground px-4 md:px-7 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap"
+                >
+                  <i className="bi bi-plus-lg"></i>
+                  <span className="hidden sm:inline">Añadir Unidad</span>
+                  <span className="sm:hidden">Añadir</span>
+                </Link>
               }
             />
 
             <div className="p-4 lg:p-8 flex-1 max-w-6xl mx-auto w-full">
               <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm flex flex-col">
-                <div className="p-4 border-b border-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/30">
-                  <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Unidades del programa</h2>
+
+                {/* ── Search bar + label ── */}
+                <div className="p-4 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-muted/30">
+                  <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1 shrink-0">
+                    Unidades del programa
+                  </h2>
                   <div className="relative w-full sm:max-w-xs">
                     <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-xs"></i>
                     <input
@@ -114,12 +112,13 @@ export default function GeneralAdminCourseManagePage() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Buscar unidad..."
-                      className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-1.5 text-xs outline-none focus:border-primary transition-all font-medium"
+                      className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2 text-xs outline-none focus:border-primary transition-all font-medium"
                     />
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* ── Desktop table (hidden on mobile) ── */}
+                <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full text-left border-collapse table-fixed">
                     <thead>
                       <tr className="bg-muted/10 border-b border-border">
@@ -180,12 +179,67 @@ export default function GeneralAdminCourseManagePage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* ── Mobile card list (hidden on sm+) ── */}
+                <div className="sm:hidden divide-y divide-border">
+                  {filteredContents.length > 0 ? (
+                    filteredContents.map((content: any) => (
+                      <div
+                        key={content.id}
+                        onClick={() => router.push(`/dashboard/administrator/general-admin/courses/manage/view/${id}/content/${content.id}`)}
+                        className="flex items-start gap-4 p-4 hover:bg-muted/40 active:bg-muted/60 transition-all cursor-pointer group"
+                      >
+                        {/* Icon */}
+                        <div className="w-10 h-10 shrink-0 rounded-xl bg-primary/10 text-primary flex items-center justify-center mt-0.5">
+                          <i className={`bi ${content.url?.includes('.mp3') ? 'bi-mic-fill text-indigo-500' : 'bi-file-earmark-text'} text-base`}></i>
+                        </div>
+
+                        {/* Text */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate">
+                            {content.title}
+                          </p>
+                          {content.summary && (
+                            <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5 italic leading-relaxed">
+                              {cleanMarkdown(content.summary)}
+                            </p>
+                          )}
+                          {/* Badges */}
+                          <div className="flex gap-1.5 mt-2">
+                            {content.url?.includes('.mp3') ? (
+                              <span className="bg-indigo-500/10 text-indigo-500 text-[9px] font-black px-1.5 py-0.5 rounded border border-indigo-500/20 uppercase tracking-tighter">Podcast</span>
+                            ) : (
+                              <span className="bg-emerald-500/10 text-emerald-500 text-[9px] font-black px-1.5 py-0.5 rounded border border-emerald-500/20 uppercase tracking-tighter">Lectura</span>
+                            )}
+                            {content.quiz && (
+                              <span className="bg-muted text-muted-foreground text-[9px] font-black px-1.5 py-0.5 rounded border border-border uppercase tracking-tighter">Test</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Delete button */}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setContentToDelete(content.id); setShowDeleteModal(true); }}
+                          className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all mt-0.5"
+                        >
+                          <i className="bi bi-trash3 text-sm"></i>
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-5 py-14 text-center text-muted-foreground font-medium text-xs italic">
+                      No hay unidades disponibles.
+                    </div>
+                  )}
+                </div>
+
               </div>
             </div>
           </>
         )}
       </main>
 
+      {/* Delete modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-card w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-border text-center animate-in zoom-in-95">

@@ -50,7 +50,7 @@ export default function GeneralAdminNewAIContentPage() {
         body: data,
       });
       if (res.ok) {
-        router.push(`/dashboard/administrator/general-admin/courses/manage/view/${id}`);
+        router.push(`/dashboard/administrator/general-admin/courses/manage/view${id}`);
       } else {
         alert('No se pudo generar el contenido.');
       }
