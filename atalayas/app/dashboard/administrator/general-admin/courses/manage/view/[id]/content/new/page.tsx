@@ -17,6 +17,7 @@ export default function GeneralAdminNewAIContentPage() {
     generatePodcast: false,
     generateImage: true,
     generateVideo: false,
+    generatePresentation: false,
     generateLab: false,
   });
   const [formData, setFormData] = useState({
@@ -118,6 +119,7 @@ export default function GeneralAdminNewAIContentPage() {
                     { id: 'generateVideo', label: 'Vídeo', icon: 'bi-play-btn', color: 'bg-purple-600' },
                     { id: 'generateQuiz', label: 'Test', icon: 'bi-patch-question', color: 'bg-amber-500' },
                     { id: 'generatePodcast', label: 'Audio', icon: 'bi-mic', color: 'bg-indigo-500' },
+                    { id: 'generatePresentation', label: 'Presentación', icon: 'bi-easel', color: 'bg-orange-500' },
                     { id: 'generateLab', label: 'Práctica', icon: 'bi-controller', color: 'bg-blue-500' },
                   ].map((opt) => (
                     <button

@@ -19,6 +19,7 @@ export default function NewAIContentPage() {
     generateImage: true,
     generateVideo: false,
     generateLab: false,
+    generatePresentation: false,
   });
 
   const [formData, setFormData] = useState({
@@ -123,7 +124,8 @@ export default function NewAIContentPage() {
                     { id: 'generateVideo', label: 'Vídeo', icon: 'bi-play-btn', color: 'bg-purple-600' },
                     { id: 'generateQuiz', label: 'Test', icon: 'bi-patch-question', color: 'bg-amber-500' },
                     { id: 'generatePodcast', label: 'Audio', icon: 'bi-mic', color: 'bg-indigo-500' },
-                    { id: 'generateLab', label: 'Práctica', icon: 'bi-controller', color: 'bg-blue-500' } // NUEVO BOTÓN
+                    { id: 'generatePresentation', label: 'Presentación', icon: 'bi-easel', color: 'bg-orange-500' },
+                    { id: 'generateLab', label: 'Práctica', icon: 'bi-controller', color: 'bg-blue-500' },
                   ].map((opt) => (
                     <button
                       key={opt.id} type="button"

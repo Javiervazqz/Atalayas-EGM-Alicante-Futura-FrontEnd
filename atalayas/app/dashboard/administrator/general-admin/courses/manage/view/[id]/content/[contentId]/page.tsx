@@ -20,7 +20,7 @@ const inputClass = 'w-full px-4 py-2.5 bg-background border border-border focus:
 const labelClass = 'text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-2 block';
 const tabBtnClass = 'pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative whitespace-nowrap';
 
-type TabType = 'multimedia' | 'lectura' | 'evaluacion';
+type TabType = 'presentacion' | 'multimedia' | 'lectura' | 'evaluacion';
 
 export default function GeneralAdminContentDetail() {
   const params = useParams();
@@ -273,6 +273,7 @@ export default function GeneralAdminContentDetail() {
                         </button>
                       </div>
                     )}
+                    
                   </div>
                 )}
               </div>
@@ -322,6 +323,24 @@ export default function GeneralAdminContentDetail() {
               </a>
             )}
 
+             {content?.presentationUrl && (
+              <a
+                href={content.presentationUrl}
+                target="_blank"
+                className="group w-full p-4 bg-orange-500/5 border border-orange-500/10 rounded-xl flex items-center gap-4 hover:border-orange-500 transition-all"
+              >
+                <div className="w-10 h-10 bg-orange-500 text-white rounded-xl flex items-center justify-center shrink-0 shadow-lg">
+                  <i className="bi bi-easel text-xl"></i>
+                </div>
+                <div>
+                  <p className="text-[8px] font-black uppercase text-orange-500">
+                    PowerPoint IA
+                  </p>
+                  <p className="text-xs font-bold">Descargar Presentación</p>
+                </div>
+              </a>
+            )}
+            
             {content?.practiceLab && (
               <button onClick={() => setShowLabModal(true)} className="group w-full p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-center gap-4 hover:border-blue-500 transition-all text-left">
                 <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
