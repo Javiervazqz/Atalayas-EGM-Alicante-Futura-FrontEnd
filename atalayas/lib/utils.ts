@@ -104,6 +104,16 @@ export const API_ROUTES = {
   ACTIVITY: {
     GET_MY: (limit = 5) => `${BASE_URL}/activity/me?limit=${limit}`,
   },
+
+  EVENTS: {
+    CREATE: `${BASE_URL}/events`,
+    GET_ALL: `${BASE_URL}/events`,
+    GET_BY_ID: (id: string) => `${BASE_URL}/events/${id}`,
+    UPDATE: (id: string) => `${BASE_URL}/events/${id}`,
+    DELETE: (id: string) => `${BASE_URL}/events/${id}`,
+
+
+  }
 };
 
 // Agrega esto al final de tu archivo @/lib/utils.ts
