@@ -41,9 +41,12 @@ export default function AdminContentDetail() {
   const imageRef = useRef<HTMLImageElement>(null);
 
   const [content, setContent] = useState<any>(null);
+  const [course, setCourse] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("lectura");
+  const [imageError, setImageError] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -62,6 +65,14 @@ export default function AdminContentDetail() {
     quiz: { questions: [] },
     practiceLab: null,
   });
+
+  // Obtener usuario actual
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setCurrentUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const sanitizeData = (data: any) => {
     const raw = data?.data || data?.content || data || {};
@@ -86,6 +97,18 @@ export default function AdminContentDetail() {
       quiz: { questions: cleanQuestions },
       practiceLab: raw.practiceLab || null,
     };
+  };
+
+  // Verificar si el usuario puede modificar este contenido
+  const canModify = () => {
+    if (!course || !currentUser) return false;
+    // GENERAL_ADMIN puede modificar todo
+    if (currentUser.role === 'GENERAL_ADMIN') return true;
+    // ADMIN solo puede modificar cursos privados de su empresa
+    if (currentUser.role === 'ADMIN') {
+      return !course.isPublic && course.companyId === currentUser.companyId;
+    }
+    return false;
   };
 
   const updateQuestionText = (qIdx: number, val: string) => {
@@ -130,35 +153,46 @@ export default function AdminContentDetail() {
   };
 
   useEffect(() => {
-    const fetchContent = async () => {
+    const fetchCourseAndContent = async () => {
       if (!params.id || !params.contentId) return;
       try {
-        const res = await fetch(
+        const token = localStorage.getItem("token");
+
+        // Fetch course info
+        const courseRes = await fetch(API_ROUTES.COURSES.GET_BY_ID(params.id as string), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const courseData = await courseRes.json();
+        setCourse(courseData);
+
+        // Fetch content
+        const contentRes = await fetch(
           API_ROUTES.CONTENT.GET_BY_ID(
             params.id as string,
             params.contentId as string,
           ),
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
             },
           },
         );
-        const data = await res.json();
-        const cleanData = sanitizeData(data);
+        const contentData = await contentRes.json();
+        const cleanData = sanitizeData(contentData);
         setContent(cleanData);
         setFormData(JSON.parse(JSON.stringify(cleanData)));
+        setImageError(false);
       } catch (error) {
         console.error("Error:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchContent();
+    fetchCourseAndContent();
   }, [params.contentId, params.id]);
 
   useEffect(() => {
-    if (activeTab === "lectura" && imageRef.current) {
+    if (activeTab === "lectura" && imageRef.current && !imageError) {
       const zoomInstance = zoom(imageRef.current, {
         background: "rgba(0,0,0,0.9)",
         margin: 20,
@@ -167,9 +201,14 @@ export default function AdminContentDetail() {
         zoomInstance.detach();
       };
     }
-  }, [content?.imageUrl, activeTab]);
+  }, [content?.imageUrl, activeTab, imageError]);
 
   const handleSave = async () => {
+    if (!canModify()) {
+      alert("No tienes permisos para modificar este contenido");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch(
@@ -190,6 +229,9 @@ export default function AdminContentDetail() {
         const result = await res.json();
         setContent(sanitizeData(result));
         setIsEditing(false);
+      } else {
+        const error = await res.json();
+        alert(error.message || "Error al guardar");
       }
     } catch (error) {
       alert("Error al guardar");
@@ -199,6 +241,12 @@ export default function AdminContentDetail() {
   };
 
   const handleDelete = async () => {
+    if (!canModify()) {
+      alert("No tienes permisos para eliminar este contenido");
+      setShowDeleteModal(false);
+      return;
+    }
+
     setIsDeleting(true);
     try {
       const res = await fetch(
@@ -211,15 +259,32 @@ export default function AdminContentDetail() {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         },
       );
-      if (res.ok)
-        router.push(`/dashboard/administrator/admin/courses/${params.id}`);
+      if (res.ok) {
+        router.push(`/dashboard/administrator/admin/courses/${params.id}/manage`);
+      } else {
+        const error = await res.json();
+        alert(error.message || "Error al eliminar");
+      }
     } catch (error) {
       console.error(error);
+      alert("Error al eliminar el contenido");
     } finally {
       setIsDeleting(false);
       setShowDeleteModal(false);
     }
   };
+
+  const isModifiable = canModify();
+  const isPublicCourse = course?.isPublic === true;
+  const isAdminView = currentUser?.role === 'ADMIN';
+
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-background items-center justify-center">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
@@ -234,7 +299,7 @@ export default function AdminContentDetail() {
           backUrl={`/dashboard/administrator/admin/courses/${params.id}/manage`}
           action={
             <div className="flex gap-2">
-              {isEditing && (
+              {isEditing && isModifiable && (
                 <button
                   onClick={() => setIsEditing(false)}
                   className="bg-muted text-foreground px-3 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest"
@@ -242,13 +307,21 @@ export default function AdminContentDetail() {
                   Cancelar
                 </button>
               )}
-              <button
-                onClick={isEditing ? handleSave : () => setIsEditing(true)}
-                disabled={loading}
-                className={`${isEditing ? "bg-emerald-500" : "bg-primary"} text-white px-4 md:px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all`}
-              >
-                {isEditing ? "Guardar" : "Editar"}
-              </button>
+              {isModifiable && (
+                <button
+                  onClick={isEditing ? handleSave : () => setIsEditing(true)}
+                  disabled={loading}
+                  className={`${isEditing ? "bg-emerald-500" : "bg-primary"} text-white px-4 md:px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all`}
+                >
+                  {isEditing ? "Guardar" : "Editar"}
+                </button>
+              )}
+              {!isModifiable && isPublicCourse && isAdminView && (
+                <div className="bg-amber-500/10 text-amber-600 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
+                  <i className="bi bi-lock-fill"></i>
+                  Solo lectura
+                </div>
+              )}
             </div>
           }
         />
@@ -295,7 +368,7 @@ export default function AdminContentDetail() {
 
               {/* Tab content */}
               <div className="p-5 md:p-8 lg:p-16">
-                {isEditing ? (
+                {isEditing && isModifiable ? (
                   <div className="space-y-10">
                     <section className="space-y-6">
                       <h3 className="text-lg font-black border-l-4 border-primary pl-4 uppercase tracking-tighter">
@@ -428,14 +501,33 @@ export default function AdminContentDetail() {
                     )}
                     {activeTab === "lectura" && (
                       <div className="space-y-8">
-                        {content?.imageUrl && (
-                          <img
-                            ref={imageRef}
-                            src={content.imageUrl}
-                            className="w-full aspect-video object-cover rounded-2xl shadow-lg border border-border/50"
-                            alt="Cover"
-                          />
+                        {/* Mostrar imagen con manejo de errores */}
+                        {content?.imageUrl && content.imageUrl.trim() !== "" && !imageError && (
+                          <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-border/50 bg-muted/20">
+                            <img
+                              ref={imageRef}
+                              src={content.imageUrl}
+                              className="w-full h-full object-contain"
+                              alt="Cover"
+                              onError={(e) => {
+                                console.error("Error cargando imagen:", content.imageUrl);
+                                setImageError(true);
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          </div>
                         )}
+
+                        {/* Si hay error o no hay imagen, mostrar placeholder */}
+                        {(!content?.imageUrl || content.imageUrl.trim() === "" || imageError) && (
+                          <div className="w-full aspect-video rounded-2xl bg-muted/30 flex flex-col items-center justify-center border border-border/50">
+                            <i className="bi bi-image text-4xl text-muted-foreground/40 mb-2"></i>
+                            <p className="text-[10px] text-muted-foreground">
+                              {imageError ? "Error al cargar la imagen" : "Sin imagen de portada"}
+                            </p>
+                          </div>
+                        )}
+
                         <div className="prose dark:prose-invert max-w-none">
                           <ReactMarkdown
                             components={{
@@ -534,10 +626,12 @@ export default function AdminContentDetail() {
 
             <h4 className={labelClass}>Materiales</h4>
 
-            {content?.url?.toLowerCase().includes(".pdf") && (
+            {/* Mostrar cualquier documento en url */}
+            {content?.url && content.url.trim() !== "" && (
               <a
                 href={content.url}
                 target="_blank"
+                rel="noopener noreferrer"
                 className="group w-full p-4 bg-muted/50 border border-border rounded-xl flex items-center gap-4 hover:border-primary transition-all"
               >
                 <div className="w-10 h-10 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center shrink-0">
@@ -545,11 +639,21 @@ export default function AdminContentDetail() {
                 </div>
                 <div className="text-left overflow-hidden">
                   <p className="text-[8px] font-black uppercase text-muted-foreground">
-                    PDF
+                    {content.url?.toLowerCase().includes(".pdf") ? "PDF" : "DOCUMENTO"}
                   </p>
-                  <p className="text-xs font-bold truncate">Descargar Guía</p>
+                  <p className="text-xs font-bold truncate">
+                    {content.url?.toLowerCase().includes(".pdf") ? "Descargar Guía" : "Abrir Documento"}
+                  </p>
                 </div>
               </a>
+            )}
+
+            {/* Si no hay documento, mostrar mensaje */}
+            {(!content?.url || content.url.trim() === "") && (
+              <div className="text-center py-4">
+                <i className="bi bi-file-earmark text-2xl text-muted-foreground/40"></i>
+                <p className="text-[9px] text-muted-foreground mt-1">Sin materiales</p>
+              </div>
             )}
 
             {content?.practiceLab && (
@@ -575,6 +679,7 @@ export default function AdminContentDetail() {
               <a
                 href={content.presentationUrl}
                 target="_blank"
+                rel="noopener noreferrer"
                 className="group w-full p-4 bg-orange-500/5 border border-orange-500/10 rounded-xl flex items-center gap-4 hover:border-orange-500 transition-all"
               >
                 <div className="w-10 h-10 bg-orange-500 text-white rounded-xl flex items-center justify-center shrink-0 shadow-lg">
@@ -582,22 +687,24 @@ export default function AdminContentDetail() {
                 </div>
                 <div>
                   <p className="text-[8px] font-black uppercase text-orange-500">
-                    PowerPoint IA
+                    Presentación
                   </p>
                   <p className="text-xs font-bold">Descargar Presentación</p>
                 </div>
               </a>
             )}
 
-            {/* Delete — on mobile show as full button; on desktop at the bottom */}
-            <div className="md:mt-auto pt-4 md:pt-6 border-t border-border">
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="w-full py-3 text-[9px] font-black uppercase text-destructive hover:bg-destructive/5 rounded-xl tracking-widest transition-all"
-              >
-                Eliminar Unidad
-              </button>
-            </div>
+            {/* Delete button - solo si se puede modificar */}
+            {isModifiable && (
+              <div className="md:mt-auto pt-4 md:pt-6 border-t border-border">
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="w-full py-3 text-[9px] font-black uppercase text-destructive hover:bg-destructive/5 rounded-xl tracking-widest transition-all"
+                >
+                  Eliminar Unidad
+                </button>
+              </div>
+            )}
           </aside>
         </div>
       </main>
@@ -702,7 +809,7 @@ export default function AdminContentDetail() {
       )}
 
       {/* ── MODAL ELIMINAR ── */}
-      {showDeleteModal && (
+      {showDeleteModal && isModifiable && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-card border border-border rounded-[1.5rem] md:rounded-[2rem] p-8 md:p-10 max-w-sm w-full text-center shadow-2xl">
             <i className="bi bi-exclamation-triangle text-4xl text-destructive mb-4 block"></i>
