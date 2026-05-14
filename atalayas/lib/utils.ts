@@ -56,6 +56,8 @@ export const API_ROUTES = {
     GET_ALL: `${BASE_URL}/announcement`,
     CREATE: `${BASE_URL}/announcement`,
     GET_BY_ID: (id: string) => `${BASE_URL}/announcement/${id}`,
+    UPDATE: (id: string) => `${BASE_URL}/announcement/${id}`,
+    DELETE: (id: string) => `${BASE_URL}/announcement/${id}`,
   },
   COMPANY_REQUESTS: {
     CREATE: `${BASE_URL}/company-request`,
@@ -111,7 +113,11 @@ export const API_ROUTES = {
     GET_BY_ID: (id: string) => `${BASE_URL}/events/${id}`,
     UPDATE: (id: string) => `${BASE_URL}/events/${id}`,
     DELETE: (id: string) => `${BASE_URL}/events/${id}`,
+  },
 
+  NOTIFICATIONS: {
+    RESET: `${BASE_URL}/notifications/reset-count`,
+    COUNT: `${BASE_URL}/notifications/unread-count`,
 
   }
 };
