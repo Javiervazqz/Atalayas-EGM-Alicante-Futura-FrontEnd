@@ -11,7 +11,9 @@ import zoom from "medium-zoom";
 
 interface LabProps {
   data: any;
+  onCompleted?: () => void;
 }
+
 
 const InteractiveLab = dynamic<LabProps>(
   () => import("@/components/interactiveLab").then((mod) => mod.default),
@@ -46,30 +48,35 @@ export default function EmployeeContentDetail() {
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [isCorrected, setIsCorrected] = useState(false);
 
+  const normalizedQuiz = Array.isArray(content?.quiz)
+    ? content.quiz
+    : content?.quiz?.questions || [];
+
+  const refreshContent = async () => {
+    const res = await fetch(
+      API_ROUTES.CONTENT.GET_BY_ID(
+        params.id as string,
+        params.contentId as string,
+      ),
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      },
+    );
+
+    const data = await res.json();
+    const raw = data?.data || data?.content || data || {};
+
+    setContent(raw);
+  };
+
+
   useEffect(() => {
-    const fetchContent = async () => {
-      try {
-        const res = await fetch(
-          API_ROUTES.CONTENT.GET_BY_ID(
-            params.id as string,
-            params.contentId as string,
-          ),
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          },
-        );
-        const data = await res.json();
-        const raw = data?.data || data?.content || data || {};
-        setContent(raw);
-      } catch (error) {
-        console.error("Error fetching content:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (params.id && params.contentId) fetchContent();
+    if (params.id && params.contentId) {
+      refreshContent()
+        .finally(() => setLoading(false));
+    }
   }, [params.id, params.contentId]);
 
   useEffect(() => {
@@ -84,9 +91,53 @@ export default function EmployeeContentDetail() {
     }
   }, [content?.imageUrl, activeTab]);
 
-  const hasQuiz = Array.isArray(content?.quiz) && content.quiz.length > 0;
+  useEffect(() => {
+    if (!params.id || !params.contentId) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        await fetch(
+          API_ROUTES.CONTENT.VIEW(
+            params.id as string,
+            params.contentId as string,
+          ),
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          },
+        );
+
+        await refreshContent();
+      } catch (err) {
+        console.error("Error marking content as viewed", err);
+      }
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [params.id, params.contentId]);
   const hasVideo = !!content?.videoUrl;
   const hasPresentation = !!content?.presentationUrl;
+
+  const quizData = content?.quiz;
+  const labData = content?.practiceLab;
+
+  const hasQuiz =
+    quizData &&
+    quizData !== "null" &&
+    (
+      (Array.isArray(quizData) && quizData.length > 0) ||
+      (
+        typeof quizData === "object" &&
+        Array.isArray(quizData.questions) &&
+        quizData.questions.length > 0
+      )
+    );
+
+  const hasLab =
+    labData &&
+    labData !== "null";
 
   return (
     <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
@@ -357,7 +408,28 @@ export default function EmployeeContentDetail() {
                 </div>
               ) : (
                 <div className="w-full h-full">
-                  <InteractiveLab data={content.practiceLab} />
+                  <InteractiveLab
+                    data={content.practiceLab}
+                    onCompleted={async () => {
+                      try {
+                        await fetch(
+                          API_ROUTES.CONTENT.COMPLETE_LAB(
+                            params.id as string,
+                            params.contentId as string,
+                          ),
+                          {
+                            method: "POST",
+                            headers: {
+                              Authorization: `Bearer ${localStorage.getItem("token")}`,
+                            },
+                          },
+                        );
+                        await refreshContent();
+                      } catch (err) {
+                        console.error("Error completing lab", err);
+                      }
+                    }}
+                  />
                 </div>
               )}
             </div>
@@ -381,7 +453,7 @@ export default function EmployeeContentDetail() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto space-y-8 md:space-y-10 no-scrollbar">
-              {content?.quiz?.map((q: any, qIdx: number) => (
+              {normalizedQuiz.map((q: any, qIdx: number) => (
                 <div key={qIdx} className="space-y-4">
                   <p className="font-bold text-base md:text-lg">{q.question}</p>
                   <div className="grid gap-2">
@@ -414,7 +486,40 @@ export default function EmployeeContentDetail() {
             {!isCorrected && (
               <div className="pt-4 md:pt-6 mt-4 md:mt-6 border-t border-border">
                 <button
-                  onClick={() => setIsCorrected(true)}
+                  onClick={async () => {
+                    let score = 0;
+
+                    normalizedQuiz.forEach((q: any, idx: number) => {
+                      if (userAnswers[idx] === q.correctAnswer) {
+                        score++;
+                      }
+                    });
+
+                    setIsCorrected(true);
+
+                    try {
+                      await fetch(
+                        API_ROUTES.CONTENT.COMPLETE(
+                          params.id as string,
+                          params.contentId as string,
+                        ),
+                        {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${localStorage.getItem("token")}`,
+                          },
+                          body: JSON.stringify({
+                            score,
+                            totalQuestions: normalizedQuiz.length,
+                          }),
+                        },
+                      );
+                      await refreshContent();
+                    } catch (err) {
+                      console.error("Error completing quiz", err);
+                    }
+                  }}
                   className="w-full bg-primary text-white py-3 md:py-4 rounded-xl font-black uppercase text-xs"
                 >
                   Enviar Respuestas
