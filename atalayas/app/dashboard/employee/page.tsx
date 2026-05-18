@@ -199,7 +199,8 @@ export default function EmployeeDashboard() {
             <NotificationBell
               unreadCount={unreadCount}
               onReset={handleNotificationReset}
-              latestItems={slides} // Usamos los slides unificados para la campana
+              latestItems={slides}
+              lastResetDate={lastResetDate} // Usamos los slides unificados para la campana
             />
           }
         />
