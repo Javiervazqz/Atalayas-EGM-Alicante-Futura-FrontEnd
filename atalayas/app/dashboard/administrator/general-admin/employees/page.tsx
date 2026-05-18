@@ -21,6 +21,7 @@ interface User {
   companyId: string | null;
   createdAt: string;
   avatarUrl?: string;
+  status?: 'ACTIVE' | 'INACTIVE';
   Company?: Company;
 }
 
@@ -46,12 +47,18 @@ export default function EmployeesPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedCompany, setSelectedCompany] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showInactive, setShowInactive] = useState(false);
 
-  // Estado para el modal de eliminación
+  // Modal eliminar
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+  // Modal dar de baja / reactivar
+  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+  const [togglingStatus, setTogglingStatus] = useState(false);
+
+  const getToken = () =>
+    typeof window !== 'undefined' ? localStorage.getItem('token') : '';
 
   const fetchData = async () => {
     try {
@@ -62,7 +69,7 @@ export default function EmployeesPage() {
 
       const [usersRes, compRes] = await Promise.all([
         fetch(API_ROUTES.USERS.GET_ALL, { headers }),
-        fetch(API_ROUTES.COMPANIES.GET_ALL, { headers }).catch(() => null)
+        fetch(API_ROUTES.COMPANIES.GET_ALL, { headers }).catch(() => null),
       ]);
 
       const usersData = await usersRes.json();
@@ -74,8 +81,10 @@ export default function EmployeesPage() {
 
       if (Array.isArray(usersData)) {
         if (storedUser.role === 'ADMIN') {
-          const filtered = usersData.filter(u =>
-            String(u.companyId || '').trim() === String(storedUser.companyId || '').trim()
+          const filtered = usersData.filter(
+            (u) =>
+              String(u.companyId || '').trim() ===
+              String(storedUser.companyId || '').trim(),
           );
           setUsers(filtered);
         } else {
@@ -83,7 +92,7 @@ export default function EmployeesPage() {
         }
       }
     } catch (err) {
-      console.error("Error cargando datos:", err);
+      console.error('Error cargando datos:', err);
     } finally {
       setLoading(false);
     }
@@ -99,36 +108,70 @@ export default function EmployeesPage() {
     try {
       const res = await fetch(`${API_ROUTES.USERS.GET_ALL}/${userToDelete.id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${getToken()}` }
+        headers: { Authorization: `Bearer ${getToken()}` },
       });
 
       if (res.ok) {
-        setUsers(users.filter(u => u.id !== userToDelete.id));
+        setUsers(users.filter((u) => u.id !== userToDelete.id));
         setUserToDelete(null);
       } else {
-        alert("No se pudo eliminar el usuario.");
+        alert('No se pudo eliminar el usuario.');
       }
     } catch (err) {
-      console.error("Error al eliminar:", err);
+      console.error('Error al eliminar:', err);
     } finally {
       setDeleting(false);
     }
   };
 
-  const handleDownloadCSV = () => {
-    const employeesToExport = users.filter(user => user.role === 'EMPLOYEE');
-    const csvRows = [['nombre', 'email', 'rol', 'puesto']];
+  const handleToggleStatus = async () => {
+    if (!userToDeactivate) return;
+    setTogglingStatus(true);
+    const isActive = userToDeactivate.status !== 'INACTIVE';
+    const endpoint = isActive
+      ? `${API_ROUTES.USERS.GET_ALL}/${userToDeactivate.id}/deactivate`
+      : `${API_ROUTES.USERS.GET_ALL}/${userToDeactivate.id}/reactivate`;
 
-    employeesToExport.forEach(employee => {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+
+      if (res.ok) {
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === userToDeactivate.id
+              ? { ...u, status: isActive ? 'INACTIVE' : 'ACTIVE' }
+              : u,
+          ),
+        );
+        setUserToDeactivate(null);
+      } else {
+        alert('No se pudo cambiar el estado del usuario.');
+      }
+    } catch (err) {
+      console.error('Error al cambiar estado:', err);
+    } finally {
+      setTogglingStatus(false);
+    }
+  };
+
+  const handleDownloadCSV = () => {
+    const employeesToExport = users.filter((user) => user.role === 'EMPLOYEE');
+    const csvRows = [['nombre', 'email', 'rol', 'puesto', 'estado']];
+
+    employeesToExport.forEach((employee) => {
       csvRows.push([
         employee.name || '',
         employee.email || '',
         'EMPLOYEE',
-        employee.jobRole || ''
+        employee.jobRole || '',
+        employee.status === 'INACTIVE' ? 'Baja' : 'Activo',
       ]);
     });
 
-    const csvContent = csvRows.map(row => row.join(',')).join('\n');
+    const csvContent = csvRows.map((row) => row.join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -141,17 +184,29 @@ export default function EmployeesPage() {
   };
 
   const displayedUsers = users
-    .filter(user => {
-      const matchCompany = selectedCompany === 'ALL' || String(user.companyId) === String(selectedCompany);
+    .filter((user) => {
+      const matchCompany =
+        selectedCompany === 'ALL' ||
+        String(user.companyId) === String(selectedCompany);
       const matchSearch =
         user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchCompany && matchSearch;
+      const matchStatus = showInactive
+        ? user.status === 'INACTIVE'
+        : user.status !== 'INACTIVE';
+      return matchCompany && matchSearch && matchStatus;
     })
     .sort((a, b) => {
-      const rolesOrder: Record<string, number> = { 'GENERAL_ADMIN': 1, 'ADMIN': 2, 'EMPLOYEE': 3, 'PUBLIC': 4 };
+      const rolesOrder: Record<string, number> = {
+        GENERAL_ADMIN: 1,
+        ADMIN: 2,
+        EMPLOYEE: 3,
+        PUBLIC: 4,
+      };
       return (rolesOrder[a.role] || 99) - (rolesOrder[b.role] || 99);
     });
+
+  const inactiveCount = users.filter((u) => u.status === 'INACTIVE').length;
 
   if (!currentUser) return null;
 
@@ -160,8 +215,16 @@ export default function EmployeesPage() {
 
       <main className="flex-1 overflow-x-hidden flex flex-col relative">
         <PageHeader
-          title={currentUser.role === 'GENERAL_ADMIN' ? "Gestión Global" : "Empleados"}
-          description={currentUser.role === 'GENERAL_ADMIN' ? "Control de perfiles y empresas" : "Administra tu equipo"}
+          title={
+            currentUser.role === 'GENERAL_ADMIN'
+              ? 'Gestión Global'
+              : 'Empleados'
+          }
+          description={
+            currentUser.role === 'GENERAL_ADMIN'
+              ? 'Control de perfiles y empresas'
+              : 'Administra tu equipo'
+          }
           icon={<i className="bi bi-people-fill"></i>}
           action={
             <div className="flex flex-wrap gap-2 justify-end w-full md:w-auto">
@@ -171,13 +234,15 @@ export default function EmployeesPage() {
                     onClick={handleDownloadCSV}
                     className="flex-1 md:flex-none bg-background border border-input hover:bg-muted text-foreground font-bold px-3 py-2 rounded-xl transition-all text-xs flex items-center justify-center gap-2"
                   >
-                    <i className="bi bi-download"></i> <span className="hidden sm:inline">CSV</span>
+                    <i className="bi bi-download"></i>{' '}
+                    <span className="hidden sm:inline">CSV</span>
                   </button>
                   <Link
                     href="/dashboard/administrator/general-admin/employees/moreNew"
                     className="flex-1 md:flex-none bg-background border border-input hover:bg-muted text-foreground font-bold px-3 py-2 rounded-xl transition-all text-xs flex items-center justify-center gap-2"
                   >
-                    <i className="bi bi-file-earmark-arrow-up"></i> <span className="hidden sm:inline">Masiva</span>
+                    <i className="bi bi-file-earmark-arrow-up"></i>{' '}
+                    <span className="hidden sm:inline">Masiva</span>
                   </Link>
                 </>
               )}
@@ -207,32 +272,69 @@ export default function EmployeesPage() {
                 />
               </div>
 
-              {currentUser.role === 'GENERAL_ADMIN' && (
-                <div className="w-full sm:w-auto relative">
-                  <select
-                    value={selectedCompany}
-                    onChange={(e) => setSelectedCompany(e.target.value)}
-                    className="w-full sm:w-64 appearance-none bg-background border border-input px-4 py-2.5 pr-10 rounded-xl text-sm font-semibold outline-none cursor-pointer focus:border-primary transition-all"
-                  >
-                    <option value="ALL">Todas las empresas</option>
-                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                  <i className="bi bi-building absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"></i>
-                </div>
-              )}
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                {/* Toggle activos / bajas */}
+                <button
+                  onClick={() => setShowInactive((v) => !v)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all ${
+                    showInactive
+                      ? 'bg-rose-500/10 text-rose-500 border-rose-500/30 hover:bg-rose-500/20'
+                      : 'bg-background border-input text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  <i
+                    className={`bi ${showInactive ? 'bi-person-slash' : 'bi-person-check'}`}
+                  ></i>
+                  {showInactive ? (
+                    <span>
+                      Bajas
+                      {inactiveCount > 0 && (
+                        <span className="ml-1.5 bg-rose-500 text-white rounded-full px-1.5 py-0.5 text-[10px]">
+                          {inactiveCount}
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    'Activos'
+                  )}
+                </button>
+
+                {currentUser.role === 'GENERAL_ADMIN' && (
+                  <div className="relative">
+                    <select
+                      value={selectedCompany}
+                      onChange={(e) => setSelectedCompany(e.target.value)}
+                      className="w-full sm:w-64 appearance-none bg-background border border-input px-4 py-2.5 pr-10 rounded-xl text-sm font-semibold outline-none cursor-pointer focus:border-primary transition-all"
+                    >
+                      <option value="ALL">Todas las empresas</option>
+                      {companies.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    <i className="bi bi-building absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"></i>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* TABLA RESPONSIVE */}
+            {/* TABLA */}
             <div className="overflow-x-auto scrollbar-hide">
               <table className="w-full text-left min-w-150 md:min-w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                     <th className="px-6 py-4">Usuario</th>
                     {currentUser.role === 'GENERAL_ADMIN' && (
-                      <th className="hidden lg:table-cell px-6 py-4">Empresa</th>
+                      <th className="hidden lg:table-cell px-6 py-4">
+                        Empresa
+                      </th>
                     )}
                     <th className="px-6 py-4 text-center">Rol</th>
                     <th className="hidden md:table-cell px-6 py-4">Puesto</th>
+                    <th className="hidden md:table-cell px-6 py-4 text-center">
+                      Estado
+                    </th>
                     <th className="px-6 py-4 text-right">Acciones</th>
                   </tr>
                 </thead>
@@ -240,76 +342,130 @@ export default function EmployeesPage() {
                   {loading ? (
                     [...Array(5)].map((_, i) => (
                       <tr key={i} className="animate-pulse">
-                        <td className="px-6 py-5" colSpan={5}>
+                        <td className="px-6 py-5" colSpan={6}>
                           <div className="h-4 bg-muted rounded w-3/4"></div>
                         </td>
                       </tr>
                     ))
                   ) : displayedUsers.length > 0 ? (
-                    displayedUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-muted/30 transition-colors group">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3 md:gap-4">
-                            {user.avatarUrl ? (
-                              <img
-                                src={user.avatarUrl}
-                                alt={user.name}
-                                className="w-8 h-8 md:w-10 md:h-10 rounded-xl object-cover border border-border/50 shrink-0"
-                              />
-                            ) : (
-                              <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xs md:text-sm font-bold text-primary border border-primary/20 shrink-0">
-                                {user.name?.charAt(0).toUpperCase() || 'U'}
+                    displayedUsers.map((user) => {
+                      const isInactive = user.status === 'INACTIVE';
+                      return (
+                        <tr
+                          key={user.id}
+                          className={`hover:bg-muted/30 transition-colors group ${isInactive ? 'opacity-60' : ''}`}
+                        >
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3 md:gap-4">
+                              {user.avatarUrl ? (
+                                <img
+                                  src={user.avatarUrl}
+                                  alt={user.name}
+                                  className="w-8 h-8 md:w-10 md:h-10 rounded-xl object-cover border border-border/50 shrink-0"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xs md:text-sm font-bold text-primary border border-primary/20 shrink-0">
+                                  {user.name?.charAt(0).toUpperCase() || 'U'}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-foreground truncate">
+                                  {user.name}
+                                </p>
+                                <p className="text-[11px] md:text-xs font-medium text-muted-foreground truncate">
+                                  {user.email}
+                                </p>
                               </div>
-                            )}
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold text-foreground truncate">{user.name}</p>
-                              <p className="text-[11px] md:text-xs font-medium text-muted-foreground truncate">{user.email}</p>
                             </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        {currentUser.role === 'GENERAL_ADMIN' && (
-                          <td className="hidden lg:table-cell px-6 py-4">
-                            <span className="text-[11px] font-bold text-foreground bg-muted px-2.5 py-1 rounded-md border border-border">
-                              {user.Company?.name || 'Independiente'}
+                          {currentUser.role === 'GENERAL_ADMIN' && (
+                            <td className="hidden lg:table-cell px-6 py-4">
+                              <span className="text-[11px] font-bold text-foreground bg-muted px-2.5 py-1 rounded-md border border-border">
+                                {user.Company?.name || 'Independiente'}
+                              </span>
+                            </td>
+                          )}
+
+                          <td className="px-6 py-4 text-center">
+                            <span
+                              className={`inline-block px-3 py-1 rounded-lg text-[8px] md:text-[9px] uppercase font-black tracking-widest ${ROLE_COLORS[user.role]}`}
+                            >
+                              {ROLE_LABELS[user.role] || user.role}
                             </span>
                           </td>
-                        )}
 
-                        <td className="px-6 py-4 text-center">
-                          <span className={`inline-block px-3 py-1 rounded-lg text-[8px] md:text-[9px] uppercase font-black tracking-widest ${ROLE_COLORS[user.role]}`}>
-                            {ROLE_LABELS[user.role] || user.role}
-                          </span>
-                        </td>
+                          <td className="hidden md:table-cell px-6 py-4">
+                            <span className="text-[11px] font-bold text-foreground/80 uppercase tracking-tight">
+                              {user.jobRole || (
+                                <span className="text-muted-foreground/30 italic font-normal">
+                                  Sin asignar
+                                </span>
+                              )}
+                            </span>
+                          </td>
 
-                        <td className="hidden md:table-cell px-6 py-4">
-                          <span className="text-[11px] font-bold text-foreground/80 uppercase tracking-tight">
-                            {user.jobRole || <span className="text-muted-foreground/30 italic font-normal">Sin asignar</span>}
-                          </span>
-                        </td>
+                          {/* Columna Estado */}
+                          <td className="hidden md:table-cell px-6 py-4 text-center">
+                            {isInactive ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] uppercase font-black tracking-widest bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                                Baja
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] uppercase font-black tracking-widest bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                Activo
+                              </span>
+                            )}
+                          </td>
 
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-1">
-                            <Link
-                              href={`/dashboard/administrator/general-admin/employees/${user.id}`}
-                              className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
-                            >
-                              <i className="bi bi-pencil-square"></i>
-                            </Link>
-                            <button
-                              onClick={() => setUserToDelete(user)}
-                              className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-all"
-                            >
-                              <i className="bi bi-trash"></i>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex justify-end gap-1">
+                              <Link
+                                href={`/dashboard/administrator/employees/${user.id}`}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+                              >
+                                <i className="bi bi-pencil-square"></i>
+                              </Link>
+
+                              {/* Botón dar de baja / reactivar — solo para EMPLOYEES */}
+                              {user.role === 'EMPLOYEE' && (
+                                <button
+                                  onClick={() => setUserToDeactivate(user)}
+                                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
+                                    isInactive
+                                      ? 'text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50'
+                                      : 'text-muted-foreground hover:text-amber-600 hover:bg-amber-50'
+                                  }`}
+                                  title={isInactive ? 'Reactivar' : 'Dar de baja'}
+                                >
+                                  <i
+                                    className={`bi ${isInactive ? 'bi-person-check' : 'bi-person-dash'}`}
+                                  ></i>
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => setUserToDelete(user)}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-all"
+                              >
+                                <i className="bi bi-trash"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
-                      <td colSpan={5} className="px-6 py-20 text-center text-muted-foreground font-medium">
-                        No hay usuarios que coincidan con la búsqueda
+                      <td
+                        colSpan={6}
+                        className="px-6 py-20 text-center text-muted-foreground font-medium"
+                      >
+                        {showInactive
+                          ? 'No hay empleados dados de baja'
+                          : 'No hay usuarios que coincidan con la búsqueda'}
                       </td>
                     </tr>
                   )}
@@ -320,7 +476,7 @@ export default function EmployeesPage() {
         </div>
       </main>
 
-      {/* MODAL DE ELIMINACIÓN */}
+      {/* MODAL ELIMINAR */}
       {userToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
           <div className="bg-card w-full max-w-sm rounded-[2rem] p-8 shadow-2xl border border-border animate-in zoom-in-95 duration-200">
@@ -328,9 +484,13 @@ export default function EmployeesPage() {
               <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
                 <i className="bi bi-exclamation-octagon"></i>
               </div>
-              <h3 className="text-lg font-bold text-foreground mb-2">¿Eliminar usuario?</h3>
+              <h3 className="text-lg font-bold text-foreground mb-2">
+                ¿Eliminar usuario?
+              </h3>
               <p className="text-muted-foreground text-sm mb-8">
-                Estás a punto de borrar a <strong>{userToDelete.name}</strong>. Esta acción no se puede deshacer.
+                Estás a punto de borrar a{' '}
+                <strong>{userToDelete.name}</strong>. Esta acción no se puede
+                deshacer.
               </p>
               <div className="space-y-3">
                 <button
@@ -347,6 +507,74 @@ export default function EmployeesPage() {
                   Cancelar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DAR DE BAJA / REACTIVAR */}
+      {userToDeactivate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <div className="bg-card w-full max-w-sm rounded-[2rem] p-8 shadow-2xl border border-border animate-in zoom-in-95 duration-200">
+            <div className="text-center">
+              {userToDeactivate.status === 'INACTIVE' ? (
+                <>
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i className="bi bi-person-check"></i>
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground mb-2">
+                    ¿Reactivar empleado?
+                  </h3>
+                  <p className="text-muted-foreground text-sm mb-8">
+                    <strong>{userToDeactivate.name}</strong> volverá a tener
+                    acceso a la plataforma y aparecerá como activo.
+                  </p>
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleToggleStatus}
+                      disabled={togglingStatus}
+                      className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                    >
+                      {togglingStatus ? 'Procesando...' : 'Confirmar Reactivación'}
+                    </button>
+                    <button
+                      onClick={() => setUserToDeactivate(null)}
+                      className="w-full py-3 bg-muted text-foreground rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-border transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i className="bi bi-person-dash"></i>
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground mb-2">
+                    ¿Dar de baja al empleado?
+                  </h3>
+                  <p className="text-muted-foreground text-sm mb-8">
+                    <strong>{userToDeactivate.name}</strong> quedará marcado
+                    como baja. No se eliminan sus datos y podrás reactivarlo
+                    cuando quieras.
+                  </p>
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleToggleStatus}
+                      disabled={togglingStatus}
+                      className="w-full py-3 bg-amber-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-amber-700 transition-colors disabled:opacity-50"
+                    >
+                      {togglingStatus ? 'Procesando...' : 'Confirmar Baja'}
+                    </button>
+                    <button
+                      onClick={() => setUserToDeactivate(null)}
+                      className="w-full py-3 bg-muted text-foreground rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-border transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
