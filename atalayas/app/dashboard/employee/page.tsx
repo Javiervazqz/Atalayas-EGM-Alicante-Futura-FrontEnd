@@ -45,6 +45,7 @@ export default function EmployeeDashboard() {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [lastResetDate, setLastResetDate] = useState<Date | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -132,6 +133,7 @@ export default function EmployeeDashboard() {
     try {
       const token = localStorage.getItem("token");
       setUnreadCount(0);
+      setLastResetDate(new Date());
       await fetchWithApiFallback(API_ROUTES.NOTIFICATIONS.RESET, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}` },
