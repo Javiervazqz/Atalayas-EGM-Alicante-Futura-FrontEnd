@@ -401,7 +401,6 @@ export default function CompanyAdminStatsPage() {
 
   return (
     <div className="flex min-h-screen bg-background font-sans text-foreground overflow-hidden">
-      <Sidebar role="ADMIN" />
 
       <main className="flex-1 overflow-y-auto no-scrollbar flex flex-col">
         <PageHeader 

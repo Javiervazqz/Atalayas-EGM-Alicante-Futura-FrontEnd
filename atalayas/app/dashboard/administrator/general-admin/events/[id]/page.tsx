@@ -174,13 +174,12 @@ export default function GAdminEventDetailPage() {
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f] font-sans">
-      <Sidebar role="GENERAL_ADMIN" />
 
       <main className="flex-1 overflow-auto flex flex-col no-scrollbar">
         <PageHeader
           title={event.title}
           description={`Panel de control del evento`}
-          icon={<i className="bi bi-shield-check"></i>}
+          icon={<i className="bi bi-calendar-event"></i>}
           backUrl="/dashboard/administrator/general-admin/events"
           action={
             <button onClick={() => setIsEditModalOpen(true)} className="p-3 px-6 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg cursor-pointer">

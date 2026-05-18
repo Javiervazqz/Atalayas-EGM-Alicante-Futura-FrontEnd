@@ -191,7 +191,6 @@ export default function EventDetailPage() {
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f] font-sans">
-      <Sidebar role="ADMIN" />
 
       <main className="flex-1 overflow-auto flex flex-col no-scrollbar">
         <PageHeader

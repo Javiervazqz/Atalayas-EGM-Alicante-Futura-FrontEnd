@@ -61,7 +61,6 @@ export default function EventsAdminPage() {
 
   return (
     <div className="flex h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f] overflow-hidden">
-      <Sidebar role="ADMIN" />
       <main className="flex-1 flex flex-col min-w-0 bg-white/40 dark:bg-transparent backdrop-blur-3xl overflow-hidden transition-all duration-300">
         <PageHeader 
           title="Gestión de Eventos" 

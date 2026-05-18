@@ -9,13 +9,24 @@ import { API_ROUTES } from '@/lib/utils';
 export default function GAdminNewPublicEvent() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    title: '', 
-    description: '', 
-    event_date: '', 
-    location: '', 
-    max_capacity: ''
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    event_date: "",
+    location: "",
+    max_capacity: "",
+    imageFile: null as File | null,
+    sendEmail: false,
   });
+
+   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (file) {
+      setFormData({ ...formData, imageFile: file });
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +42,8 @@ export default function GAdminNewPublicEvent() {
           Authorization: `Bearer ${token}` 
         },
         body: JSON.stringify({
-          ...form,
-          max_capacity: form.max_capacity ? parseInt(form.max_capacity) : null,
-          // CLAVE: Forzamos null para que sea un evento público/global
+          ...formData,
+          max_capacity: formData.max_capacity ? parseInt(formData.max_capacity) : null,
           companyId: null 
         })
       });
@@ -54,11 +64,11 @@ export default function GAdminNewPublicEvent() {
 
   return (
     <div className="flex h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f]">
-      <Sidebar role="GENERAL_ADMIN" />
       
       <main className="flex-1 overflow-y-auto no-scrollbar">
         <PageHeader 
-          title="Publicar Evento Global" 
+          title="Publicar Evento Público" 
+          icon={<i className="bi bi-calendar-event" />}
           description="Creación de eventos abiertos para todo el ecosistema (sin vinculación a empresa)." 
           backUrl="/dashboard/administrator/general-admin/events" 
         />
@@ -67,14 +77,7 @@ export default function GAdminNewPublicEvent() {
           <form 
             onSubmit={handleSubmit} 
             className="bg-white dark:bg-[#1c1c1e] p-10 rounded-[3rem] shadow-xl space-y-8 border border-black/5"
-          >
-            <div className="flex items-center gap-3 text-primary">
-              <i className="bi bi-globe-americas text-2xl"></i>
-              <h2 className="text-xl font-black uppercase italic tracking-tighter">
-                Nuevo Evento Público
-              </h2>
-            </div>
-            
+          >            
             <div className="grid grid-cols-2 gap-6">
               {/* Título */}
               <div className="col-span-2">
@@ -84,8 +87,8 @@ export default function GAdminNewPublicEvent() {
                   required 
                   placeholder="Ej. Networking Abierto Alicante Futura"
                   className="w-full p-4 mt-1 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-none font-bold outline-none focus:ring-2 ring-primary/20 transition-all" 
-                  value={form.title} 
-                  onChange={(e) => setForm({...form, title: e.target.value})} 
+                  value={formData.title} 
+                  onChange={(e) => setFormData({...formData, title: e.target.value})} 
                 />
               </div>
 
@@ -96,8 +99,8 @@ export default function GAdminNewPublicEvent() {
                   rows={4}
                   placeholder="Describe los objetivos y el público del evento..."
                   className="w-full p-4 mt-1 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-none font-bold outline-none focus:ring-2 ring-primary/20 transition-all" 
-                  value={form.description} 
-                  onChange={(e) => setForm({...form, description: e.target.value})} 
+                  value={formData.description} 
+                  onChange={(e) => setFormData({...formData, description: e.target.value})} 
                 />
               </div>
 
@@ -108,20 +111,20 @@ export default function GAdminNewPublicEvent() {
                   type="datetime-local" 
                   required 
                   className="w-full p-4 mt-1 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-none font-bold outline-none focus:ring-2 ring-primary/20 transition-all" 
-                  value={form.event_date} 
-                  onChange={(e) => setForm({...form, event_date: e.target.value})} 
+                  value={formData.event_date} 
+                  onChange={(e) => setFormData({...formData, event_date: e.target.value})} 
                 />
               </div>
 
               {/* Capacidad */}
               <div>
-                <label className="text-[10px] font-black uppercase opacity-40 ml-1 italic">Aforo Máximo</label>
+                <label className="text-[10px] font-black uppercase opacity-40 ml-1 italic">Aforo Máximo (opcional)</label>
                 <input 
                   type="number" 
-                  placeholder="Sin límite si está vacío"
+                  placeholder="Ej: 50..."
                   className="w-full p-4 mt-1 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-none font-bold outline-none focus:ring-2 ring-primary/20 transition-all" 
-                  value={form.max_capacity} 
-                  onChange={(e) => setForm({...form, max_capacity: e.target.value})} 
+                  value={formData.max_capacity} 
+                  onChange={(e) => setFormData({...formData, max_capacity: e.target.value})} 
                 />
               </div>
 
@@ -133,10 +136,76 @@ export default function GAdminNewPublicEvent() {
                   required 
                   placeholder="Lugar físico o URL de la reunión"
                   className="w-full p-4 mt-1 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-none font-bold outline-none focus:ring-2 ring-primary/20 transition-all" 
-                  value={form.location} 
-                  onChange={(e) => setForm({...form, location: e.target.value})} 
+                  value={formData.location} 
+                  onChange={(e) => setFormData({...formData, location: e.target.value})} 
                 />
               </div>
+
+              <div className="md:col-span-2 space-y-4">
+                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                  Imagen del Evento
+                </label>
+
+                <div className="flex flex-col items-center justify-center w-full">
+                  <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-input rounded-[2rem] cursor-pointer bg-background hover:bg-zinc-50 dark:hover:bg-white/5 transition-all overflow-hidden relative">
+                    {previewUrl ? (
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <i className="bi bi-cloud-arrow-up-fill text-4xl text-muted-foreground mb-2"></i>
+                        <p className="text-sm text-muted-foreground font-bold">
+                          Haz clic para subir una imagen
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/60 uppercase tracking-tighter">
+                          PNG, JPG o WEBP (MAX. 5MB)
+                        </p>
+                      </div>
+                    )}
+
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                  </label>
+
+                  {previewUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewUrl(null);
+                        setFormData({ ...formData, imageFile: null });
+                      }}
+                      className="mt-2 text-[10px] font-black uppercase text-red-500 hover:underline"
+                    >
+                      Eliminar imagen
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="md:col-span-2 p-6 rounded-3xl bg-primary/5 border border-primary/20 flex items-center gap-4 group transition-all hover:bg-primary/10">
+  <div className="relative flex items-center cursor-pointer">
+    <input 
+      type="checkbox" 
+      id="sendEmail"
+      checked={formData.sendEmail}
+      onChange={(e) => setFormData({...formData, sendEmail: e.target.checked})}
+      className="peer h-6 w-6 cursor-pointer appearance-none rounded-md border border-primary/50 transition-all checked:border-primary checked:bg-primary"
+    />
+    <i className="bi bi-check text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 pointer-events-none"></i>
+  </div>
+  
+  <label htmlFor="sendEmail" className="cursor-pointer select-none">
+    <p className="text-sm font-black text-primary uppercase tracking-tighter">Notificar por email</p>
+    <p className="text-[10px] text-primary/60 font-medium">Se enviará un correo de aviso sobre el evento a todos los usuarios.</p>
+  </label>
+</div>
             </div>
 
             {/* Botón de acción */}

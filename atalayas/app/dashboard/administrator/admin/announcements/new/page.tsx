@@ -18,7 +18,9 @@ export default function NewAnnouncementPage() {
   const [formData, setFormData] = useState({ 
     title: "", 
     content: "", 
-    imageFile: null as File | null 
+    imageFile: null as File | null,
+    sendEmail: false,
+
   });
 
   const user = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user") || "{}") : {};
@@ -58,6 +60,8 @@ export default function NewAnnouncementPage() {
       if (formData.imageFile) {
         data.append("image", formData.imageFile);
       }
+       data.append("sendEmail", String(formData.sendEmail));
+
 
       const res = await fetch(API_ROUTES.ANNOUNCEMENTS.CREATE, {
         method: "POST",
@@ -80,7 +84,6 @@ export default function NewAnnouncementPage() {
 
   return (
     <div className="flex min-h-screen bg-background font-sans">
-      <Sidebar role="ADMIN" />
       <main className="flex-1 overflow-auto flex flex-col">
         <PageHeader 
           title="Nuevo Comunicado"
@@ -156,6 +159,23 @@ export default function NewAnnouncementPage() {
                 )}
               </label>
             </div>
+              <div className="md:col-span-2 p-6 rounded-3xl bg-primary/5 border border-primary/20 flex items-center gap-4 group transition-all hover:bg-primary/10">
+  <div className="relative flex items-center cursor-pointer">
+    <input 
+      type="checkbox" 
+      id="sendEmail"
+      checked={formData.sendEmail}
+      onChange={(e) => setFormData({...formData, sendEmail: e.target.checked})}
+      className="peer h-6 w-6 cursor-pointer appearance-none rounded-md border border-primary/50 transition-all checked:border-primary checked:bg-primary"
+    />
+    <i className="bi bi-check text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 pointer-events-none"></i>
+  </div>
+  
+  <label htmlFor="sendEmail" className="cursor-pointer select-none">
+    <p className="text-sm font-black text-primary uppercase tracking-tighter">Notificar por email</p>
+    <p className="text-[10px] text-primary/60 font-medium">Se enviará un correo de aviso sobre el anuncio a todos los empleados.</p>
+  </label>
+</div>
 
             <button 
               type="submit" 

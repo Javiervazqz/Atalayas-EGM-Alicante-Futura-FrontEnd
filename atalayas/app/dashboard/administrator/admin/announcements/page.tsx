@@ -19,6 +19,26 @@ interface Announcement {
   Company?: { id: string; name: string } | null;
 }
 
+// --- Componente: Skeleton para el Loading ---
+function AnnouncementSkeleton() {
+  return (
+    <div className="bg-white dark:bg-[#1c1c1e] rounded-[2.5rem] border border-gray-100 dark:border-white/5 overflow-hidden shadow-sm animate-pulse flex flex-col">
+      <div className="h-40 bg-gray-200 dark:bg-zinc-800" />
+      <div className="p-6 space-y-4">
+        <div className="h-4 bg-gray-200 dark:bg-zinc-800 rounded-full w-3/4" />
+        <div className="space-y-2">
+          <div className="h-3 bg-gray-100 dark:bg-zinc-800/50 rounded-full w-full" />
+          <div className="h-3 bg-gray-100 dark:bg-zinc-800/50 rounded-full w-5/6" />
+        </div>
+        <div className="pt-4 border-t border-gray-50 dark:border-white/5 flex justify-between">
+          <div className="h-3 bg-gray-100 dark:bg-zinc-800/50 rounded-full w-20" />
+          <div className="h-3 bg-gray-100 dark:bg-zinc-800/50 rounded-full w-4" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // --- Componente: Carrusel Premium ---
 function AnnouncementCarousel({ 
   items, 
@@ -73,9 +93,8 @@ function AnnouncementCarousel({
                 className="absolute inset-0 bg-cover bg-center transition-transform duration-[5s] ease-out group-hover:scale-110"
                 style={{ backgroundImage: `url(${actualAnuncio.imageUrl || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop'})` }}
               />
-              <div className="absolute inset-0 bg-linea-to-r from-black/90 via-black/40 to-transparent z-10" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent z-10" />
               
-              {/* Botones de acción (Solo si NO es público) */}
               {!actualAnuncio.isPublic && (
                 <div className="absolute top-8 right-8 z-40 flex gap-3">
                   <button 
@@ -111,7 +130,6 @@ function AnnouncementCarousel({
             </motion.div>
           </AnimatePresence>
 
-          {/* Navegación lateral */}
           <button onClick={(e) => { e.stopPropagation(); prevSlide(); }} className="absolute left-4 inset-y-0 z-30 flex items-center bg-transparent border-none text-white/20 hover:text-white transition-all duration-300">
             <i className="bi bi-chevron-left text-5xl font-thin"></i>
           </button>
@@ -140,7 +158,7 @@ function AnnouncementModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
       <div className="bg-white dark:bg-[#1c1c1e] w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/10">
         <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center">
           <h2 className="text-xl font-black tracking-tight">{initialData ? 'Editar Anuncio' : 'Nuevo Anuncio'}</h2>
@@ -208,7 +226,10 @@ export default function AnnouncementsPage() {
       });
       setAnnouncements(Array.isArray(data) ? data : []);
     } catch (err) { console.error(err); } 
-    finally { setLoading(false); }
+    finally { 
+      // Pequeño timeout para que la transición no sea brusca
+      setTimeout(() => setLoading(false), 500); 
+    }
   };
 
   const handleSave = async (formData: any) => {
@@ -255,7 +276,6 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="flex h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f] overflow-hidden">
-      <Sidebar role="ADMIN" />
       <main className="flex-1 flex flex-col min-w-0 bg-white/40 dark:bg-transparent backdrop-blur-3xl">
         <PageHeader 
           title="Anuncios y Noticias" 
@@ -277,60 +297,76 @@ export default function AnnouncementsPage() {
         <div className="flex-1 overflow-y-auto p-6 lg:p-10 no-scrollbar">
           <div className="max-w-7xl mx-auto space-y-12">
             
-            {!searchQuery && currentPage === 1 && !loading && announcements.length > 0 && (
-                <AnnouncementCarousel 
-                    items={announcements.slice(0, 5)} 
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                />
+            {/* Carrusel con Loading State */}
+            {!searchQuery && currentPage === 1 && (
+              loading ? (
+                <div className="w-full aspect-video md:aspect-21/9 lg:aspect-25/8 rounded-[3.5rem] bg-gray-200 dark:bg-zinc-900 animate-pulse" />
+              ) : (
+                announcements.length > 0 && (
+                  <AnnouncementCarousel 
+                      items={announcements.slice(0, 5)} 
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                  />
+                )
+              )
             )}
 
             <div className="space-y-6">
                 <div className="flex justify-between items-end px-4">
                   <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">Historial de anuncios</h3>
-                  <p className="text-[10px] font-bold text-muted-foreground/40">Pág {currentPage} de {totalPages || 1}</p>
+                  <p className="text-[10px] font-bold text-muted-foreground/40">
+                    {loading ? "Cargando..." : `Pág ${currentPage} de ${totalPages || 1}`}
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {currentItems.map((ann) => (
-                    <div 
-                      key={ann.id}
-                      onClick={() => router.push(`/dashboard/administrator/admin/announcements/${ann.id}`)}
-                      className="group bg-white dark:bg-[#1c1c1e] rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-xl transition-all cursor-pointer overflow-hidden flex flex-col"
-                    >
-                      <div className="h-40 relative">
-                        <img src={ann.imageUrl || 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2069&auto=format&fit=crop'} className="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-500" />
-                        
-                        {!ann.isPublic && (
-                          <div className="absolute top-4 right-4 flex gap-2">
-                            <button onClick={(e) => handleEdit(e, ann)} className="w-8 h-8 rounded-full bg-black/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-primary transition-colors shadow-lg">
-                              <i className="bi bi-pencil-fill text-[10px]" />
-                            </button>
-                            <button onClick={(e) => handleDelete(e, ann.id)} className="w-8 h-8 rounded-full bg-black/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-red-500 transition-colors shadow-lg">
-                              <i className="bi bi-trash3 text-[10px]" />
-                            </button>
-                          </div>
-                        )}
+                  {loading ? (
+                    // Mostrar 6 Skeletons mientras carga
+                    Array.from({ length: 6 }).map((_, i) => <AnnouncementSkeleton key={i} />)
+                  ) : (
+                    currentItems.map((ann) => (
+                      <motion.div 
+                        key={ann.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onClick={() => router.push(`/dashboard/administrator/admin/announcements/${ann.id}`)}
+                        className="group bg-white dark:bg-[#1c1c1e] rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-xl transition-all cursor-pointer overflow-hidden flex flex-col"
+                      >
+                        <div className="h-40 relative">
+                          <img src={ann.imageUrl || 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2069&auto=format&fit=crop'} className="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-500" />
+                          
+                          {!ann.isPublic && (
+                            <div className="absolute top-4 right-4 flex gap-2">
+                              <button onClick={(e) => handleEdit(e, ann)} className="w-8 h-8 rounded-full bg-black/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-primary transition-colors shadow-lg">
+                                <i className="bi bi-pencil-fill text-[10px]" />
+                              </button>
+                              <button onClick={(e) => handleDelete(e, ann.id)} className="w-8 h-8 rounded-full bg-black/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-red-500 transition-colors shadow-lg">
+                                <i className="bi bi-trash3 text-[10px]" />
+                              </button>
+                            </div>
+                          )}
 
-                        <div className="absolute bottom-4 left-4">
-                          <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-tighter backdrop-blur-md text-white border border-white/20 ${ann.isPublic ? 'bg-blue-500/40' : 'bg-purple-500/40'}`}>
-                            {ann.isPublic ? 'Global' : ann.Company?.name}
-                          </span>
+                          <div className="absolute bottom-4 left-4">
+                            <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-tighter backdrop-blur-md text-white border border-white/20 ${ann.isPublic ? 'bg-blue-500/40' : 'bg-purple-500/40'}`}>
+                              {ann.isPublic ? 'Global' : ann.Company?.name}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="p-6">
-                        <h4 className="font-bold text-base mb-2 group-hover:text-primary transition-colors line-clamp-1">{ann.title}</h4>
-                        <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed mb-4">{ann.content}</p>
-                        <div className="pt-4 border-t border-gray-50 dark:border-white/5 flex justify-between items-center text-[10px] font-bold text-muted-foreground/40">
-                          <span>{new Date(ann.createdAt).toLocaleDateString()}</span>
-                          <i className="bi bi-arrow-right text-primary opacity-0 group-hover:opacity-100 transition-all" />
+                        <div className="p-6">
+                          <h4 className="font-bold text-base mb-2 group-hover:text-primary transition-colors line-clamp-1">{ann.title}</h4>
+                          <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed mb-4">{ann.content}</p>
+                          <div className="pt-4 border-t border-gray-50 dark:border-white/5 flex justify-between items-center text-[10px] font-bold text-muted-foreground/40">
+                            <span>{new Date(ann.createdAt).toLocaleDateString()}</span>
+                            <i className="bi bi-arrow-right text-primary opacity-0 group-hover:opacity-100 transition-all" />
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      </motion.div>
+                    ))
+                  )}
                 </div>
 
-                {totalPages > 1 && (
+                {!loading && totalPages > 1 && (
                   <div className="flex justify-center items-center gap-2 pt-6">
                     <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1} className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 border border-gray-100 flex items-center justify-center disabled:opacity-20 transition-all hover:border-primary">
                       <i className="bi bi-chevron-left" />

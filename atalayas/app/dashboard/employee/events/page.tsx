@@ -67,7 +67,6 @@ export default function EmployeeEventsPage() {
 
   return (
     <div className="flex h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f] overflow-hidden">
-      <Sidebar role="EMPLOYEE" />
       
       <main className="flex-1 flex flex-col min-w-0 bg-white/40 dark:bg-transparent backdrop-blur-3xl">
         <PageHeader 

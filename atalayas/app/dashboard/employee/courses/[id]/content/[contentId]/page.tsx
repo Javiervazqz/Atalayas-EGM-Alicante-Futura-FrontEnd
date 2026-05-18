@@ -141,7 +141,6 @@ export default function EmployeeContentDetail() {
 
   return (
     <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
-      <Sidebar role="EMPLOYEE" />
 
       <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
         <PageHeader
