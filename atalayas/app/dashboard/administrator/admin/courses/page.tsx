@@ -96,7 +96,6 @@ function AdminCoursePageContent() {
 
     return (
         <div className="flex min-h-screen bg-background font-sans text-foreground">
-            <Sidebar role="ADMIN" />
 
             <main className="flex-1 overflow-auto flex flex-col relative">
                 <PageHeader

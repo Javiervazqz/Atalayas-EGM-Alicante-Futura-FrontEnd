@@ -78,7 +78,6 @@ export default function NewEventPage() {
 
   return (
     <div className="flex min-h-screen bg-background font-sans">
-      <Sidebar role="ADMIN" />
       <main className="flex-1 flex flex-col">
         <PageHeader
           title="Crear Evento"
@@ -123,22 +122,6 @@ export default function NewEventPage() {
                     setFormData({ ...formData, event_date: e.target.value })
                   }
                   className="w-full px-6 py-4 rounded-2xl bg-background border border-input focus:border-primary outline-none font-bold"
-                />
-              </div>
-
-              {/* Aforo */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">
-                  Capacidad Máxima
-                </label>
-                <input
-                  type="number"
-                  value={formData.max_capacity}
-                  onChange={(e) =>
-                    setFormData({ ...formData, max_capacity: e.target.value })
-                  }
-                  className="w-full px-6 py-4 rounded-2xl bg-background border border-input focus:border-primary outline-none font-bold"
-                  placeholder="Ej: 50"
                 />
               </div>
 

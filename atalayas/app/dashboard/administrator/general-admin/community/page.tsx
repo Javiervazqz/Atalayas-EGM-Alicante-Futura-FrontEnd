@@ -106,13 +106,12 @@ export default function EcosystemPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background font-sans text-foreground">
-      <Sidebar role="GENERAL_ADMIN" />
 
       <main className="flex-1 overflow-y-auto flex flex-col relative no-scrollbar">
         <PageHeader 
           title="Ecosistema de Proximidad"
           description="Gestiona las entidades y colaboradores clave que forman parte del ecosistema EGM."
-          icon={<i className="bi bi-globe-americas"></i>}
+          icon={<i className="bi bi-diagram-3-fill"></i>}
           action={
             <Link 
               href="/dashboard/administrator/general-admin/community/new"

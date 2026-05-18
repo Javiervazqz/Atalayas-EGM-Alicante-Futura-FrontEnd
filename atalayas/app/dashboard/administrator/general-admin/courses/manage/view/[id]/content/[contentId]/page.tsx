@@ -113,7 +113,6 @@ export default function GeneralAdminContentDetail() {
 
   return (
     <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
-      <Sidebar role="GENERAL_ADMIN" />
 
       <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
         <PageHeader

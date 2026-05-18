@@ -78,18 +78,18 @@ export default function NotificationBell({ unreadCount, onReset, latestItems }: 
               </div>
               
               {/* Lista de Items */}
-              <div className="max-h-[400px] overflow-y-auto no-scrollbar py-2">
+              <div className="max-h-100 overflow-y-auto no-scrollbar">
                 {latestItems.length > 0 ? (
                   latestItems.map((item) => (
                     <Link
                     key={`${item.type}-${item.id}`}
                       href={item.href || '#'} 
                       onClick={() => setIsOpen(false)}
-                      className="block p-5 border-b border-white/5 hover:bg-white/5 transition-colors group"
+                      className="block py-1 border-b border-grey hover:bg-white/5 transition-colors group"
                     >
                     <div 
                       key={`${item.type}-${item.id}`} 
-                      className="group relative px-6 py-5 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-all cursor-pointer border-b border-slate-50 dark:border-white/[0.05] last:border-0"
+                      className="group relative px-6 py-2 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-all cursor-pointer border-b border-slate-50 dark:border-white/[0.05] last:border-0"
                     >
                       {/* Indicador lateral */}
                       <div className={`absolute left-0 top-6 bottom-6 w-1 rounded-r-full ${

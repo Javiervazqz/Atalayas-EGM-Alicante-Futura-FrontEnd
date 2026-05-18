@@ -71,7 +71,6 @@ export default function AdminCourseDetailPage() {
 
   return (
     <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden transition-colors duration-300">
-      <Sidebar role="ADMIN" />
 
       <main className="flex-1 overflow-auto flex flex-col relative">
         {loading ? (

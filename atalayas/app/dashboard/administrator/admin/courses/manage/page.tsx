@@ -172,7 +172,6 @@ export default function ManageCourses() {
 
   return (
     <div className="flex min-h-screen bg-background font-sans relative">
-      <Sidebar role="ADMIN" />
       <main className="flex-1 overflow-auto flex flex-col relative">
         <PageHeader
           title="Gestión de Contenido"

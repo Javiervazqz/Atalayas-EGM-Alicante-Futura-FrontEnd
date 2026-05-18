@@ -43,7 +43,6 @@ export default function GeneralAdminCourses() {
   return (
     // bg-muted/30 para dar contraste premium
     <div className="flex min-h-screen bg-muted/30 font-sans text-foreground transition-colors duration-300">
-      <Sidebar role="GENERAL_ADMIN" />
 
       <main className="flex-1 overflow-auto flex flex-col relative">
         {/* ── HEADER PREMIUM ── */}

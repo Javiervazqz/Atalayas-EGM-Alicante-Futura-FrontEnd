@@ -223,7 +223,6 @@ export default function AdminContentDetail() {
 
   return (
     <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
-      <Sidebar role="ADMIN" />
 
       {/* ── Main area: on mobile fills full width ── */}
       <main className="flex-1 flex flex-col min-w-0 relative overflow-hidden">

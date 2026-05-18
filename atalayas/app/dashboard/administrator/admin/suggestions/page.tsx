@@ -142,7 +142,6 @@ export default function AdminSuggestionsPage() {
 
   return (
     <div className="flex min-h-screen bg-background font-sans text-foreground">
-      <Sidebar role="ADMIN" />
       
       {/* Scroll natural sin barras visibles */}
       <main className="flex-1 flex flex-col relative overflow-y-auto no-scrollbar">

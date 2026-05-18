@@ -182,7 +182,6 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background font-sans">
-      <Sidebar role="EMPLOYEE" />
 
       <motion.main
         initial={{ opacity: 0, y: 5 }}

@@ -52,13 +52,12 @@ export default function GAdminPublicEventsPage() {
 
   return (
     <div className="flex h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f] overflow-hidden">
-      <Sidebar role="GENERAL_ADMIN" />
       
       <main className="flex-1 flex flex-col min-w-0">
         <PageHeader 
           title="Eventos Públicos" 
           description="Gestión exclusiva de eventos globales del ecosistema (Sin empresa asignada)."
-          icon={<i className="bi bi-globe-americas" />}
+          icon={<i className="bi bi-calendar-event" />}
           action={
             <div className="flex gap-4">
               <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar evento público..." />

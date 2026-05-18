@@ -92,7 +92,7 @@ export default function DocumentsExplorerPage() {
         <PageHeader 
           title="Centro de Documentos"
           description="Gestiona y visualiza la documentación oficial."
-          icon={<i className="bi bi-folder2-open"></i>}
+          icon={<i className="bi bi-folder-fill"></i>}
           action={
             (currentUser.role === 'ADMIN' || currentUser.role === 'GENERAL_ADMIN') && (
               <Link href="/dashboard/documents/new">
