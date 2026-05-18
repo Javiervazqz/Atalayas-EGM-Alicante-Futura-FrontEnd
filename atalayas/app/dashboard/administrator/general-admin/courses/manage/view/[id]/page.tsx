@@ -71,7 +71,6 @@ export default function GeneralAdminCourseManagePage() {
 
   return (
     <div className="flex h-screen bg-background font-sans text-foreground overflow-hidden">
-      <Sidebar role="GENERAL_ADMIN" />
 
       <main className="flex-1 overflow-auto flex flex-col relative">
         {loading ? (

@@ -52,7 +52,6 @@ export default function ServicesPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-background font-sans text-foreground overflow-hidden">
-      <Sidebar role='ADMIN' />
 
       <main className="flex-1 flex flex-col relative w-full overflow-y-auto overflow-x-hidden no-scrollbar">
         
@@ -67,7 +66,7 @@ export default function ServicesPage() {
           backUrl="/dashboard/administrator/admin"
           action={
             <Link href="/dashboard/administrator/admin/services/new"
-              className="bg-secondary text-secondary-foreground px-4 py-2 rounded-xl text-[10px] sm:text-xs font-semibold hover:opacity-90 transition-all shadow-sm flex items-center justify-center gap-2 shrink-0"
+              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
             >
               <i className="bi bi-plus-lg text-sm"></i>
               <span className="hidden sm:inline">Nuevo Servicio</span>

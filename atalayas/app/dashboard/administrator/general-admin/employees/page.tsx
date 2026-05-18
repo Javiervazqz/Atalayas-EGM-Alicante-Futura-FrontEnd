@@ -212,7 +212,6 @@ export default function EmployeesPage() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-background font-sans text-foreground">
-      <Sidebar role={currentUser.role} />
 
       <main className="flex-1 overflow-x-hidden flex flex-col relative">
         <PageHeader
@@ -239,7 +238,7 @@ export default function EmployeesPage() {
                     <span className="hidden sm:inline">CSV</span>
                   </button>
                   <Link
-                    href="/dashboard/administrator/employees/moreNew"
+                    href="/dashboard/administrator/general-admin/employees/moreNew"
                     className="flex-1 md:flex-none bg-background border border-input hover:bg-muted text-foreground font-bold px-3 py-2 rounded-xl transition-all text-xs flex items-center justify-center gap-2"
                   >
                     <i className="bi bi-file-earmark-arrow-up"></i>{' '}
@@ -248,8 +247,8 @@ export default function EmployeesPage() {
                 </>
               )}
               <Link
-                href="/dashboard/administrator/employees/new"
-                className="w-full md:w-auto bg-secondary hover:opacity-90 text-secondary-foreground font-bold px-4 py-2 rounded-xl transition-opacity text-xs shadow-sm flex items-center justify-center gap-2"
+                href="/dashboard/administrator/general-admin/employees/new"
+              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
               >
                 <i className="bi bi-person-plus-fill"></i> Nuevo
               </Link>
@@ -322,7 +321,7 @@ export default function EmployeesPage() {
 
             {/* TABLA */}
             <div className="overflow-x-auto scrollbar-hide">
-              <table className="w-full text-left min-w-[600px] md:min-w-full">
+              <table className="w-full text-left min-w-150 md:min-w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                     <th className="px-6 py-4">Usuario</th>

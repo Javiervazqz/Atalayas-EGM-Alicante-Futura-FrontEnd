@@ -5,8 +5,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-//const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://zoological-passion-atalayas.up.railway.app";
-const BASE_URL = "http://localhost:3000";
+/*const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://zoological-passion-atalayas.up.railway.app";*/
+const BASE_URL = "http://localhost:3000"
 
 export const API_ROUTES = {
   AUTH: {
@@ -51,11 +51,17 @@ export const API_ROUTES = {
       `${BASE_URL}/courses/${courseId}/content/${contentId}`,
     DELETE: (courseId: string, contentId: string) =>
       `${BASE_URL}/courses/${courseId}/content/${contentId}`,
+    VIEW: (courseId: string, contentId: string) =>
+      `${BASE_URL}/courses/${courseId}/content/${contentId}/view`,
+    COMPLETE_LAB: (courseId: string, contentId: string) =>
+      `${BASE_URL}/courses/${courseId}/content/${contentId}/complete-lab`,
   },
   ANNOUNCEMENTS: {
     GET_ALL: `${BASE_URL}/announcement`,
     CREATE: `${BASE_URL}/announcement`,
     GET_BY_ID: (id: string) => `${BASE_URL}/announcement/${id}`,
+    UPDATE: (id: string) => `${BASE_URL}/announcement/${id}`,
+    DELETE: (id: string) => `${BASE_URL}/announcement/${id}`,
   },
   COMPANY_REQUESTS: {
     CREATE: `${BASE_URL}/company-request`,
@@ -104,6 +110,20 @@ export const API_ROUTES = {
   ACTIVITY: {
     GET_MY: (limit = 5) => `${BASE_URL}/activity/me?limit=${limit}`,
   },
+
+  EVENTS: {
+    CREATE: `${BASE_URL}/events`,
+    GET_ALL: `${BASE_URL}/events`,
+    GET_BY_ID: (id: string) => `${BASE_URL}/events/${id}`,
+    UPDATE: (id: string) => `${BASE_URL}/events/${id}`,
+    DELETE: (id: string) => `${BASE_URL}/events/${id}`,
+  },
+
+  NOTIFICATIONS: {
+    RESET: `${BASE_URL}/notifications/reset-count`,
+    COUNT: `${BASE_URL}/notifications/unread-count`,
+
+  }
 };
 
 // Agrega esto al final de tu archivo @/lib/utils.ts

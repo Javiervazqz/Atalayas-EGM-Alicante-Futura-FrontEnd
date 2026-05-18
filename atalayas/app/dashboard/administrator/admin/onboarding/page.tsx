@@ -128,14 +128,12 @@ export default function OnboardingConfig() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-background font-sans text-foreground">
-      <Sidebar role="ADMIN" />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <PageHeader 
           title="Onboarding"
           description="Diseña el plan de bienvenida."
           icon={<i className="bi bi-rocket-takeoff"></i>}
-          backUrl="/dashboard/administrator/admin"
           action={
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               {showSuccess && (
@@ -146,7 +144,7 @@ export default function OnboardingConfig() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="inline-flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-50 shadow-sm"
+              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
               >
                 {saving ? <i className="bi bi-arrow-repeat animate-spin"></i> : <i className="bi bi-cloud-check"></i>}
                 <span>{saving ? "Guardando..." : "Guardar Plan"}</span>

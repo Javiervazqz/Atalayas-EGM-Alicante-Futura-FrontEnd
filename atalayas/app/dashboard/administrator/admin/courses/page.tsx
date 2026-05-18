@@ -96,7 +96,6 @@ function AdminCoursePageContent() {
 
     return (
         <div className="flex min-h-screen bg-background font-sans text-foreground">
-            <Sidebar role="ADMIN" />
 
             <main className="flex-1 overflow-auto flex flex-col relative">
                 <PageHeader
@@ -174,7 +173,7 @@ function AdminCoursePageContent() {
                         >
                             {loading ? (
                                 Array.from({ length: 4 }).map((_, i) => (
-                                    <div key={i} className="h-[350px] bg-card rounded-[2.5rem] border border-border animate-pulse shadow-sm" />
+                                    <div key={i} className="h-87.5 bg-card rounded-[2.5rem] border border-border animate-pulse shadow-sm" />
                                 ))
                             ) : filtered.length === 0 ? (
                                 <div className="col-span-full py-20 text-center bg-card border-2 border-dashed border-border rounded-[2.5rem]">

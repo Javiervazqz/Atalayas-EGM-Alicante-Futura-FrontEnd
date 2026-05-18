@@ -110,7 +110,6 @@ export default function GeneralAdminSuggestionsPage() {
 
   return (
     <div className="flex min-h-screen bg-muted/30 font-sans text-foreground transition-colors duration-300">
-      <Sidebar role="GENERAL_ADMIN" />
 
       <main className="flex-1 flex flex-col overflow-hidden">
         <PageHeader

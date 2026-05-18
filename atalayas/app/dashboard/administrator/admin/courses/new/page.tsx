@@ -70,7 +70,6 @@ export default function NewCoursePage() {
 
   return (
     <div className="flex min-h-screen bg-background font-sans">
-      <Sidebar role="ADMIN" />
       <main className="flex-1 overflow-auto flex flex-col">
         <PageHeader 
           title="Nuevo Curso"

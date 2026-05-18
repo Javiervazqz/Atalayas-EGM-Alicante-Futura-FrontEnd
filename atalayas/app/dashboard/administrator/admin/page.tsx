@@ -168,7 +168,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex min-h-screen bg-background font-sans">
-      <Sidebar role="ADMIN" />
 
       <main className="flex-1 overflow-auto flex flex-col">
         <PageHeader
@@ -259,7 +258,7 @@ export default function AdminDashboard() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-foreground truncate">{course.title}</p>
-                            <p className="text-[11px] text-muted-foreground">{enrolled} inscrito(s)</p>
+                            {/*<p className="text-[11px] text-muted-foreground">{enrolled} inscrito(s)</p>*/}
                           </div>
                           {enrolled > 0 && (
                             <div className="flex items-center gap-2 shrink-0">

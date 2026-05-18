@@ -14,14 +14,15 @@ type NavGroup = { group: string; items: NavItem[] };
 const navItems = {
   GENERAL_ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/general-admin', icon: <i className="bi bi-grid-fill"></i> },
-    { label: 'Perfil Empresa', href: '/dashboard/administrator/general-admin/company', icon: <i className="bi bi-building-gear"></i> },
+    { label: 'Perfil Empresa', href: '/dashboard/administrator/general-admin/company', icon: <i className="bi bi-building-fill"></i> },
     { label: 'Empresas', href: '/dashboard/administrator/general-admin/companies', icon: <i className="bi bi-buildings-fill"></i> },
-    { label: 'Usuarios', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
+    { label: 'Usuarios', href: '/dashboard/administrator/general-admin/employees', icon: <i className="bi bi-people-fill"></i>},
     { label: 'Cursos', href: '/dashboard/administrator/general-admin/courses/manage', icon: <i className="bi bi-journal-bookmark-fill"></i> },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder-fill"></i> },
+    { label: 'Documentos', href: '/dashboard/administrator/general-admin/documents', icon: <i className="bi bi-folder-fill"></i> },
     { label: 'Servicios', href: '/dashboard/administrator/general-admin/services', icon: <i className="bi bi-briefcase-fill"></i> },
     { label: 'Anuncios', href: '/dashboard/administrator/general-admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
-    { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-globe-americas"></i>},
+    { label: 'Eventos', href: '/dashboard/administrator/general-admin/events', icon: <i className="bi bi-calendar-event-fill"></i> },
+    { label: 'Ecosistema', href: '/dashboard/administrator/general-admin/community', icon: <i className="bi bi-diagram-3-fill"></i>},
     { label: 'Solicitudes', href: '/dashboard/administrator/general-admin/company-request', icon: <i className="bi bi-envelope-open-fill "></i> },
     { label: 'Sugerencias', href: '/dashboard/administrator/general-admin/suggestions', icon: <i className="bi bi-mailbox2"></i>},
     /* label: 'Matriculación masiva', href: '/dashboard/administrator/bulk-enroll', icon: <i className="bi bi-bar-chart-fill"></i> */
@@ -30,13 +31,14 @@ const navItems = {
   ADMIN: [
     { label: 'Panel', href: '/dashboard/administrator/admin', icon: <i className="bi bi-house-fill"></i> },
     { label: 'Mi Empresa', href: '/dashboard/administrator/admin/company', icon: <i className="bi bi-building-fill"></i> },
-    { label: 'Empleados', href: '/dashboard/administrator/employees', icon: <i className="bi bi-people-fill"></i>},
-    { label: 'Onboarding', href: '/dashboard/administrator/onboarding', icon: <i className="bi bi-person-walking"></i>},
+    { label: 'Empleados', href: '/dashboard/administrator/admin/employees', icon: <i className="bi bi-people-fill"></i>},
+    { label: 'Onboarding', href: '/dashboard/administrator/admin/onboarding', icon: <i className="bi bi-person-walking"></i>},
     { label: 'Cursos', href: '/dashboard/administrator/admin/courses/manage', icon: <i className="bi bi-mortarboard-fill"></i> },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-file-earmark-text-fill"></i> },
+    { label: 'Documentos', href: '/dashboard/administrator/admin/documents', icon: <i className="bi bi-file-earmark-text-fill"></i> },
     { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill"></i> },
     { label: 'Anuncios', href: '/dashboard/administrator/admin/announcements', icon: <i className="bi bi-megaphone-fill"></i> },
-    { label: 'Ecosistema', href: '/dashboard/administrator/admin/community', icon: <i className="bi bi-globe-americas"></i>},
+    { label: 'Eventos', href: '/dashboard/administrator/admin/events', icon: <i className="bi bi-calendar-event-fill"></i> },
+    { label: 'Ecosistema', href: '/dashboard/administrator/admin/community', icon: <i className="bi bi-diagram-3-fill"></i>},
     { label: 'Sugerencias', href: '/dashboard/administrator/admin/suggestions', icon: <i className="bi bi-mailbox"></i>},
     { label: 'Estadísticas', href: '/dashboard/administrator/admin/stats', icon: <i className="bi bi-bar-chart-fill"></i> },
 
@@ -45,10 +47,11 @@ const navItems = {
     { label: 'Panel', href: '/dashboard/employee', icon: <i className="bi bi-grid-fill"></i> },
     { label: 'Onboarding', href: '/dashboard/employee/onboarding', icon: <i className="bi bi-rocket-takeoff-fill"></i> },
     { label: 'Mis Cursos', href: '/dashboard/employee/courses', icon: <i className="bi bi-journal-bookmark-fill"></i> },
-    { label: 'Documentos', href: '/dashboard/documents', icon: <i className="bi bi-folder-fill"></i> },
+    { label: 'Documentos', href: '/dashboard/employee/documents', icon: <i className="bi bi-folder-fill"></i> },
     { label: 'Servicios', href: '/dashboard/employee/services', icon: <i className="bi bi-briefcase-fill"></i> },
     { label: 'Anuncios', href: '/dashboard/employee/announcements', icon: <i className="bi bi-megaphone-fill "></i> },
-    { label: 'Ecosistema', href: '/dashboard/employee/community', icon: <i className="bi bi-globe-americas"></i>},
+    { label: 'Eventos', href: '/dashboard/employee/events', icon: <i className="bi bi-calendar-event-fill"></i> },
+    { label: 'Ecosistema', href: '/dashboard/employee/community', icon: <i className="bi bi-diagram-3-fill"></i>},
     { label: 'Sugerencias', href: '/dashboard/employee/suggestions', icon: <i className="bi bi-mailbox2"></i>},
   ],
   PUBLIC: [
@@ -144,16 +147,19 @@ export default function Sidebar({ role }: SidebarProps) {
   };
 
   const checkActive = (href: string) => {
-  // Coincidencia exacta
+  // 1. Si son exactamente iguales, activo (esto sirve para todas)
   if (pathname === href) return true;
-  
-  // Evitar que "Panel" marque todo como activo si es solo "/"
-  if (href === '/dashboard/administrator/admin' || href === '/dashboard/employee') {
-     return pathname === href;
+
+  // 2. Definimos qué rutas NO deben usar "startsWith" para evitar el efecto cascada
+  const isPanel = href.endsWith('/admin') || href.endsWith('/general-admin') || href.endsWith('/employee');
+
+  if (isPanel) {
+    return pathname === href; // Coincidencia estricta para el Panel
   }
 
-  // Si la ruta actual empieza por el href y no es la raíz del dashboard
-  return href !== '/dashboard' && pathname.startsWith(href) && pathname[href.length] === '/';
+  // 3. Para lo demás (Cursos, Empresas, etc.), permitimos que se mantengan 
+  // activos si estamos en una sub-ruta (ej: /companies/edit/123)
+  return pathname.startsWith(href);
 };
 
   if (!mounted) return null;
@@ -181,7 +187,7 @@ export default function Sidebar({ role }: SidebarProps) {
 
       {/* Estructura del Aside Corregida */}
       <aside className={`
-        fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border flex flex-col transition-all duration-300 z-10001 shrink-0 font-sans
+        fixed lg:sticky top-0 left-0 h-screen bg-card border-r border-border flex flex-col transition-[width, transform] duration-300 z-10001 shrink-0 font-sans
         ${mobileOpen ? 'translate-x-0 w-70' : '-translate-x-full lg:translate-x-0'}
         ${collapsed ? 'w-16 lg:w-16' : 'w-60'}
       `}>

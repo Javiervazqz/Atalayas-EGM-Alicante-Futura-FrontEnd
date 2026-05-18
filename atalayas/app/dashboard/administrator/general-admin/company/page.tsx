@@ -168,7 +168,6 @@ export default function CompanyProfilePage() {
 
   return (
     <div className="flex min-h-screen bg-muted/30 font-sans text-foreground transition-colors duration-300">
-      <Sidebar role={currentUser.role} />
       
       <main className="flex-1 overflow-auto flex flex-col relative">
         

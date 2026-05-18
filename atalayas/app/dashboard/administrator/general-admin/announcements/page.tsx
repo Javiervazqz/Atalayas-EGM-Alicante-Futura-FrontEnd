@@ -182,18 +182,19 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="flex h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f] overflow-hidden">
-      <Sidebar role="GENERAL_ADMIN" />
       <main className="flex-1 flex flex-col min-w-0 bg-white/40 dark:bg-transparent backdrop-blur-3xl">
         <PageHeader 
           title="Anuncios Públicos" 
           description="Visualización de comunicados globales y noticias de la plataforma."
           icon={<i className="bi bi-megaphone-fill" />}
           action={
-            <div className="flex gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex justify-end min-w-12">
               <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar noticias..." />
+              </div>
               <button 
                 onClick={() => router.push(`/dashboard/administrator/general-admin/announcements/new`)}
-                className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
+              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
               >
                 Crear Nuevo
               </button>

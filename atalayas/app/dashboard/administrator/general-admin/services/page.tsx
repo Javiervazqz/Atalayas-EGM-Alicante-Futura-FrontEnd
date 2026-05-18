@@ -73,16 +73,15 @@ export default function ServicesPage() {
 
   return (
     <div className="flex min-h-screen bg-background font-sans text-foreground">
-      <Sidebar role='GENERAL_ADMIN' />
 
       <main className="flex-1 overflow-auto flex flex-col relative">
         <PageHeader 
           title="Gestión de Servicios"
           description="Organiza y supervisa todos los servicios del ecosistema corporativo."
-          icon={<i className="bi bi-briefcase"></i>}
+          icon={<i className="bi bi-briefcase-fill"></i>}
           action={
             <Link href="/dashboard/administrator/general-admin/services/new"
-              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-sm flex items-center gap-2"
+              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
             >
               <i className="bi bi-plus-lg"></i> Nuevo servicio
             </Link>
