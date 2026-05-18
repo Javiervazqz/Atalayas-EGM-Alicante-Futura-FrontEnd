@@ -618,7 +618,6 @@ export default function CompanyAdminStatsPage() {
 
   return (
     <div className="flex h-screen bg-background font-sans text-foreground">
-      <Sidebar role="ADMIN" />
 
       <main className="flex-1 min-h-0 overflow-y-auto no-scrollbar flex flex-col relative">
         <PageHeader
