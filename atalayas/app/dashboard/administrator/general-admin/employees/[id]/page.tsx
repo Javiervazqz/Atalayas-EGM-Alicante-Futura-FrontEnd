@@ -157,7 +157,7 @@ export default function EditEmployeePage() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Error al actualizar");
 
-            router.push("/dashboard/administrator/employees");
+            router.push("/dashboard/administrator/general-admin/employees");
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -178,14 +178,13 @@ export default function EditEmployeePage() {
 
     return (
         <div className="flex min-h-screen bg-background font-sans">
-            <Sidebar role={currentUser.role} />
 
             <main className="flex-1 overflow-auto flex flex-col relative">
                 <PageHeader
                     title="Editar Perfil"
                     description={`Modificando la cuenta de ${formData.name || 'empleado'}`}
                     icon={<i className="bi bi-person-gear"></i>}
-                    backUrl="/dashboard/administrator/employees"
+                    backUrl="/dashboard/administrator/general-admin/employees"
                 />
 
                 <div className="p-6 lg:p-10 max-w-3xl mx-auto w-full">

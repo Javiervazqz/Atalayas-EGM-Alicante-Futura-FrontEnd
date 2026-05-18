@@ -130,7 +130,7 @@ export default function GeneralAdminContentDetail() {
               <button
                 onClick={isEditing ? handleSave : () => setIsEditing(true)}
                 disabled={loading}
-                className={`${isEditing ? 'bg-emerald-500' : 'bg-primary'} text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95`}
+                className={`${isEditing ? 'bg-emerald-500' : "bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"} text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95`}
               >
                 {isEditing ? 'Guardar' : 'Editar'}
               </button>
@@ -363,9 +363,9 @@ export default function GeneralAdminContentDetail() {
 
       {/* Modal Lab */}
       {showLabModal && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/95 backdrop-blur-xl md:p-4">
+        <div className="fixed inset-0 z-120 flex items-center justify-center bg-black/95 backdrop-blur-xl md:p-4">
           <div className="bg-card border border-border md:rounded-[40px] w-full max-w-6xl h-full md:h-[90vh] relative overflow-hidden shadow-2xl flex flex-col">
-            <div className="absolute top-4 right-4 z-[130]">
+            <div className="absolute top-4 right-4 z-130">
               <button onClick={() => { setShowLabModal(false); setIsLabStarted(false); }} className="w-10 h-10 bg-white/10 hover:bg-destructive hover:text-white backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all shadow-lg">
                 <i className="bi bi-x-lg"></i>
               </button>
@@ -396,7 +396,7 @@ export default function GeneralAdminContentDetail() {
 
       {/* Modal Quiz */}
       {showQuizModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-3 md:p-4">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-md p-3 md:p-4">
           <div className="bg-card border border-border rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
             <div className="flex justify-between items-center mb-6 md:mb-8 shrink-0">
               <h3 className="text-xl md:text-2xl font-black italic">Simulación Estudiante</h3>
@@ -425,7 +425,7 @@ export default function GeneralAdminContentDetail() {
 
       {/* Modal Delete */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-110 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-card border border-border rounded-[1.5rem] md:rounded-[2rem] p-8 md:p-10 max-w-sm w-full text-center shadow-2xl">
             <i className="bi bi-exclamation-triangle text-4xl text-destructive mb-4 block"></i>
             <h3 className="text-xl font-black mb-2">¿Seguro que deseas borrar?</h3>

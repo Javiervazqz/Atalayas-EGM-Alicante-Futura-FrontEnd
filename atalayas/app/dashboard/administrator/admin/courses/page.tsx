@@ -173,7 +173,7 @@ function AdminCoursePageContent() {
                         >
                             {loading ? (
                                 Array.from({ length: 4 }).map((_, i) => (
-                                    <div key={i} className="h-[350px] bg-card rounded-[2.5rem] border border-border animate-pulse shadow-sm" />
+                                    <div key={i} className="h-87.5 bg-card rounded-[2.5rem] border border-border animate-pulse shadow-sm" />
                                 ))
                             ) : filtered.length === 0 ? (
                                 <div className="col-span-full py-20 text-center bg-card border-2 border-dashed border-border rounded-[2.5rem]">

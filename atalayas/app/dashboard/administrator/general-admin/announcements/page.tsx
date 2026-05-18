@@ -188,11 +188,13 @@ export default function AnnouncementsPage() {
           description="Visualización de comunicados globales y noticias de la plataforma."
           icon={<i className="bi bi-megaphone-fill" />}
           action={
-            <div className="flex gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex justify-end min-w-12">
               <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar noticias..." />
+              </div>
               <button 
                 onClick={() => router.push(`/dashboard/administrator/general-admin/announcements/new`)}
-                className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
+              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
               >
                 Crear Nuevo
               </button>

@@ -115,7 +115,7 @@ export default function EcosystemPage() {
           action={
             <Link 
               href="/dashboard/administrator/general-admin/community/new"
-              className="bg-secondary text-secondary-foreground px-6 py-3 rounded-2xl font-bold uppercase tracking-widest text-[11px] hover:opacity-90 transition-all shadow-sm flex items-center justify-center gap-2"
+              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
             >
               <i className="bi bi-plus-lg text-sm"></i> Añadir Entidad
             </Link>

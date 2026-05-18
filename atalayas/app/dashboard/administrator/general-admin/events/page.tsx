@@ -59,11 +59,13 @@ export default function GAdminPublicEventsPage() {
           description="Gestión exclusiva de eventos globales del ecosistema (Sin empresa asignada)."
           icon={<i className="bi bi-calendar-event" />}
           action={
-            <div className="flex gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex justify-end min-w-12">
               <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar evento público..." />
+              </div>
               <button 
                 onClick={() => router.push(`/dashboard/administrator/general-admin/events/new`)} 
-                className="bg-primary text-white px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-primary/20"
+                  className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
               >
                 Crear Evento Público
               </button>

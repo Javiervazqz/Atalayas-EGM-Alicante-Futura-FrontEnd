@@ -93,7 +93,7 @@ function AnnouncementCarousel({
                 className="absolute inset-0 bg-cover bg-center transition-transform duration-[5s] ease-out group-hover:scale-110"
                 style={{ backgroundImage: `url(${actualAnuncio.imageUrl || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop'})` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent z-10" />
+              <div className="absolute inset-0 bg-linear-to-r from-black/90 via-black/40 to-transparent z-10" />
               
               {!actualAnuncio.isPublic && (
                 <div className="absolute top-8 right-8 z-40 flex gap-3">
@@ -158,7 +158,7 @@ function AnnouncementModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
       <div className="bg-white dark:bg-[#1c1c1e] w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/10">
         <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center">
           <h2 className="text-xl font-black tracking-tight">{initialData ? 'Editar Anuncio' : 'Nuevo Anuncio'}</h2>
@@ -282,8 +282,10 @@ export default function AnnouncementsPage() {
           description="Control de comunicados destacados e historial."
           icon={<i className="bi bi-megaphone-fill" />}
           action={
-            <div className="flex gap-4">
-              <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar..." />
+            <div className="flex items-center gap-3">
+                          <div className="flex justify-end min-w-12">
+                          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar noticias..." />
+                          </div>
               <button 
                 onClick={() => router.push(`/dashboard/administrator/admin/announcements/new`)}
                 className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
