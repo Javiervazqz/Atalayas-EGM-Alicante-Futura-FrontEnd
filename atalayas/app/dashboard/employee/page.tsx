@@ -132,8 +132,10 @@ export default function EmployeeDashboard() {
     if (unreadCount === 0) return;
     try {
       const token = localStorage.getItem("token");
+      const now = new Date();
+      setLastResetDate(now);
       setUnreadCount(0);
-      setLastResetDate(new Date());
+      
       await fetchWithApiFallback(API_ROUTES.NOTIFICATIONS.RESET, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}` },
