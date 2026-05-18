@@ -127,7 +127,7 @@ function MiniLineChart({ data, theme }: { data: { label: string; value: number }
         {points.map((p, i) => (
           <div key={i} className="absolute group z-10" style={{ left: `${p.x}%`, top: `${p.y}%` }}>
             <div 
-              className="w-2.5 h-2.5 -ml-[5px] -mt-[5px] rounded-full bg-background border-2 transition-transform duration-200 group-hover:scale-[1.8] cursor-pointer" 
+              className="w-2.5 h-2.5 -ml-1.25 -mt-1.25 rounded-full bg-background border-2 transition-transform duration-200 group-hover:scale-[1.8] cursor-pointer" 
               style={{ borderColor: colors[theme].stroke }} 
             />
             <div className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 -translate-x-1/2 mb-3 bg-card border border-border shadow-lg px-2 py-1.5 rounded-lg text-[11px] whitespace-nowrap pointer-events-none transition-all z-20 flex items-center gap-1.5">
@@ -272,12 +272,12 @@ function YearlyHistorySelector({ data, title, theme }: { data: TrendEntry[], tit
         {isOpen && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 bg-background/80 backdrop-blur-sm lg:pl-[280px]"
+            className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-8 bg-background/80 backdrop-blur-sm lg:pl-70"
           >
             <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
             <motion.div
               initial={{ opacity: 0, y: 30, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.95 }} transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-5xl h-[80vh] min-h-[500px] bg-card border border-border shadow-2xl rounded-3xl p-6 md:p-10 flex flex-col"
+              className="relative w-full max-w-5xl h-[80vh] min-h-125 bg-card border border-border shadow-2xl rounded-3xl p-6 md:p-10 flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               <button onClick={() => setIsOpen(false)} className="absolute top-6 right-6 w-10 h-10 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors z-50">
@@ -321,7 +321,7 @@ function YearlyHistorySelector({ data, title, theme }: { data: TrendEntry[], tit
                     d.value >= 0 && (
                       <motion.div 
                         key={`dot-${i}`}
-                        className={`absolute w-2.5 h-2.5 ${c.bg} rounded-full border-2 border-background -ml-[5px] -mt-[5px] shadow-sm`}
+                        className={`absolute w-2.5 h-2.5 ${c.bg} rounded-full border-2 border-background -ml-1.25 -mt-1.25 shadow-sm`}
                         style={{ left: `${points[i].x}%`, top: `${points[i].y}%` }}
                         initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 1.5, duration: 0.3 }}
                       />
@@ -343,7 +343,7 @@ function YearlyHistorySelector({ data, title, theme }: { data: TrendEntry[], tit
                         initial={{ height: 0 }}
                         animate={{ height: `${heightPct}%` }}
                         transition={{ duration: 0.6, ease: 'easeOut' }}
-                        className={`w-full max-w-[80px] rounded-t-lg transition-all hover:brightness-110 ${c.bg}`}
+                        className={`w-full max-w-20 rounded-t-lg transition-all hover:brightness-110 ${c.bg}`}
                       />
                       
                       <span className="absolute -bottom-6 text-xs sm:text-sm text-muted-foreground capitalize font-medium">{d.label}</span>
@@ -609,9 +609,9 @@ export default function CompanyAdminStatsPage() {
                   <span className="text-sm text-muted-foreground">sin leer</span>
                 </div>
                 {suggestions.pending > 0 ? (
-                  <p className="text-xs text-muted-foreground mt-1 max-w-[250px]">Tienes nuevos mensajes de tu equipo esperando revisión.</p>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-62.5">Tienes nuevos mensajes de tu equipo esperando revisión.</p>
                 ) : (
-                  <p className="text-xs text-muted-foreground mt-1 max-w-[250px]">Tu buzón de sugerencias está al día. ¡Buen trabajo!</p>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-62.5">Tu buzón de sugerencias está al día. ¡Buen trabajo!</p>
                 )}
                 
                 {suggestions.pending > 0 && (

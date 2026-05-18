@@ -135,7 +135,7 @@ export default function NewEmployeePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error al registrar el usuario");
 
-      router.push("/dashboard/administrator/employees");
+      router.push("/dashboard/administrator/admin/employees");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -147,14 +147,13 @@ export default function NewEmployeePage() {
 
   return (
     <div className="flex min-h-screen bg-background font-sans">
-      <Sidebar role={currentUser.role} />
 
       <main className="flex-1 overflow-auto flex flex-col relative">
         <PageHeader
           title="Nuevo Empleado"
           description="Añade un nuevo miembro a tu organización. Se generará una contraseña temporal automáticamente."
           icon={<i className="bi bi-person-plus-fill"></i>}
-          backUrl="/dashboard/administrator/employees"
+          backUrl="/dashboard/administrator/admin/employees"
         />
 
         <div className="p-6 lg:p-10 max-w-3xl mx-auto w-full">

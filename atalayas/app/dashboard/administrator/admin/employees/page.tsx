@@ -157,7 +157,6 @@ export default function EmployeesPage() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-background font-sans text-foreground">
-      <Sidebar role={currentUser.role} />
 
       <main className="flex-1 overflow-x-hidden flex flex-col relative">
         <PageHeader
@@ -175,7 +174,7 @@ export default function EmployeesPage() {
                     <i className="bi bi-download"></i> <span className="hidden sm:inline">CSV</span>
                   </button>
                   <Link
-                    href="/dashboard/administrator/employees/moreNew"
+                    href="/dashboard/administrator/admin/employees/moreNew"
                     className="flex-1 md:flex-none bg-background border border-input hover:bg-muted text-foreground font-bold px-3 py-2 rounded-xl transition-all text-xs flex items-center justify-center gap-2"
                   >
                     <i className="bi bi-file-earmark-arrow-up"></i> <span className="hidden sm:inline">Masiva</span>
@@ -183,7 +182,7 @@ export default function EmployeesPage() {
                 </>
               )}
               <Link
-                href="/dashboard/administrator/employees/new"
+                href="/dashboard/administrator/admin/employees/new"
                 className="w-full md:w-auto bg-secondary hover:opacity-90 text-secondary-foreground font-bold px-4 py-2 rounded-xl transition-opacity text-xs shadow-sm flex items-center justify-center gap-2"
               >
                 <i className="bi bi-person-plus-fill"></i> Nuevo
@@ -225,7 +224,7 @@ export default function EmployeesPage() {
 
             {/* TABLA RESPONSIVE */}
             <div className="overflow-x-auto scrollbar-hide">
-              <table className="w-full text-left min-w-[600px] md:min-w-full">
+              <table className="w-full text-left min-w-150 md:min-w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                     <th className="px-6 py-4">Usuario</th>
@@ -292,7 +291,7 @@ export default function EmployeesPage() {
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-1">
                             <Link
-                              href={`/dashboard/administrator/employees/${user.id}`}
+                              href={`/dashboard/administrator/admin/employees/${user.id}`}
                               className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
                             >
                               <i className="bi bi-pencil-square"></i>

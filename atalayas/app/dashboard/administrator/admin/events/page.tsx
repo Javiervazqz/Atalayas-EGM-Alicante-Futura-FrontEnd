@@ -67,11 +67,13 @@ export default function EventsAdminPage() {
           description="Organiza la agenda corporativa y eventos abiertos."
           icon={<i className="bi bi-calendar-event-fill" />}
           action={
-            <div className="flex gap-4">
-              <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar..." />
+            <div className="flex items-center gap-3">
+                          <div className="flex justify-end min-w-12">
+                          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar eventos..." />
+                          </div>
               <button 
                 onClick={() => router.push(`/dashboard/administrator/admin/events/new`)}
-                className="bg-primary text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20 whitespace-nowrap"
+                  className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
               >
                 Crear Evento
               </button>
