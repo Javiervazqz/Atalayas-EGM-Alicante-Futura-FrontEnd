@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Sidebar from '@/components/ui/Sidebar';
 import PageHeader from '@/components/ui/pageHeader';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { API_ROUTES } from '@/lib/utils';
 
 // --- Interfaces ---
@@ -42,9 +43,12 @@ const ROLE_COLORS: Record<string, string> = {
 export default function EmployeesPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [availableJobRoles, setAvailableJobRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingRoles, setLoadingRoles] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedCompany, setSelectedCompany] = useState<string>('ALL');
+  const [selectedJobRole, setSelectedJobRole] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Estado para el modal de eliminación
@@ -82,10 +86,37 @@ export default function EmployeesPage() {
           setUsers(usersData);
         }
       }
+
+      // Cargar roles de trabajo disponibles
+      await fetchAvailableJobRoles();
     } catch (err) {
       console.error("Error cargando datos:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAvailableJobRoles = async () => {
+    setLoadingRoles(true);
+    try {
+      const token = getToken();
+      if (!token) return;
+
+      const res = await fetch(`${API_ROUTES.USERS.GET_ALL}/roles`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableJobRoles(Array.isArray(data) ? data : []);
+      } else {
+        setAvailableJobRoles([]);
+      }
+    } catch (err) {
+      console.error("Error cargando roles de trabajo:", err);
+      setAvailableJobRoles([]);
+    } finally {
+      setLoadingRoles(false);
     }
   };
 
@@ -140,18 +171,22 @@ export default function EmployeesPage() {
     URL.revokeObjectURL(url);
   };
 
+  // Filtrar usuarios
   const displayedUsers = users
     .filter(user => {
       const matchCompany = selectedCompany === 'ALL' || String(user.companyId) === String(selectedCompany);
+      const matchJobRole = !selectedJobRole || user.jobRole === selectedJobRole;
       const matchSearch =
         user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchCompany && matchSearch;
+      return matchCompany && matchJobRole && matchSearch;
     })
     .sort((a, b) => {
       const rolesOrder: Record<string, number> = { 'GENERAL_ADMIN': 1, 'ADMIN': 2, 'EMPLOYEE': 3, 'PUBLIC': 4 };
       return (rolesOrder[a.role] || 99) - (rolesOrder[b.role] || 99);
     });
+
+  const hasActiveJobRoleFilter = selectedJobRole !== '';
 
   if (!currentUser) return null;
 
@@ -196,31 +231,77 @@ export default function EmployeesPage() {
           <div className="bg-card rounded-2xl md:rounded-3xl shadow-sm border border-border overflow-hidden flex flex-col">
 
             {/* FILTROS */}
-            <div className="p-4 border-b border-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/20">
-              <div className="relative w-full sm:max-w-md">
-                <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"></i>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar por nombre o email..."
-                  className="w-full bg-background border border-input rounded-xl pl-11 pr-4 py-2.5 text-sm outline-none focus:border-primary transition-all font-medium"
-                />
+            <div className="p-4 border-b border-border flex flex-col gap-4 bg-muted/20">
+
+              {/* Primera fila: Búsqueda de nombre y filtro de empresa (derecha) */}
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                {/* Búsqueda por nombre/email */}
+                <div className="relative w-full sm:flex-1">
+                  <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"></i>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar por nombre o email..."
+                    className="w-full bg-background border border-input rounded-xl pl-11 pr-4 py-2.5 text-sm outline-none focus:border-primary transition-all font-medium"
+                  />
+                </div>
+
+                {/* Filtro por Empresa (solo GENERAL_ADMIN) - A la derecha */}
+                {currentUser.role === 'GENERAL_ADMIN' && (
+                  <div className="w-full sm:w-auto relative">
+                    <select
+                      value={selectedCompany}
+                      onChange={(e) => setSelectedCompany(e.target.value)}
+                      className="w-full sm:w-64 appearance-none bg-background border border-input px-4 py-2.5 pr-10 rounded-xl text-sm font-semibold outline-none cursor-pointer focus:border-primary transition-all"
+                    >
+                      <option value="ALL">Todas las empresas</option>
+                      {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                    <i className="bi bi-building absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"></i>
+                  </div>
+                )}
               </div>
 
-              {currentUser.role === 'GENERAL_ADMIN' && (
-                <div className="w-full sm:w-auto relative">
+              {/* Segunda fila: Filtro por Rol de Trabajo (barra de búsqueda) */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative w-full sm:max-w-xs">
+                  <i className="bi bi-briefcase absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"></i>
                   <select
-                    value={selectedCompany}
-                    onChange={(e) => setSelectedCompany(e.target.value)}
-                    className="w-full sm:w-64 appearance-none bg-background border border-input px-4 py-2.5 pr-10 rounded-xl text-sm font-semibold outline-none cursor-pointer focus:border-primary transition-all"
+                    value={selectedJobRole}
+                    onChange={(e) => setSelectedJobRole(e.target.value)}
+                    className="w-full appearance-none bg-background border border-input rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium outline-none focus:border-primary transition-all cursor-pointer"
                   >
-                    <option value="ALL">Todas las empresas</option>
-                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    <option value="">Todos los puestos</option>
+                    {availableJobRoles.map((role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
                   </select>
-                  <i className="bi bi-building absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"></i>
+                  {selectedJobRole && (
+                    <button
+                      onClick={() => setSelectedJobRole('')}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <i className="bi bi-x-circle-fill text-xs"></i>
+                    </button>
+                  )}
+                  {loadingRoles && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Badge de filtro activo */}
+                {hasActiveJobRoleFilter && (
+                  <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-600 text-[10px] font-semibold">
+                    <i className="bi bi-check-circle-fill text-[8px]"></i>
+                    Filtrado por: {selectedJobRole}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* TABLA RESPONSIVE */}
