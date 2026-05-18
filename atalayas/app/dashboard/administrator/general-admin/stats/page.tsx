@@ -743,7 +743,7 @@ export default function RealTimeStatsPage() {
     if (saved) setCurrentUser(JSON.parse(saved));
     const token = localStorage.getItem('token');
 
-    fetchWithApiFallback(API_ROUTES.STATS.GET_ADMIN, {
+    fetchWithApiFallback(API_ROUTES.STATS.GET_GENERAL, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(setStats)

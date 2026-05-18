@@ -43,7 +43,8 @@ interface StatsData {
   roles: RoleDist[];
   workforce: {
     hires: TrendEntry[];
-    departures: TrendEntry[];
+    userDepartures: TrendEntry[];
+    companyDepartures: TrendEntry[];
   };
 }
 
@@ -602,9 +603,9 @@ export default function CompanyAdminStatsPage() {
     1,
   );
   const hireTrend = groupByMonth(stats?.workforce?.hires ?? []);
-  const departureTrend = groupByMonth(stats?.workforce?.departures ?? []);
+  const departureTrend = groupByMonth(stats?.workforce?.userDepartures ?? []);
   const totalHires = stats?.workforce?.hires?.length ?? 0;
-  const totalDepartures = stats?.workforce?.departures?.length ?? 0;
+  const totalDepartures = stats?.workforce?.userDepartures?.length ?? 0;
 
   const kpiCards = [
     { label: 'Empleados', value: ov?.totalUsers ?? 0, icon: 'bi-people-fill', color: 'bg-blue-500/10 text-blue-400' },
@@ -781,7 +782,7 @@ export default function CompanyAdminStatsPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-2xl font-semibold tabular-nums tracking-tighter">{totalDepartures}</span>
-                        <YearlyHistorySelector data={stats?.workforce?.departures ?? []} title="Histórico de Bajas" theme="rose" />
+                        <YearlyHistorySelector data={stats?.workforce?.userDepartures ?? []} title="Histórico de Bajas" theme="rose" />
                       </div>
                     </div>
                     <MiniLineChart data={departureTrend} theme="rose" />

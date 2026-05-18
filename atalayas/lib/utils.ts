@@ -98,7 +98,7 @@ export const API_ROUTES = {
 
   STATS: {
     GET_ADMIN: `${BASE_URL}/stats`,
-    GET_GENERAL: `${BASE_URL}/admin/stats`,
+    GET_GENERAL: `${BASE_URL}/stats/general`,
   },
 
   ACTIVITY: {
