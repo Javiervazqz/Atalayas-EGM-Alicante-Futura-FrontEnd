@@ -138,18 +138,6 @@ export default function GAdminNewPublicEvent() {
                 />
               </div>
 
-              {/* Capacidad */}
-              <div>
-                <label className="text-[10px] font-black uppercase opacity-40 ml-1 italic">Aforo Máximo (opcional)</label>
-                <input 
-                  type="number" 
-                  placeholder="Ej: 50..."
-                  className="w-full p-4 mt-1 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-none font-bold outline-none focus:ring-2 ring-primary/20 transition-all" 
-                  value={formData.max_capacity} 
-                  onChange={(e) => setFormData({...formData, max_capacity: e.target.value})} 
-                />
-              </div>
-
               {/* Ubicación */}
               <div className="col-span-2">
                 <label className="text-[10px] font-black uppercase opacity-40 ml-1 italic">Ubicación / Link</label>
