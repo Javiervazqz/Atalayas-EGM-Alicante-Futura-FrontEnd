@@ -77,6 +77,7 @@ export const API_ROUTES = {
     SETUP: `${BASE_URL}/onboarding/setup`,
     ME: `${BASE_URL}/onboarding/me`,
     TOGGLE: `${BASE_URL}/onboarding/toggle`,
+    EMPLOYEE: `${BASE_URL}/onboarding/employee`,
   },
 
   CHATBOT: {
