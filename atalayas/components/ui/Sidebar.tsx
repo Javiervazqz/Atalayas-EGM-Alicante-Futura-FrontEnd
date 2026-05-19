@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { API_ROUTES } from '@/lib/utils';
 
 interface SidebarProps {
   role: 'GENERAL_ADMIN' | 'ADMIN' | 'EMPLOYEE' | 'PUBLIC';
@@ -116,6 +117,44 @@ export default function Sidebar({ role }: SidebarProps) {
     window.addEventListener('resize', checkResizing);
     return () => window.removeEventListener('resize', checkResizing);
   }, []);
+
+  // Dentro de tu componente Sidebar...
+
+useEffect(() => {
+  const fetchPendingCounts = async () => {
+    // Solo hacemos la petición si el usuario es administrador
+    if (role !== 'GENERAL_ADMIN') return;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const res = await fetch(API_ROUTES.COMPANY_REQUESTS.GET_PENDING , {
+        method: 'GET',
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        
+        // 1. Actualizamos el estado local para que se vea YA
+        setPendingRequestsCount(data.requests || 0);
+
+        // 2. Sincronizamos el localStorage para que otros componentes lo sepan
+        localStorage.setItem('count_requests', String(data.requests || 0));
+      }
+    } catch (error) {
+      console.error("Error al obtener conteos iniciales:", error);
+    }
+  };
+
+  if (mounted) {
+    fetchPendingCounts();
+  }
+}, [mounted, role]); // Se ejecuta al montar y si el rol cambia
 
   useEffect(() => {
     const updateCounts = () => {

@@ -71,6 +71,7 @@ export const API_ROUTES = {
     ARCHIVE: (id: string) => `${BASE_URL}/company-request/${id}/archive`,
     UNARCHIVE: (id: string) => `${BASE_URL}/company-request/${id}/unarchive`,
     GET_ARCHIVED: `${BASE_URL}/company-request?archived=true`,
+    GET_PENDING: `${BASE_URL}/company-request/pending-counts`
   },
 
   ONBOARDING: {
