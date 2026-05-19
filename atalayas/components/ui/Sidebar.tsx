@@ -33,7 +33,7 @@ const navItems = {
     { label: 'Panel', href: '/dashboard/administrator/admin', icon: <i className="bi bi-house-fill"></i> },
     { label: 'Mi Empresa', href: '/dashboard/administrator/admin/company', icon: <i className="bi bi-building-fill"></i> },
     { label: 'Empleados', href: '/dashboard/administrator/admin/employees', icon: <i className="bi bi-people-fill"></i>},
-    { label: 'Onboarding', href: '/dashboard/administrator/admin/onboarding', icon: <i className="bi bi-person-walking"></i>},
+    { label: 'Onboarding', href: '/dashboard/administrator/admin/onboarding', icon: <i className="bi bi-rocket-takeoff-fill"></i>},
     { label: 'Cursos', href: '/dashboard/administrator/admin/courses/manage', icon: <i className="bi bi-mortarboard-fill"></i> },
     { label: 'Documentos', href: '/dashboard/administrator/admin/documents', icon: <i className="bi bi-file-earmark-text-fill"></i> },
     { label: 'Servicios', href: '/dashboard/administrator/admin/services', icon: <i className="bi bi-suitcase-lg-fill"></i> },
@@ -211,8 +211,7 @@ useEffect(() => {
       {!mobileOpen && (
         <button 
           onClick={() => setMobileOpen(true)}
-          className="lg:hidden fixed top-20 left-5 z-9999 w-12 h-12 bg-white dark:bg-card border border-border shadow-xl rounded-2xl flex items-center justify-center text-primary transition-all active:scale-90"
-        >
+className="lg:hidden fixed bottom-6 left-6 z-50 w-14 h-14 bg-primary text-white shadow-2xl rounded-full flex items-center justify-center active:scale-90"        >
           <i className="bi bi-list text-2xl"></i>
         </button>
       )}
