@@ -40,7 +40,7 @@ export default function OnboardingConfig() {
 
   // Refs para hacer scroll a nuevos elementos
   const newElementRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const fetchOnboarding = async () => {
