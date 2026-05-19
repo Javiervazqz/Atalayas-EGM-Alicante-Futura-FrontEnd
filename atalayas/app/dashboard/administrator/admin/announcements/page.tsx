@@ -278,23 +278,34 @@ export default function AnnouncementsPage() {
     <div className="flex h-screen bg-[#f5f5f7] dark:bg-[#0d0d0f] overflow-hidden">
       <main className="flex-1 flex flex-col min-w-0 bg-white/40 dark:bg-transparent backdrop-blur-3xl">
         <PageHeader 
-          title="Anuncios y Noticias" 
-          description="Control de comunicados destacados e historial."
-          icon={<i className="bi bi-megaphone-fill" />}
-          action={
-            <div className="flex items-center gap-3">
-                          <div className="flex justify-end min-w-12">
-                          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Buscar noticias..." />
-                          </div>
-              <button 
-                onClick={() => router.push(`/dashboard/administrator/admin/announcements/new`)}
-                className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm w-full"
-              >
-                Crear Nuevo
-              </button>
-            </div>
-          }
+  title="Anuncios y Noticias" 
+  description="Control de comunicados destacados e historial."
+  icon={<i className="bi bi-megaphone-fill" />}
+  action={
+    <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
+      {/* Buscador: Flexible en móvil */}
+      <div className="flex-1 sm:flex-none max-w-[160px] sm:max-w-none">
+        <SearchInput 
+          value={searchQuery} 
+          onChange={setSearchQuery} 
+          placeholder="Buscar..." 
         />
+      </div>
+
+      {/* Botón: Adaptativo y consistente */}
+      <button 
+        onClick={() => router.push(`/dashboard/administrator/admin/announcements/new`)}
+        className="bg-secondary text-secondary-foreground rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm w-10 h-10 sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 shrink-0"
+        title="Crear Nuevo"
+      >
+        <i className="bi bi-plus-lg text-lg sm:text-base"></i>
+        <span className="hidden sm:inline whitespace-nowrap">
+          Crear Nuevo
+        </span>
+      </button>
+    </div>
+  }
+/>
 
         <div className="flex-1 overflow-y-auto p-6 lg:p-10 no-scrollbar">
           <div className="max-w-7xl mx-auto space-y-12">

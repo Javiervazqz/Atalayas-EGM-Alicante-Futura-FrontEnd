@@ -109,18 +109,24 @@ export default function EcosystemPage() {
 
       <main className="flex-1 overflow-y-auto flex flex-col relative no-scrollbar">
         <PageHeader 
-          title="Ecosistema de Proximidad"
-          description="Gestiona las entidades y colaboradores clave que forman parte del ecosistema EGM."
-          icon={<i className="bi bi-diagram-3-fill"></i>}
-          action={
-            <Link 
-              href="/dashboard/administrator/general-admin/community/new"
-              className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
-            >
-              <i className="bi bi-plus-lg text-sm"></i> Añadir Entidad
-            </Link>
-          }
-        />
+  title="Ecosistema de Proximidad"
+  description="Gestiona las entidades y colaboradores clave del ecosistema EGM."
+  icon={<i className="bi bi-diagram-3-fill"></i>}
+  action={
+    <div className="flex items-center justify-end">
+      <Link 
+        href="/dashboard/administrator/general-admin/community/new"
+        className="bg-secondary text-secondary-foreground rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm w-10 h-10 sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 shrink-0"
+        title="Añadir Entidad"
+      >
+        <i className="bi bi-plus-lg text-lg sm:text-base"></i>
+        <span className="hidden sm:inline whitespace-nowrap">
+          Añadir Entidad
+        </span>
+      </Link>
+    </div>
+  }
+/>
 
         <div className="p-6 lg:p-10 flex-1 max-w-400 mx-auto w-full relative z-0">
           
