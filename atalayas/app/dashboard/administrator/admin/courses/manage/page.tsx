@@ -251,7 +251,7 @@ export default function ManageCourses() {
                       transition={{ duration: 0.2 }}
                       className="relative overflow-hidden"
                     >
-                      <div className="relative min-w-[280px]">
+                      <div className="relative min-w-70">
                         <i className="bi bi-briefcase absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"></i>
                         <select
                           value={selectedRole}
@@ -294,7 +294,7 @@ export default function ManageCourses() {
 
             {/* Tabla */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[600px]">
+              <table className="w-full text-left border-collapse min-w-150">
                 <thead>
                   <tr className="bg-muted/40 border-b border-border">
                     <th className="px-6 lg:px-8 py-4 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Nombre del Curso</th>

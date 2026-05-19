@@ -342,7 +342,7 @@ const StepCard = memo(({ step, idx, onUpdate, onRemove, setSteps }: any) => {
           <textarea
             value={step.description}
             onChange={(e) => onUpdate(idx, "description", e.target.value)}
-            className="w-full bg-muted/30 border border-border/50 rounded-2xl px-5 py-3 text-sm outline-none focus:border-primary transition-all resize-none min-h-[80px]"
+            className="w-full bg-muted/30 border border-border/50 rounded-2xl px-5 py-3 text-sm outline-none focus:border-primary transition-all resize-none min-h-20"
             placeholder="¿Qué se hará en este paso?"
           />
         </div>

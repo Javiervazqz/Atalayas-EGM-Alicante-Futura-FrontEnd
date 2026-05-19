@@ -190,7 +190,7 @@ export default function AnnouncementsPage() {
   action={
     <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
       {/* Contenedor del Buscador */}
-      <div className="flex-1 sm:flex-none max-w-[180px] sm:max-w-none">
+      <div className="flex-1 sm:flex-none max-w-45 sm:max-w-none">
         <SearchInput 
           value={searchQuery} 
           onChange={setSearchQuery} 
